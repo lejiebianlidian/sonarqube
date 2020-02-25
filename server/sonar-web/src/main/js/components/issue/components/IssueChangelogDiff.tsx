@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,26 +36,29 @@ export default function IssueChangelogDiff({ diff }: Props) {
         )}
       </p>
     );
-  } else if (diff.key === 'from_long_branch') {
+  } else if (['from_long_branch', 'from_branch'].includes(diff.key)) {
     return (
       <p>
         {translateWithParameters(
-          'issue.change.from_long_branch',
+          'issue.change.from_branch',
           diff.oldValue || '',
           diff.newValue || ''
         )}
       </p>
     );
   } else if (diff.key === 'from_short_branch') {
+    // Applies to both legacy short lived branch and pull request
     return (
       <p>
         {translateWithParameters(
-          'issue.change.from_short_branch',
+          'issue.change.from_non_branch',
           diff.oldValue || '',
           diff.newValue || ''
         )}
       </p>
     );
+  } else if (diff.key === 'line') {
+    return <p>{translateWithParameters('issue.changelog.line_removed_X', diff.oldValue || '')}</p>;
   }
 
   let message;

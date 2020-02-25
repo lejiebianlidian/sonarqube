@@ -49,7 +49,7 @@
           "/analysis/languages/swift/",
           "/analysis/languages/typescript/",
           "/analysis/languages/tsql/",
-          "/analysis/languages/vb/",
+          "/analysis/languages/vbnet/",
           "/analysis/languages/vb6/",
           "/analysis/languages/xml/"
         ]
@@ -59,16 +59,21 @@
       "/analysis/background-tasks/",
       "/analysis/generic-issue/",
       "/analysis/generic-test/",
-      "/analysis/pull-request/",
+      {
+        "title": "Pull Request Analysis",
+        "children": [
+		  "/analysis/pull-request/",
+		  "/analysis/pr-decoration/"
+		]
+      },
       {
         "title": "Branches",
         "children": [
           "/branches/overview/",
-          "/branches/short-lived-branches/",
-          "/branches/long-lived-branches/",
           "/branches/branches-faq/"
         ]
       },
+      "/analysis/gitlab-cicd/",
       "/analysis/scm-integration/",
       "/analysis/security_configuration/"
     ]
@@ -76,7 +81,7 @@
   {
     "title": "User Guide",
     "children": [
-      "/user-guide/fixing-the-water-leak/",
+      "/user-guide/clean-as-you-code/",
       "/user-guide/project-page/",
       "/user-guide/applications/",
       "/user-guide/portfolios/",
@@ -103,7 +108,8 @@
       "/project-administration/project-existence/",
       "/project-administration/managing-project-history/",
       "/project-administration/narrowing-the-focus/",
-      "/project-administration/configuring-portfolios-and-applications/",
+	  "/project-administration/new-code-period/",
+	  "/project-administration/configuring-portfolios-and-applications/",
       "/project-administration/portfolio-pdf-configuration/",
       "/project-administration/project-settings/",
       "/project-administration/webhooks/"
@@ -115,7 +121,6 @@
       "/instance-administration/quality-profiles/",
       "/instance-administration/security/",
       "/instance-administration/delegated-auth/",
-      "/instance-administration/github-application/",
       "/instance-administration/look-and-feel/",
       "/instance-administration/marketplace/",
       "/instance-administration/housekeeping/",

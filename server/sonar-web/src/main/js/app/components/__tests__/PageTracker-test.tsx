@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { gtm } from '../../../helpers/analytics';
@@ -56,9 +55,7 @@ it('should work for WebAnalytics plugin', () => {
   const wrapper = shallowRender({ webAnalytics });
 
   expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find('HelmetWrapper').prop('onChangeClientState')).toBe(
-    wrapper.instance().trackPage
-  );
+  expect(wrapper.find('Helmet').prop('onChangeClientState')).toBe(wrapper.instance().trackPage);
   expect(installScript).toBeCalledWith(webAnalytics, 'head');
   (getWebAnalyticsPageHandlerFromCache as jest.Mock).mockReturnValueOnce(pageChange);
 
@@ -73,9 +70,7 @@ it('should work for Google Tag Manager', () => {
   const push = jest.spyOn(dataLayer, 'push');
   const wrapper = shallowRender({ trackingIdGTM: '123' });
 
-  expect(wrapper.find('HelmetWrapper').prop('onChangeClientState')).toBe(
-    wrapper.instance().trackPage
-  );
+  expect(wrapper.find('Helmet').prop('onChangeClientState')).toBe(wrapper.instance().trackPage);
   expect(gtm).toBeCalled();
   expect(dataLayer).toHaveLength(0);
 

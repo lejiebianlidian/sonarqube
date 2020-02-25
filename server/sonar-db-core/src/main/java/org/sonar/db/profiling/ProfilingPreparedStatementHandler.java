@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ class ProfilingPreparedStatementHandler implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     if (method.getName().startsWith("execute")) {
       Profiler profiler = Profiler.create(ProfiledDataSource.SQL_LOGGER).start();
-      Object result = null;
+      Object result;
       try {
         result = InvocationUtils.invokeQuietly(statement, method, args);
       } finally {

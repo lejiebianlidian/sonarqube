@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -112,12 +112,20 @@ public class ScannerPluginInstaller implements PluginInstaller {
 
   private static class InstalledPlugins {
     InstalledPlugin[] plugins;
+
+    public InstalledPlugins() {
+      // http://stackoverflow.com/a/18645370/229031
+    }
   }
 
   static class InstalledPlugin {
     String key;
     String hash;
     long updatedAt;
+
+    public InstalledPlugin() {
+      // http://stackoverflow.com/a/18645370/229031
+    }
   }
 
   private static class Loaded {

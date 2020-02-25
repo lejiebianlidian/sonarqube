@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,13 +24,11 @@ import { getBreadcrumbs } from '../../../../api/components';
 import Breadcrumbs from '../Breadcrumbs';
 
 jest.mock('../../../../api/components', () => ({
-  getBreadcrumbs: jest
-    .fn()
-    .mockResolvedValue([
-      { key: 'anc1', name: 'Ancestor1' },
-      { key: 'anc2', name: 'Ancestor2' },
-      { key: 'bar', name: 'Bar' }
-    ])
+  getBreadcrumbs: jest.fn().mockResolvedValue([
+    { key: 'anc1', name: 'Ancestor1' },
+    { key: 'anc2', name: 'Ancestor2' },
+    { key: 'bar', name: 'Bar' }
+  ])
 }));
 
 const componentFoo = {

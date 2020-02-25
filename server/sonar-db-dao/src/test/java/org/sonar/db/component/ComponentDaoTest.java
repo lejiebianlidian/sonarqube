@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +44,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.sonar.api.impl.utils.AlwaysIncreasingSystem2;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.Scopes;
 import org.sonar.api.utils.System2;
@@ -54,10 +56,8 @@ import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.source.FileSourceDto;
 
 import static com.google.common.collect.ImmutableSet.of;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -69,6 +69,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.resources.Qualifiers.APP;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.api.utils.DateUtils.parseDate;
+import static org.sonar.db.component.BranchType.BRANCH;
 import static org.sonar.db.component.BranchType.PULL_REQUEST;
 import static org.sonar.db.component.ComponentTesting.newBranchDto;
 import static org.sonar.db.component.ComponentTesting.newDirectory;
@@ -94,8 +95,11 @@ public class ComponentDaoTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+
+  private System2 system2 = new AlwaysIncreasingSystem2(1000L);
+
   @Rule
-  public DbTester db = DbTester.create(System2.INSTANCE);
+  public DbTester db = DbTester.create(system2);
 
   private Random random = new Random();
   private DbSession dbSession = db.getSession();
@@ -213,10 +217,9 @@ public class ComponentDaoTest {
   }
 
   @Test
-  @UseDataProvider("branchBranchTypes")
-  public void selectByKeyAndBranch(BranchType branchType) {
-    ComponentDto project = db.components().insertMainBranch();
-    ComponentDto branch = db.components().insertProjectBranch(project, b -> b.setKey("my_branch").setBranchType(branchType));
+  public void selectByKeyAndBranch() {
+    ComponentDto project = db.components().insertPublicProject();
+    ComponentDto branch = db.components().insertProjectBranch(project, b -> b.setKey("my_branch").setBranchType(BRANCH));
     ComponentDto file = db.components().insertComponent(newFileDto(branch));
 
     assertThat(underTest.selectByKeyAndBranch(dbSession, project.getKey(), "master").get().uuid()).isEqualTo(project.uuid());
@@ -226,17 +229,9 @@ public class ComponentDaoTest {
     assertThat(underTest.selectByKeyAndBranch(dbSession, file.getKey(), "unknown")).isNotPresent();
   }
 
-  @DataProvider
-  public static Object[][] branchBranchTypes() {
-    return new Object[][] {
-      {BranchType.SHORT},
-      {BranchType.LONG}
-    };
-  }
-
   @Test
   public void selectByKeyAndPullRequest() {
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto branch = db.components().insertProjectBranch(project, b -> b.setKey("my_branch"));
     ComponentDto pullRequest = db.components().insertProjectBranch(project, b -> b.setKey("my_PR").setBranchType(PULL_REQUEST));
     ComponentDto pullRequestNamedAsMainBranch = db.components().insertProjectBranch(project, b -> b.setKey("master").setBranchType(PULL_REQUEST));
@@ -302,7 +297,7 @@ public class ComponentDaoTest {
 
   @Test
   public void selectByKeysAndBranch() {
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto branch = db.components().insertProjectBranch(project, b -> b.setKey("my_branch"));
     ComponentDto file1 = db.components().insertComponent(newFileDto(branch));
     ComponentDto file2 = db.components().insertComponent(newFileDto(branch));
@@ -321,9 +316,9 @@ public class ComponentDaoTest {
 
   @Test
   public void select_by_keys_and_branches() {
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto projectBranch = db.components().insertProjectBranch(project, b -> b.setKey("my_branch"));
-    ComponentDto application = db.components().insertMainBranch(a -> a.setQualifier(APP));
+    ComponentDto application = db.components().insertPublicProject(a -> a.setQualifier(APP));
     ComponentDto applicationBranch = db.components().insertProjectBranch(application, b -> b.setKey("my_branch"));
 
     assertThat(underTest.selectByKeysAndBranches(db.getSession(), ImmutableMap.of(
@@ -736,7 +731,7 @@ public class ComponentDaoTest {
     db.components().insertView(organization, "IJKL");
     ComponentDto view = db.components().insertView(organization, "EFGH");
     db.components().insertSubView(view, dto -> dto.setUuid("FGHI"));
-    ComponentDto application = db.components().insertApplication(organization);
+    ComponentDto application = db.components().insertPublicApplication(organization);
 
     assertThat(underTest.selectAllViewsAndSubViews(dbSession)).extracting(UuidWithProjectUuidDto::getUuid)
       .containsExactlyInAnyOrder("ABCD", "EFGH", "FGHI", "IJKL", application.uuid());
@@ -1006,8 +1001,11 @@ public class ComponentDaoTest {
     return lowestView;
   }
 
-  @SafeVarargs
-  private final ComponentDto insertView(OrganizationDto organization, String rootViewQualifier, Consumer<ComponentDto>... dtoPopulators) {
+  private ComponentDto insertView(OrganizationDto organization, String rootViewQualifier) {
+    return insertView(organization, rootViewQualifier, defaults());
+  }
+
+  private ComponentDto insertView(OrganizationDto organization, String rootViewQualifier, Consumer<ComponentDto> dtoPopulators) {
     ComponentDbTester tester = db.components();
     if (rootViewQualifier.equals(Qualifiers.VIEW)) {
       return random.nextBoolean() ? tester.insertPublicPortfolio(organization, dtoPopulators) : tester.insertPrivatePortfolio(organization, dtoPopulators);
@@ -1062,7 +1060,7 @@ public class ComponentDaoTest {
   @Test
   public void select_projects_does_not_return_branches() {
     OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto branch = db.components().insertProjectBranch(project);
 
     assertThat(underTest.selectProjects(dbSession))
@@ -1079,7 +1077,7 @@ public class ComponentDaoTest {
     ComponentDto file = db.components().insertComponent(newFileDto(module, directory));
     ComponentDto project2 = db.components().insertPrivateProject(organization);
     ComponentDto view = db.components().insertView(organization);
-    ComponentDto application = db.components().insertApplication(organization);
+    ComponentDto application = db.components().insertPublicApplication(organization);
     OrganizationDto otherOrganization = db.organizations().insert();
     ComponentDto projectOnOtherOrganization = db.components().insertPrivateProject(otherOrganization);
 
@@ -1092,7 +1090,7 @@ public class ComponentDaoTest {
   @Test
   public void select_projects_by_organization_does_not_return_branches() {
     OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertMainBranch(organization);
+    ComponentDto project = db.components().insertPublicProject(organization);
     ComponentDto branch = db.components().insertProjectBranch(project);
 
     assertThat(underTest.selectProjectsByOrganization(dbSession, organization.getUuid()))
@@ -1156,7 +1154,7 @@ public class ComponentDaoTest {
 
     // the project does not have any analysis
     OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertMainBranch(organization);
+    ComponentDto project = db.components().insertPublicProject(organization);
     assertThat(underTest.selectByQuery(dbSession, organization.getUuid(), query.get().build(), 0, 10))
       .extracting(ComponentDto::uuid)
       .containsOnly(project.uuid());
@@ -1168,6 +1166,31 @@ public class ComponentDaoTest {
     db.components().insertSnapshot(branchWithAnalysis);
     assertThat(underTest.selectByQuery(dbSession, organization.getUuid(), query.get().build(), 0, 10))
       .isEmpty();
+  }
+
+  @Test
+  public void selectByQuery_verify_order() {
+    OrganizationDto organization = db.organizations().insert();
+
+    Date firstDate = new Date(system2.now());
+    Date secondDate = new Date(system2.now());
+    Date thirdDate = new Date(system2.now());
+
+    ComponentDto project3 = db.components().insertPrivateProject(organization, "project3", componentDto -> componentDto.setCreatedAt(thirdDate));
+    ComponentDto project1 = db.components().insertPrivateProject(organization, "project1", componentDto -> componentDto.setCreatedAt(firstDate));
+    ComponentDto project2 = db.components().insertPrivateProject(organization, "project2", componentDto -> componentDto.setCreatedAt(secondDate));
+
+    Supplier<ComponentQuery.Builder> query = () -> ComponentQuery.builder()
+      .setQualifiers(PROJECT)
+      .setOnProvisionedOnly(true);
+
+    List<ComponentDto> results = underTest.selectByQuery(dbSession, organization.getUuid(), query.get().build(), 0, 10);
+    assertThat(results)
+      .extracting(ComponentDto::uuid)
+      .containsExactly(
+        project1.uuid(),
+        project2.uuid(),
+        project3.uuid());
   }
 
   @Test
@@ -1373,17 +1396,7 @@ public class ComponentDaoTest {
         "b_enabled as \"bEnabled\", b_uuid_path as \"bUuidPath\", b_language as \"bLanguage\", b_long_name as \"bLongName\"," +
         "b_module_uuid as \"bModuleUuid\", b_module_uuid_path as \"bModuleUuidPath\", b_name as \"bName\", " +
         "b_path as \"bPath\", b_qualifier as \"bQualifier\" " +
-        "from projects where uuid='" + uuid + "'");
-  }
-
-  @Test
-  public void update_tags() {
-    ComponentDto project = db.components().insertPrivateProject(p -> p.setTags(emptyList()));
-
-    underTest.updateTags(dbSession, project.setTags(newArrayList("finance", "toto", "tutu")));
-    dbSession.commit();
-
-    assertThat(underTest.selectOrFailByKey(dbSession, project.getDbKey()).getTags()).containsOnly("finance", "toto", "tutu");
+        "from components where uuid='" + uuid + "'");
   }
 
   @Test
@@ -1484,7 +1497,7 @@ public class ComponentDaoTest {
 
   @Test
   public void selectByQuery_should_not_return_branches() {
-    ComponentDto main = db.components().insertMainBranch();
+    ComponentDto main = db.components().insertPublicProject();
     ComponentDto branch = db.components().insertProjectBranch(main);
 
     assertThat(underTest.selectByQuery(dbSession, ALL_PROJECTS_COMPONENT_QUERY, 0, 2)).hasSize(1);
@@ -1493,7 +1506,7 @@ public class ComponentDaoTest {
 
   @Test
   public void countByQuery_should_not_include_branches() {
-    ComponentDto main = db.components().insertMainBranch();
+    ComponentDto main = db.components().insertPublicProject();
     ComponentDto branch = db.components().insertProjectBranch(main);
 
     assertThat(underTest.countByQuery(dbSession, ALL_PROJECTS_COMPONENT_QUERY)).isEqualTo(1);
@@ -1593,13 +1606,13 @@ public class ComponentDaoTest {
     long aLongTimeAgo = 1_000_000_000L;
     long recentTime = 3_000_000_000L;
     // project with only a non-main and old analyzed branch
-    ComponentDto oldProject = db.components().insertMainBranch();
-    ComponentDto oldProjectBranch = db.components().insertProjectBranch(oldProject, newBranchDto(oldProject).setBranchType(BranchType.SHORT));
+    ComponentDto oldProject = db.components().insertPublicProject();
+    ComponentDto oldProjectBranch = db.components().insertProjectBranch(oldProject, newBranchDto(oldProject).setBranchType(BRANCH));
     db.components().insertSnapshot(oldProjectBranch, s -> s.setLast(true).setCreatedAt(aLongTimeAgo));
 
     // project with only a old main branch and a recent non-main branch
-    ComponentDto recentProject = db.components().insertMainBranch();
-    ComponentDto recentProjectBranch = db.components().insertProjectBranch(recentProject, newBranchDto(recentProject).setBranchType(BranchType.SHORT));
+    ComponentDto recentProject = db.components().insertPublicProject();
+    ComponentDto recentProjectBranch = db.components().insertProjectBranch(recentProject, newBranchDto(recentProject).setBranchType(BRANCH));
     db.components().insertSnapshot(recentProjectBranch, s -> s.setCreatedAt(recentTime).setLast(true));
     db.components().insertSnapshot(recentProjectBranch, s -> s.setCreatedAt(aLongTimeAgo).setLast(false));
 
@@ -1943,20 +1956,20 @@ public class ComponentDaoTest {
     OrganizationDto organizationDto = db.organizations().insert();
 
     // project1, not the biggest branch - not returned
-    final ComponentDto project1 = db.components().insertMainBranch(organizationDto, b -> b.setName("foo"));
+    final ComponentDto project1 = db.components().insertPrivateProject(organizationDto, b -> b.setName("foo"));
     insertMeasure(20d, project1, metric);
 
-    // long branch of project1 - returned
-    insertMeasure(30d, db.components().insertProjectBranch(project1, b -> b.setBranchType(BranchType.LONG)), metric);
+    // branch of project1 - returned
+    insertMeasure(30d, db.components().insertProjectBranch(project1, b -> b.setBranchType(BRANCH)), metric);
 
     // project2 - returned
-    insertMeasure(10d, db.components().insertMainBranch(organizationDto, b -> b.setName("bar")), metric);
+    insertMeasure(10d, db.components().insertPrivateProject(organizationDto, b -> b.setName("bar")), metric);
 
     // public project - not returned
-    insertMeasure(11d, db.components().insertMainBranch(organizationDto, b -> b.setPrivate(false)), metric);
+    insertMeasure(11d, db.components().insertPublicProject(organizationDto, b -> b.setPrivate(false)), metric);
 
     // different org - not returned
-    insertMeasure(12d, db.components().insertMainBranch(db.organizations().insert()), metric);
+    insertMeasure(12d, db.components().insertPrivateProject(db.organizations().insert()), metric);
 
     List<ProjectNclocDistributionDto> result = underTest.selectPrivateProjectsWithNcloc(db.getSession(), organizationDto.getUuid());
 
@@ -1977,6 +1990,11 @@ public class ComponentDaoTest {
 
   private void insertMeasure(double value, ComponentDto componentDto, MetricDto metric) {
     db.measures().insertLiveMeasure(componentDto, metric, m -> m.setValue(value));
+  }
+
+  private static <T> Consumer<T> defaults() {
+    return t -> {
+    };
   }
 
 }

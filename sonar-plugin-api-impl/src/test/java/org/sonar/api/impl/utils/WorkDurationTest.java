@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -178,7 +178,7 @@ public class WorkDurationTest {
   }
 
   @Test
-  public void test_equals_and_hashcode() throws Exception {
+  public void test_equals_and_hashcode() {
     WorkDuration duration = WorkDuration.createFromLong(28800, HOURS_IN_DAY);
     WorkDuration durationWithSameValue = WorkDuration.createFromLong(28800, HOURS_IN_DAY);
     WorkDuration durationWithDifferentValue = WorkDuration.createFromLong(14400, HOURS_IN_DAY);
@@ -194,7 +194,7 @@ public class WorkDurationTest {
   }
 
   @Test
-  public void test_toString() throws Exception {
+  public void test_toString() {
     assertThat(WorkDuration.createFromLong(28800, HOURS_IN_DAY).toString()).isNotNull();
   }
 }

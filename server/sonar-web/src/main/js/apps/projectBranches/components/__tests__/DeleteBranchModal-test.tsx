@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import * as React from 'react';
 import { click, doAsync, submit, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { deleteBranch, deletePullRequest } from '../../../../api/branches';
-import { mockPullRequest, mockShortLivingBranch } from '../../../../helpers/testMocks';
+import { mockBranch, mockPullRequest } from '../../../../helpers/mocks/branch-like';
+import { mockComponent } from '../../../../helpers/testMocks';
+import { BranchLike } from '../../../../types/branch-like';
 import DeleteBranchModal from '../DeleteBranchModal';
 
 jest.mock('../../../../api/branches', () => ({
@@ -29,7 +31,7 @@ jest.mock('../../../../api/branches', () => ({
   deletePullRequest: jest.fn()
 }));
 
-const branch = mockShortLivingBranch();
+const branch = mockBranch({ name: 'feature/foo' });
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -94,14 +96,14 @@ it('stops loading on WS error', async () => {
 });
 
 function shallowRender(
-  branchLike: T.BranchLike,
+  branchLike: BranchLike,
   onDelete: () => void = jest.fn(),
   onClose: () => void = jest.fn()
 ) {
   const wrapper = shallow<DeleteBranchModal>(
     <DeleteBranchModal
       branchLike={branchLike}
-      component="foo"
+      component={mockComponent({ key: 'foo' })}
       onClose={onClose}
       onDelete={onDelete}
     />

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,6 +47,38 @@ public class BranchDtoTest {
     underTest.setUuid("U2");
 
     assertThat(underTest.isMain()).isFalse();
+  }
+
+  @Test
+  public void verify_equals() {
+    underTest.setUuid("U1");
+    underTest.setProjectUuid("U2");
+    underTest.setKey("K1");
+    underTest.setBranchType(BranchType.BRANCH);
+    underTest.setMergeBranchUuid("U3");
+    underTest.setExcludeFromPurge(true);
+
+    assertThat(underTest.toString()).isEqualTo("BranchDto{uuid='U1', " +
+      "projectUuid='U2', kee='K1', keyType=null, branchType=BRANCH, mergeBranchUuid='U3', excludeFromPurge=true}");
+  }
+
+  @Test
+  public void verify_toString() {
+    underTest.setUuid("U1");
+    underTest.setProjectUuid("U2");
+    underTest.setKey("K1");
+    underTest.setBranchType(BranchType.BRANCH);
+    underTest.setMergeBranchUuid("U3");
+
+    BranchDto toCompare = new BranchDto();
+
+    toCompare.setUuid("U1");
+    toCompare.setProjectUuid("U2");
+    toCompare.setKey("K1");
+    toCompare.setBranchType(BranchType.BRANCH);
+    toCompare.setMergeBranchUuid("U3");
+
+    assertThat(underTest).isEqualTo(toCompare);
   }
 
   @Test

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ public class WebJvmOptionsTest {
   }
 
   @Test
-  public void constructor_sets_mandatory_JVM_options_for_java11() throws IOException {
+  public void constructor_sets_mandatory_JVM_options_for_java11() {
     when(javaVersion.isAtLeastJava11()).thenReturn(true);
     underTest = new WebJvmOptions(tmpDir, javaVersion);
 

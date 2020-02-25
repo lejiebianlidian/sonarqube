@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -124,6 +124,13 @@ public class System2 {
    */
   public boolean isOsWindows() {
     return SystemUtils.IS_OS_WINDOWS;
+  }
+
+  /**
+   * True if this is Mac system.
+   */
+  public boolean isOsMac() {
+    return SystemUtils.IS_OS_MAC;
   }
 
   /**

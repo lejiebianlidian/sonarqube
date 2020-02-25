@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,8 @@
 package org.sonarqube.ws.client;
 
 import javax.annotation.Generated;
+import org.sonarqube.ws.client.almintegrations.AlmIntegrationsService;
+import org.sonarqube.ws.client.almsettings.AlmSettingsService;
 import org.sonarqube.ws.client.analysisreports.AnalysisReportsService;
 import org.sonarqube.ws.client.applications.ApplicationsService;
 import org.sonarqube.ws.client.authentication.AuthenticationService;
@@ -32,14 +34,15 @@ import org.sonarqube.ws.client.duplications.DuplicationsService;
 import org.sonarqube.ws.client.editions.EditionsService;
 import org.sonarqube.ws.client.emails.EmailsService;
 import org.sonarqube.ws.client.favorites.FavoritesService;
-import org.sonarqube.ws.client.favourites.FavouritesService;
 import org.sonarqube.ws.client.governancereports.GovernanceReportsService;
+import org.sonarqube.ws.client.hotspots.HotspotsService;
 import org.sonarqube.ws.client.issues.IssuesService;
 import org.sonarqube.ws.client.l10n.L10nService;
 import org.sonarqube.ws.client.languages.LanguagesService;
 import org.sonarqube.ws.client.measures.MeasuresService;
 import org.sonarqube.ws.client.metrics.MetricsService;
 import org.sonarqube.ws.client.navigation.NavigationService;
+import org.sonarqube.ws.client.newcodeperiods.NewCodePeriodsService;
 import org.sonarqube.ws.client.notifications.NotificationsService;
 import org.sonarqube.ws.client.organizations.OrganizationsService;
 import org.sonarqube.ws.client.permissions.PermissionsService;
@@ -96,6 +99,10 @@ public interface WsClient {
 
   WsConnector wsConnector();
 
+  AlmIntegrationsService almIntegrations();
+
+  AlmSettingsService almSettings();
+
   AnalysisReportsService analysisReports();
 
   ApplicationsService applications();
@@ -118,9 +125,9 @@ public interface WsClient {
 
   FavoritesService favorites();
 
-  FavouritesService favourites();
-
   GovernanceReportsService governanceReports();
+
+  HotspotsService hotspots();
 
   IssuesService issues();
 
@@ -133,6 +140,8 @@ public interface WsClient {
   MetricsService metrics();
 
   NavigationService navigation();
+
+  NewCodePeriodsService newCodePeriods();
 
   NotificationsService notifications();
 

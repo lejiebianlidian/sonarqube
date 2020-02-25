@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ public class ConfigurationRepositoryTest {
 
   @Test
   public void branch_settings() {
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto branchDto = db.components().insertProjectBranch(project);
     Branch branch = mock(Branch.class);
     when(branch.getName()).thenReturn(branchDto.getBranch());

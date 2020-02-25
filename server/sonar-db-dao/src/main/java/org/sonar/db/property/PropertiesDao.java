@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ public class PropertiesDao implements Dao {
 
   private static PreparedStatement createStatement(String projectUuid, Collection<String> dispatcherKeys, Connection connection) throws SQLException {
     String sql = "SELECT count(1) FROM properties pp " +
-      "left outer join projects pj on pp.resource_id = pj.id " +
+      "left outer join components pj on pp.resource_id = pj.id " +
       "where pp.user_id is not null and (pp.resource_id is null or pj.uuid=?) " +
       "and (" + repeat("pp.prop_key like ?", " or ", dispatcherKeys.size()) + ")";
     PreparedStatement res = connection.prepareStatement(sql);
@@ -303,9 +303,9 @@ public class PropertiesDao implements Dao {
   public void saveGlobalProperties(Map<String, String> properties) {
     try (DbSession session = mybatis.openSession(false)) {
       PropertiesMapper mapper = getMapper(session);
-      properties.entrySet().forEach(entry -> {
-        mapper.deleteGlobalProperty(entry.getKey());
-        save(mapper, entry.getKey(), null, null, entry.getValue());
+      properties.forEach((key, value) -> {
+        mapper.deleteGlobalProperty(key);
+        save(mapper, key, null, null, value);
       });
       session.commit();
     }

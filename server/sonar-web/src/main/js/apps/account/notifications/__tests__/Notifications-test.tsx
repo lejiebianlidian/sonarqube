@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,98 +17,93 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
+import GlobalNotifications from '../GlobalNotifications';
 import { Notifications } from '../Notifications';
+import Projects from '../Projects';
 
-jest.mock('../../../../api/notifications', () => ({
-  addNotification: jest.fn(() => Promise.resolve()),
-  getNotifications: jest.fn(() =>
-    Promise.resolve({
-      channels: ['channel1', 'channel2'],
-      globalTypes: ['type-global', 'type-common'],
-      notifications: [
-        { channel: 'channel1', type: 'type-global' },
-        { channel: 'channel1', type: 'type-common' },
-        {
-          channel: 'channel2',
-          type: 'type-common',
-          project: 'foo',
-          projectName: 'Foo',
-          organization: 'org'
-        }
-      ],
-      perProjectTypes: ['type-common']
-    })
-  ),
-  removeNotification: jest.fn(() => Promise.resolve())
-}));
-
-const api = require('../../../../api/notifications');
-
-const addNotification = api.addNotification as jest.Mock<any>;
-const getNotifications = api.getNotifications as jest.Mock<any>;
-const removeNotification = api.removeNotification as jest.Mock<any>;
-
-beforeEach(() => {
-  addNotification.mockClear();
-  getNotifications.mockClear();
-  removeNotification.mockClear();
+it('should render correctly', () => {
+  expect(shallowRender({ loading: true })).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot();
+  expect(shallowRender({ notifications: [] })).toMatchSnapshot();
 });
 
-it('should fetch notifications and render', async () => {
-  const wrapper = await shallowRender();
-  expect(wrapper).toMatchSnapshot();
-  expect(getNotifications).toBeCalled();
-});
-
-it('should add global notification', async () => {
+it('should add and remove global notifications', () => {
+  const addNotification = jest.fn();
+  const removeNotification = jest.fn();
   const notification = { channel: 'channel2', type: 'type-global' };
-  const wrapper = await shallowRender();
-  wrapper.find('GlobalNotifications').prop<Function>('addNotification')(notification);
-  // `state` must be immediately updated
-  expect(wrapper.state('notifications')).toContainEqual(notification);
-  expect(addNotification).toBeCalledWith(notification);
-});
+  const wrapper = shallowRender({ addNotification, removeNotification });
 
-it('should remove project notification', async () => {
-  const notification = { channel: 'channel2', project: 'foo', type: 'type-common' };
-  const wrapper = await shallowRender();
-  expect(wrapper.state('notifications')).toContainEqual({
-    ...notification,
-    organization: 'org',
-    projectName: 'Foo'
-  });
-  wrapper.find('Projects').prop<Function>('removeNotification')(notification);
-  // `state` must be immediately updated
-  expect(wrapper.state('notifications')).not.toContainEqual(notification);
+  wrapper
+    .find(GlobalNotifications)
+    .props()
+    .addNotification(notification);
+  expect(addNotification).toBeCalledWith(notification);
+
+  wrapper
+    .find(GlobalNotifications)
+    .props()
+    .removeNotification(notification);
   expect(removeNotification).toBeCalledWith(notification);
 });
 
-it('should NOT fetch organizations', async () => {
-  const fetchOrganizations = jest.fn();
-  await shallowRender({ fetchOrganizations });
-  expect(getNotifications).toBeCalled();
-  expect(fetchOrganizations).not.toBeCalled();
+it('should add and remove project notification', () => {
+  const addNotification = jest.fn();
+  const removeNotification = jest.fn();
+  const notification = {
+    channel: 'channel2',
+    type: 'type-common',
+    project: 'qux'
+  };
+  const wrapper = shallowRender({ addNotification, removeNotification });
+
+  wrapper
+    .find(Projects)
+    .props()
+    .addNotification(notification);
+  expect(addNotification).toBeCalledWith(notification);
+
+  wrapper
+    .find(Projects)
+    .props()
+    .removeNotification(notification);
+  expect(removeNotification).toBeCalledWith(notification);
 });
 
-it('should fetch organizations', async () => {
-  const fetchOrganizations = jest.fn();
-  await shallowRender({ appState: { organizationsEnabled: true }, fetchOrganizations });
-  expect(getNotifications).toBeCalled();
-  expect(fetchOrganizations).toBeCalledWith(['org']);
-});
-
-async function shallowRender(props?: Partial<Notifications['props']>) {
-  const wrapper = shallow(
+function shallowRender(props = {}) {
+  return shallow(
     <Notifications
-      appState={{ organizationsEnabled: false }}
-      fetchOrganizations={jest.fn()}
+      addNotification={jest.fn()}
+      channels={['channel1', 'channel2']}
+      globalTypes={['type-global', 'type-common']}
+      loading={false}
+      notifications={[
+        {
+          channel: 'channel1',
+          type: 'type-global',
+          project: 'foo',
+          projectName: 'Foo',
+          organization: 'org'
+        },
+        {
+          channel: 'channel1',
+          type: 'type-common',
+          project: 'bar',
+          projectName: 'Bar',
+          organization: 'org'
+        },
+        {
+          channel: 'channel2',
+          type: 'type-common',
+          project: 'qux',
+          projectName: 'Qux',
+          organization: 'org'
+        }
+      ]}
+      perProjectTypes={['type-common']}
+      removeNotification={jest.fn()}
       {...props}
     />
   );
-  await waitAndUpdate(wrapper);
-  return wrapper;
 }

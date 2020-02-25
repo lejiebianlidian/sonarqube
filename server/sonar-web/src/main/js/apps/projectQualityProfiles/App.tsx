@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import {
   associateProject,
@@ -88,26 +88,37 @@ export default class QualityProfiles extends React.PureComponent<Props, State> {
   handleChangeProfile = (oldKey: string, newKey: string) => {
     const { component } = this.props;
     const { allProfiles, profiles } = this.state;
+    const oldProfile = allProfiles && allProfiles.find(profile => profile.key === oldKey);
     const newProfile = allProfiles && allProfiles.find(profile => profile.key === newKey);
-    const request =
-      newProfile && newProfile.isDefault
-        ? dissociateProject(oldKey, component.key)
-        : associateProject(newKey, component.key);
 
-    return request.then(() => {
-      if (this.mounted && profiles && newProfile) {
-        // remove old profile, add new one
-        const nextProfiles = [...profiles.filter(profile => profile.key !== oldKey), newProfile];
-        this.setState({ profiles: nextProfiles });
+    let request;
 
-        addGlobalSuccessMessage(
-          translateWithParameters(
-            'project_quality_profile.successfully_updated',
-            newProfile.languageName
-          )
-        );
+    if (newProfile) {
+      if (newProfile.isDefault && oldProfile) {
+        request = dissociateProject(oldProfile, component.key);
+      } else {
+        request = associateProject(newProfile, component.key);
       }
-    });
+    }
+
+    if (request) {
+      return request.then(() => {
+        if (this.mounted && profiles && newProfile) {
+          // remove old profile, add new one
+          const nextProfiles = [...profiles.filter(profile => profile.key !== oldKey), newProfile];
+          this.setState({ profiles: nextProfiles });
+
+          addGlobalSuccessMessage(
+            translateWithParameters(
+              'project_quality_profile.successfully_updated',
+              newProfile.languageName
+            )
+          );
+        }
+      });
+    } else {
+      return Promise.resolve();
+    }
   };
 
   render() {
@@ -120,7 +131,7 @@ export default class QualityProfiles extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited">
         <Suggestions suggestions="project_quality_profiles" />
-        <Helmet title={translate('project_quality_profiles.page')} />
+        <Helmet defer={false} title={translate('project_quality_profiles.page')} />
 
         <A11ySkipTarget anchor="profiles_main" />
 

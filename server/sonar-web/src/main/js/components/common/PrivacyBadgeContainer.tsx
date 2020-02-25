@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,9 +76,8 @@ export function PrivacyBadge({
 
   const badge = (
     <div
-      className={classNames('outline-badge', className, {
-        'badge-info': Boolean(icon),
-        'badge-icon': Boolean(icon)
+      className={classNames('badge', className, {
+        'badge-info': Boolean(icon)
       })}>
       {icon}
       {translate('visibility', visibility)}
@@ -123,9 +122,13 @@ function getDoc(visibility: T.Visibility, icon: JSX.Element | null, organization
     doc = import(/* webpackMode: "eager" */ 'Docs/tooltips/project/visibility-private.md');
   } else if (icon) {
     if (actions.admin) {
-      doc = import(/* webpackMode: "eager" */ 'Docs/tooltips/project/visibility-public-paid-org-admin.md');
+      doc = import(
+        /* webpackMode: "eager" */ 'Docs/tooltips/project/visibility-public-paid-org-admin.md'
+      );
     } else {
-      doc = import(/* webpackMode: "eager" */ 'Docs/tooltips/project/visibility-public-paid-org.md');
+      doc = import(
+        /* webpackMode: "eager" */ 'Docs/tooltips/project/visibility-public-paid-org.md'
+      );
     }
   } else if (actions.admin) {
     doc = import(/* webpackMode: "eager" */ 'Docs/tooltips/project/visibility-public-admin.md');

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,18 +19,20 @@
  */
 import * as classNames from 'classnames';
 import { Location } from 'history';
+import { debounce } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { InjectedRouter } from 'react-router';
 import ListFooter from 'sonar-ui-common/components/controls/ListFooter';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import A11ySkipTarget from '../../../app/components/a11y/A11ySkipTarget';
 import Suggestions from '../../../app/components/embed-docs-modal/Suggestions';
-import { isPullRequest, isSameBranchLike, isShortLivingBranch } from '../../../helpers/branches';
+import { isPullRequest, isSameBranchLike } from '../../../helpers/branch-like';
 import { getCodeUrl, getProjectUrl } from '../../../helpers/urls';
 import { fetchBranchStatus, fetchMetrics } from '../../../store/rootActions';
 import { getMetrics } from '../../../store/rootReducer';
+import { BranchLike } from '../../../types/branch-like';
 import { addComponent, addComponentBreadcrumbs, clearBucket } from '../bucket';
 import '../code.css';
 import { loadMoreChildren, retrieveComponent, retrieveComponentChildren } from '../utils';
@@ -44,12 +46,12 @@ interface StateToProps {
 }
 
 interface DispatchToProps {
-  fetchBranchStatus: (branchLike: T.BranchLike, projectKey: string) => Promise<void>;
+  fetchBranchStatus: (branchLike: BranchLike, projectKey: string) => Promise<void>;
   fetchMetrics: () => void;
 }
 
 interface OwnProps {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   component: T.Component;
   location: Pick<Location, 'query'>;
   router: Pick<InjectedRouter, 'push'>;
@@ -71,12 +73,18 @@ interface State {
 
 export class App extends React.PureComponent<Props, State> {
   mounted = false;
-  state: State = {
-    breadcrumbs: [],
-    loading: true,
-    page: 0,
-    total: 0
-  };
+  state: State;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      breadcrumbs: [],
+      loading: true,
+      page: 0,
+      total: 0
+    };
+    this.refreshBranchStatus = debounce(this.refreshBranchStatus, 1000);
+  }
 
   componentDidMount() {
     this.mounted = true;
@@ -224,7 +232,7 @@ export class App extends React.PureComponent<Props, State> {
 
   refreshBranchStatus = () => {
     const { branchLike, component } = this.props;
-    if (branchLike && component && (isPullRequest(branchLike) || isShortLivingBranch(branchLike))) {
+    if (branchLike && component && isPullRequest(branchLike)) {
       this.props.fetchBranchStatus(branchLike, component.key);
     }
   };
@@ -261,7 +269,10 @@ export class App extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited">
         <Suggestions suggestions="code" />
-        <Helmet title={sourceViewer !== undefined ? sourceViewer.name : defaultTitle} />
+        <Helmet
+          defer={false}
+          title={sourceViewer !== undefined ? sourceViewer.name : defaultTitle}
+        />
         <A11ySkipTarget anchor="code_main" />
 
         <Search
@@ -320,6 +331,7 @@ export class App extends React.PureComponent<Props, State> {
               <SourceViewerWrapper
                 branchLike={branchLike}
                 component={sourceViewer.key}
+                componentMeasures={sourceViewer.measures}
                 isFile={true}
                 location={location}
                 onGoToParent={this.handleGoToParent}

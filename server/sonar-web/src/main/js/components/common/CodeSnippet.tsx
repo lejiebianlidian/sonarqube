@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import * as classNames from 'classnames';
 import * as React from 'react';
-import ClipboardButton from 'sonar-ui-common/components/controls/ClipboardButton';
+import { ClipboardButton } from 'sonar-ui-common/components/controls/clipboard';
 import './CodeSnippet.css';
 
 interface Props {

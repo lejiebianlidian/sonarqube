@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -381,11 +381,11 @@ public class NewSizeMeasuresStepTest {
   }
 
   private void assertNoRawMeasures(String metricKey) {
-    assertThat(measureRepository.getAddedRawMeasures(FILE_1_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(FILE_2_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(FILE_3_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(FILE_4_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(DIRECTORY_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(ROOT_REF).get(metricKey)).isEmpty();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_1_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_2_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_3_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_4_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(DIRECTORY_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(ROOT_REF).get(metricKey)).isNull();
   }
 }

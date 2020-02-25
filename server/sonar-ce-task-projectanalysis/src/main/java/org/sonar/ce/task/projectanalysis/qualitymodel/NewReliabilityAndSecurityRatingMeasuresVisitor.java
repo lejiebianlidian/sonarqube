@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import org.sonar.ce.task.projectanalysis.issue.ComponentIssuesRepository;
 import org.sonar.ce.task.projectanalysis.measure.MeasureRepository;
 import org.sonar.ce.task.projectanalysis.metric.Metric;
 import org.sonar.ce.task.projectanalysis.metric.MetricRepository;
-import org.sonar.ce.task.projectanalysis.period.Period;
 import org.sonar.ce.task.projectanalysis.period.PeriodHolder;
 import org.sonar.core.issue.DefaultIssue;
 import org.sonar.server.measure.Rating;
@@ -45,7 +44,6 @@ import static org.sonar.api.rule.Severity.MAJOR;
 import static org.sonar.api.rule.Severity.MINOR;
 import static org.sonar.api.rules.RuleType.BUG;
 import static org.sonar.api.rules.RuleType.VULNERABILITY;
-import static org.sonar.api.utils.DateUtils.truncateToSeconds;
 import static org.sonar.ce.task.projectanalysis.component.ComponentVisitor.Order.POST_ORDER;
 import static org.sonar.ce.task.projectanalysis.component.CrawlerDepthLimit.LEAVES;
 import static org.sonar.ce.task.projectanalysis.measure.Measure.newMeasureBuilder;
@@ -106,7 +104,7 @@ public class NewReliabilityAndSecurityRatingMeasuresVisitor extends PathAwareVis
   }
 
   private void computeAndSaveMeasures(Component component, Path<Counter> path) {
-    if (!periodHolder.hasPeriod() && !analysisMetadataHolder.isSLBorPR()) {
+    if (!periodHolder.hasPeriod() && !analysisMetadataHolder.isPullRequest()) {
       return;
     }
     initRatingsToA(path);
@@ -131,7 +129,7 @@ public class NewReliabilityAndSecurityRatingMeasuresVisitor extends PathAwareVis
       .stream()
       .filter(issue -> issue.resolution() == null)
       .filter(issue -> issue.type().equals(BUG) || issue.type().equals(VULNERABILITY))
-      .forEach(issue -> path.current().processIssue(issue, analysisMetadataHolder.isSLBorPR(), periodHolder));
+      .forEach(issue -> path.current().processIssue(issue, analysisMetadataHolder.isPullRequest(), periodHolder));
   }
 
   private static void addToParent(Path<Counter> path) {
@@ -153,8 +151,8 @@ public class NewReliabilityAndSecurityRatingMeasuresVisitor extends PathAwareVis
       newRatingValueByMetric.forEach((metric, rating) -> rating.increment(otherCounter.newRatingValueByMetric.get(metric)));
     }
 
-    void processIssue(Issue issue, boolean isSLBorPR, PeriodHolder periodHolder) {
-      if (isSLBorPR || isOnPeriod((DefaultIssue) issue, periodHolder.getPeriod())) {
+    void processIssue(Issue issue, boolean isPR, PeriodHolder periodHolder) {
+      if (isPR || periodHolder.getPeriod().isOnPeriod(((DefaultIssue) issue).creationDate())) {
         Rating rating = RATING_BY_SEVERITY.get(issue.severity());
         if (issue.type().equals(BUG)) {
           newRatingValueByMetric.get(NEW_RELIABILITY_RATING_KEY).increment(rating);
@@ -162,11 +160,6 @@ public class NewReliabilityAndSecurityRatingMeasuresVisitor extends PathAwareVis
           newRatingValueByMetric.get(NEW_SECURITY_RATING_KEY).increment(rating);
         }
       }
-    }
-
-    private static boolean isOnPeriod(DefaultIssue issue, Period period) {
-      // Add one second to not take into account issues created during current analysis
-      return issue.creationDate().getTime() > truncateToSeconds(period.getSnapshotDate());
     }
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,11 +20,12 @@
 import * as key from 'keymaster';
 import { keyBy } from 'lodash';
 import * as React from 'react';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { withRouter, WithRouterProps } from 'react-router';
 import ListFooter from 'sonar-ui-common/components/controls/ListFooter';
 import SearchBox from 'sonar-ui-common/components/controls/SearchBox';
+import BackIcon from 'sonar-ui-common/components/icons/BackIcon';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import {
   addSideBarClass,
@@ -65,6 +66,7 @@ import {
   getAppFacet,
   getOpen,
   getServerFacet,
+  hasRuleKey,
   OpenFacets,
   parseQuery,
   Query,
@@ -107,6 +109,7 @@ interface State {
   referencedRepositories: T.Dict<{ key: string; language: string; name: string }>;
   rules: T.Rule[];
   selected?: string;
+  usingPermalink?: boolean;
 }
 
 export class App extends React.PureComponent<Props, State> {
@@ -145,6 +148,7 @@ export class App extends React.PureComponent<Props, State> {
       const openRule = this.getOpenRule(nextProps, rules);
       return {
         openRule,
+        usingPermalink: hasRuleKey(nextProps.location.query),
         query: parseQuery(nextProps.location.query),
         selected: openRule ? openRule.key : selected
       };
@@ -187,7 +191,7 @@ export class App extends React.PureComponent<Props, State> {
       return false;
     });
     key('left', 'coding-rules', () => {
-      this.closeRule();
+      this.handleBack();
       return false;
     });
   };
@@ -271,8 +275,18 @@ export class App extends React.PureComponent<Props, State> {
     this.makeFetchRequest(query).then(({ actives, facets, paging, rules }) => {
       if (this.mounted) {
         const openRule = this.getOpenRule(this.props, rules);
+        const usingPermalink = hasRuleKey(this.props.location.query);
         const selected = rules.length > 0 ? (openRule && openRule.key) || rules[0].key : undefined;
-        this.setState({ actives, facets, loading: false, openRule, paging, rules, selected });
+        this.setState({
+          actives,
+          facets,
+          loading: false,
+          openRule,
+          paging,
+          rules,
+          selected,
+          usingPermalink
+        });
       }
     }, this.stopLoading);
   };
@@ -422,10 +436,19 @@ export class App extends React.PureComponent<Props, State> {
     this.props.router.push(this.getRulePath(ruleKey));
   };
 
-  handleBack = (event: React.SyntheticEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    event.currentTarget.blur();
-    this.closeRule();
+  handleBack = (event?: React.SyntheticEvent<HTMLAnchorElement>) => {
+    const { usingPermalink } = this.state;
+
+    if (event) {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
+
+    if (usingPermalink) {
+      this.handleReset();
+    } else {
+      this.closeRule();
+    }
   };
 
   handleFilterChange = (changes: Partial<Query>) => {
@@ -559,7 +582,7 @@ export class App extends React.PureComponent<Props, State> {
     return (
       <>
         <Suggestions suggestions="coding_rules" />
-        <Helmet title={translate('coding_rules.page')}>
+        <Helmet defer={false} title={translate('coding_rules.page')}>
           <meta content="noindex" name="robots" />
         </Helmet>
         <div className="layout-page" id="coding-rules-page">
@@ -607,18 +630,26 @@ export class App extends React.PureComponent<Props, State> {
                 <div className="layout-page-main-inner">
                   <A11ySkipTarget anchor="rules_main" />
                   {this.state.openRule ? (
-                    <a className="js-back" href="#" onClick={this.handleBack}>
-                      {translate('coding_rules.return_to_list')}
+                    <a
+                      className="js-back display-inline-flex-center link-no-underline"
+                      href="#"
+                      onClick={this.handleBack}>
+                      <BackIcon className="spacer-right" />
+                      {this.state.usingPermalink
+                        ? translate('coding_rules.see_all')
+                        : translate('coding_rules.return_to_list')}
                     </a>
                   ) : (
                     this.renderBulkButton()
                   )}
-                  <PageActions
-                    loading={this.state.loading}
-                    onReload={this.handleReload}
-                    paging={paging}
-                    selectedIndex={selectedIndex}
-                  />
+                  {!this.state.usingPermalink && (
+                    <PageActions
+                      loading={this.state.loading}
+                      onReload={this.handleReload}
+                      paging={paging}
+                      selectedIndex={selectedIndex}
+                    />
+                  )}
                 </div>
               </div>
             </div>

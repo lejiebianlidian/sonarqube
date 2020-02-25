@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ import org.sonar.db.component.KeyWithUuidDto;
 import static org.sonar.db.component.ComponentDto.removeBranchAndPullRequestFromKey;
 
 /**
- * Cache a map of component key -> set&lt;uuid&gt; in sibling branches/PR that have open issues
+ * Cache a map of component key -> set&lt;uuid&gt; in sibling PRs that have open issues
  */
 public class SiblingComponentsWithOpenIssues {
   private final DbClient dbClient;
@@ -50,18 +50,17 @@ public class SiblingComponentsWithOpenIssues {
 
   private void loadUuidsByKey() {
     String currentBranchUuid = treeRootHolder.getRoot().getUuid();
-    String longLivingReferenceBranchUuid;
+    String referenceBranchUuid;
 
-    if (metadataHolder.isSLBorPR()) {
-      longLivingReferenceBranchUuid = metadataHolder.getBranch().getMergeBranchUuid();
+    if (metadataHolder.isPullRequest()) {
+      referenceBranchUuid = metadataHolder.getBranch().getReferenceBranchUuid();
     } else {
-      longLivingReferenceBranchUuid = currentBranchUuid;
+      referenceBranchUuid = currentBranchUuid;
     }
 
     uuidsByKey = new HashMap<>();
     try (DbSession dbSession = dbClient.openSession(false)) {
-      List<KeyWithUuidDto> components = dbClient.componentDao().selectAllSiblingComponentKeysHavingOpenIssues(dbSession,
-        longLivingReferenceBranchUuid, currentBranchUuid);
+      List<KeyWithUuidDto> components = dbClient.componentDao().selectAllSiblingComponentKeysHavingOpenIssues(dbSession, referenceBranchUuid, currentBranchUuid);
       for (KeyWithUuidDto dto : components) {
         uuidsByKey.computeIfAbsent(removeBranchAndPullRequestFromKey(dto.key()), s -> new HashSet<>()).add(dto.uuid());
       }

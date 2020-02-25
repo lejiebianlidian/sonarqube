@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Stream;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -69,11 +68,6 @@ public class ProjectReactorBuilder {
   private static final String MODULE_KEY_PROPERTY = "sonar.moduleKey";
 
   protected static final String PROPERTY_PROJECT_BASEDIR = "sonar.projectBaseDir";
-  /**
-   * @deprecated since 6.1 notion of buildDir is not well defined
-   */
-  @Deprecated
-  private static final String PROPERTY_PROJECT_BUILDDIR = "sonar.projectBuildDir";
   private static final String PROPERTY_MODULES = "sonar.modules";
 
   /**
@@ -128,7 +122,7 @@ public class ProjectReactorBuilder {
     rootProjectWorkDir = rootProject.getWorkDir();
     defineChildren(rootProject, propertiesByModuleIdPath, "");
     cleanAndCheckProjectDefinitions(rootProject);
-    profiler.stopDebug();
+    profiler.stopInfo();
     return new ProjectReactor(rootProject);
   }
 
@@ -187,12 +181,11 @@ public class ProjectReactorBuilder {
 
     return ProjectDefinition.create().setProperties(moduleProperties)
       .setBaseDir(baseDir)
-      .setWorkDir(workDir)
-      .setBuildDir(initModuleBuildDir(baseDir, moduleProperties));
+      .setWorkDir(workDir);
   }
 
   private void checkUnsupportedIssueExclusions(Map<String, String> moduleProperties, Map<String, String> parentProps) {
-    UNSUPPORTED_PROPS_FOR_MODULES.stream().forEach(p -> {
+    UNSUPPORTED_PROPS_FOR_MODULES.forEach(p -> {
       if (moduleProperties.containsKey(p) && !Objects.equals(moduleProperties.get(p), parentProps.get(p))) {
         warnOnceUnsupportedIssueExclusions(
           "Specifying issue exclusions at module level is not supported anymore. Configure the property '" + p + "' and any other issue exclusions at project level.");
@@ -232,20 +225,6 @@ public class ProjectReactorBuilder {
       return customWorkDir;
     }
     return new File(moduleBaseDir, customWorkDir.getPath());
-  }
-
-  @CheckForNull
-  private static File initModuleBuildDir(File moduleBaseDir, Map<String, String> moduleProperties) {
-    String buildDir = moduleProperties.get(PROPERTY_PROJECT_BUILDDIR);
-    if (StringUtils.isBlank(buildDir)) {
-      return null;
-    }
-
-    File customBuildDir = new File(buildDir);
-    if (customBuildDir.isAbsolute()) {
-      return customBuildDir;
-    }
-    return new File(moduleBaseDir, customBuildDir.getPath());
   }
 
   private void defineChildren(ProjectDefinition parentProject, Map<String, Map<String, String>> propertiesByModuleIdPath, String parentModuleIdPath) {

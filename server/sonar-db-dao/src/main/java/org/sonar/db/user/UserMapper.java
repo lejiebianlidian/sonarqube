@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -81,8 +81,6 @@ public interface UserMapper {
   void setRoot(@Param("login") String login, @Param("root") boolean root, @Param("now") long now);
 
   void deactivateUser(@Param("login") String login, @Param("now") long now);
-
-  void deactivateSonarCloudUser(@Param("login") String login, @Param("now") long now);
 
   void clearHomepages(@Param("homepageType") String type, @Param("homepageParameter") String value, @Param("now") long now);
 

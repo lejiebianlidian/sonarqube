@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +20,13 @@
 import * as key from 'keymaster';
 import * as React from 'react';
 import { getBreadcrumbs } from '../../../api/components';
-import { getBranchLikeQuery, isSameBranchLike } from '../../../helpers/branches';
+import { getBranchLikeQuery, isSameBranchLike } from '../../../helpers/branch-like';
+import { BranchLike } from '../../../types/branch-like';
 import Breadcrumb from './Breadcrumb';
 
 interface Props {
   backToFirst: boolean;
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   className?: string;
   component: T.ComponentMeasure;
   handleSelect: (component: string) => void;

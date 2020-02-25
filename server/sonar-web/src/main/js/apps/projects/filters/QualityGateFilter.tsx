@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@ export default function QualityGateFilter(props: Props) {
   return (
     <Filter
       facet={props.facet}
-      getFacetValueForOption={getFacetValueForOption}
       header={<FilterHeader name={translate('projects.facets.quality_gate')} />}
       maxFacetValue={props.maxFacetValue}
       onQueryChange={props.onQueryChange}
@@ -54,10 +53,6 @@ export default function QualityGateFilter(props: Props) {
       value={props.value}
     />
   );
-}
-
-function getFacetValueForOption(facet: Facet, option: string) {
-  return facet[option];
 }
 
 function renderOption(option: string, selected: boolean) {

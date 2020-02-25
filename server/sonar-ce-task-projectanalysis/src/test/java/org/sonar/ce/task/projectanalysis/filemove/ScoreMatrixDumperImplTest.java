@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ public class ScoreMatrixDumperImplTest {
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     FileUtils.listFiles(tempDir.toFile(), new AbstractFileFilter() {
       @Override
       public boolean accept(File file) {
@@ -119,7 +119,7 @@ public class ScoreMatrixDumperImplTest {
     };
   }
 
-  private static Collection<File> listDumpFilesForTaskUuid(String taskUuid) throws IOException {
+  private static Collection<File> listDumpFilesForTaskUuid(String taskUuid) {
     return FileUtils.listFiles(tempDir.toFile(), new AbstractFileFilter() {
       @Override
       public boolean accept(File file) {

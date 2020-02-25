@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ public interface LiveMeasureMapper {
     @Param("baseUuidPath") String baseUuidPath,
     ResultHandler<LiveMeasureDto> resultHandler);
 
-  Long sumNclocOfBiggestLongLivingBranch(
+  Long sumNclocOfBiggestBranch(
     @Param("ncloc") String nclocKey,
     @Param("branch") KeyType branchOrPullRequest,
     @Param("branchType") BranchType branchType,

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,8 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockIssue, mockMainBranch } from '../../../../helpers/testMocks';
+import { mockMainBranch } from '../../../../helpers/mocks/branch-like';
+import { mockIssue } from '../../../../helpers/testMocks';
 import IssuesSourceViewer from '../IssuesSourceViewer';
 
 it('should render SourceViewer correctly', () => {

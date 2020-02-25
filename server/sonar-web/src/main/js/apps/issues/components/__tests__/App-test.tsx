@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@ import { shallow } from 'enzyme';
 import * as React from 'react';
 import handleRequiredAuthentication from 'sonar-ui-common/helpers/handleRequiredAuthentication';
 import { KEYCODE_MAP, keydown, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
+import { mockPullRequest } from '../../../../helpers/mocks/branch-like';
 import {
   mockComponent,
   mockCurrentUser,
@@ -28,7 +29,6 @@ import {
   mockIssue,
   mockLocation,
   mockLoggedInUser,
-  mockPullRequest,
   mockRouter
 } from '../../../../helpers/testMocks';
 import {
@@ -238,26 +238,14 @@ it('should fetch issues for component', async () => {
 it('should display the right facets open', () => {
   expect(
     shallowRender({
-      location: mockLocation({ query: { types: 'SECURITY_HOTSPOT' } })
-    }).state('openFacets')
-  ).toEqual({
-    owaspTop10: false,
-    sansTop25: false,
-    severities: false,
-    standards: true,
-    sonarsourceSecurity: true,
-    types: true
-  });
-  expect(
-    shallowRender({
-      location: mockLocation({ query: { types: 'BUGS,SECURITY_HOTSPOT' } })
+      location: mockLocation({ query: { types: 'BUGS' } })
     }).state('openFacets')
   ).toEqual({
     owaspTop10: false,
     sansTop25: false,
     severities: true,
-    standards: true,
-    sonarsourceSecurity: true,
+    standards: false,
+    sonarsourceSecurity: false,
     types: true
   });
   expect(
@@ -281,7 +269,6 @@ it('should correctly handle filter changes', () => {
   instance.handleFilterChange({ types: ['VULNERABILITY'] });
   expect(instance.state.openFacets).toEqual({
     types: true,
-    severities: true,
     sonarsourceSecurity: true,
     standards: true
   });
@@ -289,22 +276,13 @@ it('should correctly handle filter changes', () => {
   instance.handleFilterChange({ types: ['BUGS'] });
   expect(instance.state.openFacets).toEqual({
     types: true,
-    severities: true,
-    sonarsourceSecurity: true,
-    standards: true
-  });
-  instance.setState({ openFacets: { types: true } });
-  instance.handleFilterChange({ types: ['SECURITY_HOTSPOT'] });
-  expect(instance.state.openFacets).toEqual({
-    types: true,
-    severities: false,
     sonarsourceSecurity: true,
     standards: true
   });
 });
 
 it('should fetch issues until defined', async () => {
-  const mockDone = (_lastIssue: T.Issue, paging: T.Paging) =>
+  const mockDone = (_: T.Issue[], paging: T.Paging) =>
     paging.total <= paging.pageIndex * paging.pageSize;
 
   const wrapper = shallowRender({

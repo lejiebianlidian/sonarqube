@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,13 +46,13 @@ import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import AlertErrorIcon from 'sonar-ui-common/components/icons/AlertErrorIcon';
 import AlertSuccessIcon from 'sonar-ui-common/components/icons/AlertSuccessIcon';
 import AlertWarnIcon from 'sonar-ui-common/components/icons/AlertWarnIcon';
+import BranchIcon from 'sonar-ui-common/components/icons/BranchIcon';
 import CheckIcon from 'sonar-ui-common/components/icons/CheckIcon';
 import ClearIcon from 'sonar-ui-common/components/icons/ClearIcon';
 import DetachIcon from 'sonar-ui-common/components/icons/DetachIcon';
 import DropdownIcon from 'sonar-ui-common/components/icons/DropdownIcon';
 import HelpIcon from 'sonar-ui-common/components/icons/HelpIcon';
 import LockIcon from 'sonar-ui-common/components/icons/LockIcon';
-import LongLivingBranchIcon from 'sonar-ui-common/components/icons/LongLivingBranchIcon';
 import PlusCircleIcon from 'sonar-ui-common/components/icons/PlusCircleIcon';
 import PullRequestIcon from 'sonar-ui-common/components/icons/PullRequestIcon';
 import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
@@ -64,11 +64,10 @@ import DuplicationsRating from 'sonar-ui-common/components/ui/DuplicationsRating
 import Level from 'sonar-ui-common/components/ui/Level';
 import Rating from 'sonar-ui-common/components/ui/Rating';
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
-import * as request from 'sonar-ui-common/helpers/request';
 import NotFound from '../../../app/components/NotFound';
 import Favorite from '../../../components/controls/Favorite';
 import HomePageSelect from '../../../components/controls/HomePageSelect';
-import BranchIcon from '../../../components/icons-components/BranchIcon';
+import BranchLikeIcon from '../../../components/icons/BranchLikeIcon';
 import DateFormatter from '../../../components/intl/DateFormatter';
 import DateFromNow from '../../../components/intl/DateFromNow';
 import DateTimeFormatter from '../../../components/intl/DateTimeFormatter';
@@ -76,9 +75,9 @@ import CoverageRating from '../../../components/ui/CoverageRating';
 import {
   getBranchLikeQuery,
   isBranch,
-  isLongLivingBranch,
+  isMainBranch,
   isPullRequest
-} from '../../../helpers/branches';
+} from '../../../helpers/branch-like';
 import * as measures from '../../../helpers/measures';
 import {
   getStandards,
@@ -87,11 +86,16 @@ import {
   renderSansTop25Category,
   renderSonarSourceSecurityCategory
 } from '../../../helpers/security-standard';
-import { getComponentIssuesUrl, getRulesUrl } from '../../../helpers/urls';
+import {
+  getComponentIssuesUrl,
+  getComponentSecurityHotspotsUrl,
+  getRulesUrl
+} from '../../../helpers/urls';
 import addGlobalSuccessMessage from '../../utils/addGlobalSuccessMessage';
 import throwGlobalError from '../../utils/throwGlobalError';
 import A11ySkipTarget from '../a11y/A11ySkipTarget';
 import Suggestions from '../embed-docs-modal/Suggestions';
+import request from './legacy/request-legacy';
 
 const exposeLibraries = () => {
   const global = window as any;
@@ -101,7 +105,7 @@ const exposeLibraries = () => {
   global.SonarHelpers = {
     getBranchLikeQuery,
     isBranch,
-    isLongLivingBranch,
+    isMainBranch,
     isPullRequest,
     getStandards,
     renderCWECategory,
@@ -109,6 +113,7 @@ const exposeLibraries = () => {
     renderSansTop25Category,
     renderSonarSourceSecurityCategory,
     getComponentIssuesUrl,
+    getComponentSecurityHotspotsUrl,
     getRulesUrl
   };
   global.SonarMeasures = { ...measures, formatMeasure };
@@ -125,7 +130,7 @@ const exposeLibraries = () => {
     AlertErrorIcon,
     AlertSuccessIcon,
     AlertWarnIcon,
-    BranchIcon,
+    BranchIcon: BranchLikeIcon,
     Button,
     Checkbox,
     CheckIcon,
@@ -149,7 +154,7 @@ const exposeLibraries = () => {
     Level,
     ListFooter,
     LockIcon,
-    LongLivingBranchIcon,
+    LongLivingBranchIcon: BranchIcon,
     Modal,
     NotFound,
     PlusCircleIcon,

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +20,16 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { click, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
+import { setDefaultProfile } from '../../../../api/quality-profiles';
 import { mockQualityProfile, mockRouter } from '../../../../helpers/testMocks';
 import { ProfileActions } from '../ProfileActions';
+
+beforeEach(() => jest.clearAllMocks());
+
+jest.mock('../../../../api/quality-profiles', () => ({
+  ...jest.requireActual('../../../../api/quality-profiles'),
+  setDefaultProfile: jest.fn().mockResolvedValue({})
+}));
 
 const PROFILE = mockQualityProfile({
   activeRuleCount: 68,
@@ -67,7 +75,7 @@ it('should copy profile', async () => {
     updateProfiles
   });
 
-  click(wrapper.find('[id="quality-profile-copy"]'));
+  click(wrapper.find('[data-test="quality-profiles__copy"]').parent());
   expect(wrapper.find('CopyProfileForm').exists()).toBe(true);
 
   wrapper.find('CopyProfileForm').prop<Function>('onCopy')(name);
@@ -91,7 +99,7 @@ it('should extend profile', async () => {
     updateProfiles
   });
 
-  click(wrapper.find('[id="quality-profile-extend"]'));
+  click(wrapper.find('[data-test="quality-profiles__extend"]').parent());
   expect(wrapper.find('ExtendProfileForm').exists()).toBe(true);
 
   wrapper.find('ExtendProfileForm').prop<Function>('onExtend')(name);
@@ -105,9 +113,20 @@ it('should extend profile', async () => {
   expect(wrapper.find('ExtendProfileForm').exists()).toBe(false);
 });
 
+it('should delete profile properly', async () => {
+  const updateProfiles = jest.fn();
+
+  const wrapper = shallowRender({ updateProfiles });
+  wrapper.instance().handleSetDefaultClick();
+  await waitAndUpdate(wrapper);
+
+  expect(setDefaultProfile).toHaveBeenCalledWith(PROFILE);
+  expect(updateProfiles).toHaveBeenCalled();
+});
+
 function shallowRender(props: Partial<ProfileActions['props']> = {}) {
   const router = mockRouter();
-  return shallow(
+  return shallow<ProfileActions>(
     <ProfileActions
       organization="org"
       profile={PROFILE}

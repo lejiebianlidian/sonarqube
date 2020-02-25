@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ it('should handle selection properly', async () => {
   wrapper.instance().handleSelect('toto');
   await waitAndUpdate(wrapper);
 
-  expect(associateProject).toHaveBeenCalledWith(profile.key, 'toto');
+  expect(associateProject).toHaveBeenCalledWith(profile, 'toto');
   expect(wrapper.state().needToReload).toBe(true);
 });
 
@@ -96,7 +96,7 @@ it('should handle deselection properly', async () => {
   wrapper.instance().handleUnselect('tata');
   await waitAndUpdate(wrapper);
 
-  expect(dissociateProject).toHaveBeenCalledWith(profile.key, 'tata');
+  expect(dissociateProject).toHaveBeenCalledWith(profile, 'tata');
   expect(wrapper.state().needToReload).toBe(true);
 });
 

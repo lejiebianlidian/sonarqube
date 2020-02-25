@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,18 +52,6 @@ public class EmailSettingsTest {
     when(server.getPublicRootUrl()).thenReturn(expected);
 
     assertThat(underTest.getServerBaseURL()).isEqualTo(expected);
-  }
-
-  @Test
-  public void getInstanceName_returns_sonarqube_when_not_on_SonarCloud() {
-    assertThat(underTest.getInstanceName()).isEqualTo("SonarQube");
-  }
-
-  @Test
-  public void getInstanceName_returns_sonarcloud_on_SonarCloud() {
-    settings.setProperty("sonar.sonarcloud.enabled", true);
-
-    assertThat(underTest.getInstanceName()).isEqualTo("SonarCloud");
   }
 
   @Test

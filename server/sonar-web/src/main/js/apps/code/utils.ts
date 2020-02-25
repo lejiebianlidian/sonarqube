@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { getBreadcrumbs, getChildren, getComponent } from '../../api/components';
-import { getBranchLikeQuery, isPullRequest, isShortLivingBranch } from '../../helpers/branches';
+import { getBranchLikeQuery, isPullRequest } from '../../helpers/branch-like';
+import { BranchLike } from '../../types/branch-like';
+import { MetricKey } from '../../types/metrics';
 import {
   addComponent,
   addComponentBreadcrumbs,
@@ -29,34 +31,34 @@ import {
 } from './bucket';
 
 const METRICS = [
-  'ncloc',
-  'bugs',
-  'vulnerabilities',
-  'code_smells',
-  'security_hotspots',
-  'coverage',
-  'duplicated_lines_density'
+  MetricKey.ncloc,
+  MetricKey.bugs,
+  MetricKey.vulnerabilities,
+  MetricKey.code_smells,
+  MetricKey.security_hotspots,
+  MetricKey.coverage,
+  MetricKey.duplicated_lines_density
 ];
 
-const APPLICATION_METRICS = ['alert_status', ...METRICS];
+const APPLICATION_METRICS = [MetricKey.alert_status, ...METRICS];
 
 const PORTFOLIO_METRICS = [
-  'releasability_rating',
-  'reliability_rating',
-  'security_rating',
-  'security_review_rating',
-  'sqale_rating',
-  'ncloc'
+  MetricKey.releasability_rating,
+  MetricKey.reliability_rating,
+  MetricKey.security_rating,
+  MetricKey.security_review_rating,
+  MetricKey.sqale_rating,
+  MetricKey.ncloc
 ];
 
 const LEAK_METRICS = [
-  'new_lines',
-  'bugs',
-  'vulnerabilities',
-  'code_smells',
-  'security_hotspots',
-  'new_coverage',
-  'new_duplicated_lines_density'
+  MetricKey.new_lines,
+  MetricKey.bugs,
+  MetricKey.vulnerabilities,
+  MetricKey.code_smells,
+  MetricKey.security_hotspots,
+  MetricKey.new_coverage,
+  MetricKey.new_duplicated_lines_density
 ];
 
 const PAGE_SIZE = 100;
@@ -75,8 +77,8 @@ function prepareChildren(r: any): Children {
   };
 }
 
-export function showLeakMeasure(branchLike?: T.BranchLike) {
-  return isShortLivingBranch(branchLike) || isPullRequest(branchLike);
+export function showLeakMeasure(branchLike?: BranchLike) {
+  return isPullRequest(branchLike);
 }
 
 function skipRootDir(breadcrumbs: T.ComponentMeasure[]) {
@@ -99,9 +101,14 @@ function storeChildrenBreadcrumbs(parentComponentKey: string, children: T.Breadc
   }
 }
 
-export function getCodeMetrics(qualifier: string, branchLike?: T.BranchLike) {
+export function getCodeMetrics(
+  qualifier: string,
+  branchLike?: BranchLike,
+  options: { includeQGStatus?: boolean } = {}
+) {
   if (['VW', 'SVW'].includes(qualifier)) {
-    return [...PORTFOLIO_METRICS];
+    const metrics = [...PORTFOLIO_METRICS];
+    return options.includeQGStatus ? metrics.concat(MetricKey.alert_status) : metrics;
   }
   if (qualifier === 'APP') {
     return [...APPLICATION_METRICS];
@@ -112,7 +119,7 @@ export function getCodeMetrics(qualifier: string, branchLike?: T.BranchLike) {
   return [...METRICS];
 }
 
-function retrieveComponentBase(componentKey: string, qualifier: string, branchLike?: T.BranchLike) {
+function retrieveComponentBase(componentKey: string, qualifier: string, branchLike?: BranchLike) {
   const existing = getComponentFromBucket(componentKey);
   if (existing) {
     return Promise.resolve(existing);
@@ -133,7 +140,7 @@ function retrieveComponentBase(componentKey: string, qualifier: string, branchLi
 export function retrieveComponentChildren(
   componentKey: string,
   qualifier: string,
-  branchLike?: T.BranchLike
+  branchLike?: BranchLike
 ): Promise<{ components: T.ComponentMeasure[]; page: number; total: number }> {
   const existing = getComponentChildren(componentKey);
   if (existing) {
@@ -144,10 +151,7 @@ export function retrieveComponentChildren(
     });
   }
 
-  const metrics = getCodeMetrics(qualifier, branchLike);
-  if (['VW', 'SVW'].includes(qualifier)) {
-    metrics.push('alert_status');
-  }
+  const metrics = getCodeMetrics(qualifier, branchLike, { includeQGStatus: true });
 
   return getChildren(componentKey, metrics, {
     ps: PAGE_SIZE,
@@ -165,7 +169,7 @@ export function retrieveComponentChildren(
 
 function retrieveComponentBreadcrumbs(
   component: string,
-  branchLike?: T.BranchLike
+  branchLike?: BranchLike
 ): Promise<T.Breadcrumb[]> {
   const existing = getComponentBreadcrumbs(component);
   if (existing) {
@@ -183,7 +187,7 @@ function retrieveComponentBreadcrumbs(
 export function retrieveComponent(
   componentKey: string,
   qualifier: string,
-  branchLike?: T.BranchLike
+  branchLike?: BranchLike
 ): Promise<{
   breadcrumbs: T.Breadcrumb[];
   component: T.ComponentMeasure;
@@ -210,9 +214,9 @@ export function loadMoreChildren(
   componentKey: string,
   page: number,
   qualifier: string,
-  branchLike?: T.BranchLike
+  branchLike?: BranchLike
 ): Promise<Children> {
-  const metrics = getCodeMetrics(qualifier, branchLike);
+  const metrics = getCodeMetrics(qualifier, branchLike, { includeQGStatus: true });
 
   return getChildren(componentKey, metrics, {
     ps: PAGE_SIZE,

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -99,9 +99,12 @@ export default class CreateProfileForm extends React.PureComponent<Props, State>
 
     try {
       const { profile } = await createQualityProfile(data);
-      if (this.state.parent) {
-        await changeProfileParent(profile.key, this.state.parent);
+
+      const parentProfile = this.props.profiles.find(p => p.key === this.state.parent);
+      if (parentProfile) {
+        await changeProfileParent(profile, parentProfile);
       }
+
       this.props.onCreate(profile);
     } finally {
       if (this.mounted) {

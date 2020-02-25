@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,9 @@ public interface CoreProperties {
 
   /**
    * @since 4.0
+   * @deprecated since 8.1. Database cleaning now has a dedicated category {@link CoreProperties#CATEGORY_HOUSEKEEPING}.
    */
+  @Deprecated
   String SUBCATEGORY_DATABASE_CLEANER = "databaseCleaner";
 
   /**
@@ -55,9 +57,24 @@ public interface CoreProperties {
   String SUBCATEGORY_DUPLICATIONS = "duplications";
 
   /**
+   * @since 8.2
+   */
+  String CATEGORY_ALM_INTEGRATION = "almintegration";
+
+  /**
+   * @since 8.1
+   */
+  String CATEGORY_HOUSEKEEPING = "housekeeping";
+
+  /**
    * @since 6.6
    */
-  String SUBCATEGORY_BRANCHES = "Branches";
+  String SUBCATEGORY_BRANCHES_AND_PULL_REQUESTS = "branchesAndPullRequests";
+
+  /**
+   * @since 8.1
+   */
+  String SUBCATEGORY_GENERAL = "general";
 
   /**
    * @since 4.0
@@ -139,12 +156,6 @@ public interface CoreProperties {
   /* Global settings */
   String SONAR_HOME = "SONAR_HOME";
 
-  /**
-   * @deprecated since 6.7. This feature is deprecated in favor of the new branch feature.
-   * @see <a href="https://redirect.sonarsource.com/doc/branches.html">https://redirect.sonarsource.com/doc/branches.html/a>
-   */
-  @Deprecated
-  String PROJECT_BRANCH_PROPERTY = "sonar.branch";
   String PROJECT_VERSION_PROPERTY = "sonar.projectVersion";
   String BUILD_STRING_PROPERTY = "sonar.buildString";
 
@@ -174,11 +185,6 @@ public interface CoreProperties {
    * Value format is yyyy-MM-dd
    */
   String PROJECT_DATE_PROPERTY = "sonar.projectDate";
-
-  /**
-   * @since 6.6
-   */
-  String LONG_LIVED_BRANCHES_REGEX = "sonar.branch.longLivedBranches.regex";
 
   /* Exclusions */
   String PROJECT_INCLUSIONS_PROPERTY = "sonar.inclusions";

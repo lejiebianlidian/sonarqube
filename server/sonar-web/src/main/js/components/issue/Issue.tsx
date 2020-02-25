@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,13 +20,16 @@
 import * as key from 'keymaster';
 import * as React from 'react';
 import { setIssueAssignee } from '../../api/issues';
+import { BranchLike } from '../../types/branch-like';
 import { updateIssue } from './actions';
 import './Issue.css';
 import IssueView from './IssueView';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   checked?: boolean;
+  displayLocationsCount?: boolean;
+  displayLocationsLink?: boolean;
   issue: T.Issue;
   onChange: (issue: T.Issue) => void;
   onCheck?: (issue: string) => void;
@@ -130,6 +133,8 @@ export default class Issue extends React.PureComponent<Props> {
         branchLike={this.props.branchLike}
         checked={this.props.checked}
         currentPopup={this.props.openPopup}
+        displayLocationsCount={this.props.displayLocationsCount}
+        displayLocationsLink={this.props.displayLocationsLink}
         issue={this.props.issue}
         onAssign={this.handleAssignement}
         onChange={this.props.onChange}

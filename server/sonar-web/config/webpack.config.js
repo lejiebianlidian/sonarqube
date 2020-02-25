@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,13 @@ module.exports = ({ production = true, release = false }) => {
       extensions: ['.ts', '.tsx', '.js', '.json'],
       // import from 'Docs/foo.md' is rewritten to import from 'sonar-docs/src/foo.md'
       alias: {
-        Docs: path.resolve(__dirname, '../../sonar-docs/src')
+        Docs: path.resolve(__dirname, '../../sonar-docs/src'),
+        // This avoid having multi instance of @emotion when developing with yarn link on sonar-ui-common
+        '@emotion': path.resolve(__dirname, '../node_modules/@emotion'),
+        // This avoid having multi instance of react when developing with yarn link on sonar-ui-common
+        // See https://reactjs.org/warnings/invalid-hook-call-warning.html
+        react: path.resolve(__dirname, '../node_modules/react'),
+        'react-dom': path.resolve(__dirname, '../node_modules/react-dom')
       }
     },
     optimization: {
@@ -199,6 +205,7 @@ module.exports = ({ production = true, release = false }) => {
               // ignore source maps and documentation chunk
               assetFilter: assetFilename =>
                 !assetFilename.endsWith('.map') && !assetFilename.startsWith('js/docs.'),
+              maxAssetSize: 310000,
               hints: 'error'
             }
           : undefined

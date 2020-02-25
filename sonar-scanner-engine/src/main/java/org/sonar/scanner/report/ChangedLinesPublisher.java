@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ public class ChangedLinesPublisher implements ReportPublisherStep {
   @Override
   public void publish(ScannerReportWriter writer) {
     String targetBranchName = branchConfiguration.targetBranchName();
-    if (scmConfiguration.isDisabled() || !branchConfiguration.isShortOrPullRequest() || targetBranchName == null) {
+    if (scmConfiguration.isDisabled() || !branchConfiguration.isPullRequest() || targetBranchName == null) {
       return;
     }
 

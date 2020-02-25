@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@ import { isSonarCloud } from '../../helpers/system';
 import { isLoggedIn } from '../../helpers/users';
 import { getAppState, getCurrentUser, Store } from '../../store/rootReducer';
 import { skipOnboarding } from '../../store/users';
+import { EditionKey } from '../../types/editions';
 import { OnboardingContext } from './OnboardingContext';
 
 const OnboardingModal = lazyLoad(() => import('../../apps/tutorials/onboarding/OnboardingModal'));
@@ -40,7 +41,7 @@ const LicensePromptModal = lazyLoad(
 
 interface StateProps {
   canAdmin?: boolean;
-  currentEdition?: T.EditionKey;
+  currentEdition?: EditionKey;
   currentUser: T.CurrentUser;
 }
 
@@ -136,9 +137,13 @@ export class StartupModal extends React.PureComponent<Props, State> {
     if (
       isSonarCloud() &&
       this.props.currentUser.showOnboardingTutorial &&
-      !['/about', '/documentation', '/onboarding', '/projects/create', '/create-organization'].some(
-        path => this.props.location.pathname.startsWith(path)
-      )
+      ![
+        '/about',
+        '/documentation',
+        '/onboarding',
+        '/projects/create',
+        '/create-organization'
+      ].some(path => this.props.location.pathname.startsWith(path))
     ) {
       this.openOnboarding();
     }
@@ -163,13 +168,10 @@ export class StartupModal extends React.PureComponent<Props, State> {
 
 const mapStateToProps = (state: Store): StateProps => ({
   canAdmin: getAppState(state).canAdmin,
-  currentEdition: getAppState(state).edition,
+  currentEdition: getAppState(state).edition as EditionKey, // TODO: Fix once AppState is no longer ambiant.
   currentUser: getCurrentUser(state)
 });
 
 const mapDispatchToProps: DispatchProps = { skipOnboarding };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withRouter(StartupModal));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(StartupModal));

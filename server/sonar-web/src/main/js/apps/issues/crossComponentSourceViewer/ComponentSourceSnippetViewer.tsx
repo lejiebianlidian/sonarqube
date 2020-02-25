@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,8 @@ import { getSources } from '../../../api/components';
 import getCoverageStatus from '../../../components/SourceViewer/helpers/getCoverageStatus';
 import { locationsByLine } from '../../../components/SourceViewer/helpers/indexing';
 import SourceViewerHeaderSlim from '../../../components/SourceViewer/SourceViewerHeaderSlim';
-import { getBranchLikeQuery } from '../../../helpers/branches';
+import { getBranchLikeQuery } from '../../../helpers/branch-like';
+import { BranchLike } from '../../../types/branch-like';
 import SnippetViewer from './SnippetViewer';
 import {
   createSnippets,
@@ -34,7 +35,7 @@ import {
 } from './utils';
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   duplications?: T.Duplication[];
   duplicationsByLine?: { [line: number]: number[] };
   highlightedLocationMessage: { index: number; text: string | undefined } | undefined;
@@ -54,7 +55,7 @@ interface Props {
     index: number,
     line: number
   ) => React.ReactNode;
-  scroll?: (element: HTMLElement) => void;
+  scroll?: (element: HTMLElement, offset: number) => void;
   snippetGroup: T.SnippetGroup;
 }
 
@@ -87,7 +88,12 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
   }
 
   createSnippetsFromProps() {
-    const snippets = createSnippets(this.props.snippetGroup.locations, this.props.last);
+    const snippets = createSnippets({
+      locations: this.props.snippetGroup.locations,
+      issue: this.props.issue,
+      addIssueLocation: this.props.issue.secondaryLocations.length > 0
+    });
+
     this.setState({ snippets });
   }
 
@@ -110,6 +116,22 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
     }
 
     return { wrapper, table };
+  }
+
+  /*
+   * Clean after animation
+   */
+  cleanDom(index: number) {
+    const nodes = this.getNodes(index);
+
+    if (!nodes) {
+      return;
+    }
+
+    const { wrapper, table } = nodes;
+
+    table.style.marginTop = '';
+    wrapper.style.maxHeight = '';
   }
 
   setMaxHeight(index: number, value?: number, up = false) {
@@ -139,13 +161,13 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
     }
   }
 
-  expandBlock = (snippetIndex: number, direction: T.ExpandDirection) => {
+  expandBlock = (snippetIndex: number, direction: T.ExpandDirection): Promise<void> => {
     const { branchLike, snippetGroup } = this.props;
     const { key } = snippetGroup.component;
     const { snippets } = this.state;
     const snippet = snippets.find(s => s.index === snippetIndex);
     if (!snippet) {
-      return;
+      return Promise.reject();
     }
     // Extend by EXPAND_BY_LINES and add buffer for merging snippets
     const extension = EXPAND_BY_LINES + MERGE_DISTANCE - 1;
@@ -159,7 +181,7 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
             from: snippet.end + 1,
             to: snippet.end + extension
           };
-    getSources({
+    return getSources({
       key,
       ...range,
       ...getBranchLikeQuery(branchLike)
@@ -171,17 +193,14 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
           return lineMap;
         }, {})
       )
-      .then(
-        newLinesMapped => this.animateBlockExpansion(snippetIndex, direction, newLinesMapped),
-        () => {}
-      );
+      .then(newLinesMapped => this.animateBlockExpansion(snippetIndex, direction, newLinesMapped));
   };
 
   animateBlockExpansion(
     snippetIndex: number,
     direction: T.ExpandDirection,
     newLinesMapped: T.Dict<T.SourceLine>
-  ) {
+  ): Promise<void> {
     if (this.mounted) {
       const { snippets } = this.state;
 
@@ -197,28 +216,32 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
       deletedSnippets.forEach(s => this.setMaxHeight(s.index));
       this.setMaxHeight(snippetIndex);
 
-      this.setState(
-        ({ additionalLines, snippets }) => {
-          const combinedLines = { ...additionalLines, ...newLinesMapped };
-          return {
-            additionalLines: combinedLines,
-            snippets
-          };
-        },
-        () => {
-          // Set max-height 0 to trigger CSS transitions
-          deletedSnippets.forEach(s => {
-            this.setMaxHeight(s.index, 0);
-          });
-          this.setMaxHeight(snippetIndex, undefined, direction === 'up');
+      return new Promise(resolve => {
+        this.setState(
+          ({ additionalLines, snippets }) => {
+            const combinedLines = { ...additionalLines, ...newLinesMapped };
+            return {
+              additionalLines: combinedLines,
+              snippets
+            };
+          },
+          () => {
+            // Set max-height 0 to trigger CSS transitions
+            deletedSnippets.forEach(s => {
+              this.setMaxHeight(s.index, 0);
+            });
+            this.setMaxHeight(snippetIndex, undefined, direction === 'up');
 
-          // Wait for transition to finish before updating dom
-          setTimeout(() => {
-            this.setState({ snippets: newSnippets.filter(s => !s.toDelete) });
-          }, 200);
-        }
-      );
+            // Wait for transition to finish before updating dom
+            setTimeout(() => {
+              this.setState({ snippets: newSnippets.filter(s => !s.toDelete) }, resolve);
+              this.cleanDom(snippetIndex);
+            }, 200);
+          }
+        );
+      });
     }
+    return Promise.resolve();
   }
 
   expandComponent = () => {
@@ -308,6 +331,7 @@ export default class ComponentSourceSnippetViewer extends React.PureComponent<Pr
         issuePopup={this.props.issuePopup}
         issuesByLine={issuesByLine}
         last={last}
+        linePopup={this.props.linePopup}
         loadDuplications={this.loadDuplications}
         locations={this.props.locations}
         locationsByLine={locationsByLine}

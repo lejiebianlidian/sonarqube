@@ -96,7 +96,7 @@
     from
       project_alm_bindings b
     inner join projects p
-      on b.project_uuid = p.project_uuid
+      on b.project_uuid = p.uuid
     where
       alm_id = #{almId, jdbcType=VARCHAR}
       and repo_id = #{repoId, jdbcType=VARCHAR}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,8 @@ import org.sonar.db.rule.RuleDto;
 import org.sonar.db.rule.RuleForIndexingDto;
 import org.sonar.markdown.Markdown;
 import org.sonar.server.es.BaseDoc;
-import org.sonar.server.security.SecurityStandardHelper;
+import org.sonar.server.security.SecurityStandards;
+import org.sonar.server.security.SecurityStandards.SQCategory;
 
 import static org.sonar.server.rule.index.RuleIndexDefinition.TYPE_RULE;
 
@@ -186,12 +187,13 @@ public class RuleDoc extends BaseDoc {
   }
 
   @CheckForNull
-  public Collection<String> getSonarSourceSecurityCategories() {
-    return getNullableField(RuleIndexDefinition.FIELD_RULE_SONARSOURCE_SECURITY);
+  public SQCategory getSonarSourceSecurityCategory() {
+    String key = getNullableField(RuleIndexDefinition.FIELD_RULE_SONARSOURCE_SECURITY);
+    return SQCategory.fromKey(key).orElse(null);
   }
 
-  public RuleDoc setSonarSourceSecurityCategories(@Nullable Collection<String> c) {
-    setField(RuleIndexDefinition.FIELD_RULE_SONARSOURCE_SECURITY, c);
+  public RuleDoc setSonarSourceSecurityCategory(@Nullable SQCategory sqCategory) {
+    setField(RuleIndexDefinition.FIELD_RULE_SONARSOURCE_SECURITY, sqCategory == null ? null : sqCategory.getKey());
     return this;
   }
 
@@ -267,8 +269,7 @@ public class RuleDoc extends BaseDoc {
     return ReflectionToStringBuilder.toString(this);
   }
 
-  public static RuleDoc of(RuleForIndexingDto dto) {
-    Collection<String> cwe = SecurityStandardHelper.getCwe(dto.getSecurityStandardsAsSet());
+  public static RuleDoc of(RuleForIndexingDto dto, SecurityStandards securityStandards) {
     RuleDoc ruleDoc = new RuleDoc()
       .setId(dto.getId())
       .setKey(dto.getRuleKey().toString())
@@ -277,10 +278,10 @@ public class RuleDoc extends BaseDoc {
       .setIsTemplate(dto.isTemplate())
       .setIsExternal(dto.isExternal())
       .setLanguage(dto.getLanguage())
-      .setCwe(cwe)
-      .setOwaspTop10(SecurityStandardHelper.getOwaspTop10(dto.getSecurityStandardsAsSet()))
-      .setSansTop25(SecurityStandardHelper.getSansTop25(cwe))
-      .setSonarSourceSecurityCategories(SecurityStandardHelper.getSonarSourceSecurityCategories(cwe))
+      .setCwe(securityStandards.getCwe())
+      .setOwaspTop10(securityStandards.getOwaspTop10())
+      .setSansTop25(securityStandards.getSansTop25())
+      .setSonarSourceSecurityCategory(securityStandards.getSqCategory())
       .setName(dto.getName())
       .setRuleKey(dto.getPluginRuleKey())
       .setSeverity(dto.getSeverityAsString())

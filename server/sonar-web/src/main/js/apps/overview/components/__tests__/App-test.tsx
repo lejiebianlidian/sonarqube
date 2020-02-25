@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { isSonarCloud } from '../../../../helpers/system';
+import BranchOverview from '../../branches/BranchOverview';
 import { App } from '../App';
 
 jest.mock('../../../../helpers/system', () => ({ isSonarCloud: jest.fn() }));
@@ -39,22 +40,16 @@ beforeEach(() => {
   (isSonarCloud as jest.Mock<any>).mockReturnValue(false);
 });
 
-it('should render OverviewApp', () => {
+it('should render BranchOverview', () => {
   expect(
     getWrapper()
-      .find('Connect(OverviewApp)')
+      .find(BranchOverview)
       .exists()
   ).toBeTruthy();
 });
 
 function getWrapper(props = {}) {
   return shallow(
-    <App
-      branchLikes={[]}
-      component={component}
-      onComponentChange={jest.fn()}
-      router={{ replace: jest.fn() }}
-      {...props}
-    />
+    <App branchLikes={[]} component={component} router={{ replace: jest.fn() }} {...props} />
   );
 }

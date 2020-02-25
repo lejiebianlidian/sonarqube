@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ export default function SetSeverityPopup({ issue, onSelect }: Props) {
     <DropdownOverlay>
       <SelectList currentItem={issue.severity} items={SEVERITY} onSelect={onSelect}>
         {SEVERITY.map(severity => (
-          <SelectListItem item={severity} key={severity}>
+          <SelectListItem className="display-flex-center" item={severity} key={severity}>
             <SeverityIcon className="little-spacer-right" severity={severity} />
             {translate('severity', severity)}
           </SelectListItem>

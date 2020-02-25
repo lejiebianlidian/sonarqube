@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ public class MassUpdate {
   }
 
   public Upsert update(String sql) throws SQLException {
-    UpsertImpl upsert = UpsertImpl.create(db, writeConnection, sql);
+    UpsertImpl upsert = UpsertImpl.create(writeConnection, sql);
     this.updates.add(upsert);
     return upsert;
   }
@@ -89,7 +89,8 @@ public class MassUpdate {
 
     progress.start();
     try {
-      select.scroll(row -> callSingleHandler(handler, updates.iterator().next(), row));
+      UpsertImpl update = updates.iterator().next();
+      select.scroll(row -> callSingleHandler(handler, update, row));
       closeStatements();
 
       // log the total number of processed rows

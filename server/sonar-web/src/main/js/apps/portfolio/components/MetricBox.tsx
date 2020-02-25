@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,22 +22,22 @@ import { Link } from 'react-router';
 import HelpTooltip from 'sonar-ui-common/components/controls/HelpTooltip';
 import Level from 'sonar-ui-common/components/ui/Level';
 import { translate } from 'sonar-ui-common/helpers/l10n';
+import ActivityLink from '../../../components/common/ActivityLink';
+import MeasuresLink from '../../../components/common/MeasuresLink';
 import Measure from '../../../components/measure/Measure';
 import { getComponentDrilldownUrl } from '../../../helpers/urls';
 import { METRICS_PER_TYPE } from '../utils';
 import Effort from './Effort';
-import HistoryButtonLink from './HistoryButtonLink';
 import MainRating from './MainRating';
-import MeasuresButtonLink from './MeasuresButtonLink';
 import RatingFreshness from './RatingFreshness';
 
-interface Props {
+export interface MetricBoxProps {
   component: string;
   measures: T.Dict<string | undefined>;
   metricKey: string;
 }
 
-export default function MetricBox({ component, measures, metricKey }: Props) {
+export default function MetricBox({ component, measures, metricKey }: MetricBoxProps) {
   const keys = METRICS_PER_TYPE[metricKey];
   const rating = measures[keys.rating];
   const lastReliabilityChange = measures[keys.last_change];
@@ -90,8 +90,17 @@ export default function MetricBox({ component, measures, metricKey }: Props) {
                       ? translate('project_singular')
                       : translate('project_plural')}
                   </span>
-                </Link>{' '}
-                <Level level="ERROR" small={true} />
+                </Link>
+                <Level
+                  aria-label={
+                    Number(effort) === 1
+                      ? translate('portfolio.has_qg_status')
+                      : translate('portfolio.have_qg_status')
+                  }
+                  className="little-spacer-left"
+                  level="ERROR"
+                  small={true}
+                />
               </div>
             </>
           )
@@ -104,10 +113,10 @@ export default function MetricBox({ component, measures, metricKey }: Props) {
 
       <div className="portfolio-box-links">
         <div>
-          <MeasuresButtonLink component={component} metric={keys.measuresMetric} />
+          <MeasuresLink component={component} metric={keys.measuresMetric} />
         </div>
         <div>
-          <HistoryButtonLink component={component} metric={keys.activity || keys.rating} />
+          <ActivityLink component={component} metric={keys.activity || keys.rating} />
         </div>
       </div>
     </div>

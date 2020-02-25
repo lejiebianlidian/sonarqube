@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,9 @@ export default class VersionSelect extends React.PureComponent<Props, State> {
                 return (
                   <li key={version.value}>
                     <a href={version.current ? '/' : '/' + version.value}>
-                      <span className={version.current ? 'current' : ''}>{version.value}</span>
+                      <span className={version.current || version.lts ? 'current' : ''}>
+                        {version.value + (version.lts ? ' LTS' : '')}
+                      </span>
                     </a>
                   </li>
                 );

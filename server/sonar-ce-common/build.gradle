@@ -35,7 +35,6 @@ dependencies {
   compile 'org.slf4j:jul-to-slf4j'
   compile 'org.slf4j:slf4j-api'
   compile project(':server:sonar-ce-task')
-  compile project(':server:sonar-db-dao')
   compile project(':server:sonar-server-common')
   compile project(':sonar-core')
   compile project(path: ':sonar-plugin-api', configuration: 'shadow')
@@ -52,8 +51,5 @@ dependencies {
   testCompile 'org.assertj:assertj-guava'
   testCompile 'org.hamcrest:hamcrest-all'
   testCompile project(':sonar-plugin-api-impl')
-  testCompile project(':server:sonar-db-testing')
-  testCompile project(path: ":server:sonar-server-common", configuration: "tests")
-
-  testRuntime 'com.h2database:h2'
+  testCompile testFixtures(project(':server:sonar-server-common'))
 }

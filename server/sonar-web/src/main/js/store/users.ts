@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,22 +46,23 @@ export function receiveCurrentUser(user: T.CurrentUser) {
   return { type: Actions.ReceiveCurrentUser, user };
 }
 
-function skipOnboardingAction() {
+export function skipOnboardingAction() {
   return { type: Actions.SkipOnboardingAction };
 }
 
 export function skipOnboarding() {
   return (dispatch: Dispatch) =>
-    api
-      .skipOnboarding()
-      .then(() => dispatch(skipOnboardingAction()), () => dispatch(skipOnboardingAction()));
+    api.skipOnboarding().then(
+      () => dispatch(skipOnboardingAction()),
+      () => dispatch(skipOnboardingAction())
+    );
 }
 
-function setHomePageAction(homepage: T.HomePage) {
+export function setHomePageAction(homepage: T.HomePage) {
   return { type: Actions.SetHomePageAction, homepage };
 }
 
-function setCurrentUserSettingAction(setting: T.CurrentUserSetting) {
+export function setCurrentUserSettingAction(setting: T.CurrentUserSetting) {
   return { type: Actions.SetCurrentUserSetting, setting };
 }
 

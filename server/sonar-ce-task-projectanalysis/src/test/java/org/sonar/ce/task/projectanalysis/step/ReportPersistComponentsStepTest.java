@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@ import org.sonar.ce.task.projectanalysis.component.DefaultBranchImpl;
 import org.sonar.ce.task.projectanalysis.component.FileAttributes;
 import org.sonar.ce.task.projectanalysis.component.MutableDbIdsRepositoryRule;
 import org.sonar.ce.task.projectanalysis.component.MutableDisabledComponentsHolder;
+import org.sonar.ce.task.projectanalysis.component.ProjectPersister;
 import org.sonar.ce.task.projectanalysis.component.ReportComponent;
 import org.sonar.ce.task.projectanalysis.component.TreeRootHolderRule;
 import org.sonar.ce.task.step.ComputationStep;
@@ -87,7 +88,6 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
   private Date now;
   private MutableDisabledComponentsHolder disabledComponentsHolder = mock(MutableDisabledComponentsHolder.class, RETURNS_DEEP_STUBS);
   private PersistComponentsStep underTest;
-  private BranchPersister branchPersister;
 
   @Before
   public void setup() throws Exception {
@@ -95,8 +95,9 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
     when(system2.now()).thenReturn(now.getTime());
 
     db.organizations().insertForUuid(ORGANIZATION_UUID);
-    branchPersister = mock(BranchPersister.class);
-    underTest = new PersistComponentsStep(dbClient, treeRootHolder, dbIdsRepository, system2, disabledComponentsHolder, analysisMetadataHolder, branchPersister);
+    BranchPersister branchPersister = mock(BranchPersister.class);
+    ProjectPersister projectPersister = mock(ProjectPersister.class);
+    underTest = new PersistComponentsStep(dbClient, treeRootHolder, dbIdsRepository, system2, disabledComponentsHolder, analysisMetadataHolder, branchPersister, projectPersister);
   }
 
   @Override
@@ -124,7 +125,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(db.countRowsOfTable("projects")).isEqualTo(3);
+    assertThat(db.countRowsOfTable("components")).isEqualTo(3);
 
     ComponentDto directoryDto = dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir").get();
     assertThat(directoryDto.getOrganizationUuid()).isEqualTo(ORGANIZATION_UUID);
@@ -186,7 +187,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(db.countRowsOfTable("projects")).isEqualTo(3);
+    assertThat(db.countRowsOfTable("components")).isEqualTo(3);
 
     ComponentDto directoryDto = dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir").get();
     assertThat(directoryDto.getOrganizationUuid()).isEqualTo(ORGANIZATION_UUID);
@@ -366,7 +367,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(db.countRowsOfTable("projects")).isEqualTo(3);
+    assertThat(db.countRowsOfTable("components")).isEqualTo(3);
 
     ComponentDto projectReloaded = dbClient.componentDao().selectByKey(db.getSession(), project.getDbKey()).get();
     assertThat(projectReloaded.getId()).isEqualTo(project.getId());
@@ -415,7 +416,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(db.countRowsOfTable("projects")).isEqualTo(3);
+    assertThat(db.countRowsOfTable("components")).isEqualTo(3);
     assertThat(dbClient.componentDao().selectByKey(db.getSession(), project.getDbKey()).get().getId()).isEqualTo(project.getId());
     assertThat(dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir").get().getId()).isEqualTo(directory.getId());
     assertThat(dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir/Foo.java").get().getId()).isEqualTo(file.getId());
@@ -477,7 +478,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
     dbClient.componentDao().applyBChangesForRootComponentUuid(db.getSession(), project.uuid());
     db.commit();
 
-    assertThat(db.countRowsOfTable("projects")).isEqualTo(3);
+    assertThat(db.countRowsOfTable("components")).isEqualTo(3);
 
     ComponentDto directoryReloaded = dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir").get();
     assertThat(directoryReloaded).isNotNull();
@@ -549,7 +550,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(db.countRowsOfTable("projects")).isEqualTo(3);
+    assertThat(db.countRowsOfTable("components")).isEqualTo(3);
     assertThat(dbClient.componentDao().selectByKey(db.getSession(), project.getDbKey()).get().getId()).isEqualTo(project.getId());
     assertThat(dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir").get().getId()).isEqualTo(removedDirectory.getId());
     assertThat(dbClient.componentDao().selectByKey(db.getSession(), "PROJECT_KEY:src/main/java/dir/Foo.java").get().getId()).isEqualTo(removedFile.getId());
@@ -639,18 +640,31 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
     return builder(PROJECT, 1).setUuid(project.uuid()).setKey(project.getDbKey()).setName(project.name());
   }
 
-  private ComponentDto prepareProject(Consumer<ComponentDto>... populators) {
+  private ComponentDto prepareProject() {
+    return prepareProject(defaults());
+  }
+
+  private ComponentDto prepareProject(Consumer<ComponentDto> populators) {
     ComponentDto dto = db.components().insertPrivateProject(db.organizations().insert(), populators);
     analysisMetadataHolder.setProject(Project.from(dto));
     analysisMetadataHolder.setBranch(new DefaultBranchImpl());
     return dto;
   }
 
-  private ComponentDto prepareBranch(String branchName, Consumer<ComponentDto>... populators) {
+  private ComponentDto prepareBranch(String branchName) {
+    return prepareBranch(branchName, defaults());
+  }
+
+  private ComponentDto prepareBranch(String branchName, Consumer<ComponentDto> populators) {
     ComponentDto dto = db.components().insertPrivateProject(db.organizations().insert(), populators);
     analysisMetadataHolder.setProject(Project.from(dto));
     analysisMetadataHolder.setBranch(new TestBranch(branchName));
     return dto;
+  }
+
+  private static <T> Consumer<T> defaults() {
+    return t -> {
+    };
   }
 
   private static class TestBranch implements Branch {
@@ -662,7 +676,7 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
 
     @Override
     public BranchType getType() {
-      return BranchType.LONG;
+      return BranchType.BRANCH;
     }
 
     @Override
@@ -671,13 +685,8 @@ public class ReportPersistComponentsStepTest extends BaseStepTest {
     }
 
     @Override
-    public String getMergeBranchUuid() {
+    public String getReferenceBranchUuid() {
       throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isLegacyFeature() {
-      return false;
     }
 
     @Override

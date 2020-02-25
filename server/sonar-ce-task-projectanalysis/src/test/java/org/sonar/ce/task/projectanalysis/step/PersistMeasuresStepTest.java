@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ public class PersistMeasuresStepTest extends BaseStepTest {
   }
 
   @Test
-  public void measures_on_leak_period_are_persisted() {
+  public void measures_on_new_code_period_are_persisted() {
     prepareProject();
     measureRepository.addRawMeasure(REF_1, INT_METRIC.getKey(), newMeasureBuilder().setVariation(42.0).createNoValue());
 

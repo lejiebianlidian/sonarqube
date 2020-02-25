@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ public class AuthorizationDaoTest {
   private String randomPermission = "p" + random.nextInt();
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     organization = db.organizations().insert();
     user = db.users().insertUser();
     group1 = db.users().insertGroup(organization, "group1");
@@ -1220,7 +1220,7 @@ public class AuthorizationDaoTest {
   @Test
   public void keepAuthorizedLoginsOnProject_return_correct_users_on_branch() {
     ComponentDto project = db.components().insertPrivateProject(organization);
-    ComponentDto branch = db.components().insertProjectBranch(project, c -> c.setBranchType(random.nextBoolean() ? BranchType.SHORT : BranchType.LONG));
+    ComponentDto branch = db.components().insertProjectBranch(project, c -> c.setBranchType(BranchType.BRANCH));
 
     GroupDto userGroup = db.users().insertGroup(organization, "USERS");
     GroupDto adminGroup = db.users().insertGroup(organization, "ADMIN");

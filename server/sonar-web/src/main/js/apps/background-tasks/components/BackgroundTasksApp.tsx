@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import { debounce, uniq } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { toShortNotSoISOString } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
@@ -218,7 +218,7 @@ export class BackgroundTasksApp extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited">
         <Suggestions suggestions="background_tasks" />
-        <Helmet title={translate('background_tasks.page')} />
+        <Helmet defer={false} title={translate('background_tasks.page')} />
         <Header component={component} />
 
         <Stats
@@ -260,7 +260,4 @@ export class BackgroundTasksApp extends React.PureComponent<Props, State> {
 
 const mapDispatchToProps = { fetchOrganizations };
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(BackgroundTasksApp);
+export default connect(null, mapDispatchToProps)(BackgroundTasksApp);

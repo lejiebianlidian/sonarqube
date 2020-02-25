@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@ import org.sonar.ce.task.step.ComputationStep;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.BranchDto;
-import org.sonar.db.component.BranchType;
 import org.sonar.db.component.ComponentDao;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.SnapshotDto;
@@ -54,7 +53,7 @@ import static org.sonar.api.utils.DateUtils.formatDateTime;
  * <li>module key already exists in another project (same module key cannot exists in different projects)</li>
  * <li>module key is already used as a project key</li>
  * <li>date of the analysis is before last analysis</li>
- * <li>short living branch or PR targets a branch that still contains modules</li>
+ * <li>PR targets a branch that still contains modules</li>
  * </ol>
  */
 public class ValidateProjectStep implements ComputationStep {
@@ -88,17 +87,16 @@ public class ValidateProjectStep implements ComputationStep {
   }
 
   private void validateTargetBranch(DbSession session) {
-    if (!analysisMetadataHolder.isSLBorPR()) {
+    if (!analysisMetadataHolder.isPullRequest()) {
       return;
     }
-    String mergeBranchUuid = analysisMetadataHolder.getBranch().getMergeBranchUuid();
-    int moduleCount = dbClient.componentDao().countEnabledModulesByProjectUuid(session, mergeBranchUuid);
+    String referenceBranchUuid = analysisMetadataHolder.getBranch().getReferenceBranchUuid();
+    int moduleCount = dbClient.componentDao().countEnabledModulesByProjectUuid(session, referenceBranchUuid);
     if (moduleCount > 0) {
-      Optional<BranchDto> opt = dbClient.branchDao().selectByUuid(session, mergeBranchUuid);
-      checkState(opt.isPresent(), "Merge branch '%s' does not exist", mergeBranchUuid);
-      String type = analysisMetadataHolder.getBranch().getType() == BranchType.PULL_REQUEST ? "pull request" : "short-lived branch";
+      Optional<BranchDto> opt = dbClient.branchDao().selectByUuid(session, referenceBranchUuid);
+      checkState(opt.isPresent(), "Reference branch '%s' does not exist", referenceBranchUuid);
       throw MessageException.of(String.format(
-        "Due to an upgrade, you need first to re-analyze the target branch '%s' before analyzing this %s.", opt.get().getKey(), type));
+        "Due to an upgrade, you need first to re-analyze the target branch '%s' before analyzing this pull request.", opt.get().getKey()));
     }
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import org.sonar.ce.task.CeTask;
 import org.sonar.db.DbSession;
+import org.sonar.db.ce.CeActivityDto;
 import org.sonar.db.ce.CeQueueDto;
 
 /**
@@ -111,6 +112,16 @@ public interface CeQueue {
   void resumeWorkers();
 
   WorkersPauseStatus getWorkersPauseStatus();
+
+  /**
+   * Removes all the tasks from the queue, whatever their status. They are marked
+   * as {@link CeActivityDto.Status#CANCELED} in past activity.
+   * This method can NOT be called when  workers are being executed, as in progress
+   * tasks can't be killed.
+   *
+   * @return the number of canceled tasks
+   */
+  int clear();
 
   enum SubmitOption {
     UNIQUE_QUEUE_PER_MAIN_COMPONENT

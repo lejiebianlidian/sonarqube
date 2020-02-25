@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getSettingsNavigation } from '../../api/nav';
@@ -64,7 +64,10 @@ export class AdminContainer extends React.PureComponent<Props, State> {
   }
 
   fetchNavigationSettings = () => {
-    getSettingsNavigation().then(r => this.props.setAdminPages(r.extensions), () => {});
+    getSettingsNavigation().then(
+      r => this.props.setAdminPages(r.extensions),
+      () => {}
+    );
   };
 
   fetchPendingPlugins = () => {
@@ -117,7 +120,7 @@ export class AdminContainer extends React.PureComponent<Props, State> {
 
     return (
       <div>
-        <Helmet defaultTitle={defaultTitle} titleTemplate={'%s - ' + defaultTitle} />
+        <Helmet defaultTitle={defaultTitle} defer={false} titleTemplate={`%s - ${defaultTitle}`} />
         <SettingsNav
           extensions={adminPages}
           fetchPendingPlugins={this.fetchPendingPlugins}
@@ -145,7 +148,4 @@ const mapStateToProps = (state: Store) => ({ appState: getAppState(state) });
 
 const mapDispatchToProps = { setAdminPages };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(AdminContainer);
+export default connect(mapStateToProps, mapDispatchToProps)(AdminContainer);

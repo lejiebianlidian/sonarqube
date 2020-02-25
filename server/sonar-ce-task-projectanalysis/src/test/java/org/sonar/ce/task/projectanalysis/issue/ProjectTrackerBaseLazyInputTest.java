@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ public class ProjectTrackerBaseLazyInputTest {
   public void prepare() {
     rule = dbTester.rules().insert();
     ruleRepositoryRule.add(rule.getKey());
-    rootProjectDto = dbTester.components().insertMainBranch();
+    rootProjectDto = dbTester.components().insertPublicProject();
     ReportComponent rootProject = ReportComponent.builder(Component.Type.FILE, 1)
       .setKey(rootProjectDto.getDbKey())
       .setUuid(rootProjectDto.uuid()).build();

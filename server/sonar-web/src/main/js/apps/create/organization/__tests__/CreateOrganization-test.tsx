@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@ import { mount, shallow } from 'enzyme';
 import { Location } from 'history';
 import { times } from 'lodash';
 import * as React from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import { get, remove } from 'sonar-ui-common/helpers/storage';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import {
@@ -42,9 +43,10 @@ import {
 import { CreateOrganization } from '../CreateOrganization';
 
 jest.mock('../../../../api/billing', () => ({
-  getSubscriptionPlans: jest
-    .fn()
-    .mockResolvedValue([{ maxNcloc: 100000, price: 10 }, { maxNcloc: 250000, price: 75 }])
+  getSubscriptionPlans: jest.fn().mockResolvedValue([
+    { maxNcloc: 100000, price: 10 },
+    { maxNcloc: 250000, price: 75 }
+  ])
 }));
 
 jest.mock('../../../../api/alm-integration', () => ({
@@ -311,7 +313,7 @@ it('should bind org and redirect to org home when coming from org binding', asyn
 });
 
 function mountRender(props: Partial<CreateOrganization['props']> = {}) {
-  return mount<CreateOrganization>(createComponent(props));
+  return mount<CreateOrganization>(<HelmetProvider>{createComponent(props)}</HelmetProvider>);
 }
 
 function shallowRender(props: Partial<CreateOrganization['props']> = {}) {

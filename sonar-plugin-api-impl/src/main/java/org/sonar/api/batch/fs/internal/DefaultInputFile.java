@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -403,6 +403,7 @@ public class DefaultInputFile extends DefaultInputComponent implements InputFile
   }
 
   public boolean isIgnoreAllIssues() {
+    checkMetadata();
     return ignoreAllIssues;
   }
 
@@ -418,6 +419,7 @@ public class DefaultInputFile extends DefaultInputComponent implements InputFile
   }
 
   public boolean isIgnoreAllIssuesOnLine(@Nullable Integer line) {
+    checkMetadata();
     if (line == null || ignoreIssuesOnlineRanges == null) {
       return false;
     }

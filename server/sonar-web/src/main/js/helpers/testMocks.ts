@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@ import { Location } from 'history';
 import { InjectedRouter } from 'react-router';
 import { createStore, Store } from 'redux';
 import { DocumentationEntry } from '../apps/documentation/utils';
-import { ParsedAnalysis } from '../apps/projectActivity/utils';
-import { Profile } from '../apps/quality-profiles/types';
+import { Exporter, Profile } from '../apps/quality-profiles/types';
+import { ComponentQualifier } from '../types/component';
 
 export function mockAlmApplication(overrides: Partial<T.AlmApplication> = {}): T.AlmApplication {
   return {
@@ -51,9 +51,19 @@ export function mockAlmOrganization(overrides: Partial<T.AlmOrganization> = {}):
   };
 }
 
-export function mockParsedAnalysis(overrides: Partial<ParsedAnalysis> = {}): ParsedAnalysis {
+export function mockAnalysis(overrides: Partial<T.Analysis> = {}): T.Analysis {
   return {
-    date: new Date('2017-03-01T09:36:01+0100'),
+    date: '2017-03-01T09:36:01+0100',
+    events: [],
+    key: 'foo',
+    projectVersion: '1.0',
+    ...overrides
+  };
+}
+
+export function mockParsedAnalysis(overrides: Partial<T.ParsedAnalysis> = {}): T.ParsedAnalysis {
+  return {
+    date: new Date('2017-03-01T09:37:01+0100'),
     events: [],
     key: 'foo',
     projectVersion: '1.0',
@@ -268,7 +278,7 @@ export function mockComponent(overrides: Partial<T.Component> = {}): T.Component
     key: 'my-project',
     name: 'MyProject',
     organization: 'foo',
-    qualifier: 'TRK',
+    qualifier: ComponentQualifier.Project,
     qualityGate: { isDefault: true, key: '30', name: 'Sonar way' },
     qualityProfiles: [
       {
@@ -306,15 +316,12 @@ export function mockComponentMeasure(
   };
 }
 
-export function mockQualityGateStatusCondition(
-  overrides: Partial<T.QualityGateStatusCondition> = {}
-): T.QualityGateStatusCondition {
+export function mockCondition(overrides: Partial<T.Condition> = {}): T.Condition {
   return {
-    actual: '10',
-    error: '0',
-    level: 'ERROR',
-    metric: 'foo',
-    op: 'GT',
+    error: '10',
+    id: 1,
+    metric: 'coverage',
+    op: 'LT',
     ...overrides
   };
 }
@@ -369,6 +376,15 @@ export function mockLoggedInUser(overrides: Partial<T.LoggedInUser> = {}): T.Log
   };
 }
 
+export function mockGroup(overrides: Partial<T.Group> = {}): T.Group {
+  return {
+    id: 1,
+    membersCount: 1,
+    name: 'Foo',
+    ...overrides
+  };
+}
+
 export function mockEvent(overrides = {}) {
   return {
     target: { blur() {} },
@@ -410,7 +426,10 @@ export function mockIssue(withLocations = false, overrides: Partial<T.Issue> = {
   const loc = mockFlowLocation;
 
   if (withLocations) {
-    issue.flows = [[loc(), loc(), loc()], [loc(), loc()]];
+    issue.flows = [
+      [loc(), loc(), loc()],
+      [loc(), loc()]
+    ];
     issue.secondaryLocations = [loc(), loc()];
   }
 
@@ -433,13 +452,17 @@ export function mockLocation(overrides: Partial<Location> = {}): Location {
   };
 }
 
-export function mockMetric(overrides: Partial<T.Metric> = {}): T.Metric {
+export function mockMetric(
+  overrides: Partial<Pick<T.Metric, 'key' | 'name' | 'type'>> = {}
+): T.Metric {
+  const key = overrides.key || 'coverage';
+  const name = overrides.name || key[0].toUpperCase() + key.substr(1);
+  const type = overrides.type || 'PERCENT';
   return {
-    id: 'coverage',
-    key: 'coverage',
-    name: 'Coverage',
-    type: 'PERCENT',
-    ...overrides
+    id: key,
+    key,
+    name,
+    type
   };
 }
 
@@ -503,22 +526,11 @@ export function mockOrganizationWithAlm(
   });
 }
 
-export function mockQualityGate(overrides: Partial<T.QualityGate> = {}): T.QualityGate {
+export function mockPeriod(overrides: Partial<T.Period> = {}): T.Period {
   return {
-    id: 1,
-    name: 'qualitygate',
-    ...overrides
-  };
-}
-
-export function mockPullRequest(overrides: Partial<T.PullRequest> = {}): T.PullRequest {
-  return {
-    analysisDate: '2018-01-01',
-    base: 'master',
-    branch: 'feature/foo/bar',
-    key: '1001',
-    target: 'master',
-    title: 'Foo Bar feature',
+    date: '2019-04-23T02:12:32+0100',
+    index: 0,
+    mode: 'previous_version',
     ...overrides
   };
 }
@@ -542,23 +554,38 @@ export function mockQualityProfile(overrides: Partial<Profile> = {}): Profile {
   };
 }
 
-export function mockQualityGateProjectStatus(
-  overrides: Partial<T.QualityGateProjectStatus> = {}
-): T.QualityGateProjectStatus {
+export function mockQualityProfileInheritance(
+  overrides: Partial<T.ProfileInheritanceDetails> = {}
+): T.ProfileInheritanceDetails {
   return {
-    conditions: [
-      {
-        actualValue: '0',
-        comparator: 'GT',
-        errorThreshold: '1.0',
-        metricKey: 'new_bugs',
-        periodIndex: 1,
-        status: 'OK'
-      }
-    ],
-    ignoredConditions: false,
-    status: 'OK',
+    activeRuleCount: 4,
+    isBuiltIn: false,
+    key: 'foo',
+    name: 'Foo',
+    overridingRuleCount: 0,
     ...overrides
+  };
+}
+
+export function mockQualityProfileChangelogEvent(eventOverride?: any) {
+  return {
+    action: 'ACTIVATED',
+    date: '2019-04-23T02:12:32+0100',
+    params: {
+      severity: 'MAJOR'
+    },
+    ruleKey: 'rule-key',
+    ruleName: 'rule-name',
+    ...eventOverride
+  };
+}
+
+export function mockQualityProfileExporter(override?: Partial<Exporter>): Exporter {
+  return {
+    key: 'exporter-key',
+    name: 'exporter-name',
+    languages: ['first-lang', 'second-lang'],
+    ...override
   };
 }
 
@@ -637,19 +664,6 @@ export function mockRuleDetailsParameter(
   };
 }
 
-export function mockShortLivingBranch(
-  overrides: Partial<T.ShortLivingBranch> = {}
-): T.ShortLivingBranch {
-  return {
-    analysisDate: '2018-01-01',
-    isMain: false,
-    name: 'feature/foo',
-    mergeBranch: 'master',
-    type: 'SHORT',
-    ...overrides
-  };
-}
-
 export function mockSourceViewerFile(
   overrides: Partial<T.SourceViewerFile> = {}
 ): T.SourceViewerFile {
@@ -720,18 +734,6 @@ export function mockStandaloneSysInfo(overrides: Partial<any> = {}): T.SysInfoSt
   };
 }
 
-export function mockLongLivingBranch(
-  overrides: Partial<T.LongLivingBranch> = {}
-): T.LongLivingBranch {
-  return {
-    analysisDate: '2018-01-01',
-    isMain: false,
-    name: 'branch-6.7',
-    type: 'LONG',
-    ...overrides
-  };
-}
-
 export function mockStore(state: any = {}, reducer = (state: any) => state): Store {
   return createStore(reducer, state);
 }
@@ -746,6 +748,28 @@ export function mockUser(overrides: Partial<T.User> = {}): T.User {
   };
 }
 
+export function mockDocumentationMarkdown(
+  overrides: Partial<{ content: string; title: string; key: string }> = {}
+): string {
+  const content =
+    overrides.content ||
+    `
+## Lorem Ipsum
+
+Donec at est elit. In finibus justo ut augue rhoncus, vitae consequat mauris mattis.
+Nunc ante est, volutpat ac volutpat ac, pharetra in libero.
+`;
+
+  const frontMatter = `
+---
+${overrides.title ? 'title: ' + overrides.title : ''}
+${overrides.key ? 'key: ' + overrides.key : ''}
+---`;
+
+  return `${frontMatter}
+${content}`;
+}
+
 export function mockDocumentationEntry(
   overrides: Partial<DocumentationEntry> = {}
 ): DocumentationEntry {
@@ -756,15 +780,6 @@ export function mockDocumentationEntry(
     text: 'Lorem ipsum dolor sit amet fredum',
     title: 'Lorem',
     url: '/lorem/ipsum',
-    ...overrides
-  };
-}
-
-export function mockMainBranch(overrides: Partial<T.MainBranch> = {}): T.MainBranch {
-  return {
-    analysisDate: '2018-01-01',
-    isMain: true,
-    name: 'master',
     ...overrides
   };
 }
@@ -786,6 +801,18 @@ export function mockFlowLocation(overrides: Partial<T.FlowLocation> = {}): T.Flo
       endLine: 2,
       endOffset: 2
     },
+    ...overrides
+  };
+}
+
+export function mockIdentityProvider(
+  overrides: Partial<T.IdentityProvider> = {}
+): T.IdentityProvider {
+  return {
+    backgroundColor: '#000000',
+    iconPath: '/path/icon.svg',
+    key: 'github',
+    name: 'Github',
     ...overrides
   };
 }

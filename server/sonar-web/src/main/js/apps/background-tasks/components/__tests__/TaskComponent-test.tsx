@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,11 +39,7 @@ it('renders correctly', () => {
 });
 
 it('renders correctly for branches and pullrequest', () => {
-  expect(
-    shallow(<TaskComponent task={{ ...TASK, branch: 'feature', branchType: 'SHORT' }} />)
-  ).toMatchSnapshot();
-  expect(
-    shallow(<TaskComponent task={{ ...TASK, branch: 'branch-6.7', branchType: 'LONG' }} />)
-  ).toMatchSnapshot();
+  expect(shallow(<TaskComponent task={{ ...TASK, branch: 'feature' }} />)).toMatchSnapshot();
+  expect(shallow(<TaskComponent task={{ ...TASK, branch: 'branch-6.7' }} />)).toMatchSnapshot();
   expect(shallow(<TaskComponent task={{ ...TASK, pullRequest: 'pr-89' }} />)).toMatchSnapshot();
 });

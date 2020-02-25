@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ export default class ListHeader extends React.PureComponent<Props> {
 
   render() {
     const cells = this.props.permissions.map(permission => (
-      <th className="permission-column" key={permission.key}>
+      <th className="permission-column little-padded-left little-padded-right" key={permission.key}>
         <div className="permission-column-inner">
           <span className="text-middle">{translate('projects_role', permission.key)}</span>
           <HelpTooltip className="spacer-left" overlay={this.renderTooltip(permission)} />
@@ -55,9 +55,9 @@ export default class ListHeader extends React.PureComponent<Props> {
     return (
       <thead>
         <tr>
-          <th>&nbsp;</th>
+          <th className="little-padded-left little-padded-right">&nbsp;</th>
           {cells}
-          <th className="thin nowrap text-right">&nbsp;</th>
+          <th className="thin nowrap text-right little-padded-left little-padded-right">&nbsp;</th>
         </tr>
       </thead>
     );

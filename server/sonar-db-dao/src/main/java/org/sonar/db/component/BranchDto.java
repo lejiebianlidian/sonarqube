@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -74,9 +74,9 @@ public class BranchDto {
 
   /**
    * UUID of the branch:
-   * - in which the short-lived branch or pull request will be merged into
-   * - that is the base of long-lived branch.
-   *
+   * - in which the pull request will be merged into
+   * - that is the base of a branch.
+   * <p>
    * Can be null if information is not known.
    */
   @Nullable
@@ -88,11 +88,7 @@ public class BranchDto {
   @Nullable
   private byte[] pullRequestBinary;
 
-  /**
-   * The UUID of the analysis set by user as manual baseline for computation of the New Code Period, if any.
-   */
-  @Nullable
-  private String manualBaseline;
+  private boolean excludeFromPurge;
 
   public String getUuid() {
     return uuid;
@@ -177,6 +173,15 @@ public class BranchDto {
     return decodePullRequestData(pullRequestBinary);
   }
 
+  public boolean isExcludeFromPurge() {
+    return excludeFromPurge;
+  }
+
+  public BranchDto setExcludeFromPurge(boolean excludeFromPurge) {
+    this.excludeFromPurge = excludeFromPurge;
+    return this;
+  }
+
   private static byte[] encodePullRequestData(DbProjectBranches.PullRequestData pullRequestData) {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     try {
@@ -195,16 +200,6 @@ public class BranchDto {
     }
   }
 
-  @CheckForNull
-  public String getManualBaseline() {
-    return manualBaseline;
-  }
-
-  public BranchDto setManualBaseline(@Nullable String manualBaseline) {
-    this.manualBaseline = manualBaseline == null || manualBaseline.isEmpty() ? null : manualBaseline;
-    return this;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -215,11 +210,10 @@ public class BranchDto {
     }
     BranchDto branchDto = (BranchDto) o;
     return Objects.equals(uuid, branchDto.uuid) &&
-        Objects.equals(projectUuid, branchDto.projectUuid) &&
-        Objects.equals(kee, branchDto.kee) &&
-        branchType == branchDto.branchType &&
-        Objects.equals(mergeBranchUuid, branchDto.mergeBranchUuid) &&
-        Objects.equals(manualBaseline, branchDto.manualBaseline);
+      Objects.equals(projectUuid, branchDto.projectUuid) &&
+      Objects.equals(kee, branchDto.kee) &&
+      branchType == branchDto.branchType &&
+      Objects.equals(mergeBranchUuid, branchDto.mergeBranchUuid);
   }
 
   @Override
@@ -229,15 +223,14 @@ public class BranchDto {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("BranchDto{");
-    sb.append("uuid='").append(uuid).append('\'');
-    sb.append(", projectUuid='").append(projectUuid).append('\'');
-    sb.append(", kee='").append(kee).append('\'');
-    sb.append(", keyType=").append(keyType);
-    sb.append(", branchType=").append(branchType);
-    sb.append(", mergeBranchUuid='").append(mergeBranchUuid).append('\'');
-    sb.append(", manualBaseline='").append(manualBaseline).append('\'');
-    sb.append('}');
-    return sb.toString();
+    return "BranchDto{" +
+      "uuid='" + uuid + '\'' +
+      ", projectUuid='" + projectUuid + '\'' +
+      ", kee='" + kee + '\'' +
+      ", keyType=" + keyType +
+      ", branchType=" + branchType +
+      ", mergeBranchUuid='" + mergeBranchUuid + '\'' +
+      ", excludeFromPurge=" + excludeFromPurge +
+      '}';
   }
 }

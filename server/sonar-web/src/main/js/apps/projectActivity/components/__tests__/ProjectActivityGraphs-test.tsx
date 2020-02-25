@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { parseDate } from 'sonar-ui-common/helpers/dates';
-import { DEFAULT_GRAPH } from '../../utils';
+import { DEFAULT_GRAPH } from '../../../../components/activity-graph/utils';
 import ProjectActivityGraphs from '../ProjectActivityGraphs';
 
 const ANALYSES = [

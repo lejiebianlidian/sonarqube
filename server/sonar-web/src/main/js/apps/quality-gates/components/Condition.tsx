@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import * as classNames from 'classnames';
 import * as React from 'react';
-import ActionsDropdown, {
-  ActionsDropdownItem
-} from 'sonar-ui-common/components/controls/ActionsDropdown';
+import { DeleteButton, EditButton } from 'sonar-ui-common/components/controls/buttons';
 import ConfirmModal from 'sonar-ui-common/components/controls/ConfirmModal';
 import {
   getLocalizedMetricName,
@@ -29,6 +28,7 @@ import {
 } from 'sonar-ui-common/helpers/l10n';
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
 import { deleteCondition } from '../../../api/quality-gates';
+import { getLocalizedMetricNameNoDiffMetric } from '../utils';
 import ConditionModal from './ConditionModal';
 
 interface Props {
@@ -39,6 +39,7 @@ interface Props {
   onRemoveCondition: (Condition: T.Condition) => void;
   onSaveCondition: (newCondition: T.Condition, oldCondition: T.Condition) => void;
   qualityGate: T.QualityGate;
+  updated?: boolean;
 }
 
 interface State {
@@ -85,43 +86,40 @@ export default class Condition extends React.PureComponent<Props, State> {
   renderOperator() {
     // TODO can operator be missing?
     const { op = 'GT' } = this.props.condition;
-    return (
-      <span className="note">
-        {this.props.metric.type === 'RATING'
-          ? translate('quality_gates.operator', op, 'rating')
-          : translate('quality_gates.operator', op)}
-      </span>
-    );
+    return this.props.metric.type === 'RATING'
+      ? translate('quality_gates.operator', op, 'rating')
+      : translate('quality_gates.operator', op);
   }
 
   render() {
-    const { condition, canEdit, metric, organization, qualityGate } = this.props;
+    const { condition, canEdit, metric, organization, qualityGate, updated } = this.props;
     return (
-      <tr>
+      <tr className={classNames({ highlighted: updated })}>
         <td className="text-middle">
-          {getLocalizedMetricName(metric)}
+          {getLocalizedMetricNameNoDiffMetric(metric)}
           {metric.hidden && (
             <span className="text-danger little-spacer-left">{translate('deprecated')}</span>
           )}
         </td>
 
-        <td className="thin text-middle nowrap">{this.renderOperator()}</td>
+        <td className="text-middle nowrap">{this.renderOperator()}</td>
 
-        <td className="thin text-middle nowrap">{formatMeasure(condition.error, metric.type)}</td>
+        <td className="text-middle nowrap">{formatMeasure(condition.error, metric.type)}</td>
 
         {canEdit && (
-          <td className="thin text-middle nowrap">
-            <ActionsDropdown className="dropdown-menu-right">
-              <ActionsDropdownItem className="js-condition-update" onClick={this.handleOpenUpdate}>
-                {translate('update_details')}
-              </ActionsDropdownItem>
-              <ActionsDropdownItem
-                destructive={true}
-                id="condition-delete"
-                onClick={this.handleDeleteClick}>
-                {translate('delete')}
-              </ActionsDropdownItem>
-            </ActionsDropdown>
+          <>
+            <td className="text-center thin">
+              <EditButton
+                data-test="quality-gates__condition-update"
+                onClick={this.handleOpenUpdate}
+              />
+            </td>
+            <td className="text-center thin">
+              <DeleteButton
+                data-test="quality-gates__condition-delete"
+                onClick={this.handleDeleteClick}
+              />
+            </td>
             {this.state.modal && (
               <ConditionModal
                 condition={condition}
@@ -147,7 +145,7 @@ export default class Condition extends React.PureComponent<Props, State> {
                 )}
               </ConfirmModal>
             )}
-          </td>
+          </>
         )}
       </tr>
     );

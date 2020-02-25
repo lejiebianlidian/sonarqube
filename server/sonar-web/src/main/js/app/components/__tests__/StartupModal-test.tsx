@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@ import { hasMessage } from 'sonar-ui-common/helpers/l10n';
 import { get, save } from 'sonar-ui-common/helpers/storage';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { showLicense } from '../../../api/marketplace';
-import { EditionKey } from '../../../apps/marketplace/utils';
 import { mockOrganization, mockRouter } from '../../../helpers/testMocks';
+import { EditionKey } from '../../../types/editions';
 import { ModalKey, StartupModal } from '../StartupModal';
 
 jest.mock('../../../api/marketplace', () => ({

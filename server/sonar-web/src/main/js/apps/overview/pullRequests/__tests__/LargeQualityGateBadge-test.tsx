@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,24 +19,12 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { isSonarCloud } from '../../../../helpers/system';
 import { mockComponent } from '../../../../helpers/testMocks';
-import LargeQualityGateBadge from '../LargeQualityGateBadge';
-
-jest.mock('../../../../helpers/system', () => ({
-  isSonarCloud: jest.fn()
-}));
+import { LargeQualityGateBadge } from '../LargeQualityGateBadge';
 
 it('should render correctly for SQ', () => {
-  (isSonarCloud as jest.Mock).mockReturnValue(false);
-
   expect(shallowRender()).toMatchSnapshot();
   expect(shallowRender({ level: 'OK' })).toMatchSnapshot();
-});
-
-it('should render the link correctly for SC', () => {
-  (isSonarCloud as jest.Mock).mockReturnValue(true);
-  expect(shallowRender()).toMatchSnapshot();
 });
 
 function shallowRender(props = {}) {

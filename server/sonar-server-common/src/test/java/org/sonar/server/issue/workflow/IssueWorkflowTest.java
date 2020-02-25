@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.server.issue.workflow;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -52,7 +51,6 @@ import static org.sonar.api.issue.Issue.RESOLUTION_REMOVED;
 import static org.sonar.api.issue.Issue.RESOLUTION_WONT_FIX;
 import static org.sonar.api.issue.Issue.STATUS_CLOSED;
 import static org.sonar.api.issue.Issue.STATUS_CONFIRMED;
-import static org.sonar.api.issue.Issue.STATUS_IN_REVIEW;
 import static org.sonar.api.issue.Issue.STATUS_OPEN;
 import static org.sonar.api.issue.Issue.STATUS_REOPENED;
 import static org.sonar.api.issue.Issue.STATUS_RESOLVED;
@@ -74,7 +72,7 @@ public class IssueWorkflowTest {
     // issues statuses
     expectedStatus.addAll(Arrays.asList(STATUS_OPEN, STATUS_CONFIRMED, STATUS_REOPENED, STATUS_RESOLVED, STATUS_CLOSED));
     // hostpots statuses
-    expectedStatus.addAll(Arrays.asList(STATUS_TO_REVIEW, STATUS_IN_REVIEW, STATUS_REVIEWED));
+    expectedStatus.addAll(Arrays.asList(STATUS_TO_REVIEW, STATUS_REVIEWED));
 
     assertThat(underTest.statusKeys()).containsExactlyInAnyOrder(expectedStatus.toArray(new String[]{}));
   }
@@ -473,11 +471,6 @@ public class IssueWorkflowTest {
   }
 
   private Collection<String> keys(List<Transition> transitions) {
-    return Collections2.transform(transitions, new Function<Transition, String>() {
-      @Override
-      public String apply(@Nullable Transition transition) {
-        return transition.key();
-      }
-    });
+    return Collections2.transform(transitions, Transition::key);
   }
 }

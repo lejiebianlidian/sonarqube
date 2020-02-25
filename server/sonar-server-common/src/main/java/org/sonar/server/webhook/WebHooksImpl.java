@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,14 +23,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import org.sonar.api.ce.ComputeEngineSide;
+import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.server.ServerSide;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.component.ComponentDto;
+import org.sonar.db.project.ProjectDto;
 import org.sonar.db.webhook.WebhookDao;
 import org.sonar.db.webhook.WebhookDto;
 import org.sonar.server.async.AsyncExecution;
@@ -56,27 +59,26 @@ public class WebHooksImpl implements WebHooks {
   }
 
   @Override
-  public boolean isEnabled(ComponentDto projectDto) {
-    return readWebHooksFrom(projectDto.uuid())
+  public boolean isEnabled(ProjectDto projectDto) {
+    return readWebHooksFrom(projectDto.getUuid(), null)
       .findAny()
       .isPresent();
   }
 
-  private Stream<WebhookDto> readWebHooksFrom(String projectUuid) {
+  private Stream<WebhookDto> readWebHooksFrom(String projectUuid, @CheckForNull PostProjectAnalysisTask.LogStatistics taskLogStatistics) {
     try (DbSession dbSession = dbClient.openSession(false)) {
 
-      Optional<ComponentDto> optionalComponentDto = dbClient.componentDao().selectByUuid(dbSession, projectUuid);
-      ComponentDto componentDto = checkStateWithOptional(optionalComponentDto, "the requested project '%s' was not found", projectUuid);
-
-      if (componentDto.getMainBranchProjectUuid() != null && !componentDto.uuid().equals(componentDto.getMainBranchProjectUuid())) {
-        Optional<ComponentDto> mainBranchComponentDto = dbClient.componentDao().selectByUuid(dbSession, componentDto.getMainBranchProjectUuid());
-        componentDto = checkStateWithOptional(mainBranchComponentDto, "the requested project '%s' was not found", projectUuid);
-      }
+      Optional<ProjectDto> optionalProjectDto = dbClient.projectDao().selectByUuid(dbSession, projectUuid);
+      ProjectDto projectDto = checkStateWithOptional(optionalProjectDto, "the requested project '%s' was not found", projectUuid);
 
       WebhookDao dao = dbClient.webhookDao();
-      return Stream.concat(
-        dao.selectByProject(dbSession, componentDto).stream(),
-        dao.selectByOrganizationUuid(dbSession, componentDto.getOrganizationUuid()).stream());
+      List<WebhookDto> projectWebhooks = dao.selectByProject(dbSession, projectDto);
+      List<WebhookDto> organizationWebhooks = dao.selectByOrganizationUuid(dbSession, projectDto.getOrganizationUuid());
+      if (taskLogStatistics != null) {
+        taskLogStatistics.add("globalWebhooks", organizationWebhooks.size());
+        taskLogStatistics.add("projectWebhooks", projectWebhooks.size());
+      }
+      return Stream.concat(projectWebhooks.stream(), organizationWebhooks.stream());
     }
   }
 
@@ -90,7 +92,17 @@ public class WebHooksImpl implements WebHooks {
 
   @Override
   public void sendProjectAnalysisUpdate(Analysis analysis, Supplier<WebhookPayload> payloadSupplier) {
-    List<Webhook> webhooks = readWebHooksFrom(analysis.getProjectUuid())
+    sendProjectAnalysisUpdateImpl(analysis, payloadSupplier, null);
+  }
+
+  @Override
+  public void sendProjectAnalysisUpdate(Analysis analysis, Supplier<WebhookPayload> payloadSupplier, PostProjectAnalysisTask.LogStatistics taskLogStatistics) {
+    sendProjectAnalysisUpdateImpl(analysis, payloadSupplier, taskLogStatistics);
+  }
+
+  private void sendProjectAnalysisUpdateImpl(Analysis analysis, Supplier<WebhookPayload> payloadSupplier,
+    @Nullable PostProjectAnalysisTask.LogStatistics taskLogStatistics) {
+    List<Webhook> webhooks = readWebHooksFrom(analysis.getProjectUuid(), taskLogStatistics)
       .map(dto -> new Webhook(dto.getUuid(), analysis.getProjectUuid(), analysis.getCeTaskUuid(), analysis.getAnalysisUuid(),
         dto.getName(), dto.getUrl(), dto.getSecret()))
       .collect(MoreCollectors.toList());

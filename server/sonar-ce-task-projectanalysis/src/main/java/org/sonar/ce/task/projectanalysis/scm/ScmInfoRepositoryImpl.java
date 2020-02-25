@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,21 +19,19 @@
  */
 package org.sonar.ce.task.projectanalysis.scm;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.scanner.protocol.output.ScannerReport;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolder;
 import org.sonar.ce.task.projectanalysis.batch.BatchReportReader;
 import org.sonar.ce.task.projectanalysis.component.Component;
 import org.sonar.ce.task.projectanalysis.component.Component.Status;
 import org.sonar.ce.task.projectanalysis.source.SourceHashRepository;
 import org.sonar.ce.task.projectanalysis.source.SourceLinesDiff;
+import org.sonar.scanner.protocol.output.ScannerReport;
 
 import static java.util.Objects.requireNonNull;
 
@@ -49,7 +47,7 @@ public class ScmInfoRepositoryImpl implements ScmInfoRepository {
   private final SourceHashRepository sourceHashRepository;
 
   public ScmInfoRepositoryImpl(BatchReportReader scannerReportReader, AnalysisMetadataHolder analysisMetadata, ScmInfoDbLoader scmInfoDbLoader,
-                               SourceLinesDiff sourceLinesDiff, SourceHashRepository sourceHashRepository) {
+    SourceLinesDiff sourceLinesDiff, SourceHashRepository sourceHashRepository) {
     this.scannerReportReader = scannerReportReader;
     this.analysisMetadata = analysisMetadata;
     this.scmInfoDbLoader = scmInfoDbLoader;
@@ -86,21 +84,21 @@ public class ScmInfoRepositoryImpl implements ScmInfoRepository {
 
   private static Optional<ScmInfo> getScmInfoFromReport(Component file, ScannerReport.Changesets changesets) {
     LOGGER.trace("Reading SCM info from report for file '{}'", file.getDbKey());
-    return Optional.of(new ReportScmInfo(changesets));
+    return Optional.of(ReportScmInfo.create(changesets));
   }
 
   private Optional<ScmInfo> generateScmInfoForAllFile(Component file) {
     if (file.getFileAttributes().getLines() == 0) {
       return Optional.empty();
     }
-    Set<Integer> newOrChangedLines = IntStream.rangeClosed(1, file.getFileAttributes().getLines()).boxed().collect(Collectors.toSet());
-    return Optional.of(GeneratedScmInfo.create(analysisMetadata.getAnalysisDate(), newOrChangedLines));
+    return Optional.of(GeneratedScmInfo.create(analysisMetadata.getAnalysisDate(), file.getFileAttributes().getLines()));
   }
 
   private static ScmInfo removeAuthorAndRevision(ScmInfo info) {
-    Map<Integer, Changeset> cleanedScmInfo = info.getAllChangesets().entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, e -> removeAuthorAndRevision(e.getValue())));
-    return new ScmInfoImpl(cleanedScmInfo);
+    Changeset[] changesets = Arrays.stream(info.getAllChangesets())
+      .map(ScmInfoRepositoryImpl::removeAuthorAndRevision)
+      .toArray(Changeset[]::new);
+    return new ScmInfoImpl(changesets);
   }
 
   private static Changeset removeAuthorAndRevision(Changeset changeset) {

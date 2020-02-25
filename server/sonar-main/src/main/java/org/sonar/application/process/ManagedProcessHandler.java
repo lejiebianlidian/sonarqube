@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.process.ProcessId;
@@ -72,7 +73,8 @@ public class ManagedProcessHandler {
       this.process = commandLauncher.get();
     } catch (RuntimeException e) {
       LOG.error("Fail to launch process [{}]", processId.getKey(), e);
-      lifecycle.tryToMoveTo(ManagedProcessLifecycle.State.STOPPED);
+      lifecycle.tryToMoveTo(ManagedProcessLifecycle.State.STOPPING);
+      finalizeStop();
       throw e;
     }
     this.stdOutGobbler = new StreamGobbler(process.getInputStream(), processId.getKey());
@@ -103,7 +105,7 @@ public class ManagedProcessHandler {
         hardStop();
       } else {
         // enforce stop and clean-up even if process has been quickly stopped
-        stopForcibly();
+        finalizeStop();
       }
     } else {
       // already stopping or stopped
@@ -122,7 +124,7 @@ public class ManagedProcessHandler {
         LOG.info("{} failed to stop in a quick fashion. Killing it.", processId.getKey());
       }
       // enforce stop and clean-up even if process has been quickly stopped
-      stopForcibly();
+      finalizeStop();
     } else {
       // already stopping or stopped
       waitForDown();
@@ -164,7 +166,8 @@ public class ManagedProcessHandler {
       process.waitFor(hardStopTimeout.getDuration(), hardStopTimeout.getUnit());
     } catch (InterruptedException e) {
       // can't wait for the termination of process. Let's assume it's down.
-      throw rethrowWithWarn(e, format("Interrupted while hard stopping process %s", processId));
+      throw rethrowWithWarn(e,
+        format("Interrupted while hard stopping process %s (currentThread=%s)", processId, Thread.currentThread().getName()));
     } catch (Throwable e) {
       LOG.error("Failed while asking for hard stop of process {}", processId, e);
     }
@@ -176,9 +179,13 @@ public class ManagedProcessHandler {
     return new InterruptedException(errorMessage);
   }
 
-  public void stopForcibly() {
-    eventWatcher.interrupt();
-    stopWatcher.interrupt();
+  private void finalizeStop() {
+    if (!lifecycle.tryToMoveTo(ManagedProcessLifecycle.State.FINALIZE_STOPPING)) {
+      return;
+    }
+
+    interrupt(eventWatcher);
+    interrupt(stopWatcher);
     if (process != null) {
       process.destroyForcibly();
       waitForDown();
@@ -194,6 +201,18 @@ public class ManagedProcessHandler {
     }
     // will trigger state listeners
     lifecycle.tryToMoveTo(ManagedProcessLifecycle.State.STOPPED);
+  }
+
+  private static void interrupt(@Nullable Thread thread) {
+    Thread currentThread = Thread.currentThread();
+    // prevent current thread from interrupting itself
+    if (thread != null && currentThread != thread) {
+      thread.interrupt();
+      if (LOG.isTraceEnabled()) {
+        Exception e = new Exception("(capturing stack trace for debugging purpose)");
+        LOG.trace("{} interrupted {}", currentThread.getName(), thread.getName(), e);
+      }
+    }
   }
 
   void refreshState() {
@@ -239,7 +258,15 @@ public class ManagedProcessHandler {
         Thread.currentThread().interrupt();
         // stop watching process
       }
-      stopForcibly();
+      // since process is already stopped, this will only finalize the stop sequence
+      // call hardStop() rather than finalizeStop() directly because hardStop() checks lifeCycle state and this
+      // avoid running to concurrent stop finalization pieces of code
+      try {
+        hardStop();
+      } catch (InterruptedException e) {
+        LOG.debug("Interrupted while stopping [{}] after process ended", processId.getKey(), e);
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,22 +22,25 @@ import { sortBy } from 'lodash';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { IndexLink } from 'react-router';
-import { getSettingsAppAllCategories, Store } from '../../../store/rootReducer';
+import { getAppState, getSettingsAppAllCategories, Store } from '../../../store/rootReducer';
 import { getCategoryName } from '../utils';
+import { ADDITIONAL_CATEGORIES } from './AdditionalCategories';
+import { CATEGORY_OVERRIDES } from './CategoryOverrides';
 
 interface Category {
   key: string;
   name: string;
 }
 
-interface Props {
+export interface CategoriesListProps {
+  branchesEnabled?: boolean;
   categories: string[];
   component?: T.Component;
   defaultCategory: string;
   selectedCategory: string;
 }
 
-export class CategoriesList extends React.PureComponent<Props> {
+export class CategoriesList extends React.PureComponent<CategoriesListProps> {
   renderLink(category: Category) {
     const { component, defaultCategory, selectedCategory } = this.props;
     const pathname = this.props.component ? '/project/settings' : '/settings';
@@ -58,10 +61,25 @@ export class CategoriesList extends React.PureComponent<Props> {
   }
 
   render() {
-    const categoriesWithName = this.props.categories.map(key => ({
-      key,
-      name: getCategoryName(key)
-    }));
+    const { branchesEnabled } = this.props;
+
+    const categoriesWithName = this.props.categories
+      .filter(key => !CATEGORY_OVERRIDES[key.toLowerCase()])
+      .map(key => ({
+        key,
+        name: getCategoryName(key)
+      }))
+      .concat(
+        ADDITIONAL_CATEGORIES.filter(c => c.displayTab)
+          .filter(c =>
+            this.props.component
+              ? // Project settings
+                c.availableForProject
+              : // Global settings
+                c.availableGlobally
+          )
+          .filter(c => branchesEnabled || !c.requiresBranchesEnabled)
+      );
     const sortedCategories = sortBy(categoriesWithName, category => category.name.toLowerCase());
     return (
       <ul className="side-tabs-menu">
@@ -74,7 +92,8 @@ export class CategoriesList extends React.PureComponent<Props> {
 }
 
 const mapStateToProps = (state: Store) => ({
-  categories: getSettingsAppAllCategories(state)
+  categories: getSettingsAppAllCategories(state),
+  branchesEnabled: getAppState(state).branchesEnabled
 });
 
 export default connect(mapStateToProps)(CategoriesList);

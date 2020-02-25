@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang.StringUtils;
 import org.sonar.api.utils.MessageException;
 import org.sonar.ce.task.CeTask;
 import org.sonar.ce.task.projectanalysis.analysis.MutableAnalysisMetadataHolder;
@@ -34,13 +33,12 @@ import org.sonar.ce.task.projectanalysis.analysis.ScannerPlugin;
 import org.sonar.ce.task.projectanalysis.batch.BatchReportReader;
 import org.sonar.ce.task.projectanalysis.component.BranchLoader;
 import org.sonar.ce.task.step.ComputationStep;
-import org.sonar.core.component.ComponentKeys;
 import org.sonar.core.platform.PluginRepository;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.component.ComponentDto;
 import org.sonar.db.organization.OrganizationDto;
+import org.sonar.db.project.ProjectDto;
 import org.sonar.db.qualityprofile.QProfileDto;
 import org.sonar.scanner.protocol.output.ScannerReport;
 import org.sonar.scanner.protocol.output.ScannerReport.Metadata.Plugin;
@@ -104,32 +102,29 @@ public class LoadReportAnalysisMetadataHolderStep implements ComputationStep {
    * @return a {@link Runnable} to execute some checks on the project at the end of the step
    */
   private Runnable loadProject(ScannerReport.Metadata reportMetadata, Organization organization) {
-    String reportProjectKey = projectKeyFromReport(reportMetadata);
     CeTask.Component mainComponent = mandatoryComponent(ceTask.getMainComponent());
     String mainComponentKey = mainComponent.getKey()
       .orElseThrow(() -> MessageException.of(format(
         "Compute Engine task main component key is null. Project with UUID %s must have been deleted since report was uploaded. Can not proceed.",
         mainComponent.getUuid())));
     CeTask.Component component = mandatoryComponent(ceTask.getComponent());
-    String componentKey = component.getKey()
-      .orElseThrow(() -> MessageException.of(format(
+    if (!component.getKey().isPresent()) {
+      throw MessageException.of(format(
         "Compute Engine task component key is null. Project with UUID %s must have been deleted since report was uploaded. Can not proceed.",
-        component.getUuid())));
-    ComponentDto dto = toProject(reportProjectKey);
+        component.getUuid()));
+    }
 
+    ProjectDto dto = toProject(reportMetadata.getProjectKey());
     analysisMetadata.setProject(Project.from(dto));
     return () -> {
-      if (!mainComponentKey.equals(reportProjectKey)) {
+      if (!mainComponentKey.equals(reportMetadata.getProjectKey())) {
         throw MessageException.of(format(
           "ProjectKey in report (%s) is not consistent with projectKey under which the report has been submitted (%s)",
-          reportProjectKey,
+          reportMetadata.getProjectKey(),
           mainComponentKey));
       }
       if (!dto.getOrganizationUuid().equals(organization.getUuid())) {
         throw MessageException.of(format("Project is not in the expected organization: %s", organization.getKey()));
-      }
-      if (componentKey.equals(mainComponentKey) && dto.getMainBranchProjectUuid() != null) {
-        throw MessageException.of("Component should not reference a branch");
       }
     };
   }
@@ -225,20 +220,12 @@ public class LoadReportAnalysisMetadataHolderStep implements ComputationStep {
     return Organization.from(organizationDto.get());
   }
 
-  private ComponentDto toProject(String projectKey) {
+  private ProjectDto toProject(String projectKey) {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      Optional<ComponentDto> opt = dbClient.componentDao().selectByKey(dbSession, projectKey);
+      Optional<ProjectDto> opt = dbClient.projectDao().selectProjectByKey(dbSession, projectKey);
       checkState(opt.isPresent(), "Project with key '%s' can't be found", projectKey);
       return opt.get();
     }
-  }
-
-  private static String projectKeyFromReport(ScannerReport.Metadata reportMetadata) {
-    String deprecatedBranch = reportMetadata.getDeprecatedBranch();
-    if (StringUtils.isNotEmpty(deprecatedBranch)) {
-      return ComponentKeys.createKey(reportMetadata.getProjectKey(), deprecatedBranch);
-    }
-    return reportMetadata.getProjectKey();
   }
 
   @Override

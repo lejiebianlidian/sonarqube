@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,96 +17,106 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import * as classNames from 'classnames';
 import * as React from 'react';
 import ContextNavBar from 'sonar-ui-common/components/ui/ContextNavBar';
 import { STATUSES } from '../../../../apps/background-tasks/constants';
+import { BranchLike } from '../../../../types/branch-like';
+import { ComponentQualifier } from '../../../../types/component';
 import { rawSizes } from '../../../theme';
 import RecentHistory from '../../RecentHistory';
-import './ComponentNav.css';
 import ComponentNavBgTaskNotif from './ComponentNavBgTaskNotif';
-import ComponentNavHeader from './ComponentNavHeader';
-import ComponentNavMenu from './ComponentNavMenu';
-import ComponentNavMeta from './ComponentNavMeta';
+import Header from './Header';
+import HeaderMeta from './HeaderMeta';
+import Menu from './Menu';
+import InfoDrawer from './projectInformation/InfoDrawer';
+import ProjectInformation from './projectInformation/ProjectInformation';
 
 interface Props {
-  branchLikes: T.BranchLike[];
-  currentBranchLike: T.BranchLike | undefined;
+  branchLikes: BranchLike[];
+  currentBranchLike: BranchLike | undefined;
   component: T.Component;
   currentTask?: T.Task;
   currentTaskOnSameBranch?: boolean;
   isInProgress?: boolean;
   isPending?: boolean;
-  location: {};
+  onComponentChange: (changes: Partial<T.Component>) => void;
   warnings: string[];
 }
 
-export default class ComponentNav extends React.PureComponent<Props> {
-  mounted = false;
+export default function ComponentNav(props: Props) {
+  const {
+    branchLikes,
+    component,
+    currentBranchLike,
+    currentTask,
+    currentTaskOnSameBranch,
+    isInProgress,
+    isPending,
+    warnings
+  } = props;
+  const { contextNavHeightRaw, globalNavHeightRaw } = rawSizes;
 
-  componentDidMount() {
-    this.populateRecentHistory();
-  }
+  const [displayProjectInfo, setDisplayProjectInfo] = React.useState(false);
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.component.key !== prevProps.component.key) {
-      this.populateRecentHistory();
-    }
-  }
-
-  populateRecentHistory = () => {
-    const { breadcrumbs } = this.props.component;
+  React.useEffect(() => {
+    const { breadcrumbs, key, name, organization } = component;
     const { qualifier } = breadcrumbs[breadcrumbs.length - 1];
-    if (['TRK', 'VW', 'APP', 'DEV'].indexOf(qualifier) !== -1) {
-      RecentHistory.add(
-        this.props.component.key,
-        this.props.component.name,
-        qualifier.toLowerCase(),
-        this.props.component.organization
-      );
+    if (
+      [
+        ComponentQualifier.Project,
+        ComponentQualifier.Portfolio,
+        ComponentQualifier.Application,
+        ComponentQualifier.Developper
+      ].includes(qualifier as ComponentQualifier)
+    ) {
+      RecentHistory.add(key, name, qualifier.toLowerCase(), organization);
     }
-  };
+  }, [component, component.key]);
 
-  render() {
-    const { component, currentBranchLike, currentTask, isInProgress, isPending } = this.props;
-    const contextNavHeight = rawSizes.contextNavHeightRaw;
-    let notifComponent;
-    if (isInProgress || isPending || (currentTask && currentTask.status === STATUSES.FAILED)) {
-      notifComponent = (
-        <ComponentNavBgTaskNotif
-          component={component}
-          currentTask={currentTask}
-          currentTaskOnSameBranch={this.props.currentTaskOnSameBranch}
-          isInProgress={isInProgress}
-          isPending={isPending}
-        />
-      );
-    }
-    return (
-      <ContextNavBar
-        height={notifComponent ? contextNavHeight + 30 : contextNavHeight}
-        id="context-navigation"
-        notif={notifComponent}>
-        <div className="navbar-context-justified">
-          <ComponentNavHeader
-            branchLikes={this.props.branchLikes}
-            component={component}
-            currentBranchLike={currentBranchLike}
-            // to close dropdown on any location change
-            location={this.props.location}
-          />
-          <ComponentNavMeta
-            branchLike={currentBranchLike}
-            component={component}
-            warnings={this.props.warnings}
-          />
-        </div>
-        <ComponentNavMenu
-          branchLike={currentBranchLike}
-          component={component}
-          // to re-render selected menu item
-          location={this.props.location}
-        />
-      </ContextNavBar>
+  let notifComponent;
+  if (isInProgress || isPending || (currentTask && currentTask.status === STATUSES.FAILED)) {
+    notifComponent = (
+      <ComponentNavBgTaskNotif
+        component={component}
+        currentTask={currentTask}
+        currentTaskOnSameBranch={currentTaskOnSameBranch}
+        isInProgress={isInProgress}
+        isPending={isPending}
+      />
     );
   }
+
+  const contextNavHeight = notifComponent ? contextNavHeightRaw + 30 : contextNavHeightRaw;
+
+  return (
+    <ContextNavBar height={contextNavHeight} id="context-navigation" notif={notifComponent}>
+      <div
+        className={classNames('display-flex-center display-flex-space-between little-padded-top', {
+          'padded-bottom': warnings.length === 0
+        })}>
+        <Header
+          branchLikes={branchLikes}
+          component={component}
+          currentBranchLike={currentBranchLike}
+        />
+        <HeaderMeta branchLike={currentBranchLike} component={component} warnings={warnings} />
+      </div>
+      <Menu
+        branchLike={currentBranchLike}
+        component={component}
+        onToggleProjectInfo={() => setDisplayProjectInfo(!displayProjectInfo)}
+      />
+      <InfoDrawer
+        displayed={displayProjectInfo}
+        onClose={() => setDisplayProjectInfo(false)}
+        top={globalNavHeightRaw + contextNavHeightRaw}>
+        <ProjectInformation
+          branchLike={currentBranchLike}
+          component={component}
+          onComponentChange={props.onComponentChange}
+        />
+      </InfoDrawer>
+    </ContextNavBar>
+  );
 }

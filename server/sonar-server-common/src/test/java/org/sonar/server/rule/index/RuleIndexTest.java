@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -86,8 +86,8 @@ import static org.sonar.server.rule.index.RuleIndex.FACET_TYPES;
 import static org.sonar.server.rule.index.RuleIndexDefinition.TYPE_ACTIVE_RULE;
 import static org.sonar.server.rule.index.RuleIndexDefinition.TYPE_RULE;
 import static org.sonar.server.rule.index.RuleIndexDefinition.TYPE_RULE_EXTENSION;
-import static org.sonar.server.security.SecurityStandardHelper.SANS_TOP_25_INSECURE_INTERACTION;
-import static org.sonar.server.security.SecurityStandardHelper.SANS_TOP_25_RISKY_RESOURCE;
+import static org.sonar.server.security.SecurityStandards.SANS_TOP_25_INSECURE_INTERACTION;
+import static org.sonar.server.security.SecurityStandards.SANS_TOP_25_RISKY_RESOURCE;
 
 public class RuleIndexTest {
 

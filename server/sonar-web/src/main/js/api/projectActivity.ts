@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,16 @@
  */
 import { getJSON, post, postJSON, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
+import { BranchParameters } from '../types/branch-like';
 
 export function getProjectActivity(
-  data: { project: string; category?: string; p?: number; ps?: number } & T.BranchParameters
+  data: {
+    project: string;
+    category?: string;
+    from?: string;
+    p?: number;
+    ps?: number;
+  } & BranchParameters
 ): Promise<{ analyses: T.Analysis[]; paging: T.Paging }> {
   return getJSON('/api/project_analyses/search', data).catch(throwGlobalError);
 }

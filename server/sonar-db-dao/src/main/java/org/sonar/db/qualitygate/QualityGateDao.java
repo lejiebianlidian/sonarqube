@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,6 +54,11 @@ public class QualityGateDao implements Dao {
   }
 
   @CheckForNull
+  public QualityGateDto selectByUuid(DbSession session, String uuid) {
+    return mapper(session).selectByUuid(uuid);
+  }
+
+  @CheckForNull
   public QGateWithOrgDto selectByOrganizationAndUuid(DbSession dbSession, OrganizationDto organization, String qualityGateUuid) {
     return mapper(dbSession).selectByUuidAndOrganization(qualityGateUuid, organization.getUuid());
   }
@@ -102,7 +107,7 @@ public class QualityGateDao implements Dao {
     return session.getMapper(QualityGateMapper.class);
   }
 
-  public QualityGateDto selectByProjectUuid(DbSession dbSession, String uuid) {
-    return mapper(dbSession).selectByProjectUuid(uuid);
+  public QualityGateDto selectByProjectUuid(DbSession dbSession, String projectUuid) {
+    return mapper(dbSession).selectByProjectUuid(projectUuid);
   }
 }

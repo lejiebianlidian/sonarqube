@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ import org.sonar.core.i18n.I18n;
 import org.sonar.server.issue.notification.NewIssuesStatistics.Metric;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Base class to create emails for new issues
@@ -65,7 +66,7 @@ public abstract class AbstractNewIssuesEmailTemplate implements EmailTemplate {
 
   public static String encode(String toEncode) {
     try {
-      return URLEncoder.encode(toEncode, "UTF-8");
+      return URLEncoder.encode(toEncode, UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException("Encoding not supported", e);
     }

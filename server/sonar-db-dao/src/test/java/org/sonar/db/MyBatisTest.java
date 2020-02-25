@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,11 +31,11 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class MyBatisTest {
-  private static H2Database database;
+  private static SQDatabase database;
 
   @BeforeClass
   public static void start() {
-    database = new H2Database("sonar2", true);
+    database = SQDatabase.newH2Database("sonar2", true);
     database.start();
   }
 

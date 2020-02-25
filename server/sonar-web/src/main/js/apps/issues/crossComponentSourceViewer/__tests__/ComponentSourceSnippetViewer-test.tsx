@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,15 +18,14 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { mount, ReactWrapper, shallow } from 'enzyme';
-import { times } from 'lodash';
+import { range, times } from 'lodash';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getSources } from '../../../../api/components';
+import { mockBranch, mockMainBranch } from '../../../../helpers/mocks/branch-like';
 import {
   mockFlowLocation,
   mockIssue,
-  mockMainBranch,
-  mockShortLivingBranch,
   mockSnippetsByComponent,
   mockSourceLine,
   mockSourceViewerFile
@@ -45,10 +44,13 @@ it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot();
 });
 
-it('should expand block', async () => {
-  (getSources as jest.Mock).mockResolvedValueOnce(
-    Object.values(mockSnippetsByComponent('a', [22, 23, 24, 25, 26, 27, 28, 29, 30, 31]).sources)
-  );
+it('should render correctly with secondary locations', () => {
+  // issue with secondary locations but no flows
+  const issue = mockIssue(true, {
+    flows: [],
+    textRange: { startLine: 7, endLine: 7, startOffset: 5, endOffset: 10 }
+  });
+
   const snippetGroup: T.SnippetGroup = {
     locations: [
       mockFlowLocation({
@@ -57,21 +59,48 @@ it('should expand block', async () => {
       }),
       mockFlowLocation({
         component: 'a',
-        textRange: { startLine: 54, endLine: 54, startOffset: 0, endOffset: 0 }
+        textRange: { startLine: 74, endLine: 74, startOffset: 0, endOffset: 0 }
       })
     ],
-    ...mockSnippetsByComponent('a', [32, 33, 34, 35, 36, 52, 53, 54, 55, 56])
+    ...mockSnippetsByComponent('a', [...range(2, 17), ...range(29, 39), ...range(69, 79)])
+  };
+  const wrapper = shallowRender({ issue, snippetGroup });
+  expect(wrapper.state('snippets')).toHaveLength(3);
+  expect(wrapper.state('snippets')[0]).toEqual({ index: 0, start: 2, end: 16 });
+  expect(wrapper.state('snippets')[1]).toEqual({ index: 1, start: 29, end: 39 });
+  expect(wrapper.state('snippets')[2]).toEqual({ index: 2, start: 69, end: 79 });
+});
+
+it('should expand block', async () => {
+  (getSources as jest.Mock).mockResolvedValueOnce(
+    Object.values(mockSnippetsByComponent('a', range(6, 59)).sources)
+  );
+  const issue = mockIssue(true, {
+    textRange: { startLine: 74, endLine: 74, startOffset: 5, endOffset: 10 }
+  });
+  const snippetGroup: T.SnippetGroup = {
+    locations: [
+      mockFlowLocation({
+        component: 'a',
+        textRange: { startLine: 74, endLine: 74, startOffset: 0, endOffset: 0 }
+      }),
+      mockFlowLocation({
+        component: 'a',
+        textRange: { startLine: 107, endLine: 107, startOffset: 0, endOffset: 0 }
+      })
+    ],
+    ...mockSnippetsByComponent('a', [...range(69, 83), ...range(102, 112)])
   };
 
-  const wrapper = shallowRender({ snippetGroup });
+  const wrapper = shallowRender({ issue, snippetGroup });
 
   wrapper.instance().expandBlock(0, 'up');
   await waitAndUpdate(wrapper);
 
-  expect(getSources).toHaveBeenCalledWith({ from: 19, key: 'a', to: 31 });
+  expect(getSources).toHaveBeenCalledWith({ from: 9, key: 'a', to: 68 });
   expect(wrapper.state('snippets')).toHaveLength(2);
-  expect(wrapper.state('snippets')[0]).toEqual({ index: 0, start: 22, end: 36 });
-  expect(Object.keys(wrapper.state('additionalLines'))).toHaveLength(10);
+  expect(wrapper.state('snippets')[0]).toEqual({ index: 0, start: 19, end: 83 });
+  expect(Object.keys(wrapper.state('additionalLines'))).toHaveLength(53);
 });
 
 it('should expand full component', async () => {
@@ -110,18 +139,18 @@ it('should get the right branch when expanding', async () => {
   );
   const snippetGroup: T.SnippetGroup = {
     locations: [mockFlowLocation()],
-    ...mockSnippetsByComponent('a', [1, 2, 3, 4])
+    ...mockSnippetsByComponent('a', [1, 2, 3, 4, 5, 6, 7])
   };
 
   const wrapper = shallowRender({
-    branchLike: mockShortLivingBranch({ name: 'asdf' }),
+    branchLike: mockBranch({ name: 'asdf' }),
     snippetGroup
   });
 
   wrapper.instance().expandBlock(0, 'down');
   await waitAndUpdate(wrapper);
 
-  expect(getSources).toHaveBeenCalledWith({ branch: 'asdf', from: 5, key: 'a', to: 17 });
+  expect(getSources).toHaveBeenCalledWith({ branch: 'asdf', from: 8, key: 'a', to: 67 });
 });
 
 it('should handle correctly open/close issue', () => {
@@ -232,6 +261,17 @@ describe('getNodes', () => {
     const rootNode = wrapper.instance().rootNodeRef;
     mockDom(rootNode.current!);
     expect(wrapper.instance().getNodes(3)).not.toBeUndefined();
+  });
+
+  it('should enable cleaning the dom', async () => {
+    await waitAndUpdate(wrapper);
+    const rootNode = wrapper.instance().rootNodeRef;
+    mockDom(rootNode.current!);
+
+    expect(wrapper.instance().cleanDom(3));
+    const nodes = wrapper.instance().getNodes(3);
+    expect(nodes!.wrapper.style.maxHeight).toBe('');
+    expect(nodes!.table.style.marginTop).toBe('');
   });
 });
 

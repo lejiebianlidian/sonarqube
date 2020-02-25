@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,26 +17,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { getBranchLikeKey } from '../../helpers/branches';
-import {
-  mockLongLivingBranch,
-  mockPullRequest,
-  mockQualityGateStatusCondition,
-  mockShortLivingBranch
-} from '../../helpers/testMocks';
+import { getBranchLikeKey } from '../../helpers/branch-like';
+import { mockBranch, mockPullRequest } from '../../helpers/mocks/branch-like';
+import { mockQualityGateStatusCondition } from '../../helpers/mocks/quality-gates';
+import { BranchLike } from '../../types/branch-like';
+import { QualityGateStatusCondition } from '../../types/quality-gates';
 import reducer, {
   getBranchStatusByBranchLike,
   registerBranchStatusAction,
   State
 } from '../branches';
 
-type TestArgs = [T.BranchLike, string, T.Status, T.QualityGateStatusCondition[], boolean?];
+type TestArgs = [BranchLike, string, T.Status, QualityGateStatusCondition[], boolean?];
 
 const FAILING_CONDITION = mockQualityGateStatusCondition();
 const COMPONENT = 'foo';
 const BRANCH_STATUS_1: TestArgs = [mockPullRequest(), COMPONENT, 'ERROR', [FAILING_CONDITION]];
-const BRANCH_STATUS_2: TestArgs = [mockLongLivingBranch(), 'bar', 'OK', [], true];
-const BRANCH_STATUS_3: TestArgs = [mockShortLivingBranch(), COMPONENT, 'OK', []];
+const BRANCH_STATUS_2: TestArgs = [mockBranch(), 'bar', 'OK', [], true];
+const BRANCH_STATUS_3: TestArgs = [mockBranch(), COMPONENT, 'OK', []];
 
 it('should allow to register new branche statuses', () => {
   const initialState: State = convertToState();
@@ -51,7 +49,7 @@ it('should allow to register new branche statuses', () => {
 
 it('should allow to update branche statuses', () => {
   const initialState: State = convertToState([BRANCH_STATUS_1, BRANCH_STATUS_2, BRANCH_STATUS_3]);
-  const branchLike: T.BranchLike = { ...BRANCH_STATUS_1[0], status: { qualityGateStatus: 'OK' } };
+  const branchLike: BranchLike = { ...BRANCH_STATUS_1[0], status: { qualityGateStatus: 'OK' } };
   const branchStatus: TestArgs = [branchLike, COMPONENT, 'OK', []];
 
   const newState = reducer(initialState, registerBranchStatusAction(...branchStatus));

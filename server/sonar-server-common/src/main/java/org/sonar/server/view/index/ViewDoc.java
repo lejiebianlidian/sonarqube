@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 package org.sonar.server.view.index;
 
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.sonar.server.es.BaseDoc;
@@ -33,7 +33,7 @@ public class ViewDoc extends BaseDoc {
   }
 
   public ViewDoc() {
-    super(TYPE_VIEW, Maps.newHashMap());
+    super(TYPE_VIEW, new HashMap<>());
   }
 
   @Override

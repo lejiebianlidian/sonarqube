@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -233,7 +233,7 @@ public class AnalysisMetadataHolderImplTest {
   public void set_branch() {
     AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
 
-    underTest.setBranch(new DefaultBranchImpl("master"));
+    underTest.setBranch(new DefaultBranchImpl());
 
     assertThat(underTest.getBranch().getName()).isEqualTo("master");
   }
@@ -249,11 +249,11 @@ public class AnalysisMetadataHolderImplTest {
   @Test
   public void setBranch_throws_ISE_when_called_twice() {
     AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
-    underTest.setBranch(new DefaultBranchImpl("master"));
+    underTest.setBranch(new DefaultBranchImpl());
 
     expectedException.expect(IllegalStateException.class);
     expectedException.expectMessage("Branch has already been set");
-    underTest.setBranch(new DefaultBranchImpl("master"));
+    underTest.setBranch(new DefaultBranchImpl());
   }
 
   @Test
@@ -262,21 +262,6 @@ public class AnalysisMetadataHolderImplTest {
     when(editionProvider.get()).thenReturn(Optional.ofNullable(edition));
     Branch branch = mock(Branch.class);
     when(branch.isMain()).thenReturn(true);
-    when(branch.isLegacyFeature()).thenReturn(false);
-    AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
-
-    underTest.setBranch(branch);
-
-    assertThat(underTest.getBranch()).isSameAs(branch);
-  }
-
-  @Test
-  @UseDataProvider("anyEditionIncludingNone")
-  public void setBranch_does_not_fail_if_legacy_branch_on_any_edition(@Nullable Edition edition) {
-    when(editionProvider.get()).thenReturn(Optional.ofNullable(edition));
-    Branch branch = mock(Branch.class);
-    when(branch.isMain()).thenReturn(false);
-    when(branch.isLegacyFeature()).thenReturn(true);
     AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
 
     underTest.setBranch(branch);
@@ -286,11 +271,10 @@ public class AnalysisMetadataHolderImplTest {
 
   @Test
   @UseDataProvider("anyEditionIncludingNoneButCommunity")
-  public void setBranch_does_not_fail_if_non_main_non_legacy_branch_on_any_edition_but_Community(@Nullable Edition edition) {
+  public void setBranch_does_not_fail_if_non_main_on_any_edition_but_Community(@Nullable Edition edition) {
     when(editionProvider.get()).thenReturn(Optional.ofNullable(edition));
     Branch branch = mock(Branch.class);
     when(branch.isMain()).thenReturn(false);
-    when(branch.isLegacyFeature()).thenReturn(false);
     AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
 
     underTest.setBranch(branch);
@@ -299,11 +283,10 @@ public class AnalysisMetadataHolderImplTest {
   }
 
   @Test
-  public void setBranch_fails_if_non_main_non_legacy_branch_on_Community_edition() {
+  public void setBranch_fails_if_non_main_branch_on_Community_edition() {
     when(editionProvider.get()).thenReturn(Optional.of(Edition.COMMUNITY));
     Branch branch = mock(Branch.class);
     when(branch.isMain()).thenReturn(false);
-    when(branch.isLegacyFeature()).thenReturn(false);
     AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
 
     expectedException.expect(IllegalStateException.class);
@@ -415,48 +398,6 @@ public class AnalysisMetadataHolderImplTest {
   }
 
   @Test
-  public void getIsShortLivingBranch_throws_ISE_when_holder_is_not_initialized() {
-    expectedException.expect(IllegalStateException.class);
-    expectedException.expectMessage("Branch has not been set");
-
-    AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
-    underTest.isShortLivingBranch();
-  }
-
-  @Test
-  public void getIsShortLivingBranch_returns_true() {
-    Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.SHORT);
-
-    AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
-    underTest.setBranch(branch);
-
-    assertThat(underTest.isShortLivingBranch()).isTrue();
-  }
-
-  @Test
-  public void getIsSLBorPR_returns_true() {
-    Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.SHORT);
-
-    AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
-    underTest.setBranch(branch);
-
-    assertThat(underTest.isSLBorPR()).isTrue();
-  }
-
-  @Test
-  public void getIsSLBorPR_returns_false() {
-    Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.LONG);
-
-    AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
-    underTest.setBranch(branch);
-
-    assertThat(underTest.isSLBorPR()).isFalse();
-  }
-
-  @Test
   public void getPullRequestBranch_returns_true() {
     Branch branch = mock(Branch.class);
     when(branch.getType()).thenReturn(BranchType.PULL_REQUEST);
@@ -503,5 +444,31 @@ public class AnalysisMetadataHolderImplTest {
     AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
     underTest.setScmRevision("    ");
     assertThat(underTest.getScmRevision()).isEmpty();
+  }
+
+  @Test
+  public void isBranch_returns_true_for_initialized_branch() {
+    Branch branch = mock(Branch.class);
+    when(branch.getType()).thenReturn(BranchType.BRANCH);
+    underTest.setBranch(branch);
+
+    assertThat(underTest.isBranch()).isTrue();
+  }
+
+  @Test
+  public void isBranch_returns_false_for_pr() {
+    Branch branch = mock(Branch.class);
+    when(branch.getType()).thenReturn(BranchType.PULL_REQUEST);
+    underTest.setBranch(branch);
+
+    assertThat(underTest.isBranch()).isFalse();
+  }
+
+  @Test
+  public void isBranch_throws_ISE_for_not_initialized_branch() {
+    expectedException.expect(IllegalStateException.class);
+    expectedException.expectMessage("Branch has not been set");
+
+    underTest.isBranch();
   }
 }

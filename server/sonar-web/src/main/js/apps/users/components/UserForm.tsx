@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,11 +76,11 @@ export default class UserForm extends React.PureComponent<Props, State> {
     this.mounted = false;
   }
 
-  handleError = (error: { response: Response }) => {
-    if (!this.mounted || ![400, 500].includes(error.response.status)) {
-      return throwGlobalError(error);
+  handleError = (response: Response) => {
+    if (!this.mounted || ![400, 500].includes(response.status)) {
+      return throwGlobalError(response);
     } else {
-      return parseError(error).then(
+      return parseError(response).then(
         errorMsg => this.setState({ error: errorMsg }),
         throwGlobalError
       );

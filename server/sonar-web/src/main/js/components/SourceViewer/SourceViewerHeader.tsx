@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@ import { stringify } from 'querystring';
 import * as React from 'react';
 import { Link } from 'react-router';
 import { ButtonIcon } from 'sonar-ui-common/components/controls/buttons';
+import { ClipboardIconButton } from 'sonar-ui-common/components/controls/clipboard';
 import Dropdown from 'sonar-ui-common/components/controls/Dropdown';
 import ListIcon from 'sonar-ui-common/components/icons/ListIcon';
 import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
@@ -30,15 +31,16 @@ import { formatMeasure } from 'sonar-ui-common/helpers/measures';
 import { collapsedDirFromPath, fileFromPath } from 'sonar-ui-common/helpers/path';
 import { omitNil } from 'sonar-ui-common/helpers/request';
 import { getBaseUrl, getPathUrlAsString } from 'sonar-ui-common/helpers/urls';
-import { getBranchLikeQuery, isMainBranch } from '../../helpers/branches';
+import { getBranchLikeQuery, isMainBranch } from '../../helpers/branch-like';
 import { getBranchLikeUrl, getCodeUrl, getComponentIssuesUrl } from '../../helpers/urls';
+import { BranchLike } from '../../types/branch-like';
 import Favorite from '../controls/Favorite';
 import { WorkspaceContextShape } from '../workspace/context';
 import MeasuresOverlay from './components/MeasuresOverlay';
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
-  issues?: T.Issue[];
+  branchLike: BranchLike | undefined;
+  componentMeasures?: T.Measure[];
   openComponent: WorkspaceContextShape['openComponent'];
   showMeasures?: boolean;
   sourceViewerFile: T.SourceViewerFile;
@@ -47,6 +49,13 @@ interface Props {
 interface State {
   measuresOverlay: boolean;
 }
+
+const METRIC_KEY_FOR_ISSUE_TYPE: { [type in T.IssueType]: string } = {
+  BUG: 'bugs',
+  VULNERABILITY: 'vulnerabilities',
+  CODE_SMELL: 'code_smells',
+  SECURITY_HOTSPOT: 'security_hotspots'
+};
 
 export default class SourceViewerHeader extends React.PureComponent<Props, State> {
   state: State = { measuresOverlay: false };
@@ -67,10 +76,10 @@ export default class SourceViewerHeader extends React.PureComponent<Props, State
   };
 
   renderIssueMeasures = () => {
-    const { branchLike, issues, sourceViewerFile } = this.props;
+    const { branchLike, componentMeasures, sourceViewerFile } = this.props;
     return (
-      issues &&
-      issues.length > 0 && (
+      componentMeasures &&
+      componentMeasures.length > 0 && (
         <>
           <div className="source-viewer-header-measure-separator" />
 
@@ -82,7 +91,9 @@ export default class SourceViewerHeader extends React.PureComponent<Props, State
               types: type
             };
 
-            const total = issues.filter(issue => issue.type === type).length;
+            const measure = componentMeasures.find(
+              m => m.metric === METRIC_KEY_FOR_ISSUE_TYPE[type]
+            );
             return (
               <div className="source-viewer-header-measure" key={type}>
                 <span className="source-viewer-header-measure-label">
@@ -90,7 +101,7 @@ export default class SourceViewerHeader extends React.PureComponent<Props, State
                 </span>
                 <span className="source-viewer-header-measure-value">
                   <Link to={getComponentIssuesUrl(sourceViewerFile.project, params)}>
-                    {formatMeasure(total, 'INT')}
+                    {formatMeasure((measure && measure.value) || 0, 'INT')}
                   </Link>
                 </span>
               </div>
@@ -123,7 +134,7 @@ export default class SourceViewerHeader extends React.PureComponent<Props, State
     // TODO favorite
     return (
       <div className="source-viewer-header display-flex-center">
-        <div className="source-viewer-header-component flex-1">
+        <div className="flex-1 little-spacer-top">
           <div className="component-name">
             <div className="component-name-parent">
               <a
@@ -142,10 +153,13 @@ export default class SourceViewerHeader extends React.PureComponent<Props, State
             <div className="component-name-path">
               <QualifierIcon qualifier={q} /> <span>{collapsedDirFromPath(path)}</span>
               <span className="component-name-file">{fileFromPath(path)}</span>
+              <span className="nudged-up spacer-left">
+                <ClipboardIconButton className="button-link link-no-underline" copyValue={path} />
+              </span>
               {this.props.sourceViewerFile.canMarkAsFavorite &&
                 (!this.props.branchLike || isMainBranch(this.props.branchLike)) && (
                   <Favorite
-                    className="component-name-favorite"
+                    className="component-name-favorite spacer-left"
                     component={key}
                     favorite={this.props.sourceViewerFile.fav || false}
                     qualifier={this.props.sourceViewerFile.q}

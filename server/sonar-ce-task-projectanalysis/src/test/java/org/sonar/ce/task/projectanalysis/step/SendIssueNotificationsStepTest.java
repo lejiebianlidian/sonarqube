@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -92,16 +92,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonar.api.rules.RuleType.SECURITY_HOTSPOT;
 import static org.sonar.ce.task.projectanalysis.component.Component.Type;
 import static org.sonar.ce.task.projectanalysis.component.ReportComponent.builder;
 import static org.sonar.ce.task.projectanalysis.step.SendIssueNotificationsStep.NOTIF_TYPES;
-import static org.sonar.db.component.BranchType.LONG;
+import static org.sonar.db.component.BranchType.BRANCH;
 import static org.sonar.db.component.BranchType.PULL_REQUEST;
-import static org.sonar.db.component.BranchType.SHORT;
 import static org.sonar.db.component.ComponentTesting.newBranchDto;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
-import static org.sonar.db.component.ComponentTesting.newProjectBranch;
+import static org.sonar.db.component.ComponentTesting.newBranchComponent;
 import static org.sonar.db.issue.IssueTesting.newIssue;
 import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 import static org.sonar.db.rule.RuleTesting.newRule;
@@ -134,7 +134,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
   public DbTester db = DbTester.create(System2.INSTANCE);
 
   private final Random random = new Random();
-  private final RuleType[] RULE_TYPES_EXCEPT_HOTSPOTS = Stream.of(RuleType.values()).filter(r -> r != RuleType.SECURITY_HOTSPOT).toArray(RuleType[]::new);
+  private final RuleType[] RULE_TYPES_EXCEPT_HOTSPOTS = Stream.of(RuleType.values()).filter(r -> r != SECURITY_HOTSPOT).toArray(RuleType[]::new);
   private final RuleType randomRuleType = RULE_TYPES_EXCEPT_HOTSPOTS[random.nextInt(RULE_TYPES_EXCEPT_HOTSPOTS.length)];
   @SuppressWarnings("unchecked")
   private Class<Map<String, UserDto>> assigneeCacheType = (Class<Map<String, UserDto>>) (Object) Map.class;
@@ -202,12 +202,12 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     Integer[] backDatedEfforts = IntStream.range(0, 1 + random.nextInt(10)).mapToObj(i -> 10 + random.nextInt(100)).toArray(Integer[]::new);
     Duration expectedEffort = Duration.create(stream(efforts).mapToInt(i -> i).sum());
     List<DefaultIssue> issues = concat(stream(efforts)
-      .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
-        .setCreationDate(new Date(ANALYSE_DATE))),
+        .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
+          .setCreationDate(new Date(ANALYSE_DATE))),
       stream(backDatedEfforts)
         .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
           .setCreationDate(new Date(ANALYSE_DATE - FIVE_MINUTES_IN_MS))))
-            .collect(toList());
+      .collect(toList());
     shuffle(issues);
     DiskCache<DefaultIssue>.DiskAppender issueCache = this.issueCache.newAppender();
     issues.forEach(issueCache::append);
@@ -225,7 +225,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     assertThat(stats.hasIssues()).isTrue();
     // just checking all issues have been added to the stats
     DistributedMetricStatsInt severity = stats.getDistributedMetricStats(NewIssuesStatistics.Metric.RULE_TYPE);
-    assertThat(severity.getOnLeak()).isEqualTo(efforts.length);
+    assertThat(severity.getOnCurrentAnalysis()).isEqualTo(efforts.length);
     assertThat(severity.getTotal()).isEqualTo(backDatedEfforts.length + efforts.length);
     verifyStatistics(context, 1, 0, 0);
   }
@@ -248,14 +248,14 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
   }
 
   @Test
-  public void send_global_new_issues_notification_on_long_branch() {
+  public void send_global_new_issues_notification_on_branch() {
     ComponentDto project = newPrivateProjectDto(newOrganizationDto());
-    ComponentDto branch = setUpBranch(project, LONG);
+    ComponentDto branch = setUpBranch(project, BRANCH);
     issueCache.newAppender().append(
       new DefaultIssue().setType(randomRuleType).setEffort(ISSUE_DURATION).setCreationDate(new Date(ANALYSE_DATE))).close();
     when(notificationService.hasProjectSubscribersForTypes(branch.uuid(), NOTIF_TYPES)).thenReturn(true);
     analysisMetadataHolder.setProject(Project.from(project));
-    analysisMetadataHolder.setBranch(newBranch(BranchType.LONG));
+    analysisMetadataHolder.setBranch(newBranch(BranchType.BRANCH));
 
     TestComputationStepContext context = new TestComputationStepContext();
     underTest.execute(context);
@@ -266,22 +266,6 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     verify(newIssuesNotificationMock).setStatistics(eq(branch.longName()), any(NewIssuesStatistics.Stats.class));
     verify(newIssuesNotificationMock).setDebt(ISSUE_DURATION);
     verifyStatistics(context, 1, 0, 0);
-  }
-
-  @Test
-  public void do_not_send_global_new_issues_notification_on_short_branch() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
-    ComponentDto branch = setUpBranch(project, SHORT);
-    issueCache.newAppender().append(
-      new DefaultIssue().setType(randomRuleType).setEffort(ISSUE_DURATION).setCreationDate(new Date(ANALYSE_DATE))).close();
-    when(notificationService.hasProjectSubscribersForTypes(project.uuid(), NOTIF_TYPES)).thenReturn(true);
-    analysisMetadataHolder.setProject(Project.from(project));
-    analysisMetadataHolder.setBranch(newBranch(SHORT));
-
-    TestComputationStepContext context = new TestComputationStepContext();
-    underTest.execute(context);
-
-    verifyZeroInteractions(notificationService, newIssuesNotificationMock);
   }
 
   @Test
@@ -302,14 +286,14 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
   }
 
   @Test
-  public void do_not_send_global_new_issues_notification_on_long_branch_if_issue_has_been_backdated() {
+  public void do_not_send_global_new_issues_notification_on_branch_if_issue_has_been_backdated() {
     ComponentDto project = newPrivateProjectDto(newOrganizationDto());
-    ComponentDto branch = setUpBranch(project, LONG);
+    ComponentDto branch = setUpBranch(project, BRANCH);
     issueCache.newAppender().append(
       new DefaultIssue().setType(randomRuleType).setEffort(ISSUE_DURATION).setCreationDate(new Date(ANALYSE_DATE - FIVE_MINUTES_IN_MS))).close();
     when(notificationService.hasProjectSubscribersForTypes(branch.uuid(), NOTIF_TYPES)).thenReturn(true);
     analysisMetadataHolder.setProject(Project.from(project));
-    analysisMetadataHolder.setBranch(newBranch(BranchType.LONG));
+    analysisMetadataHolder.setBranch(newBranch(BranchType.BRANCH));
 
     TestComputationStepContext context = new TestComputationStepContext();
     underTest.execute(context);
@@ -356,14 +340,14 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     Integer[] assignedToOther = IntStream.range(0, 3).mapToObj(i -> 10).toArray(Integer[]::new);
 
     List<DefaultIssue> issues = concat(stream(assigned)
-      .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
-        .setAssigneeUuid(perceval.getUuid())
-        .setCreationDate(new Date(ANALYSE_DATE))),
+        .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
+          .setAssigneeUuid(perceval.getUuid())
+          .setCreationDate(new Date(ANALYSE_DATE))),
       stream(assignedToOther)
         .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
           .setAssigneeUuid(arthur.getUuid())
           .setCreationDate(new Date(ANALYSE_DATE))))
-            .collect(toList());
+      .collect(toList());
     shuffle(issues);
     IssueCache issueCache = new IssueCache(temp.newFile(), System2.INSTANCE);
     DiskCache<DefaultIssue>.DiskAppender newIssueCache = issueCache.newAppender();
@@ -415,7 +399,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     assertThat(stats.hasIssues()).isTrue();
     // just checking all issues have been added to the stats
     DistributedMetricStatsInt severity = stats.getDistributedMetricStats(NewIssuesStatistics.Metric.RULE_TYPE);
-    assertThat(severity.getOnLeak()).isEqualTo(assigned.length);
+    assertThat(severity.getOnCurrentAnalysis()).isEqualTo(assigned.length);
     assertThat(severity.getTotal()).isEqualTo(assigned.length);
 
     verifyStatistics(context, 1, 2, 0);
@@ -429,14 +413,14 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     Integer[] backDatedEfforts = IntStream.range(0, 1 + random.nextInt(10)).mapToObj(i -> 10 + random.nextInt(100)).toArray(Integer[]::new);
     Duration expectedEffort = Duration.create(stream(efforts).mapToInt(i -> i).sum());
     List<DefaultIssue> issues = concat(stream(efforts)
-      .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
-        .setAssigneeUuid(user.getUuid())
-        .setCreationDate(new Date(ANALYSE_DATE))),
+        .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
+          .setAssigneeUuid(user.getUuid())
+          .setCreationDate(new Date(ANALYSE_DATE))),
       stream(backDatedEfforts)
         .map(effort -> new DefaultIssue().setType(randomRuleType).setEffort(Duration.create(effort))
           .setAssigneeUuid(user.getUuid())
           .setCreationDate(new Date(ANALYSE_DATE - FIVE_MINUTES_IN_MS))))
-            .collect(toList());
+      .collect(toList());
     shuffle(issues);
     DiskCache<DefaultIssue>.DiskAppender issueCache = this.issueCache.newAppender();
     issues.forEach(issueCache::append);
@@ -464,7 +448,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     assertThat(stats.hasIssues()).isTrue();
     // just checking all issues have been added to the stats
     DistributedMetricStatsInt severity = stats.getDistributedMetricStats(NewIssuesStatistics.Metric.RULE_TYPE);
-    assertThat(severity.getOnLeak()).isEqualTo(efforts.length);
+    assertThat(severity.getOnCurrentAnalysis()).isEqualTo(efforts.length);
     assertThat(severity.getTotal()).isEqualTo(backDatedEfforts.length + efforts.length);
 
     verifyStatistics(context, 1, 1, 0);
@@ -477,7 +461,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
       .isEmpty();
     Tuple[] expected = stream(users).map(user -> tuple(user.getUuid(), user.getUuid(), user.getId(), user.getLogin())).toArray(Tuple[]::new);
     assertThat(cache.entrySet())
-      .extracting(t -> t.getKey(), t -> t.getValue().getUuid(), t -> t.getValue().getId(), t -> t.getValue().getLogin())
+      .extracting(Map.Entry::getKey, t -> t.getValue().getUuid(), t -> t.getValue().getId(), t -> t.getValue().getLogin())
       .containsOnly(expected);
   }
 
@@ -505,7 +489,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
   }
 
   @Test
-  public void dont_send_issues_change_notification_for_hotspot() {
+  public void do_not_send_new_issues_notifications_for_hotspot() {
     UserDto user = db.users().insertUser();
     ComponentDto project = newPrivateProjectDto(newOrganizationDto()).setDbKey(PROJECT.getDbKey()).setLongName(PROJECT.getName());
     ComponentDto file = newFileDto(project).setDbKey(FILE.getDbKey()).setLongName(FILE.getName());
@@ -565,18 +549,18 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
   }
 
   @Test
-  public void send_issues_change_notification_on_long_branch() {
-    sendIssueChangeNotificationOnLongBranch(ANALYSE_DATE);
+  public void send_issues_change_notification_on_branch() {
+    sendIssueChangeNotificationOnBranch(ANALYSE_DATE);
   }
 
   @Test
-  public void send_issues_change_notification_on_long_branch_even_if_issue_is_backdated() {
-    sendIssueChangeNotificationOnLongBranch(ANALYSE_DATE - FIVE_MINUTES_IN_MS);
+  public void send_issues_change_notification_on_branch_even_if_issue_is_backdated() {
+    sendIssueChangeNotificationOnBranch(ANALYSE_DATE - FIVE_MINUTES_IN_MS);
   }
 
-  private void sendIssueChangeNotificationOnLongBranch(long issueCreatedAt) {
+  private void sendIssueChangeNotificationOnBranch(long issueCreatedAt) {
     ComponentDto project = newPrivateProjectDto(newOrganizationDto());
-    ComponentDto branch = newProjectBranch(project, newBranchDto(project).setKey(BRANCH_NAME));
+    ComponentDto branch = newBranchComponent(project, newBranchDto(project).setKey(BRANCH_NAME));
     ComponentDto file = newFileDto(branch);
     treeRootHolder.setRoot(builder(Type.PROJECT, 2).setKey(branch.getDbKey()).setPublicKey(branch.getKey()).setName(branch.longName()).setUuid(branch.uuid()).addChildren(
       builder(Type.FILE, 11).setKey(file.getDbKey()).setPublicKey(file.getKey()).setName(file.longName()).build()).build());
@@ -592,7 +576,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
     when(notificationService.hasProjectSubscribersForTypes(project.uuid(), NOTIF_TYPES)).thenReturn(true);
     IssuesChangesNotification issuesChangesNotification = mock(IssuesChangesNotification.class);
     when(notificationFactory.newIssuesChangesNotification(anySet(), anyMap())).thenReturn(issuesChangesNotification);
-    analysisMetadataHolder.setBranch(newBranch(BranchType.LONG));
+    analysisMetadataHolder.setBranch(newBranch(BranchType.BRANCH));
 
     underTest.execute(new TestComputationStepContext());
 
@@ -708,7 +692,7 @@ public class SendIssueNotificationsStepTest extends BaseStepTest {
   }
 
   private ComponentDto setUpBranch(ComponentDto project, BranchType branchType) {
-    ComponentDto branch = newProjectBranch(project, newBranchDto(project, branchType).setKey(BRANCH_NAME));
+    ComponentDto branch = newBranchComponent(project, newBranchDto(project, branchType).setKey(BRANCH_NAME));
     ComponentDto file = newFileDto(branch);
     treeRootHolder.setRoot(builder(Type.PROJECT, 2).setKey(branch.getDbKey()).setPublicKey(branch.getKey()).setName(branch.longName()).setUuid(branch.uuid()).addChildren(
       builder(Type.FILE, 11).setKey(file.getDbKey()).setPublicKey(file.getKey()).setName(file.longName()).build()).build());

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,10 @@
  */
 import { getJSON, post, postJSON, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
+import { BranchParameters } from '../types/branch-like';
 
 export function getMeasures(
-  data: { component: string; metricKeys: string } & T.BranchParameters
+  data: { component: string; metricKeys: string } & BranchParameters
 ): Promise<T.Measure[]> {
   return getJSON('/api/measures/component', data).then(r => r.component.measures, throwGlobalError);
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 import * as React from 'react';
 import { Button } from 'sonar-ui-common/components/controls/buttons';
 import { translate } from 'sonar-ui-common/helpers/l10n';
+import { BranchLike } from '../../types/branch-like';
 import Line from './components/Line';
 import { getSecondaryIssueLocationsForLine } from './helpers/issueLocations';
 import {
@@ -38,9 +39,11 @@ const ZERO_LINE = {
 };
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   componentKey: string;
   displayAllIssues?: boolean;
+  displayIssueLocationsCount?: boolean;
+  displayIssueLocationsLink?: boolean;
   displayLocationMarkers?: boolean;
   duplications: T.Duplication[] | undefined;
   duplicationsByLine: { [line: number]: number[] };
@@ -119,6 +122,8 @@ export default class SourceViewerCode extends React.PureComponent<Props> {
         displayAllIssues={this.props.displayAllIssues}
         displayCoverage={displayCoverage}
         displayDuplications={displayDuplications}
+        displayIssueLocationsCount={this.props.displayIssueLocationsCount}
+        displayIssueLocationsLink={this.props.displayIssueLocationsLink}
         displayIssues={displayIssues}
         displayLocationMarkers={this.props.displayLocationMarkers}
         duplications={this.getDuplicationsForLine(line)}

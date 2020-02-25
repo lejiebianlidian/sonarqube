@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +19,9 @@
  */
 import { getBaseUrl, Location } from 'sonar-ui-common/helpers/urls';
 import { getProfilePath } from '../apps/quality-profiles/utils';
-import {
-  getBranchLikeQuery,
-  isLongLivingBranch,
-  isPullRequest,
-  isShortLivingBranch
-} from './branches';
+import { BranchLike } from '../types/branch-like';
+import { GraphType } from '../types/project-activity';
+import { getBranchLikeQuery, isBranch, isMainBranch, isPullRequest } from './branch-like';
 
 type Query = Location['query'];
 
@@ -44,23 +41,17 @@ export function getComponentBackgroundTaskUrl(componentKey: string, status?: str
   return { pathname: '/project/background_tasks', query: { id: componentKey, status } };
 }
 
-export function getBranchLikeUrl(project: string, branchLike?: T.BranchLike): Location {
+export function getBranchLikeUrl(project: string, branchLike?: BranchLike): Location {
   if (isPullRequest(branchLike)) {
     return getPullRequestUrl(project, branchLike.key);
-  } else if (isShortLivingBranch(branchLike)) {
-    return getShortLivingBranchUrl(project, branchLike.name);
-  } else if (isLongLivingBranch(branchLike)) {
-    return getLongLivingBranchUrl(project, branchLike.name);
+  } else if (isBranch(branchLike) && !isMainBranch(branchLike)) {
+    return getBranchUrl(project, branchLike.name);
   } else {
     return getProjectUrl(project);
   }
 }
 
-export function getLongLivingBranchUrl(project: string, branch: string): Location {
-  return { pathname: '/dashboard', query: { branch, id: project } };
-}
-
-export function getShortLivingBranchUrl(project: string, branch: string): Location {
+export function getBranchUrl(project: string, branch: string): Location {
   return { pathname: '/dashboard', query: { branch, id: project } };
 }
 
@@ -84,12 +75,23 @@ export function getComponentIssuesUrl(componentKey: string, query?: Query): Loca
 }
 
 /**
+ * Generate URL for a component's security hotspot page
+ */
+export function getComponentSecurityHotspotsUrl(componentKey: string, query: Query = {}): Location {
+  const { branch, pullRequest, sinceLeakPeriod, hotspots, assignedToMe } = query;
+  return {
+    pathname: '/security_hotspots',
+    query: { id: componentKey, branch, pullRequest, sinceLeakPeriod, hotspots, assignedToMe }
+  };
+}
+
+/**
  * Generate URL for a component's drilldown page
  */
 export function getComponentDrilldownUrl(options: {
   componentKey: string;
   metric: string;
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   selectionKey?: string;
   treemapView?: boolean;
   listView?: boolean;
@@ -112,7 +114,7 @@ export function getComponentDrilldownUrlWithSelection(
   componentKey: string,
   selectionKey: string,
   metric: string,
-  branchLike?: T.BranchLike
+  branchLike?: BranchLike
 ): Location {
   return getComponentDrilldownUrl({ componentKey, selectionKey, metric, branchLike });
 }
@@ -121,17 +123,17 @@ export function getMeasureTreemapUrl(componentKey: string, metric: string) {
   return getComponentDrilldownUrl({ componentKey, metric, treemapView: true });
 }
 
-export function getActivityUrl(component: string, branchLike?: T.BranchLike) {
+export function getActivityUrl(component: string, branchLike?: BranchLike, graph?: GraphType) {
   return {
     pathname: '/project/activity',
-    query: { id: component, ...getBranchLikeQuery(branchLike) }
+    query: { id: component, graph, ...getBranchLikeQuery(branchLike) }
   };
 }
 
 /**
  * Generate URL for a component's measure history
  */
-export function getMeasureHistoryUrl(component: string, metric: string, branchLike?: T.BranchLike) {
+export function getMeasureHistoryUrl(component: string, metric: string, branchLike?: BranchLike) {
   return {
     pathname: '/project/activity',
     query: {
@@ -203,7 +205,7 @@ export function getMarkdownHelpUrl(): string {
 
 export function getCodeUrl(
   project: string,
-  branchLike?: T.BranchLike,
+  branchLike?: BranchLike,
   selected?: string,
   line?: number
 ) {
@@ -225,7 +227,7 @@ export function getHomePageUrl(homepage: T.HomePage) {
         : getProjectUrl(homepage.component);
     case 'PROJECT':
       return homepage.branch
-        ? getLongLivingBranchUrl(homepage.component, homepage.branch)
+        ? getBranchUrl(homepage.component, homepage.branch)
         : getProjectUrl(homepage.component);
     case 'ORGANIZATION':
       return getOrganizationUrl(homepage.organization);

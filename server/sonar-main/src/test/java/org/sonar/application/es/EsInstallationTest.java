@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -162,11 +162,7 @@ public class EsInstallationTest {
 
     EsInstallation underTest = new EsInstallation(props);
 
-    if (System.getProperty("os.name").startsWith("Windows")) {
-      assertThat(underTest.getExecutable()).isEqualTo(new File(sqHomeDir, "elasticsearch/bin/elasticsearch.bat"));
-    } else {
-      assertThat(underTest.getExecutable()).isEqualTo(new File(sqHomeDir, "elasticsearch/bin/elasticsearch"));
-    }
+    assertThat(underTest.getExecutable()).isEqualTo(new File(sqHomeDir, "elasticsearch/bin/elasticsearch"));
   }
 
   @Test

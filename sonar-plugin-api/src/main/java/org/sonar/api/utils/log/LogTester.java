@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,9 @@
  */
 package org.sonar.api.utils.log;
 
-import java.util.List;
-import org.junit.rules.ExternalResource;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 /**
  * <b>For tests only</b>
@@ -55,66 +56,22 @@ import org.junit.rules.ExternalResource;
  *
  * @since 5.1
  */
-public class LogTester extends ExternalResource {
-
-  @Override
-  protected void before() throws Throwable {
-    // this shared instance breaks compatibility with parallel execution of tests
-    LogInterceptors.set(new ListInterceptor());
-    setLevel(LoggerLevel.INFO);
+public class LogTester extends AbstractLogTester<LogTester> implements TestRule {
+  public Statement apply(Statement base, Description description) {
+    return statement(base);
   }
 
-  @Override
-  protected void after() {
-    LogInterceptors.set(NullInterceptor.NULL_INSTANCE);
-    setLevel(LoggerLevel.INFO);
-  }
-
-  LoggerLevel getLevel() {
-    return Loggers.getFactory().getLevel();
-  }
-
-  /**
-   * Enable/disable debug logs. Info, warn and error logs are always enabled.
-   * By default INFO logs are enabled when LogTester is started.
-   */
-  public LogTester setLevel(LoggerLevel level) {
-    Loggers.getFactory().setLevel(level);
-    return this;
-  }
-
-  /**
-   * Logs in chronological order (item at index 0 is the oldest one)
-   */
-  public List<String> logs() {
-    return ((ListInterceptor) LogInterceptors.get()).logs();
-  }
-
-  /**
-   * Logs in chronological order (item at index 0 is the oldest one) for
-   * a given level
-   */
-  public List<String> logs(LoggerLevel level) {
-    return ((ListInterceptor) LogInterceptors.get()).logs(level);
-  }
-
-  /**
-   * Logs with arguments in chronological order (item at index 0 is the oldest one)
-   */
-  public List<LogAndArguments> getLogs() {
-    return ((ListInterceptor) LogInterceptors.get()).getLogs();
-  }
-
-  /**
-   * Logs with arguments in chronological order (item at index 0 is the oldest one) for
-   * a given level
-   */
-  public List<LogAndArguments> getLogs(LoggerLevel level) {
-    return ((ListInterceptor) LogInterceptors.get()).getLogs(level);
-  }
-
-  public LogTester clear() {
-    ((ListInterceptor) LogInterceptors.get()).clear();
-    return this;
+  private Statement statement(final Statement base) {
+    return new Statement() {
+      @Override
+      public void evaluate() throws Throwable {
+        before();
+        try {
+          base.evaluate();
+        } finally {
+          after();
+        }
+      }
+    };
   }
 }

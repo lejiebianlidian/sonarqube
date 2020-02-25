@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import javax.annotation.concurrent.Immutable;
 public class DefaultBranchConfiguration implements BranchConfiguration {
   @Override
   public BranchType branchType() {
-    return BranchType.LONG;
+    return BranchType.BRANCH;
   }
 
   @CheckForNull
@@ -43,7 +43,7 @@ public class DefaultBranchConfiguration implements BranchConfiguration {
 
   @CheckForNull
   @Override
-  public String longLivingSonarReferenceBranch() {
+  public String referenceBranchName() {
     return null;
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,4 @@ export class OnboardingPage extends React.PureComponent<Props> {
 
 const mapDispatchToProps = { skipOnboarding };
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(OnboardingPage);
+export default connect(null, mapDispatchToProps)(OnboardingPage);

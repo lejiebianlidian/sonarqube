@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class HttpExceptionTest {
   @Test
-  public void test_exception() throws Exception {
+  public void test_exception() {
     HttpException exception = new HttpException("http://localhost:9000/api/search", 500, "error");
     assertThat(exception.code()).isEqualTo(500);
     assertThat(exception.url()).isEqualTo("http://localhost:9000/api/search");

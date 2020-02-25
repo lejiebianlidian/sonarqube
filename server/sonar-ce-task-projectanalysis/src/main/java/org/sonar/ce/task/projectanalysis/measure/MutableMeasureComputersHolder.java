@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.ce.task.projectanalysis.measure;
 
-import org.sonar.ce.task.projectanalysis.api.measurecomputer.MeasureComputerWrapper;
 import org.sonar.ce.task.projectanalysis.api.measurecomputer.MeasureComputerWrapper;
 
 /**

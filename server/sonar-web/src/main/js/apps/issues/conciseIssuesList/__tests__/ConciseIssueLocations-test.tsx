@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,11 @@ it('should render one flow', () => {
 
 it('should render several flows', () => {
   const issue = {
-    flows: [[loc, loc, loc], [loc, loc], [loc, loc, loc]],
+    flows: [
+      [loc, loc, loc],
+      [loc, loc],
+      [loc, loc, loc]
+    ],
     secondaryLocations: []
   };
   expect(

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,13 +26,5 @@ it('renders', () => {
   expect(wrapper).toMatchSnapshot();
 
   const renderOption = wrapper.prop('renderOption');
-  expect(renderOption(2, false)).toMatchSnapshot();
-
-  const getFacetValueForOption = wrapper.prop('getFacetValueForOption');
-  expect(
-    getFacetValueForOption(
-      { '80.0-*': 1, '70.0-80.0': 42, '50.0-70.0': 14, '30.0-50.0': 13, '*-30.0': 8, NO_DATA: 3 },
-      2
-    )
-  ).toBe(42);
+  expect(renderOption('70.0-80.0', false)).toMatchSnapshot();
 });

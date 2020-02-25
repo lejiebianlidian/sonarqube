@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 import * as classNames from 'classnames';
 import { times } from 'lodash';
 import * as React from 'react';
+import { BranchLike } from '../../../types/branch-like';
 import './Line.css';
 import LineCode from './LineCode';
 import LineCoverage from './LineCoverage';
@@ -30,12 +31,15 @@ import LineNumber from './LineNumber';
 import LineSCM from './LineSCM';
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   displayAllIssues?: boolean;
   displayCoverage: boolean;
   displayDuplications: boolean;
+  displayIssueLocationsCount?: boolean;
+  displayIssueLocationsLink?: boolean;
   displayIssues: boolean;
   displayLocationMarkers?: boolean;
+  displaySCM?: boolean;
   duplications: number[];
   duplicationsCount: number;
   highlighted: boolean;
@@ -94,7 +98,14 @@ export default class Line extends React.PureComponent<Props> {
   };
 
   render() {
-    const { displayCoverage, duplications, duplicationsCount, issuePopup, line } = this.props;
+    const {
+      displayCoverage,
+      displaySCM = true,
+      duplications,
+      duplicationsCount,
+      issuePopup,
+      line
+    } = this.props;
     const className = classNames('source-line', {
       'source-line-highlighted': this.props.highlighted,
       'source-line-filtered': line.isNew,
@@ -116,13 +127,14 @@ export default class Line extends React.PureComponent<Props> {
           popupOpen={this.isPopupOpen('line-number')}
         />
 
-        <LineSCM
-          line={line}
-          onPopupToggle={this.props.onLinePopupToggle}
-          popupOpen={this.isPopupOpen('scm')}
-          previousLine={this.props.previousLine}
-        />
-
+        {displaySCM && (
+          <LineSCM
+            line={line}
+            onPopupToggle={this.props.onLinePopupToggle}
+            popupOpen={this.isPopupOpen('scm')}
+            previousLine={this.props.previousLine}
+          />
+        )}
         {this.props.displayIssues && !this.props.displayAllIssues ? (
           <LineIssuesIndicator
             issues={this.props.issues}
@@ -153,6 +165,8 @@ export default class Line extends React.PureComponent<Props> {
 
         <LineCode
           branchLike={this.props.branchLike}
+          displayIssueLocationsCount={this.props.displayIssueLocationsCount}
+          displayIssueLocationsLink={this.props.displayIssueLocationsLink}
           displayLocationMarkers={this.props.displayLocationMarkers}
           highlightedLocationMessage={this.props.highlightedLocationMessage}
           highlightedSymbols={this.props.highlightedSymbols}

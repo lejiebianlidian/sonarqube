@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { withRouter, WithRouterProps } from 'react-router';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getSystemInfo } from '../../../api/system';
@@ -46,7 +46,7 @@ interface State {
   sysInfoData?: T.SysInfoCluster | T.SysInfoStandalone;
 }
 
-class App extends React.PureComponent<Props, State> {
+export class App extends React.PureComponent<Props, State> {
   mounted = false;
   state: State = { loading: true };
 
@@ -121,7 +121,7 @@ class App extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited">
         <Suggestions suggestions="system_info" />
-        <Helmet title={translate('system_info.page')} />
+        <Helmet defer={false} title={translate('system_info.page')} />
         <SystemUpgradeNotif />
         {sysInfoData && (
           <PageHeader

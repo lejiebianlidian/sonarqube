@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.scanner.mediumtest;
 
-import com.google.common.collect.Maps;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -57,6 +56,7 @@ import org.sonar.batch.bootstrapper.Batch;
 import org.sonar.batch.bootstrapper.EnvironmentInformation;
 import org.sonar.batch.bootstrapper.LogOutput;
 import org.sonar.scanner.bootstrap.GlobalAnalysisMode;
+import org.sonar.scanner.report.CeTaskReportDataHolder;
 import org.sonar.scanner.repository.FileData;
 import org.sonar.scanner.repository.MetricsRepository;
 import org.sonar.scanner.repository.MetricsRepositoryLoader;
@@ -95,6 +95,7 @@ public class ScannerMediumTester extends ExternalResource {
   private final FakeQualityProfileLoader qualityProfiles = new FakeQualityProfileLoader();
   private final FakeActiveRulesLoader activeRules = new FakeActiveRulesLoader();
   private final FakeSonarRuntime sonarRuntime = new FakeSonarRuntime();
+  private final CeTaskReportDataHolder reportMetadataHolder = new CeTaskReportDataHolder();
   private LogOutput logOutput = null;
 
   private static void createWorkingDirs() throws IOException {
@@ -294,6 +295,7 @@ public class ScannerMediumTester extends ExternalResource {
           tester.globalSettingsLoader,
           tester.projectSettingsLoader,
           tester.sonarRuntime,
+          tester.reportMetadataHolder,
           result)
         .setLogOutput(tester.logOutput)
         .build().execute();
@@ -361,7 +363,7 @@ public class ScannerMediumTester extends ExternalResource {
   }
 
   private static class FakeProjectRepositoriesLoader implements ProjectRepositoriesLoader {
-    private Map<String, FileData> fileDataMap = Maps.newHashMap();
+    private Map<String, FileData> fileDataMap = new HashMap<>();
 
     @Override
     public ProjectRepositories load(String projectKey, @Nullable String branchBase) {
@@ -377,10 +379,10 @@ public class ScannerMediumTester extends ExternalResource {
 
   private static class FakeBranchConfiguration implements BranchConfiguration {
 
-    private BranchType branchType = BranchType.LONG;
+    private BranchType branchType = BranchType.BRANCH;
     private String branchName = null;
     private String branchTarget = null;
-    private String longLivingSonarReferenceBranch = null;
+    private String referenceBranchName = null;
 
     @Override
     public BranchType branchType() {
@@ -401,13 +403,13 @@ public class ScannerMediumTester extends ExternalResource {
 
     @CheckForNull
     @Override
-    public String longLivingSonarReferenceBranch() {
-      return longLivingSonarReferenceBranch;
+    public String referenceBranchName() {
+      return referenceBranchName;
     }
 
     @Override
     public String pullRequestKey() {
-      throw new UnsupportedOperationException();
+      return "1'";
     }
   }
 
@@ -459,8 +461,8 @@ public class ScannerMediumTester extends ExternalResource {
     return this;
   }
 
-  public ScannerMediumTester setLongLivingSonarReferenceBranch(String longLivingSonarReferenceBranch) {
-    this.branchConfiguration.longLivingSonarReferenceBranch = longLivingSonarReferenceBranch;
+  public ScannerMediumTester setReferenceBranchName(String referenceBranchNam) {
+    this.branchConfiguration.referenceBranchName = referenceBranchNam;
     return this;
   }
 

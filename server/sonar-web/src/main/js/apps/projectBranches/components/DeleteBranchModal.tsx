@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +22,12 @@ import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/contro
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { deleteBranch, deletePullRequest } from '../../../api/branches';
-import { getBranchLikeDisplayName, isPullRequest } from '../../../helpers/branches';
+import { getBranchLikeDisplayName, isPullRequest } from '../../../helpers/branch-like';
+import { BranchLike } from '../../../types/branch-like';
 
 interface Props {
-  branchLike: T.BranchLike;
-  component: string;
+  branchLike: BranchLike;
+  component: T.Component;
   onClose: () => void;
   onDelete: () => void;
 }
@@ -52,12 +53,12 @@ export default class DeleteBranchModal extends React.PureComponent<Props, State>
     this.setState({ loading: true });
     const request = isPullRequest(this.props.branchLike)
       ? deletePullRequest({
-          project: this.props.component,
+          project: this.props.component.key,
           pullRequest: this.props.branchLike.key
         })
       : deleteBranch({
           branch: this.props.branchLike.name,
-          project: this.props.component
+          project: this.props.component.key
         });
     request.then(
       () => {
@@ -77,7 +78,9 @@ export default class DeleteBranchModal extends React.PureComponent<Props, State>
   render() {
     const { branchLike } = this.props;
     const header = translate(
-      isPullRequest(branchLike) ? 'branches.pull_request.delete' : 'branches.delete'
+      isPullRequest(branchLike)
+        ? 'project_branch_pull_request.pull_request.delete'
+        : 'project_branch_pull_request.branch.delete'
     );
 
     return (
@@ -89,8 +92,8 @@ export default class DeleteBranchModal extends React.PureComponent<Props, State>
           <div className="modal-body">
             {translateWithParameters(
               isPullRequest(branchLike)
-                ? 'branches.pull_request.delete.are_you_sure'
-                : 'branches.delete.are_you_sure',
+                ? 'project_branch_pull_request.pull_request.delete.are_you_sure'
+                : 'project_branch_pull_request.branch.delete.are_you_sure',
               getBranchLikeDisplayName(branchLike)
             )}
           </div>

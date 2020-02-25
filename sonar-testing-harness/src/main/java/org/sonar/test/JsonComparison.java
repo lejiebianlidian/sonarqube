@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ class JsonComparison {
 
   private boolean strictTimezone = false;
   private boolean strictArrayOrder = false;
-  private Set<String> ignoredFields = synchronizedSet(new HashSet<String>());
+  private Set<String> ignoredFields = synchronizedSet(new HashSet<>());
 
   boolean isStrictTimezone() {
     return strictTimezone;
@@ -196,7 +196,7 @@ class JsonComparison {
   }
 
   private boolean shouldIgnoreField(Object key) {
-    return key instanceof String && ignoredFields.contains((String) key);
+    return key instanceof String && ignoredFields.contains(key);
   }
 
   @CheckForNull

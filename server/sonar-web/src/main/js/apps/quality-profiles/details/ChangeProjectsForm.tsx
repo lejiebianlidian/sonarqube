@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ export default class ChangeProjectsForm extends React.PureComponent<Props, State
     });
 
   handleSelect = (key: string) =>
-    associateProject(this.props.profile.key, key).then(() => {
+    associateProject(this.props.profile, key).then(() => {
       if (this.mounted) {
         this.setState((state: State) => ({
           needToReload: true,
@@ -111,7 +111,7 @@ export default class ChangeProjectsForm extends React.PureComponent<Props, State
     });
 
   handleUnselect = (key: string) =>
-    dissociateProject(this.props.profile.key, key).then(() => {
+    dissociateProject(this.props.profile, key).then(() => {
       if (this.mounted) {
         this.setState((state: State) => ({
           needToReload: true,

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -57,9 +57,7 @@ public class DefaultInputModuleTest {
 
     assertThat(module.key()).isEqualTo("moduleKey");
     assertThat(module.definition()).isEqualTo(def);
-    assertThat(module.getBranch()).isNull();
     assertThat(module.getBaseDir()).isEqualTo(baseDir.toPath());
-    assertThat(module.getKeyWithBranch()).isEqualTo("moduleKey");
     assertThat(module.getWorkDir()).isEqualTo(workDir.toPath());
     assertThat(module.getEncoding()).isEqualTo(Charset.defaultCharset());
     assertThat(module.getSourceDirsOrFiles().get()).containsExactlyInAnyOrder(src);
@@ -85,9 +83,7 @@ public class DefaultInputModuleTest {
 
     assertThat(module.key()).isEqualTo("moduleKey");
     assertThat(module.definition()).isEqualTo(def);
-    assertThat(module.getBranch()).isNull();
     assertThat(module.getBaseDir()).isEqualTo(baseDir.toPath());
-    assertThat(module.getKeyWithBranch()).isEqualTo("moduleKey");
     assertThat(module.getWorkDir()).isEqualTo(workDir.toPath());
     assertThat(module.getEncoding()).isEqualTo(Charset.defaultCharset());
     assertThat(module.getSourceDirsOrFiles()).isNotPresent();

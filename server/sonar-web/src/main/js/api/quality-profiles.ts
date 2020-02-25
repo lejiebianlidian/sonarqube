@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,9 @@
  */
 import { map } from 'lodash';
 import { csvEscape } from 'sonar-ui-common/helpers/csv';
-import {
-  checkStatus,
-  getJSON,
-  parseJSON,
-  post,
-  postJSON,
-  request,
-  RequestData
-} from 'sonar-ui-common/helpers/request';
+import { getJSON, post, postJSON, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
+import { Exporter, ProfileChangelogEvent } from '../apps/quality-profiles/types';
 
 export interface ProfileActions {
   associateProjects?: boolean;
@@ -81,31 +74,22 @@ export function searchQualityProfiles(
   return getJSON('/api/qualityprofiles/search', parameters).catch(throwGlobalError);
 }
 
-export function getQualityProfile(data: {
+export function getQualityProfile({
+  compareToSonarWay,
+  profile: { key }
+}: {
   compareToSonarWay?: boolean;
-  profile: string;
+  profile: Profile;
 }): Promise<any> {
-  return getJSON('/api/qualityprofiles/show', data);
+  return getJSON('/api/qualityprofiles/show', { compareToSonarWay, key });
 }
 
 export function createQualityProfile(data: RequestData): Promise<any> {
-  return request('/api/qualityprofiles/create')
-    .setMethod('post')
-    .setData(data)
-    .submit()
-    .then(checkStatus)
-    .then(parseJSON)
-    .catch(throwGlobalError);
+  return postJSON('/api/qualityprofiles/create', data).catch(throwGlobalError);
 }
 
 export function restoreQualityProfile(data: RequestData): Promise<any> {
-  return request('/api/qualityprofiles/restore')
-    .setMethod('post')
-    .setData(data)
-    .submit()
-    .then(checkStatus)
-    .then(parseJSON)
-    .catch(throwGlobalError);
+  return postJSON('/api/qualityprofiles/restore', data).catch(throwGlobalError);
 }
 
 export interface ProfileProject {
@@ -121,12 +105,28 @@ export function getProfileProjects(
   return getJSON('/api/qualityprofiles/projects', data).catch(throwGlobalError);
 }
 
-export function getProfileInheritance(profileKey: string): Promise<any> {
-  return getJSON('/api/qualityprofiles/inheritance', { profileKey }).catch(throwGlobalError);
+export function getProfileInheritance({
+  language,
+  name: qualityProfile,
+  organization
+}: Profile): Promise<{
+  ancestors: T.ProfileInheritanceDetails[];
+  children: T.ProfileInheritanceDetails[];
+  profile: T.ProfileInheritanceDetails;
+}> {
+  return getJSON('/api/qualityprofiles/inheritance', {
+    language,
+    qualityProfile,
+    organization
+  }).catch(throwGlobalError);
 }
 
-export function setDefaultProfile(profileKey: string): Promise<void> {
-  return post('/api/qualityprofiles/set_default', { profileKey });
+export function setDefaultProfile({ language, name: qualityProfile, organization }: Profile) {
+  return post('/api/qualityprofiles/set_default', {
+    language,
+    qualityProfile,
+    organization
+  });
 }
 
 export function renameProfile(key: string, name: string) {
@@ -137,14 +137,43 @@ export function copyProfile(fromKey: string, toName: string): Promise<any> {
   return postJSON('/api/qualityprofiles/copy', { fromKey, toName }).catch(throwGlobalError);
 }
 
-export function deleteProfile(profileKey: string) {
-  return post('/api/qualityprofiles/delete', { profileKey }).catch(throwGlobalError);
-}
-
-export function changeProfileParent(profileKey: string, parentKey: string) {
-  return post('/api/qualityprofiles/change_parent', { profileKey, parentKey }).catch(
+export function deleteProfile({ language, name: qualityProfile, organization }: Profile) {
+  return post('/api/qualityprofiles/delete', { language, qualityProfile, organization }).catch(
     throwGlobalError
   );
+}
+
+export function changeProfileParent(
+  { language, name: qualityProfile, organization }: Profile,
+  parentProfile?: Profile
+) {
+  return post('/api/qualityprofiles/change_parent', {
+    language,
+    qualityProfile,
+    organization,
+    parentQualityProfile: parentProfile ? parentProfile.name : undefined
+  }).catch(throwGlobalError);
+}
+
+export function getQualityProfileBackupUrl({
+  language,
+  name: qualityProfile,
+  organization
+}: Profile) {
+  const queryParams = Object.entries({ language, qualityProfile, organization })
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join('&');
+  return `/api/qualityprofiles/backup?${queryParams}`;
+}
+
+export function getQualityProfileExporterUrl(
+  { key: exporterKey }: Exporter,
+  { language, name: qualityProfile, organization }: Profile
+) {
+  const queryParams = Object.entries({ exporterKey, language, qualityProfile, organization })
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join('&');
+  return `/api/qualityprofiles/export?${queryParams}`;
 }
 
 export function getImporters(): Promise<
@@ -157,8 +186,25 @@ export function getExporters(): Promise<any> {
   return getJSON('/api/qualityprofiles/exporters').then(r => r.exporters);
 }
 
-export function getProfileChangelog(data: RequestData): Promise<any> {
-  return getJSON('/api/qualityprofiles/changelog', data);
+export function getProfileChangelog(
+  since: any,
+  to: any,
+  { language, name: qualityProfile, organization }: Profile,
+  page?: number
+): Promise<{
+  events: ProfileChangelogEvent[];
+  p: number;
+  ps: number;
+  total: number;
+}> {
+  return getJSON('/api/qualityprofiles/changelog', {
+    since,
+    to,
+    language,
+    qualityProfile,
+    organization,
+    p: page
+  });
 }
 
 export interface CompareResponse {
@@ -178,12 +224,28 @@ export function compareProfiles(leftKey: string, rightKey: string): Promise<Comp
   return getJSON('/api/qualityprofiles/compare', { leftKey, rightKey });
 }
 
-export function associateProject(key: string, project: string) {
-  return post('/api/qualityprofiles/add_project', { key, project }).catch(throwGlobalError);
+export function associateProject(
+  { language, name: qualityProfile, organization }: Profile,
+  project: string
+) {
+  return post('/api/qualityprofiles/add_project', {
+    language,
+    qualityProfile,
+    organization,
+    project
+  }).catch(throwGlobalError);
 }
 
-export function dissociateProject(key: string, project: string) {
-  return post('/api/qualityprofiles/remove_project', { key, project }).catch(throwGlobalError);
+export function dissociateProject(
+  { language, name: qualityProfile, organization }: Profile,
+  project: string
+) {
+  return post('/api/qualityprofiles/remove_project', {
+    language,
+    qualityProfile,
+    organization,
+    project
+  }).catch(throwGlobalError);
 }
 
 export interface SearchUsersGroupsParameters {

@@ -24,46 +24,28 @@ dependencies {
   compileOnly 'com.google.code.findbugs:jsr305'
 
   testCompile 'com.google.code.findbugs:jsr305'
+  testCompile 'com.h2database:h2'
   testCompile 'com.microsoft.sqlserver:mssql-jdbc'
   testCompile 'com.oracle.jdbc:ojdbc8'
   testCompile 'com.tngtech.java:junit-dataprovider'
-  testCompile 'junit:junit'
-  testCompile 'org.assertj:assertj-core'
-  testCompile 'org.dbunit:dbunit'
   testCompile 'org.mockito:mockito-core'
   testCompile 'org.postgresql:postgresql'
-  testCompile 'org.sonarsource.orchestrator:sonar-orchestrator'
   testCompile project(':sonar-testing-harness')
 
   testRuntime 'com.h2database:h2'
   testRuntime 'com.microsoft.sqlserver:mssql-jdbc'
   testRuntime 'com.oracle.jdbc:ojdbc8'
   testRuntime 'org.postgresql:postgresql'
-}
 
-task createDB(type:JavaExec) {
-  main = 'org.sonar.db.CreateDb'
-  classpath = sourceSets.test.runtimeClasspath
-  systemProperty 'orchestrator.configUrl', System.getProperty('orchestrator.configUrl')
-  if (!project.version.endsWith("-SNAPSHOT")) {
-    systemProperty 'sonar.runtimeVersion', project.version
-  }
+  testFixturesApi 'junit:junit'
+  testFixturesApi 'org.assertj:assertj-core'
+
+  testFixturesCompileOnly 'com.google.code.findbugs:jsr305'
 }
 
 test {
   if (System.hasProperty('orchestrator.configUrl'))
     systemProperty 'orchestrator.configUrl', System.getProperty('orchestrator.configUrl')
-}
-
-task testJar(type: Jar) {
-  classifier = 'tests'
-  from sourceSets.test.output
-}
-
-configurations { tests { extendsFrom testRuntime } }
-
-artifacts {
-   tests testJar
 }
 
 artifactoryPublish.skip = false
@@ -76,7 +58,6 @@ publishing {
       if (release) {
         artifact sourcesJar
         artifact javadocJar
-        artifact testJar
       }
     }
   }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ public class WebhookPayloadFactoryImplTest {
   private WebhookPayloadFactory underTest = new WebhookPayloadFactoryImpl(server, system2);
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     when(server.getPublicRootUrl()).thenReturn("http://foo");
     when(system2.now()).thenReturn(1_500_999L);
   }
@@ -232,23 +232,6 @@ public class WebhookPayloadFactoryImplTest {
   }
 
   @Test
-  public void create_payload_on_short_branch() {
-    CeTask task = new CeTask("#1", CeTask.Status.SUCCESS);
-    ProjectAnalysis analysis = newAnalysis(task, null, new Branch(false, "feature/foo", Branch.Type.SHORT), 1_500_000_000_000L, emptyMap());
-
-    WebhookPayload payload = underTest.create(analysis);
-    assertJson(payload.getJson())
-      .isSimilarTo("{" +
-        "\"branch\": {" +
-        "  \"name\": \"feature/foo\"," +
-        "  \"type\": \"SHORT\"," +
-        "  \"isMain\": false," +
-        "  \"url\": \"http://foo/dashboard?id=P1&branch=feature%2Ffoo\"" +
-        "}" +
-        "}");
-  }
-
-  @Test
   public void create_payload_on_pull_request() {
     CeTask task = new CeTask("#1", CeTask.Status.SUCCESS);
     ProjectAnalysis analysis = newAnalysis(task, null, new Branch(false, "pr/foo", Branch.Type.PULL_REQUEST), 1_500_000_000_000L, emptyMap());
@@ -287,16 +270,16 @@ public class WebhookPayloadFactoryImplTest {
   }
 
   @Test
-  public void create_payload_on_long_branch() {
+  public void create_payload_on_branch() {
     CeTask task = new CeTask("#1", CeTask.Status.SUCCESS);
-    ProjectAnalysis analysis = newAnalysis(task, null, new Branch(false, "feature/foo", Branch.Type.LONG), 1_500_000_000_000L, emptyMap());
+    ProjectAnalysis analysis = newAnalysis(task, null, new Branch(false, "feature/foo", Branch.Type.BRANCH), 1_500_000_000_000L, emptyMap());
 
     WebhookPayload payload = underTest.create(analysis);
     assertJson(payload.getJson())
       .isSimilarTo("{" +
         "\"branch\": {" +
         "  \"name\": \"feature/foo\"" +
-        "  \"type\": \"LONG\"" +
+        "  \"type\": \"BRANCH\"" +
         "  \"isMain\": false," +
         "  \"url\": \"http://foo/dashboard?id=P1&branch=feature%2Ffoo\"" +
         "}" +
@@ -306,13 +289,13 @@ public class WebhookPayloadFactoryImplTest {
   @Test
   public void create_payload_on_main_branch_without_name() {
     CeTask task = new CeTask("#1", CeTask.Status.SUCCESS);
-    ProjectAnalysis analysis = newAnalysis(task, null, new Branch(true, null, Branch.Type.LONG), 1_500_000_000_000L, emptyMap());
+    ProjectAnalysis analysis = newAnalysis(task, null, new Branch(true, null, Branch.Type.BRANCH), 1_500_000_000_000L, emptyMap());
 
     WebhookPayload payload = underTest.create(analysis);
     assertJson(payload.getJson())
       .isSimilarTo("{" +
         "\"branch\": {" +
-        "  \"type\": \"LONG\"" +
+        "  \"type\": \"BRANCH\"" +
         "  \"isMain\": true," +
         "  \"url\": \"http://foo/dashboard?id=P1\"" +
         "}" +

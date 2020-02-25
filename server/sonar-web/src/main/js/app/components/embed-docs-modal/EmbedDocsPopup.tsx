@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ export default class EmbedDocsPopup extends React.PureComponent<Props> {
         {this.renderTitle(translate('embed_docs.stay_connected'))}
         <li>
           {this.renderIconLink(
-            'https://www.sonarsource.com/resources/product-news/',
+            'https://www.sonarqube.org/whats-new/',
             'embed-doc/sq-icon.svg',
             translate('embed_docs.news')
           )}

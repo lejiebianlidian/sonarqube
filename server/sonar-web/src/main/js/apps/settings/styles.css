@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,9 @@
 }
 
 .settings-definition-changed {
-  border-top: 1px solid #faebcc;
-  border-bottom: 1px solid #faebcc;
-  background-color: #fcf8e3;
+  border-top: 1px solid var(--alertBorderWarning);
+  border-bottom: 1px solid var(--alertBorderWarning);
+  background-color: var(--alertBackgroundWarning);
 }
 
 .settings-definition-left {
@@ -82,13 +82,8 @@
   border-top: 1px dotted var(--barBorderColor);
 }
 
-.settings-sub-categories-list {
-}
-
-.settings-sub-categories-list > li {
-}
-
-.settings-sub-categories-list > li + li {
+.settings-sub-categories-list > li + li,
+.settings-sub-category {
   margin: 30px -20px 0;
   padding: 30px 20px;
   border-top: 1px solid var(--barBorderColor);

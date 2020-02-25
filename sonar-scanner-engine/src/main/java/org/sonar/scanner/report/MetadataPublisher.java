@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.sonar.api.batch.fs.internal.AbstractProjectOrModule;
+import org.sonar.api.batch.fs.internal.DefaultInputModule;
 import org.sonar.api.batch.scm.ScmProvider;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -32,8 +34,6 @@ import org.sonar.scanner.ProjectInfo;
 import org.sonar.scanner.bootstrap.ScannerPlugin;
 import org.sonar.scanner.bootstrap.ScannerPluginRepository;
 import org.sonar.scanner.cpd.CpdSettings;
-import org.sonar.api.batch.fs.internal.AbstractProjectOrModule;
-import org.sonar.api.batch.fs.internal.DefaultInputModule;
 import org.sonar.scanner.fs.InputModuleHierarchy;
 import org.sonar.scanner.protocol.output.ScannerReport;
 import org.sonar.scanner.protocol.output.ScannerReport.Metadata.BranchType;
@@ -44,8 +44,6 @@ import org.sonar.scanner.scan.ScanProperties;
 import org.sonar.scanner.scan.branch.BranchConfiguration;
 import org.sonar.scanner.scm.ScmConfiguration;
 import org.sonar.scanner.scm.ScmRevision;
-
-import static java.util.Optional.ofNullable;
 
 public class MetadataPublisher implements ReportPublisherStep {
 
@@ -99,8 +97,6 @@ public class MetadataPublisher implements ReportPublisherStep {
     if (branchConfiguration.branchName() != null) {
       addBranchInformation(builder);
     }
-
-    ofNullable(rootProject.getBranch()).ifPresent(builder::setDeprecatedBranch);
 
     addScmInformation(builder);
 
@@ -160,9 +156,9 @@ public class MetadataPublisher implements ReportPublisherStep {
     builder.setBranchName(branchConfiguration.branchName());
     BranchType branchType = toProtobufBranchType(branchConfiguration.branchType());
     builder.setBranchType(branchType);
-    String referenceBranch = branchConfiguration.longLivingSonarReferenceBranch();
+    String referenceBranch = branchConfiguration.referenceBranchName();
     if (referenceBranch != null) {
-      builder.setMergeBranchName(referenceBranch);
+      builder.setReferenceBranchName(referenceBranch);
     }
     String targetBranchName = branchConfiguration.targetBranchName();
     if (targetBranchName != null) {
@@ -177,10 +173,8 @@ public class MetadataPublisher implements ReportPublisherStep {
     if (branchType == org.sonar.scanner.scan.branch.BranchType.PULL_REQUEST) {
       return BranchType.PULL_REQUEST;
     }
-    if (branchType == org.sonar.scanner.scan.branch.BranchType.LONG) {
-      return BranchType.LONG;
-    }
-    return BranchType.SHORT;
+
+    return BranchType.BRANCH;
   }
 
   private static String toSonarQubePath(Path path) {

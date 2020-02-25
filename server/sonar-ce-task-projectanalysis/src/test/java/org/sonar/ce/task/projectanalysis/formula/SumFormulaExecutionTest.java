@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ import org.sonar.ce.task.projectanalysis.measure.MeasureRepositoryRule;
 import org.sonar.ce.task.projectanalysis.metric.MetricRepositoryRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.guava.api.Assertions.assertThat;
 import static org.sonar.api.measures.CoreMetrics.LINES_KEY;
 import static org.sonar.ce.task.projectanalysis.component.Component.Type.DIRECTORY;
 import static org.sonar.ce.task.projectanalysis.component.Component.Type.PROJECT;
@@ -54,7 +53,7 @@ public class SumFormulaExecutionTest {
   FormulaExecutorComponentVisitor underTest;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     underTest = FormulaExecutorComponentVisitor.newBuilder(metricRepository, measureRepository)
       .buildFor(Lists.newArrayList(createIntSumFormula(LINES_KEY)));
   }

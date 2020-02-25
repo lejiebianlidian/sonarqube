@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +18,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
+import { translate } from 'sonar-ui-common/helpers/l10n';
 import { fetchQualityGate } from '../../../api/quality-gates';
+import addGlobalSuccessMessage from '../../../app/utils/addGlobalSuccessMessage';
 import { fetchMetrics } from '../../../store/rootActions';
 import { getMetrics, Store } from '../../../store/rootReducer';
 import { addCondition, checkIfDefault, deleteCondition, replaceCondition } from '../utils';
@@ -49,6 +51,7 @@ type Props = StateToProps & DispatchToProps & OwnProps;
 interface State {
   loading: boolean;
   qualityGate?: T.QualityGate;
+  updatedConditionId?: number;
 }
 
 export class Details extends React.PureComponent<Props, State> {
@@ -77,7 +80,7 @@ export class Details extends React.PureComponent<Props, State> {
     return fetchQualityGate({ id, organization }).then(
       qualityGate => {
         if (this.mounted) {
-          this.setState({ loading: false, qualityGate });
+          this.setState({ loading: false, qualityGate, updatedConditionId: undefined });
         }
       },
       () => {
@@ -93,7 +96,11 @@ export class Details extends React.PureComponent<Props, State> {
       if (!qualityGate) {
         return null;
       }
-      return { qualityGate: addCondition(qualityGate, condition) };
+      addGlobalSuccessMessage(translate('quality_gates.condition_added'));
+      return {
+        qualityGate: addCondition(qualityGate, condition),
+        updatedConditionId: condition.id
+      };
     });
   };
 
@@ -102,7 +109,11 @@ export class Details extends React.PureComponent<Props, State> {
       if (!qualityGate) {
         return null;
       }
-      return { qualityGate: replaceCondition(qualityGate, newCondition, oldCondition) };
+      addGlobalSuccessMessage(translate('quality_gates.condition_updated'));
+      return {
+        qualityGate: replaceCondition(qualityGate, newCondition, oldCondition),
+        updatedConditionId: newCondition.id
+      };
     });
   };
 
@@ -111,7 +122,11 @@ export class Details extends React.PureComponent<Props, State> {
       if (!qualityGate) {
         return null;
       }
-      return { qualityGate: deleteCondition(qualityGate, condition) };
+      addGlobalSuccessMessage(translate('quality_gates.condition_deleted'));
+      return {
+        qualityGate: deleteCondition(qualityGate, condition),
+        updatedConditionId: undefined
+      };
     });
   };
 
@@ -131,14 +146,14 @@ export class Details extends React.PureComponent<Props, State> {
 
   render() {
     const { organization, metrics, refreshQualityGates } = this.props;
-    const { loading, qualityGate } = this.state;
+    const { loading, qualityGate, updatedConditionId } = this.state;
 
     return (
       <div className="layout-page-main">
         <DeferredSpinner loading={loading} timeout={200}>
           {qualityGate && (
             <>
-              <Helmet title={qualityGate.name} />
+              <Helmet defer={false} title={qualityGate.name} />
               <DetailsHeader
                 onSetDefault={this.handleSetDefault}
                 organization={organization}
@@ -154,6 +169,7 @@ export class Details extends React.PureComponent<Props, State> {
                 onSaveCondition={this.handleSaveCondition}
                 organization={organization}
                 qualityGate={qualityGate}
+                updatedConditionId={updatedConditionId}
               />
             </>
           )}
@@ -169,7 +185,4 @@ const mapStateToProps = (state: Store): StateToProps => ({
   metrics: getMetrics(state)
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Details);
+export default connect(mapStateToProps, mapDispatchToProps)(Details);

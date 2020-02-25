@@ -3,6 +3,51 @@ title: Release Upgrade Notes
 url: /setup/upgrade-notes/
 ---
 
+## Release 8.2 Upgrade Notes  
+**Security Hotspots: dedicated space and workflow**
+* The Security Hotspots have a brand new space where developers can perform security reviews. The review process has been simplified. It's no longer necessary to transform a Security Hotspot into a Manual Vulnerability and back. A developer can now simply mark a Security Hotspot as Safe, Fixed, or leave it as-is if more time is needed. ([MMF-1868](https://jira.sonarsource.com/browse/MMF-1868)).
+* Manual Vulnerabilities created from Security Hotspots are migrated to Security Hotspots with the status "To Review". A comment "Migrated from Manual Vulnerability" is added to the review history to recognize them.  
+* A Security Hotspots Reviewed metric has been added and is available to Quality Gates along with the Security Review Rating.
+
+**New project homepage**  
+The project homepage has been redesigned to focus on New Code ([MMF-1886](https://jira.sonarsource.com/browse/MMF-1886)). Projects details are now tucked into a new "Project information" pane. The project administration menu has been renamed "Project Settings".
+
+**Deprecated configuration**  
+The old way of referencing environment variables in server configuration is deprecated and replaced with the support of default environment variables. ([SONAR-13113](https://jira.sonarsource.com/browse/SONAR-13113)).
+
+[Full Release Notes](https://jira.sonarsource.com/secure/ReleaseNote.jspa?projectId=10930&version=15301)
+
+## Release 8.1 Upgrade Notes  
+**Short-lived and Long-lived branches are now just branches**  
+The concept for branches is now simplified, with a single way to handle all of them. ([MMF-1786](https://jira.sonarsource.com/browse/MMF-1786)).
+* Analysis is the same for all branches. The parameter `sonar.branch.target` is no longer used and can be removed.
+* All branches behave as previous Long-lived branches: all measures are available. The New Code period is configurable and starts by default after the first analysis. The Quality Gate check applies on all conditions.
+* As a consequence, branches that were previously Short-Lived branches may display incomplete measures before they are analyzed again. With the first analysis, measures on New Code and the Quality Gate status may change.
+* New housekeeping settings replace the Long-lived branch pattern and allow you to choose the branches which should be kept when inactive.
+* Detection of new issues in branches and PRs is simplified. The list of issues reported as new may change slighlty. ([SONAR-12627](https://jira.sonarsource.com/browse/SONAR-12627)).
+
+**Configuration of Pull Request decoration**  
+The configuration of Pull Request decoration changes. Previous settings are replaced by a new configuration in the UI. Also, decoration of Pull Requests now supports multiple instances of a same ALM provider in Enterprise Edition and above. ([MMF-1814](https://jira.sonarsource.com/browse/MMF-1814)).
+
+**Deprecated web services and parameters dropped**  
+Some Web services and parameters which were deprecated in 6.x versions have been dropped, including some related to Quality Profiles. See Full Release Notes for more info.
+
+[Full Release Notes](https://jira.sonarsource.com/secure/ReleaseNote.jspa?projectId=10930&version=15243)
+
+
+## Release 8.0 Upgrade Notes  
+**GitHub, LDAP, and SAML authentication now built in**  
+GitHub, LDAP, and SAML authentication is now built in. If you were using the authentication plugins (sonar-ldap, sonar-auth-github, and sonar-auth-saml), you need to remove them from SonarQube before upgrading. ([SONAR-12471](https://jira.sonarsource.com/browse/SONAR-12471)).
+
+**GitLab Authentication now available**  
+GitLab OAuth2 authentication is now available in all editions. If you were using the community plugin, you need to remove it from SonarQube before upgrading. The configured variable of the plugin will be migrated, so the authentication will work without having to rewrite the configuration. Due to changes in group mapping, GitLab subgroups mapped using the community plugin will need to be renamed in SonarQube for the mapping to work. ([SONAR-12460](https://jira.sonarsource.com/browse/SONAR-12460)).
+
+**New Code Period values simplified**
+It's now easier to set your New Code Period in the UI. With the new settings, specific analysis has replaced setting the New Code Period to a specific date or version. If you were using a specific date or version for your New Code Period, now you'll need to use a specific analysis. See the [Setting Your New Code Period](/project-administration/new-code-period/) for more info. ([MMF-1579](https://jira.sonarsource.com/browse/MMF-1579)).  
+
+[Full Release Notes](https://jira.sonarsource.com/secure/ReleaseNote.jspa?projectId=10930&version=14962)
+
+
 ## Release 7.9.1 LTS Upgrade Notes  
 **Upgrade on Microsoft SQL Server fixed**  
 Upgrade failure and performance issues with Microsoft SQL Server have been fixed ([SONAR-12260](https://jira.sonarsource.com/browse/SONAR-12260), [SONAR-12251](https://jira.sonarsource.com/browse/SONAR-12251)).

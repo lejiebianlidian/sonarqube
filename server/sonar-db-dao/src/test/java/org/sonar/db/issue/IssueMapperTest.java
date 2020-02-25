@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ public class IssueMapperTest {
   private System2 system2 = new AlwaysIncreasingSystem2();
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     OrganizationDto organizationDto = dbTester.organizations().insert();
     project = ComponentTesting.newPrivateProjectDto(organizationDto);
     dbTester.getDbClient().componentDao().insert(dbSession, project);
@@ -341,27 +341,6 @@ public class IssueMapperTest {
   }
 
   @Test
-  public void scrollClosedByComponentUuid_returns_closed_issues_without_isHotspot_flag() {
-    RuleType ruleType = randomSupportedRuleType();
-    OrganizationDto organization = dbTester.organizations().insert();
-    ComponentDto component = randomComponent(organization);
-    IssueDto noHotspotFlagIssue = insertNewClosedIssue(component, ruleType);
-    IssueChangeDto noFlagIssueChange = insertToClosedDiff(noHotspotFlagIssue);
-    manuallySetToNullFromHotpotsColumn(noHotspotFlagIssue);
-    IssueDto issue = insertNewClosedIssue(component, ruleType);
-    IssueChangeDto issueChange = insertToClosedDiff(issue);
-
-    RecorderResultHandler resultHandler = new RecorderResultHandler();
-    underTest.scrollClosedByComponentUuid(component.uuid(), NO_FILTERING_ON_CLOSE_DATE, resultHandler);
-
-    assertThat(resultHandler.issues)
-      .extracting(IssueDto::getKey, t -> t.getClosedChangeData().get())
-      .containsOnly(
-        tuple(issue.getKey(), issueChange.getChangeData()),
-        tuple(noHotspotFlagIssue.getKey(), noFlagIssueChange.getChangeData()));
-  }
-
-  @Test
   public void scrollClosedByComponentUuid_does_not_return_closed_issues_without_close_date() {
     RuleType ruleType = randomSupportedRuleType();
     OrganizationDto organization = dbTester.organizations().insert();
@@ -428,29 +407,6 @@ public class IssueMapperTest {
       .containsOnly(issues[3].getKey(), issues[1].getKey(), issues[2].getKey(), issues[0].getKey());
   }
 
-  private void manuallySetToNullFromHotpotsColumn(IssueDto fromHostSpotIssue) {
-    dbTester.executeUpdateSql("update issues set from_hotspot = null where kee = '" + fromHostSpotIssue.getKey() + "'");
-    dbTester.commit();
-  }
-
-  @Test
-  @UseDataProvider("closedIssuesSupportedRuleTypes")
-  public void scrollClosedByComponentUuid_does_not_return_closed_issues_with_isHotspot_flag_true(RuleType ruleType) {
-    OrganizationDto organization = dbTester.organizations().insert();
-    ComponentDto component = randomComponent(organization);
-    IssueDto fromHostSpotIssue = insertNewClosedIssue(component, ruleType, t -> t.setIsFromHotspot(true));
-    insertToClosedDiff(fromHostSpotIssue);
-    IssueDto issue = insertNewClosedIssue(component, ruleType);
-    IssueChangeDto issueChange = insertToClosedDiff(issue);
-
-    RecorderResultHandler resultHandler = new RecorderResultHandler();
-    underTest.scrollClosedByComponentUuid(component.uuid(), NO_FILTERING_ON_CLOSE_DATE, resultHandler);
-
-    assertThat(resultHandler.issues)
-      .extracting(IssueDto::getKey, t -> t.getClosedChangeData().get())
-      .containsOnly(tuple(issue.getKey(), issueChange.getChangeData()));
-  }
-
   @Test
   @UseDataProvider("closedIssuesSupportedRuleTypes")
   public void scrollClosedByComponentUuid_return_one_row_per_status_diff_to_CLOSED_sorted_by_most_recent_creation_date_first(RuleType ruleType) {
@@ -458,7 +414,7 @@ public class IssueMapperTest {
     ComponentDto component = randomComponent(organization);
     IssueDto issue = insertNewClosedIssue(component, ruleType);
     Date date = new Date();
-    IssueChangeDto changes[] = new IssueChangeDto[] {
+    IssueChangeDto[] changes = new IssueChangeDto[] {
       insertToClosedDiff(issue, DateUtils.addDays(date, -10)),
       insertToClosedDiff(issue, DateUtils.addDays(date, -60)),
       insertToClosedDiff(issue, date),
@@ -485,7 +441,7 @@ public class IssueMapperTest {
     ComponentDto component = randomComponent(organization);
     IssueDto issue = insertNewClosedIssue(component, ruleType);
     Date date = new Date();
-    IssueChangeDto changes[] = new IssueChangeDto[] {
+    IssueChangeDto[] changes = new IssueChangeDto[] {
       insertToClosedDiff(issue, DateUtils.addDays(date, -10), Issue.STATUS_CLOSED, Issue.STATUS_REOPENED),
       insertToClosedDiff(issue, DateUtils.addDays(date, -60)),
       insertToClosedDiff(issue, date),

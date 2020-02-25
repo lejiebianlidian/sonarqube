@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,12 +21,13 @@ import * as classNames from 'classnames';
 import * as React from 'react';
 import { withScrollTo } from '../../../components/hoc/withScrollTo';
 import { WorkspaceContext } from '../../../components/workspace/context';
+import { BranchLike } from '../../../types/branch-like';
 import ComponentMeasure from './ComponentMeasure';
 import ComponentName from './ComponentName';
 import ComponentPin from './ComponentPin';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   canBePinned?: boolean;
   canBrowse?: boolean;
   component: T.ComponentMeasure;

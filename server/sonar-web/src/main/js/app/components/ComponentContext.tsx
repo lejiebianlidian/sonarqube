@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,9 +18,10 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { BranchLike } from '../../types/branch-like';
 
 interface ComponentContextType {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   component: T.Component | undefined;
 }
 

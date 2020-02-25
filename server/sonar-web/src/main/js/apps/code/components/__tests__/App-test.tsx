@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
-import { mockIssue, mockPullRequest, mockRouter } from '../../../../helpers/testMocks';
+import { mockPullRequest } from '../../../../helpers/mocks/branch-like';
+import { mockIssue, mockRouter } from '../../../../helpers/testMocks';
 import { retrieveComponent } from '../../utils';
 import { App } from '../App';
 
@@ -47,7 +48,7 @@ beforeEach(() => {
 it('should have correct title for APP based component', async () => {
   const wrapper = shallowRender();
   await waitAndUpdate(wrapper);
-  expect(wrapper.find('HelmetWrapper')).toMatchSnapshot();
+  expect(wrapper.find('Helmet')).toMatchSnapshot();
 });
 
 it('should have correct title for portfolio base component', async () => {
@@ -60,7 +61,7 @@ it('should have correct title for portfolio base component', async () => {
   });
   const wrapper = shallowRender();
   await waitAndUpdate(wrapper);
-  expect(wrapper.find('HelmetWrapper')).toMatchSnapshot();
+  expect(wrapper.find('Helmet')).toMatchSnapshot();
 });
 
 it('should have correct title for project component', async () => {
@@ -73,7 +74,7 @@ it('should have correct title for project component', async () => {
   });
   const wrapper = shallowRender();
   await waitAndUpdate(wrapper);
-  expect(wrapper.find('HelmetWrapper')).toMatchSnapshot();
+  expect(wrapper.find('Helmet')).toMatchSnapshot();
 });
 
 it('should refresh branch status if issues are updated', async () => {

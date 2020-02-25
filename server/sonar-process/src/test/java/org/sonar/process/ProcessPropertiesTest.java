@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -115,7 +115,7 @@ public class ProcessPropertiesTest {
     processProperties.completeDefaults(p);
   }
 
-  private class FakeExtension1 implements CoreExtension {
+  private static class FakeExtension1 implements CoreExtension {
 
     @Override
     public String getName() {
@@ -135,7 +135,7 @@ public class ProcessPropertiesTest {
     }
   }
 
-  private class FakeExtension2 implements CoreExtension {
+  private static class FakeExtension2 implements CoreExtension {
 
     @Override
     public String getName() {
@@ -155,7 +155,7 @@ public class ProcessPropertiesTest {
     }
   }
 
-  private class FakeExtension3 implements CoreExtension {
+  private static class FakeExtension3 implements CoreExtension {
 
     @Override
     public String getName() {

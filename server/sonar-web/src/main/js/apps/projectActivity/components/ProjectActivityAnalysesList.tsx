@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,33 +18,29 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as classNames from 'classnames';
+import { isEqual } from 'date-fns';
 import { throttle } from 'lodash';
 import * as React from 'react';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import { toShortNotSoISOString } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import DateFormatter from '../../../components/intl/DateFormatter';
-import {
-  activityQueryChanged,
-  getAnalysesByVersionByDay,
-  ParsedAnalysis,
-  Query,
-  selectedDateQueryChanged
-} from '../utils';
+import { ComponentQualifier } from '../../../types/component';
+import { activityQueryChanged, getAnalysesByVersionByDay, Query } from '../utils';
 import ProjectActivityAnalysis from './ProjectActivityAnalysis';
 
 interface Props {
   addCustomEvent: (analysis: string, name: string, category?: string) => Promise<void>;
   addVersion: (analysis: string, version: string) => Promise<void>;
-  analyses: ParsedAnalysis[];
+  analyses: T.ParsedAnalysis[];
   analysesLoading: boolean;
   canAdmin?: boolean;
   canDeleteAnalyses?: boolean;
   changeEvent: (event: string, name: string) => Promise<void>;
-  className?: string;
   deleteAnalysis: (analysis: string) => Promise<void>;
   deleteEvent: (analysis: string, event: string) => Promise<void>;
   initializing: boolean;
+  leakPeriodDate?: Date;
   project: { qualifier: string };
   query: Query;
   updateQuery: (changes: Partial<Query>) => void;
@@ -53,7 +49,7 @@ interface Props {
 export default class ProjectActivityAnalysesList extends React.PureComponent<Props> {
   analyses?: HTMLCollectionOf<HTMLElement>;
   badges?: HTMLCollectionOf<HTMLElement>;
-  scrollContainer?: HTMLElement | null;
+  scrollContainer?: HTMLUListElement | null;
 
   constructor(props: Props) {
     super(props);
@@ -73,13 +69,7 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
     if (!this.scrollContainer) {
       return;
     }
-    if (
-      this.props.query.selectedDate &&
-      (selectedDateQueryChanged(prevProps.query, this.props.query) ||
-        prevProps.analyses !== this.props.analyses)
-    ) {
-      this.scrollToDate(this.props.query.selectedDate);
-    } else if (activityQueryChanged(prevProps.query, this.props.query)) {
+    if (activityQueryChanged(prevProps.query, this.props.query)) {
       this.resetScrollTop(0, true);
     }
   }
@@ -97,24 +87,6 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
       }
     }
     this.updateStickyBadges(forceBadgeAlignement);
-  };
-
-  scrollToDate = (targetDate?: Date) => {
-    if (!this.scrollContainer || !targetDate || !this.analyses) {
-      return;
-    }
-    const date = targetDate.valueOf();
-    for (let i = 1; i < this.analyses.length; i++) {
-      if (Number(this.analyses[i].getAttribute('data-date')) === date) {
-        const containerHeight = this.scrollContainer.offsetHeight - 100;
-        const scrollDiff = Math.abs(this.scrollContainer.scrollTop - this.analyses[i].offsetTop);
-        // Center only the extremities and the ones outside of the container
-        if (scrollDiff > containerHeight || scrollDiff < 100) {
-          this.resetScrollTop(this.analyses[i].offsetTop - containerHeight / 2);
-        }
-        break;
-      }
-    }
   };
 
   updateStickyBadges = (forceBadgeAlignement?: boolean) => {
@@ -155,6 +127,38 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
     this.props.updateQuery({ selectedDate: date });
   };
 
+  shouldRenderBaselineMarker(analysis: T.ParsedAnalysis): boolean {
+    return Boolean(this.props.leakPeriodDate && isEqual(this.props.leakPeriodDate, analysis.date));
+  }
+
+  renderAnalysis(analysis: T.ParsedAnalysis) {
+    const firstAnalysisKey = this.props.analyses[0].key;
+
+    const selectedDate = this.props.query.selectedDate
+      ? this.props.query.selectedDate.valueOf()
+      : null;
+
+    return (
+      <ProjectActivityAnalysis
+        addCustomEvent={this.props.addCustomEvent}
+        addVersion={this.props.addVersion}
+        analysis={analysis}
+        canAdmin={this.props.canAdmin}
+        canCreateVersion={this.props.project.qualifier === ComponentQualifier.Project}
+        canDeleteAnalyses={this.props.canDeleteAnalyses}
+        changeEvent={this.props.changeEvent}
+        deleteAnalysis={this.props.deleteAnalysis}
+        deleteEvent={this.props.deleteEvent}
+        isBaseline={this.shouldRenderBaselineMarker(analysis)}
+        isFirst={analysis.key === firstAnalysisKey}
+        key={analysis.key}
+        parentScrollContainer={this.scrollContainer}
+        selected={analysis.date.valueOf() === selectedDate}
+        updateSelectedDate={this.updateSelectedDate}
+      />
+    );
+  }
+
   render() {
     const byVersionByDay = getAnalysesByVersionByDay(this.props.analyses, this.props.query);
     const hasFilteredData =
@@ -162,7 +166,7 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
       (byVersionByDay.length === 1 && Object.keys(byVersionByDay[0].byDay).length > 0);
     if (this.props.analyses.length === 0 || !hasFilteredData) {
       return (
-        <div className={this.props.className}>
+        <div className="boxed-group-inner">
           {this.props.initializing ? (
             <div className="text-center">
               <i className="spinner" />
@@ -174,17 +178,14 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
       );
     }
 
-    const firstAnalysisKey = this.props.analyses[0].key;
-    const selectedDate = this.props.query.selectedDate
-      ? this.props.query.selectedDate.valueOf()
-      : null;
-
     return (
       <ul
-        className={classNames('project-activity-versions-list', this.props.className)}
+        className="project-activity-versions-list"
         onScroll={this.handleScroll}
         ref={element => (this.scrollContainer = element)}
-        style={{ paddingTop: this.props.project.qualifier === 'TRK' ? 52 : undefined }}>
+        style={{
+          paddingTop: this.props.project.qualifier === ComponentQualifier.Project ? 52 : undefined
+        }}>
         {byVersionByDay.map((version, idx) => {
           const days = Object.keys(version.byDay);
           if (days.length <= 0) {
@@ -197,7 +198,7 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
                   <Tooltip
                     mouseEnterDelay={0.5}
                     overlay={`${translate('version')} ${version.version}`}>
-                    <span className="badge">{version.version}</span>
+                    <span className="analysis-version">{version.version}</span>
                   </Tooltip>
                 </div>
               )}
@@ -212,23 +213,7 @@ export default class ProjectActivityAnalysesList extends React.PureComponent<Pro
                     </div>
                     <ul className="project-activity-analyses-list">
                       {version.byDay[day] != null &&
-                        version.byDay[day].map(analysis => (
-                          <ProjectActivityAnalysis
-                            addCustomEvent={this.props.addCustomEvent}
-                            addVersion={this.props.addVersion}
-                            analysis={analysis}
-                            canAdmin={this.props.canAdmin}
-                            canCreateVersion={this.props.project.qualifier === 'TRK'}
-                            canDeleteAnalyses={this.props.canDeleteAnalyses}
-                            changeEvent={this.props.changeEvent}
-                            deleteAnalysis={this.props.deleteAnalysis}
-                            deleteEvent={this.props.deleteEvent}
-                            isFirst={analysis.key === firstAnalysisKey}
-                            key={analysis.key}
-                            selected={analysis.date.valueOf() === selectedDate}
-                            updateSelectedDate={this.updateSelectedDate}
-                          />
-                        ))}
+                        version.byDay[day].map(analysis => this.renderAnalysis(analysis))}
                     </ul>
                   </li>
                 ))}

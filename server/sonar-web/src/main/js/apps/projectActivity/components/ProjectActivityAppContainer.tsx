@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,16 +24,18 @@ import { parseDate } from 'sonar-ui-common/helpers/dates';
 import { getAllMetrics } from '../../../api/metrics';
 import * as api from '../../../api/projectActivity';
 import { getAllTimeMachineData } from '../../../api/time-machine';
-import { getBranchLikeQuery } from '../../../helpers/branches';
+import {
+  DEFAULT_GRAPH,
+  getActivityGraph,
+  getHistoryMetrics,
+  isCustomGraph
+} from '../../../components/activity-graph/utils';
+import { getBranchLikeQuery } from '../../../helpers/branch-like';
+import { BranchLike } from '../../../types/branch-like';
+import { GraphType, MeasureHistory } from '../../../types/project-activity';
 import * as actions from '../actions';
 import {
   customMetricsChanged,
-  DEFAULT_GRAPH,
-  getHistoryMetrics,
-  getProjectActivityGraph,
-  isCustomGraph,
-  MeasureHistory,
-  ParsedAnalysis,
   parseQuery,
   Query,
   serializeQuery,
@@ -42,14 +44,14 @@ import {
 import ProjectActivityApp from './ProjectActivityApp';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   component: T.Component;
   location: Location;
   router: Pick<InjectedRouter, 'push' | 'replace'>;
 }
 
 export interface State {
-  analyses: ParsedAnalysis[];
+  analyses: T.ParsedAnalysis[];
   analysesLoading: boolean;
   graphLoading: boolean;
   initialized: boolean;
@@ -58,6 +60,8 @@ export interface State {
   paging?: T.Paging;
   query: Query;
 }
+
+export const PROJECT_ACTIVITY_GRAPH = 'sonar_project_activity.graph';
 
 export default class ProjectActivityAppContainer extends React.PureComponent<Props, State> {
   mounted = false;
@@ -78,7 +82,10 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
   componentDidMount() {
     this.mounted = true;
     if (this.shouldRedirect()) {
-      const { graph, customGraphs } = getProjectActivityGraph(this.props.component.key);
+      const { graph, customGraphs } = getActivityGraph(
+        PROJECT_ACTIVITY_GRAPH,
+        this.props.component.key
+      );
       const newQuery = { ...this.state.query, graph };
       if (isCustomGraph(newQuery.graph)) {
         newQuery.customMetrics = customGraphs;
@@ -100,7 +107,7 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
       const query = parseQuery(this.props.location.query);
       if (query.graph !== this.state.query.graph || customMetricsChanged(this.state.query, query)) {
         if (this.state.initialized) {
-          this.updateGraphData(query.graph, query.customMetrics);
+          this.updateGraphData(query.graph || DEFAULT_GRAPH, query.customMetrics);
         } else {
           this.firstLoadData(query, this.props.component);
         }
@@ -136,7 +143,10 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
   deleteAnalysis = (analysis: string) => {
     return api.deleteAnalysis(analysis).then(() => {
       if (this.mounted) {
-        this.updateGraphData(this.state.query.graph, this.state.query.customMetrics);
+        this.updateGraphData(
+          this.state.query.graph || DEFAULT_GRAPH,
+          this.state.query.customMetrics
+        );
         this.setState(actions.deleteAnalysis(analysis));
       }
     });
@@ -158,7 +168,7 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
         analyses: analyses.map(analysis => ({
           ...analysis,
           date: parseDate(analysis.date)
-        })) as ParsedAnalysis[],
+        })) as T.ParsedAnalysis[],
         paging
       }));
   };
@@ -204,8 +214,8 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
 
   loadAllActivities = (
     project: string,
-    prevResult?: { analyses: ParsedAnalysis[]; paging: T.Paging }
-  ): Promise<{ analyses: ParsedAnalysis[]; paging: T.Paging }> => {
+    prevResult?: { analyses: T.ParsedAnalysis[]; paging: T.Paging }
+  ): Promise<{ analyses: T.ParsedAnalysis[]; paging: T.Paging }> => {
     if (
       prevResult &&
       prevResult.paging.pageIndex * prevResult.paging.pageSize >= prevResult.paging.total
@@ -242,7 +252,7 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
   }
 
   firstLoadData(query: Query, component: T.Component) {
-    const graphMetrics = getHistoryMetrics(query.graph, query.customMetrics);
+    const graphMetrics = getHistoryMetrics(query.graph || DEFAULT_GRAPH, query.customMetrics);
     const topLevelComponent = this.getTopLevelComponent(component);
     Promise.all([
       this.fetchActivity(topLevelComponent, 1, 100, serializeQuery(query)),
@@ -271,7 +281,7 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
     );
   }
 
-  updateGraphData = (graph: string, customMetrics: string[]) => {
+  updateGraphData = (graph: GraphType, customMetrics: string[]) => {
     const graphMetrics = getHistoryMetrics(graph, customMetrics);
     this.setState({ graphLoading: true });
     this.fetchMeasuresHistory(graphMetrics).then(
@@ -312,7 +322,10 @@ export default class ProjectActivityAppContainer extends React.PureComponent<Pro
       key => key !== 'id' && locationQuery[key] !== ''
     );
 
-    const { graph, customGraphs } = getProjectActivityGraph(this.props.component.key);
+    const { graph, customGraphs } = getActivityGraph(
+      PROJECT_ACTIVITY_GRAPH,
+      this.props.component.key
+    );
     const emptyCustomGraph = isCustomGraph(graph) && customGraphs.length <= 0;
 
     // if there is no filter, but there are saved preferences in the localStorage

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ export interface RawIssue extends IssueBase {
   textRange?: T.TextRange;
 }
 
-export function sortByType(issues: T.Issue[]): T.Issue[] {
+export function sortByType<T extends Pick<T.Issue, 'type'>>(issues: T[]): T[] {
   return sortBy(issues, issue => ISSUE_TYPES.indexOf(issue.type));
 }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,10 @@ import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n
 import { getApplicationLeak } from '../../../api/application';
 import DateFromNow from '../../../components/intl/DateFromNow';
 import DateTooltipFormatter from '../../../components/intl/DateTooltipFormatter';
+import { Branch } from '../../../types/branch-like';
 
 interface Props {
-  branch?: T.LongLivingBranch;
+  branch?: Branch;
   component: T.LightComponent;
 }
 

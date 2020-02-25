@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,17 +19,13 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { mockBranch } from '../../../../helpers/mocks/branch-like';
 import { Components } from '../Components';
 
 const COMPONENT = { key: 'foo', name: 'Foo', qualifier: 'TRK' };
 const PORTFOLIO = { key: 'bar', name: 'Bar', qualifier: 'VW' };
 const METRICS = { coverage: { id: '1', key: 'coverage', type: 'PERCENT', name: 'Coverage' } };
-const BRANCH = {
-  isMain: false,
-  name: 'feature',
-  mergeBranch: 'master',
-  type: 'SHORT'
-};
+const BRANCH = mockBranch({ name: 'feature' });
 
 it('renders correctly', () => {
   expect(

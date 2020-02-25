@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ interface Props {
   optionClassName?: string;
   organization?: { key: string };
 
-  getFacetValueForOption?: (facet: Facet, option: Option) => void;
+  getFacetValueForOption?: (facet: Facet, option: Option) => number;
 
   halfWidth?: boolean;
   highlightUnder?: number;
@@ -48,6 +48,8 @@ interface Props {
   header?: React.ReactNode;
   footer?: React.ReactNode;
 }
+
+const defaultGetFacetValueForOption = (facet: Facet, option: string | number) => facet[option];
 
 export default class Filter extends React.PureComponent<Props> {
   isSelected(option: Option): boolean {
@@ -73,7 +75,7 @@ export default class Filter extends React.PureComponent<Props> {
     let urlOption;
 
     if (option) {
-      if (Array.isArray(value) && event.ctrlKey) {
+      if (Array.isArray(value) && (event.ctrlKey || event.metaKey)) {
         if (this.isSelected(option)) {
           urlOption = value.length > 1 ? value.filter(val => val !== option).join(',') : null;
         } else {
@@ -103,7 +105,7 @@ export default class Filter extends React.PureComponent<Props> {
   }
 
   renderOption(option: Option) {
-    const { facet, getFacetValueForOption, value } = this.props;
+    const { facet, getFacetValueForOption = defaultGetFacetValueForOption, value } = this.props;
     const className = classNames(
       'facet',
       'search-navigator-facet',

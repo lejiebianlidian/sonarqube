@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,20 +59,25 @@ jest.mock('../navTreeUtils', () => {
 beforeEach(() => {
   (fetch as FetchMock).resetMocks();
   (fetch as FetchMock).mockResponse(`[
-    { "value": "2.0", "current": true },
+    { "value": "3.0", "current": true },
+    { "value": "2.0", "current": false, "lts": true },
     { "value": "1.0", "current": false }
   ]`);
 });
 
-it('should render correctly', () => {
+it('should render correctly', async () => {
   const wrapper = shallowRender();
-  expect(wrapper).toMatchSnapshot();
+  await new Promise(setImmediate);
+
+  expect(wrapper).toMatchSnapshot('default');
+  expect(wrapper.setProps({ version: '1.0' })).toMatchSnapshot('show warning');
+  expect(wrapper.setProps({ version: '2.0' })).toMatchSnapshot('lts');
 });
 
 function shallowRender(props: Partial<Sidebar['props']> = {}) {
-  return shallow(
+  return shallow<Sidebar>(
     <Sidebar
-      location={{ pathname: '/foo/baz/foo/bar' } as Location}
+      location={{ pathname: '/2.0/foo/baz/foo/bar' } as Location}
       pages={[
         {
           fields: {
@@ -99,7 +104,7 @@ function shallowRender(props: Partial<Sidebar['props']> = {}) {
           }
         } as MarkdownRemark
       ]}
-      version="2.0"
+      version="3.0"
       {...props}
     />
   );

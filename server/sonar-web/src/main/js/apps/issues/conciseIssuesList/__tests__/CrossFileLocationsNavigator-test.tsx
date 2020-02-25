@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,6 +46,7 @@ const location3: T.FlowLocation = {
 it('should render', () => {
   const wrapper = shallow(
     <CrossFileLocationsNavigator
+      isTaintAnalysis={false}
       issue={{ key: 'abcd', type: 'BUG' }}
       locations={[location1, location2, location3]}
       onLocationSelect={jest.fn()}
@@ -63,6 +64,7 @@ it('should render', () => {
 it('should render all locations', () => {
   const wrapper = shallow(
     <CrossFileLocationsNavigator
+      isTaintAnalysis={false}
       issue={{ key: 'abcd', type: 'BUG' }}
       locations={[location1, location2]}
       onLocationSelect={jest.fn()}
@@ -76,6 +78,7 @@ it('should render all locations', () => {
 it('should expand all locations', () => {
   const wrapper = shallow(
     <CrossFileLocationsNavigator
+      isTaintAnalysis={false}
       issue={{ key: 'abcd', type: 'BUG' }}
       locations={[location1, location2, location3]}
       onLocationSelect={jest.fn()}
@@ -92,6 +95,7 @@ it('should expand all locations', () => {
 it('should collapse locations when issue changes', () => {
   const wrapper = shallow(
     <CrossFileLocationsNavigator
+      isTaintAnalysis={false}
       issue={{ key: 'abcd', type: 'BUG' }}
       locations={[location1, location2, location3]}
       onLocationSelect={jest.fn()}

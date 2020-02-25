@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,9 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { find } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { WithRouterProps } from 'react-router';
 import { translate } from 'sonar-ui-common/helpers/l10n';
@@ -27,10 +28,11 @@ import { getSettingsAppDefaultCategory, Store } from '../../../store/rootReducer
 import '../side-tabs.css';
 import { fetchSettings } from '../store/actions';
 import '../styles.css';
+import { ADDITIONAL_CATEGORIES } from './AdditionalCategories';
 import AllCategoriesList from './AllCategoriesList';
 import CategoryDefinitionsList from './CategoryDefinitionsList';
+import { CATEGORY_OVERRIDES } from './CategoryOverrides';
 import PageHeader from './PageHeader';
-import WildcardsHelp from './WildcardsHelp';
 
 interface Props {
   component?: T.Component;
@@ -78,12 +80,20 @@ export class App extends React.PureComponent<Props & WithRouterProps, State> {
     }
 
     const { query } = this.props.location;
-    const selectedCategory = query.category || this.props.defaultCategory;
+    const originalCategory = (query.category as string) || this.props.defaultCategory;
+    const overriddenCategory = CATEGORY_OVERRIDES[originalCategory.toLowerCase()];
+    const selectedCategory = overriddenCategory || originalCategory;
+    const foundAdditionalCategory = find(ADDITIONAL_CATEGORIES, c => c.key === selectedCategory);
+    const isProjectSettings = this.props.component;
+    const shouldRenderAdditionalCategory =
+      foundAdditionalCategory &&
+      ((isProjectSettings && foundAdditionalCategory.availableForProject) ||
+        (!isProjectSettings && foundAdditionalCategory.availableGlobally));
 
     return (
       <div className="page page-limited" id="settings-page">
         <Suggestions suggestions="settings" />
-        <Helmet title={translate('settings.page')} />
+        <Helmet defer={false} title={translate('settings.page')} />
 
         <PageHeader component={this.props.component} />
 
@@ -96,8 +106,17 @@ export class App extends React.PureComponent<Props & WithRouterProps, State> {
             />
           </div>
           <div className="side-tabs-main">
-            <CategoryDefinitionsList category={selectedCategory} component={this.props.component} />
-            {selectedCategory === 'exclusions' && <WildcardsHelp />}
+            {foundAdditionalCategory && shouldRenderAdditionalCategory ? (
+              foundAdditionalCategory.renderComponent({
+                component: this.props.component,
+                selectedCategory: originalCategory
+              })
+            ) : (
+              <CategoryDefinitionsList
+                category={selectedCategory}
+                component={this.props.component}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -111,7 +130,4 @@ const mapStateToProps = (state: Store) => ({
 
 const mapDispatchToProps = { fetchSettings: fetchSettings as any };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);

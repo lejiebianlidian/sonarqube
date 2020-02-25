@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,22 +19,24 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { mockMetric } from '../../../../helpers/testMocks';
 import MetricSelect from '../MetricSelect';
 
 it('should render correctly', () => {
-  expect(
-    shallow(
-      <MetricSelect
-        metrics={[
-          {
-            id: '1',
-            key: '1',
-            name: 'metric 1',
-            type: 'test'
-          }
-        ]}
-        onMetricChange={jest.fn()}
-      />
-    )
-  ).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot();
 });
+
+it('should correctly handle change', () => {
+  const onMetricChange = jest.fn();
+  const metric = mockMetric();
+  const metrics = [mockMetric({ key: 'duplication' }), metric];
+  const wrapper = shallowRender({ metrics, onMetricChange });
+  wrapper.instance().handleChange({ label: metric.name, value: metric.key });
+  expect(onMetricChange).toBeCalledWith(metric);
+});
+
+function shallowRender(props: Partial<MetricSelect['props']> = {}) {
+  return shallow<MetricSelect>(
+    <MetricSelect metrics={[mockMetric()]} onMetricChange={jest.fn()} {...props} />
+  );
+}

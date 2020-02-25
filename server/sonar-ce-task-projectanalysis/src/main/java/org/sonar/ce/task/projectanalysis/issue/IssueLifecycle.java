@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import org.sonar.core.issue.DefaultIssueComment;
 import org.sonar.core.issue.FieldDiffs;
 import org.sonar.core.issue.IssueChangeContext;
 import org.sonar.core.util.Uuids;
-import org.sonar.db.component.KeyType;
 import org.sonar.server.issue.IssueFieldsSetter;
 import org.sonar.server.issue.workflow.IssueWorkflow;
 
@@ -77,7 +76,6 @@ public class IssueLifecycle {
     issue.setCreationDate(changeContext.date());
     issue.setUpdateDate(changeContext.date());
     issue.setEffort(debtCalculator.calculate(issue));
-    issue.setIsFromHotspot(rule.getType() == RuleType.SECURITY_HOTSPOT);
     setType(issue, rule);
     setStatus(issue, rule);
   }
@@ -90,28 +88,28 @@ public class IssueLifecycle {
   }
 
   private void setStatus(DefaultIssue issue, Rule rule) {
-    if (issue.isFromExternalRuleEngine() || rule.getType() != RuleType.SECURITY_HOTSPOT) {
-      issue.setStatus(Issue.STATUS_OPEN);
-    } else {
+    if (rule.getType() == RuleType.SECURITY_HOTSPOT || issue.type() == RuleType.SECURITY_HOTSPOT) {
       issue.setStatus(Issue.STATUS_TO_REVIEW);
+    } else {
+      issue.setStatus(Issue.STATUS_OPEN);
     }
   }
 
-  public void copyExistingOpenIssueFromLongLivingBranch(DefaultIssue raw, DefaultIssue base, String fromLongBranchName) {
+  public void copyExistingOpenIssueFromBranch(DefaultIssue raw, DefaultIssue base, String branchName) {
     raw.setKey(Uuids.create());
     raw.setNew(false);
-    copyAttributesOfIssueFromOtherBranch(raw, base);
-    raw.setFieldChange(changeContext, IssueFieldsSetter.FROM_LONG_BRANCH, fromLongBranchName, analysisMetadataHolder.getBranch().getName());
+    copyAttributesOfIssueFromAnotherBranch(raw, base);
+    raw.setFieldChange(changeContext, IssueFieldsSetter.FROM_BRANCH, branchName, analysisMetadataHolder.getBranch().getName());
   }
 
-  public void mergeConfirmedOrResolvedFromShortLivingBranchOrPr(DefaultIssue raw, DefaultIssue base, KeyType branchType, String fromShortBranchNameOrPR) {
-    copyAttributesOfIssueFromOtherBranch(raw, base);
-    String from = (branchType == KeyType.PULL_REQUEST ? "#" : "") + fromShortBranchNameOrPR;
+  public void mergeConfirmedOrResolvedFromPr(DefaultIssue raw, DefaultIssue base, String pr) {
+    copyAttributesOfIssueFromAnotherBranch(raw, base);
+    String from = "#" + pr;
     String to = analysisMetadataHolder.isPullRequest() ? ("#" + analysisMetadataHolder.getPullRequestKey()) : analysisMetadataHolder.getBranch().getName();
-    raw.setFieldChange(changeContext, IssueFieldsSetter.FROM_SHORT_BRANCH, from, to);
+    raw.setFieldChange(changeContext, IssueFieldsSetter.FROM_BRANCH, from, to);
   }
 
-  private void copyAttributesOfIssueFromOtherBranch(DefaultIssue to, DefaultIssue from) {
+  private void copyAttributesOfIssueFromAnotherBranch(DefaultIssue to, DefaultIssue from) {
     to.setCopied(true);
     copyFields(to, from);
     if (from.manualSeverity()) {
@@ -166,20 +164,9 @@ public class IssueLifecycle {
       // In case issue was moved from module or folder to the root project
       raw.setChanged(true);
     }
-    raw.setIsFromHotspot(rule.getType() == RuleType.SECURITY_HOTSPOT);
     setType(raw, rule);
     copyFields(raw, base);
     base.changes().forEach(raw::addChange);
-    if (raw.isFromHotspot() != base.isFromHotspot()) {
-      // This is to force DB update of the issue
-      raw.setChanged(true);
-    }
-    if (raw.isFromHotspot() && !base.isFromHotspot()) {
-      // First analysis after rule type was changed to security_hotspot. Issue will be reset to an open hotspot
-      updater.setType(raw, RuleType.SECURITY_HOTSPOT, changeContext);
-      updater.setStatus(raw, Issue.STATUS_TO_REVIEW, changeContext);
-      updater.setResolution(raw, null, changeContext);
-    }
 
     if (base.manualSeverity()) {
       raw.setManualSeverity(true);

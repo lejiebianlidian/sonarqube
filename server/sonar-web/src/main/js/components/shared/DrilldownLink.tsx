@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,9 @@
  */
 import * as React from 'react';
 import { Link } from 'react-router';
-import { getBranchLikeQuery } from '../../helpers/branches';
+import { getBranchLikeQuery } from '../../helpers/branch-like';
 import { getComponentDrilldownUrl, getComponentIssuesUrl } from '../../helpers/urls';
+import { BranchLike } from '../../types/branch-like';
 
 const ISSUE_MEASURES = [
   'violations',
@@ -71,7 +72,7 @@ const issueParamsPerMetric: T.Dict<T.Dict<string>> = {
 };
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   children?: React.ReactNode;
   className?: string;
   component: string;

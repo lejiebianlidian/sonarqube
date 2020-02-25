@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ public class ProjectAnalysisTest {
   private final CeTask ceTask = new CeTask("id", CeTask.Status.SUCCESS);
   private final Project project = new Project("uuid", "key", "name");
   private final Analysis analysis = new Analysis("analysis_uuid", 1_500L, "sha1");
-  private final Branch branch = new Branch(true, "name", Branch.Type.SHORT);
+  private final Branch branch = new Branch(true, "name", Branch.Type.BRANCH);
   private final EvaluatedQualityGate qualityGate = EvaluatedQualityGate.newBuilder()
     .setQualityGate(new QualityGate("id", "name", emptySet()))
     .setStatus(Metric.Level.ERROR)
@@ -105,7 +105,7 @@ public class ProjectAnalysisTest {
     assertThat(underTest).isNotEqualTo(new ProjectAnalysis(project, ceTask, null, null, qualityGate, 1L, properties));
     assertThat(underTest).isNotEqualTo(new ProjectAnalysis(project, ceTask, new Analysis("foo", 1_500L, "sha1"), null, qualityGate, 1L, properties));
     assertThat(underTest).isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, null, qualityGate, 1L, properties));
-    assertThat(underTest).isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, new Branch(false, "B", Branch.Type.SHORT), qualityGate, 1L, properties));
+    assertThat(underTest).isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, new Branch(false, "B", Branch.Type.BRANCH), qualityGate, 1L, properties));
     assertThat(underTest).isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, branch, null, 1L, properties));
     EvaluatedQualityGate otherQualityGate = EvaluatedQualityGate.newBuilder()
       .setQualityGate(new QualityGate("A", "B", emptySet()))
@@ -131,7 +131,7 @@ public class ProjectAnalysisTest {
     assertThat(underTest.hashCode()).isNotEqualTo(new ProjectAnalysis(project, ceTask, new Analysis("foo", 1_500L, "sha1"), null, qualityGate, 1L, properties).hashCode());
     assertThat(underTest.hashCode()).isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, null, qualityGate, 1L, properties).hashCode());
     assertThat(underTest.hashCode())
-      .isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, new Branch(false, "B", Branch.Type.SHORT), qualityGate, 1L, properties).hashCode());
+      .isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, new Branch(false, "B", Branch.Type.BRANCH), qualityGate, 1L, properties).hashCode());
     assertThat(underTest.hashCode()).isNotEqualTo(new ProjectAnalysis(project, ceTask, analysis, branch, null, 1L, properties).hashCode());
     EvaluatedQualityGate otherQualityGate = EvaluatedQualityGate.newBuilder()
       .setQualityGate(new QualityGate("A", "B", emptySet()))
@@ -148,6 +148,6 @@ public class ProjectAnalysisTest {
   @Test
   public void verify_toString() {
     assertThat(underTest.toString()).isEqualTo(
-      "ProjectAnalysis{project=Project{uuid='uuid', key='key', name='name'}, ceTask=CeTask{id='id', status=SUCCESS}, branch=Branch{main=true, name='name', type=SHORT}, qualityGate=EvaluatedQualityGate{qualityGate=QualityGate{id=id, name='name', conditions=[]}, status=ERROR, evaluatedConditions=[]}, updatedAt=1, properties={a=b}, analysis=Analysis{uuid='analysis_uuid', date=1500, revision=sha1}}");
+      "ProjectAnalysis{project=Project{uuid='uuid', key='key', name='name'}, ceTask=CeTask{id='id', status=SUCCESS}, branch=Branch{main=true, name='name', type=BRANCH}, qualityGate=EvaluatedQualityGate{qualityGate=QualityGate{id=id, name='name', conditions=[]}, status=ERROR, evaluatedConditions=[]}, updatedAt=1, properties={a=b}, analysis=Analysis{uuid='analysis_uuid', date=1500, revision=sha1}}");
   }
 }

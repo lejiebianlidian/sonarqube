@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ public class ProjectRepositoriesSupplier implements Supplier<ProjectRepositories
   public ProjectRepositories get() {
     if (project == null) {
       Profiler profiler = Profiler.create(LOG).startInfo(LOG_MSG);
-      project = loader.load(scannerProperties.getKeyWithBranch(), branchConfig.longLivingSonarReferenceBranch());
+      project = loader.load(scannerProperties.getProjectKey(), branchConfig.referenceBranchName());
       profiler.stopInfo();
     }
 

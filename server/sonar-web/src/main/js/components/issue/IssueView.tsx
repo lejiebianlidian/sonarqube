@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,15 +21,18 @@ import classNames from 'classnames';
 import * as React from 'react';
 import Checkbox from 'sonar-ui-common/components/controls/Checkbox';
 import { deleteIssueComment, editIssueComment } from '../../api/issues';
+import { BranchLike } from '../../types/branch-like';
 import { updateIssue } from './actions';
 import IssueActionsBar from './components/IssueActionsBar';
 import IssueCommentLine from './components/IssueCommentLine';
 import IssueTitleBar from './components/IssueTitleBar';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   checked?: boolean;
   currentPopup?: string;
+  displayLocationsCount?: boolean;
+  displayLocationsLink?: boolean;
   issue: T.Issue;
   onAssign: (login: string) => void;
   onChange: (issue: T.Issue) => void;
@@ -83,6 +86,8 @@ export default class IssueView extends React.PureComponent<Props> {
         <IssueTitleBar
           branchLike={this.props.branchLike}
           currentPopup={this.props.currentPopup}
+          displayLocationsCount={this.props.displayLocationsCount}
+          displayLocationsLink={this.props.displayLocationsLink}
           issue={issue}
           onFilter={this.props.onFilter}
           togglePopup={this.props.togglePopup}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,18 +19,15 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { mockBranch } from '../../../../helpers/mocks/branch-like';
 import { mockIssue } from '../../../../helpers/testMocks';
 import IssueTitleBar from '../IssueTitleBar';
 
 const issue: T.Issue = mockIssue();
+const issueWithLocations: T.Issue = mockIssue(true);
 
 it('should render the titlebar correctly', () => {
-  const branch: T.ShortLivingBranch = {
-    isMain: false,
-    mergeBranch: 'master',
-    name: 'feature-1.0',
-    type: 'SHORT'
-  };
+  const branch = mockBranch({ name: 'feature-1.0' });
   const element = shallow(
     <IssueTitleBar branchLike={branch} issue={issue} togglePopup={jest.fn()} />
   );
@@ -42,6 +39,27 @@ it('should render the titlebar with the filter', () => {
     <IssueTitleBar issue={issue} onFilter={jest.fn()} togglePopup={jest.fn()} />
   );
   expect(element).toMatchSnapshot();
+});
+
+it('should count all code locations', () => {
+  const element = shallow(
+    <IssueTitleBar
+      displayLocationsCount={true}
+      issue={issueWithLocations}
+      togglePopup={jest.fn()}
+    />
+  );
+  expect(element.find('LocationIndex')).toMatchSnapshot();
+
+  const elementWithLink = shallow(
+    <IssueTitleBar
+      displayLocationsCount={true}
+      displayLocationsLink={true}
+      issue={issueWithLocations}
+      togglePopup={jest.fn()}
+    />
+  );
+  expect(elementWithLink.find('LocationIndex')).toMatchSnapshot();
 });
 
 it('should have a correct permalink for security hotspots', () => {

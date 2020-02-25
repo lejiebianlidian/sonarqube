@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ package org.sonar.ce.task.projectanalysis.source.linereader;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -82,20 +81,17 @@ public class SymbolsLineReader implements LineReader {
   private void processSymbols(DbFileSources.Line.Builder lineBuilder) {
     int line = lineBuilder.getLine();
 
-    List<ScannerReport.Symbol> lineSymbols = new ArrayList<>(this.symbolsPerLine.get(line));
     // Sort symbols to have deterministic results and avoid false variation that would lead to an unnecessary update of the source files
     // data
-    lineSymbols.sort(SymbolsComparator.INSTANCE);
-
     StringBuilder symbolString = new StringBuilder();
-    for (ScannerReport.Symbol lineSymbol : lineSymbols) {
+    symbolsPerLine.get(line).stream().sorted(SymbolsComparator.INSTANCE).forEach(lineSymbol -> {
       int symbolId = idsBySymbol.get(lineSymbol);
 
       appendSymbol(symbolString, lineSymbol.getDeclaration(), line, symbolId, lineBuilder.getSource());
       for (ScannerReport.TextRange range : lineSymbol.getReferenceList()) {
         appendSymbol(symbolString, range, line, symbolId, lineBuilder.getSource());
       }
-    }
+    });
     if (symbolString.length() > 0) {
       lineBuilder.setSymbols(symbolString.toString());
     }

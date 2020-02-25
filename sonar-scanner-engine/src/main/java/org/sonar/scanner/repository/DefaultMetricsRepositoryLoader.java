@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -122,6 +122,10 @@ public class DefaultMetricsRepositoryLoader implements MetricsRepositoryLoader {
     private int p;
 
     private int ps;
+
+    public WsMetricsResponse() {
+      // http://stackoverflow.com/a/18645370/229031
+    }
 
     public int getTotal() {
       return total;

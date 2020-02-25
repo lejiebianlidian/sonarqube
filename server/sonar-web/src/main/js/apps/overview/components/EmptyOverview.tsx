@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,107 +22,77 @@ import { FormattedMessage } from 'react-intl';
 import { connect } from 'react-redux';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import { isBranch, isLongLivingBranch, isMainBranch } from '../../../helpers/branches';
-import { isSonarCloud } from '../../../helpers/system';
+import { getBranchLikeDisplayName, isBranch, isMainBranch } from '../../../helpers/branch-like';
 import { isLoggedIn } from '../../../helpers/users';
 import { getCurrentUser, Store } from '../../../store/rootReducer';
+import { BranchLike } from '../../../types/branch-like';
+import { ComponentQualifier } from '../../../types/component';
 import AnalyzeTutorial from '../../tutorials/analyzeProject/AnalyzeTutorial';
-import AnalyzeTutorialSonarCloud from '../../tutorials/analyzeProject/AnalyzeTutorialSonarCloud';
-import MetaContainer from '../meta/MetaContainer';
 
-interface OwnProps {
-  branchLike?: T.BranchLike;
-  branchLikes: T.BranchLike[];
+interface Props {
+  branchLike?: BranchLike;
+  branchLikes: BranchLike[];
   component: T.Component;
-  hasAnalyses?: boolean;
-  onComponentChange: (changes: {}) => void;
-}
-
-interface StateProps {
   currentUser: T.CurrentUser;
+  hasAnalyses?: boolean;
 }
 
-type Props = OwnProps & StateProps;
+export function EmptyOverview(props: Props) {
+  const { branchLike, branchLikes, component, currentUser, hasAnalyses } = props;
 
-export function EmptyOverview({
-  branchLike,
-  branchLikes,
-  component,
-  currentUser,
-  hasAnalyses,
-  onComponentChange
-}: Props) {
+  if (component.qualifier === ComponentQualifier.Application) {
+    return (
+      <div className="page page-limited">
+        <Alert variant="warning">{translate('provisioning.no_analysis.application')}</Alert>
+      </div>
+    );
+  } else if (!isBranch(branchLike)) {
+    return null;
+  }
+
   const hasBranches = branchLikes.length > 1;
   const hasBadBranchConfig =
     branchLikes.length > 2 ||
-    (branchLikes.length === 2 && branchLikes.some(branch => isLongLivingBranch(branch)));
-  return (
-    <div className="page page-limited">
-      <div className="overview page-with-sidebar">
-        <div className="overview-main page-main">
-          {isLoggedIn(currentUser) && isMainBranch(branchLike) ? (
-            <>
-              {hasBranches && (
-                <WarningMessage
-                  branchLike={branchLike}
-                  message={
-                    hasBadBranchConfig
-                      ? translate('provisioning.no_analysis_on_main_branch.bad_configuration')
-                      : translate('provisioning.no_analysis_on_main_branch')
-                  }
-                />
-              )}
-              {!hasBranches &&
-                !hasAnalyses &&
-                (isSonarCloud() ? (
-                  <AnalyzeTutorialSonarCloud component={component} currentUser={currentUser} />
-                ) : (
-                  <AnalyzeTutorial component={component} currentUser={currentUser} />
-                ))}
-            </>
-          ) : (
-            <WarningMessage
-              branchLike={branchLike}
-              message={translate('provisioning.no_analysis_on_main_branch')}
-            />
-          )}
-        </div>
+    (branchLikes.length === 2 && branchLikes.some(branch => isBranch(branch)));
 
-        {!isSonarCloud() && (
-          <div className="overview-sidebar page-sidebar-fixed">
-            <MetaContainer
-              branchLike={branchLike}
-              component={component}
-              onComponentChange={onComponentChange}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+  const showWarning = isMainBranch(branchLike) && hasBranches;
+  const showTutorial = isMainBranch(branchLike) && !hasBranches && !hasAnalyses;
 
-export function WarningMessage({
-  branchLike,
-  message
-}: {
-  branchLike?: T.BranchLike;
-  message: string;
-}) {
-  if (!isBranch(branchLike)) {
-    return null;
-  }
-  return (
-    <Alert variant="warning">
+  let warning;
+  if (isLoggedIn(currentUser) && showWarning && hasBadBranchConfig) {
+    warning = (
       <FormattedMessage
-        defaultMessage={message}
-        id={message}
+        defaultMessage={translate('provisioning.no_analysis_on_main_branch.bad_configuration')}
+        id="provisioning.no_analysis_on_main_branch.bad_configuration"
         values={{
-          branchName: branchLike.name,
+          branchName: getBranchLikeDisplayName(branchLike),
           branchType: translate('branches.main_branch')
         }}
       />
-    </Alert>
+    );
+  } else {
+    warning = (
+      <FormattedMessage
+        defaultMessage={translate('provisioning.no_analysis_on_main_branch')}
+        id="provisioning.no_analysis_on_main_branch"
+        values={{
+          branchName: getBranchLikeDisplayName(branchLike)
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="page page-limited">
+      {isLoggedIn(currentUser) ? (
+        <>
+          {showWarning && <Alert variant="warning">{warning}</Alert>}
+          {showTutorial && <AnalyzeTutorial component={component} currentUser={currentUser} />}
+        </>
+      ) : (
+        <Alert variant="warning">{warning}</Alert>
+      )}
+    </div>
   );
 }
 

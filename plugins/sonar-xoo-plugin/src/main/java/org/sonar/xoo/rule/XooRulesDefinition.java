@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -176,6 +176,10 @@ public class XooRulesDefinition implements RulesDefinition {
       hotspot
         .addOwaspTop10(OwaspTop10.A1, OwaspTop10.A3)
         .addCwe(1, 89, 123, 863);
+
+      oneVulnerabilityIssuePerModule
+        .addOwaspTop10(OwaspTop10.A9, OwaspTop10.A10)
+        .addCwe(250, 564, 546, 943);
     }
 
     repo.done();

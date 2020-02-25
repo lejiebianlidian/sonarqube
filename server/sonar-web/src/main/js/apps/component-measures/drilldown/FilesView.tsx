@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,11 +27,12 @@ import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
 import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import { isDiffMetric, isPeriodBestValue } from '../../../helpers/measures';
+import { BranchLike } from '../../../types/branch-like';
 import { View } from '../utils';
 import ComponentsList from './ComponentsList';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   components: T.ComponentMeasureEnhanced[];
   defaultShowBestMeasures: boolean;
   fetchMore: () => void;

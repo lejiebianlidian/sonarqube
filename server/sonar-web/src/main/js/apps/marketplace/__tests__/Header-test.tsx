@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { EditionKey } from '../../../types/editions';
 import Header from '../Header';
-import { EditionKey } from '../utils';
 
 it('should render with installed editions', () => {
   expect(shallow(<Header currentEdition={EditionKey.community} />)).toMatchSnapshot();

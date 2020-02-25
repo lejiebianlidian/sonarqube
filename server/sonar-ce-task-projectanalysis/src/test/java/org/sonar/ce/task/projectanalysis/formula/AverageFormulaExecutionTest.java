@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@ import org.sonar.ce.task.projectanalysis.metric.MetricRepositoryRule;
 import org.sonar.ce.task.projectanalysis.period.PeriodHolderRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.guava.api.Assertions.assertThat;
 import static org.sonar.api.measures.CoreMetrics.COMPLEXITY_IN_FUNCTIONS_KEY;
 import static org.sonar.api.measures.CoreMetrics.FUNCTIONS_KEY;
 import static org.sonar.api.measures.CoreMetrics.FUNCTION_COMPLEXITY_KEY;
@@ -58,10 +57,10 @@ public class AverageFormulaExecutionTest {
   @Rule
   public PeriodHolderRule periodsHolder = new PeriodHolderRule();
 
-  FormulaExecutorComponentVisitor underTest;
+  private FormulaExecutorComponentVisitor underTest;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     underTest = FormulaExecutorComponentVisitor.newBuilder(metricRepository, measureRepository)
       .buildFor(Lists.newArrayList(
         AverageFormula.Builder.newBuilder()

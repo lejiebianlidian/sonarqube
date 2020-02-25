@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -72,6 +72,11 @@ public final class CoreMetrics {
    * @since 5.5
    */
   public static String DOMAIN_SECURITY = "Security";
+
+  /**
+   * @since 8.2
+   */
+  public static String DOMAIN_SECURITY_REVIEW = "SecurityReview";
 
   /**
    * @since 5.5
@@ -418,12 +423,12 @@ public final class CoreMetrics {
   @Deprecated
   public static final Metric<String> FUNCTION_COMPLEXITY_DISTRIBUTION = new Metric.Builder(FUNCTION_COMPLEXITY_DISTRIBUTION_KEY, "Function Distribution / Complexity",
     Metric.ValueType.DISTRIB)
-    .setDescription("Functions distribution /complexity")
-    .setDirection(Metric.DIRECTION_NONE)
-    .setQualitative(true)
-    .setDomain(DOMAIN_COMPLEXITY)
-    .setHidden(true)
-    .create();
+      .setDescription("Functions distribution /complexity")
+      .setDirection(Metric.DIRECTION_NONE)
+      .setQualitative(true)
+      .setDomain(DOMAIN_COMPLEXITY)
+      .setHidden(true)
+      .create();
 
   /**
    * @deprecated since 6.7
@@ -436,12 +441,12 @@ public final class CoreMetrics {
   @Deprecated
   public static final Metric<String> FILE_COMPLEXITY_DISTRIBUTION = new Metric.Builder(FILE_COMPLEXITY_DISTRIBUTION_KEY, "File Distribution / Complexity",
     Metric.ValueType.DISTRIB)
-    .setDescription("Files distribution /complexity")
-    .setDirection(Metric.DIRECTION_NONE)
-    .setQualitative(true)
-    .setDomain(DOMAIN_COMPLEXITY)
-    .setHidden(true)
-    .create();
+      .setDescription("Files distribution /complexity")
+      .setDirection(Metric.DIRECTION_NONE)
+      .setQualitative(true)
+      .setDomain(DOMAIN_COMPLEXITY)
+      .setHidden(true)
+      .create();
 
   public static final String COGNITIVE_COMPLEXITY_KEY = "cognitive_complexity";
   public static final Metric<Integer> COGNITIVE_COMPLEXITY = new Metric.Builder(COGNITIVE_COMPLEXITY_KEY, "Cognitive Complexity", Metric.ValueType.INT)
@@ -753,13 +758,13 @@ public final class CoreMetrics {
    */
   public static final Metric<Integer> NEW_DUPLICATED_LINES_DENSITY = new Metric.Builder(NEW_DUPLICATED_LINES_DENSITY_KEY, "Duplicated Lines on New Code",
     Metric.ValueType.PERCENT)
-    .setDescription("Duplicated lines on new code balanced by statements")
-    .setDirection(Metric.DIRECTION_WORST)
-    .setQualitative(true)
-    .setDomain(DOMAIN_DUPLICATIONS)
-    .setBestValue(0.0)
-    .setDeleteHistoricalData(true)
-    .create();
+      .setDescription("Duplicated lines on new code balanced by statements")
+      .setDirection(Metric.DIRECTION_WORST)
+      .setQualitative(true)
+      .setDomain(DOMAIN_DUPLICATIONS)
+      .setBestValue(0.0)
+      .setDeleteHistoricalData(true)
+      .create();
 
   /**
    * @deprecated since 4.5. Internal storage of duplication is not an API.
@@ -1151,7 +1156,7 @@ public final class CoreMetrics {
     .setDescription("Security Hotspots")
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(false)
-    .setDomain(DOMAIN_SECURITY)
+    .setDomain(DOMAIN_SECURITY_REVIEW)
     .setBestValue(0.0)
     .setOptimizedBestValue(true)
     .create();
@@ -1168,7 +1173,7 @@ public final class CoreMetrics {
     .setDescription("New Security Hotspots")
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(true)
-    .setDomain(DOMAIN_SECURITY)
+    .setDomain(DOMAIN_SECURITY_REVIEW)
     .setBestValue(0.0)
     .setOptimizedBestValue(true)
     .setDeleteHistoricalData(true)
@@ -1283,7 +1288,7 @@ public final class CoreMetrics {
   /**
    * @since 7.0
    */
-  public static final Metric<String> NEW_DEVELOPMENT_COST = new Metric.Builder(NEW_DEVELOPMENT_COST_KEY, "Development Cost on New Code", Metric.ValueType.STRING)
+  public static final Metric<String> NEW_DEVELOPMENT_COST = new Metric.Builder(NEW_DEVELOPMENT_COST_KEY, "Development Cost on New Code", Metric.ValueType.FLOAT)
     .setDescription("Development cost on new code")
     .setDomain(DOMAIN_MAINTAINABILITY)
     .setDirection(Metric.DIRECTION_WORST)
@@ -1341,13 +1346,13 @@ public final class CoreMetrics {
    */
   public static final Metric<Long> EFFORT_TO_REACH_MAINTAINABILITY_RATING_A = new Metric.Builder(EFFORT_TO_REACH_MAINTAINABILITY_RATING_A_KEY,
     "Effort to Reach Maintainability Rating A", Metric.ValueType.WORK_DUR)
-    .setDescription("Effort to reach maintainability rating A")
-    .setDomain(DOMAIN_MAINTAINABILITY)
-    .setDirection(Metric.DIRECTION_WORST)
-    .setQualitative(true)
-    .setBestValue(0.0)
-    .setOptimizedBestValue(true)
-    .create();
+      .setDescription("Effort to reach maintainability rating A")
+      .setDomain(DOMAIN_MAINTAINABILITY)
+      .setDirection(Metric.DIRECTION_WORST)
+      .setQualitative(true)
+      .setBestValue(0.0)
+      .setOptimizedBestValue(true)
+      .create();
 
   // --------------------------------------------------------------------------------------------------------------------
   //
@@ -1365,13 +1370,13 @@ public final class CoreMetrics {
    */
   public static final Metric<Long> RELIABILITY_REMEDIATION_EFFORT = new Metric.Builder(RELIABILITY_REMEDIATION_EFFORT_KEY, "Reliability Remediation Effort",
     Metric.ValueType.WORK_DUR)
-    .setDescription("Reliability Remediation Effort")
-    .setDomain(DOMAIN_RELIABILITY)
-    .setDirection(Metric.DIRECTION_WORST)
-    .setOptimizedBestValue(true)
-    .setBestValue(0.0)
-    .setQualitative(true)
-    .create();
+      .setDescription("Reliability Remediation Effort")
+      .setDomain(DOMAIN_RELIABILITY)
+      .setDirection(Metric.DIRECTION_WORST)
+      .setOptimizedBestValue(true)
+      .setBestValue(0.0)
+      .setQualitative(true)
+      .create();
 
   /**
    * @since 5.5
@@ -1383,14 +1388,14 @@ public final class CoreMetrics {
    */
   public static final Metric<Long> NEW_RELIABILITY_REMEDIATION_EFFORT = new Metric.Builder(NEW_RELIABILITY_REMEDIATION_EFFORT_KEY, "Reliability Remediation Effort on New Code",
     Metric.ValueType.WORK_DUR)
-    .setDescription("Reliability remediation effort on new code")
-    .setDomain(DOMAIN_RELIABILITY)
-    .setDirection(Metric.DIRECTION_WORST)
-    .setOptimizedBestValue(true)
-    .setBestValue(0.0)
-    .setQualitative(true)
-    .setDeleteHistoricalData(true)
-    .create();
+      .setDescription("Reliability remediation effort on new code")
+      .setDomain(DOMAIN_RELIABILITY)
+      .setDirection(Metric.DIRECTION_WORST)
+      .setOptimizedBestValue(true)
+      .setBestValue(0.0)
+      .setQualitative(true)
+      .setDeleteHistoricalData(true)
+      .create();
 
   /**
    * @since 5.5
@@ -1461,14 +1466,14 @@ public final class CoreMetrics {
    */
   public static final Metric<Long> NEW_SECURITY_REMEDIATION_EFFORT = new Metric.Builder(NEW_SECURITY_REMEDIATION_EFFORT_KEY, "Security Remediation Effort on New Code",
     Metric.ValueType.WORK_DUR)
-    .setDescription("Security remediation effort on new code")
-    .setDomain(DOMAIN_SECURITY)
-    .setDirection(Metric.DIRECTION_WORST)
-    .setOptimizedBestValue(true)
-    .setBestValue(0.0)
-    .setQualitative(true)
-    .setDeleteHistoricalData(true)
-    .create();
+      .setDescription("Security remediation effort on new code")
+      .setDomain(DOMAIN_SECURITY)
+      .setDirection(Metric.DIRECTION_WORST)
+      .setOptimizedBestValue(true)
+      .setBestValue(0.0)
+      .setQualitative(true)
+      .setDeleteHistoricalData(true)
+      .create();
 
   /**
    * @since 5.5
@@ -1506,6 +1511,12 @@ public final class CoreMetrics {
     .setWorstValue(5.0)
     .create();
 
+  // --------------------------------------------------------------------------------------------------------------------
+  //
+  // SECURITY REVIEW
+  //
+  // --------------------------------------------------------------------------------------------------------------------
+
   /**
    * @since 7.8
    */
@@ -1516,12 +1527,156 @@ public final class CoreMetrics {
    */
   public static final Metric<Integer> SECURITY_REVIEW_RATING = new Metric.Builder(SECURITY_REVIEW_RATING_KEY, "Security Review Rating", Metric.ValueType.RATING)
     .setDescription("Security Review Rating")
-    .setDomain(DOMAIN_SECURITY)
+    .setDomain(DOMAIN_SECURITY_REVIEW)
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(true)
-    .setBestValue(1d)
-    .setWorstValue(5d)
+    .setBestValue(1.0)
+    .setWorstValue(5.0)
     .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String NEW_SECURITY_REVIEW_RATING_KEY = "new_security_review_rating";
+
+  /**
+   * @since 8.2
+   */
+  public static final Metric<Integer> NEW_SECURITY_REVIEW_RATING = new Metric.Builder(NEW_SECURITY_REVIEW_RATING_KEY, "Security Review Rating on New Code",
+    Metric.ValueType.RATING)
+      .setDescription("Security Review Rating on New Code")
+      .setDomain(DOMAIN_SECURITY_REVIEW)
+      .setDirection(Metric.DIRECTION_WORST)
+      .setDeleteHistoricalData(true)
+      .setOptimizedBestValue(true)
+      .setQualitative(true)
+      .setBestValue(1.0)
+      .setWorstValue(5.0)
+      .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String SECURITY_HOTSPOTS_REVIEWED_KEY = "security_hotspots_reviewed";
+
+  /**
+   * @since 8.2
+   */
+  public static final Metric<Integer> SECURITY_HOTSPOTS_REVIEWED = new Metric.Builder(SECURITY_HOTSPOTS_REVIEWED_KEY, "Security Hotspots Reviewed", Metric.ValueType.PERCENT)
+    .setDescription("Percentage of Security Hotspots Reviewed")
+    .setDomain(DOMAIN_SECURITY_REVIEW)
+    .setDirection(Metric.DIRECTION_BETTER)
+    .setQualitative(true)
+    .setWorstValue(0.0)
+    .setBestValue(100.0)
+    .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String NEW_SECURITY_HOTSPOTS_REVIEWED_KEY = "new_security_hotspots_reviewed";
+
+  /**
+   * @since 8.2
+   */
+  public static final Metric<Integer> NEW_SECURITY_HOTSPOTS_REVIEWED = new Metric.Builder(NEW_SECURITY_HOTSPOTS_REVIEWED_KEY, "Security Hotspots Reviewed on New Code",
+    Metric.ValueType.PERCENT)
+      .setDescription("Percentage of Security Hotspots Reviewed on New Code")
+      .setDomain(DOMAIN_SECURITY_REVIEW)
+      .setDirection(Metric.DIRECTION_BETTER)
+      .setDeleteHistoricalData(true)
+      .setQualitative(true)
+      .setWorstValue(0.0)
+      .setBestValue(100.0)
+      .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String SECURITY_HOTSPOTS_REVIEWED_STATUS_KEY = "security_hotspots_reviewed_status";
+
+  /**
+   * @since 8.2
+   *
+   * This hidden metric is only needed to compute 'security_review_rating' and 'security_hotspots_reviewed' on Applications.
+   */
+  public static final Metric<Integer> SECURITY_HOTSPOTS_REVIEWED_STATUS = new Metric.Builder(SECURITY_HOTSPOTS_REVIEWED_STATUS_KEY, "Security Review Reviewed Status",
+    Metric.ValueType.INT)
+      .setDescription("Security Review Reviewed Status")
+      .setDirection(Metric.DIRECTION_WORST)
+      .setQualitative(false)
+      .setDomain(DOMAIN_SECURITY_REVIEW)
+      .setBestValue(0.0)
+      .setOptimizedBestValue(true)
+      .setDeleteHistoricalData(true)
+      .setHidden(true)
+      .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String SECURITY_HOTSPOTS_TO_REVIEW_STATUS_KEY = "security_hotspots_to_review_status";
+
+  /**
+   * @since 8.2
+   *
+   * This hidden metric is only needed to compute 'security_review_rating' and 'security_hotspots_reviewed' on Applications.
+   */
+  public static final Metric<Integer> SECURITY_HOTSPOTS_TO_REVIEW_STATUS = new Metric.Builder(SECURITY_HOTSPOTS_TO_REVIEW_STATUS_KEY, "Security Review To Review Status",
+    Metric.ValueType.INT)
+      .setDescription("Security Review To Review Status")
+      .setDirection(Metric.DIRECTION_WORST)
+      .setQualitative(false)
+      .setDomain(DOMAIN_SECURITY_REVIEW)
+      .setBestValue(0.0)
+      .setOptimizedBestValue(true)
+      .setDeleteHistoricalData(true)
+      .setHidden(true)
+      .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String NEW_SECURITY_HOTSPOTS_REVIEWED_STATUS_KEY = "new_security_hotspots_reviewed_status";
+
+  /**
+   * @since 8.2
+   *
+   * This hidden metric is only needed to compute 'new_security_review_rating' and 'new_security_hotspots_reviewed' on Applications.
+   */
+  public static final Metric<Integer> NEW_SECURITY_HOTSPOTS_REVIEWED_STATUS = new Metric.Builder(NEW_SECURITY_HOTSPOTS_REVIEWED_STATUS_KEY,
+    "Security Review Reviewed Status on New Code", Metric.ValueType.INT)
+      .setDescription("Security Review Reviewed Status on New Code")
+      .setDirection(Metric.DIRECTION_WORST)
+      .setQualitative(false)
+      .setDomain(DOMAIN_SECURITY_REVIEW)
+      .setBestValue(0.0)
+      .setOptimizedBestValue(true)
+      .setDeleteHistoricalData(true)
+      .setHidden(true)
+      .create();
+
+  /**
+   * @since 8.2
+   */
+  public static final String NEW_SECURITY_HOTSPOTS_TO_REVIEW_STATUS_KEY = "new_security_hotspots_to_review_status";
+
+  /**
+   * @since 8.2
+   *
+   * This hidden metric is only needed to compute 'new_security_review_rating' and 'new_security_hotspots_reviewed' on Applications.
+   */
+  public static final Metric<Integer> NEW_SECURITY_HOTSPOTS_TO_REVIEW_STATUS = new Metric.Builder(NEW_SECURITY_HOTSPOTS_TO_REVIEW_STATUS_KEY,
+    "Security Review To Review Status on New Code", Metric.ValueType.INT)
+      .setDescription("Security Review To Review Status on New Code")
+      .setDirection(Metric.DIRECTION_WORST)
+      .setQualitative(false)
+      .setDomain(DOMAIN_SECURITY_REVIEW)
+      .setBestValue(0.0)
+      .setOptimizedBestValue(true)
+      .setDeleteHistoricalData(true)
+      .setHidden(true)
+      .create();
 
   // --------------------------------------------------------------------------------------------------------------------
   //

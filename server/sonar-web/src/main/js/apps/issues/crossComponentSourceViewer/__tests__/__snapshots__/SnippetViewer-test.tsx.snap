@@ -24,6 +24,7 @@ exports[`should render correctly 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -72,6 +73,7 @@ exports[`should render correctly 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -133,6 +135,7 @@ exports[`should render correctly 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -231,6 +234,7 @@ exports[`should render correctly when at the bottom of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -279,6 +283,7 @@ exports[`should render correctly when at the bottom of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -340,6 +345,7 @@ exports[`should render correctly when at the bottom of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -401,6 +407,7 @@ exports[`should render correctly when at the bottom of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -488,6 +495,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -536,6 +544,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -597,6 +606,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -658,6 +668,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -719,6 +730,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -780,6 +792,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -841,6 +854,7 @@ exports[`should render correctly when at the top of the file 1`] = `
           branchLike={
             Object {
               "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
               "isMain": true,
               "name": "master",
             }
@@ -850,6 +864,219 @@ exports[`should render correctly when at the top of the file 1`] = `
           displayDuplications={false}
           displayIssues={true}
           displayLocationMarkers={true}
+          duplications={Array []}
+          duplicationsCount={0}
+          highlighted={false}
+          issueLocations={Array []}
+          issues={Array []}
+          key="7"
+          last={false}
+          line={
+            Object {
+              "code": "<span class=\\"k\\">import</span> java.util.<span class=\\"sym-9 sym\\">ArrayList</span>;",
+              "coverageStatus": "covered",
+              "coveredConditions": 2,
+              "duplicated": false,
+              "isNew": true,
+              "line": 7,
+              "scmAuthor": "simon.brandhof@sonarsource.com",
+              "scmDate": "2018-12-11T10:48:39+0100",
+              "scmRevision": "80f564becc0c0a1c9abaa006eca83a4fd278c3f0",
+            }
+          }
+          loadDuplications={[MockFunction]}
+          onIssueChange={[MockFunction]}
+          onIssuePopupToggle={[MockFunction]}
+          onIssueSelect={[Function]}
+          onIssueUnselect={[Function]}
+          onIssuesClose={[MockFunction]}
+          onIssuesOpen={[MockFunction]}
+          onLinePopupToggle={[MockFunction]}
+          onLocationSelect={[MockFunction]}
+          onSymbolClick={[MockFunction]}
+          previousLine={
+            Object {
+              "code": "<span class=\\"k\\">import</span> java.util.<span class=\\"sym-9 sym\\">ArrayList</span>;",
+              "coverageStatus": "covered",
+              "coveredConditions": 2,
+              "duplicated": false,
+              "isNew": true,
+              "line": 6,
+              "scmAuthor": "simon.brandhof@sonarsource.com",
+              "scmDate": "2018-12-11T10:48:39+0100",
+              "scmRevision": "80f564becc0c0a1c9abaa006eca83a4fd278c3f0",
+            }
+          }
+          renderDuplicationPopup={[MockFunction]}
+          scroll={[Function]}
+          secondaryIssueLocations={Array []}
+          verticalBuffer={0}
+        />
+      </tbody>
+    </table>
+    <div
+      className="expand-block expand-block-below"
+    >
+      <button
+        aria-label="source_viewer.expand_below"
+        onClick={[Function]}
+        type="button"
+      >
+        <ExpandSnippetIcon />
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`should render correctly with no SCM 1`] = `
+<div
+  className="source-viewer-code snippet"
+>
+  <div>
+    <div
+      className="expand-block expand-block-above"
+    >
+      <button
+        aria-label="source_viewer.expand_above"
+        onClick={[Function]}
+        type="button"
+      >
+        <ExpandSnippetIcon />
+      </button>
+    </div>
+    <table
+      className="source-table expand-up expand-down"
+    >
+      <tbody>
+        <Line
+          branchLike={
+            Object {
+              "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
+              "isMain": true,
+              "name": "master",
+            }
+          }
+          displayAllIssues={false}
+          displayCoverage={true}
+          displayDuplications={false}
+          displayIssues={true}
+          displayLocationMarkers={true}
+          displaySCM={false}
+          duplications={Array []}
+          duplicationsCount={0}
+          highlighted={false}
+          issueLocations={Array []}
+          issues={Array []}
+          key="5"
+          last={false}
+          line={
+            Object {
+              "code": "<span class=\\"k\\">import</span> java.util.<span class=\\"sym-9 sym\\">ArrayList</span>;",
+              "coverageStatus": "covered",
+              "coveredConditions": 2,
+              "duplicated": false,
+              "isNew": true,
+              "line": 5,
+              "scmAuthor": "simon.brandhof@sonarsource.com",
+              "scmDate": "2018-12-11T10:48:39+0100",
+              "scmRevision": "80f564becc0c0a1c9abaa006eca83a4fd278c3f0",
+            }
+          }
+          loadDuplications={[MockFunction]}
+          onIssueChange={[MockFunction]}
+          onIssuePopupToggle={[MockFunction]}
+          onIssueSelect={[Function]}
+          onIssueUnselect={[Function]}
+          onIssuesClose={[MockFunction]}
+          onIssuesOpen={[MockFunction]}
+          onLinePopupToggle={[MockFunction]}
+          onLocationSelect={[MockFunction]}
+          onSymbolClick={[MockFunction]}
+          renderDuplicationPopup={[MockFunction]}
+          scroll={[Function]}
+          secondaryIssueLocations={Array []}
+          verticalBuffer={0}
+        />
+        <Line
+          branchLike={
+            Object {
+              "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
+              "isMain": true,
+              "name": "master",
+            }
+          }
+          displayAllIssues={false}
+          displayCoverage={true}
+          displayDuplications={false}
+          displayIssues={true}
+          displayLocationMarkers={true}
+          displaySCM={false}
+          duplications={Array []}
+          duplicationsCount={0}
+          highlighted={false}
+          issueLocations={Array []}
+          issues={Array []}
+          key="6"
+          last={false}
+          line={
+            Object {
+              "code": "<span class=\\"k\\">import</span> java.util.<span class=\\"sym-9 sym\\">ArrayList</span>;",
+              "coverageStatus": "covered",
+              "coveredConditions": 2,
+              "duplicated": false,
+              "isNew": true,
+              "line": 6,
+              "scmAuthor": "simon.brandhof@sonarsource.com",
+              "scmDate": "2018-12-11T10:48:39+0100",
+              "scmRevision": "80f564becc0c0a1c9abaa006eca83a4fd278c3f0",
+            }
+          }
+          loadDuplications={[MockFunction]}
+          onIssueChange={[MockFunction]}
+          onIssuePopupToggle={[MockFunction]}
+          onIssueSelect={[Function]}
+          onIssueUnselect={[Function]}
+          onIssuesClose={[MockFunction]}
+          onIssuesOpen={[MockFunction]}
+          onLinePopupToggle={[MockFunction]}
+          onLocationSelect={[MockFunction]}
+          onSymbolClick={[MockFunction]}
+          previousLine={
+            Object {
+              "code": "<span class=\\"k\\">import</span> java.util.<span class=\\"sym-9 sym\\">ArrayList</span>;",
+              "coverageStatus": "covered",
+              "coveredConditions": 2,
+              "duplicated": false,
+              "isNew": true,
+              "line": 5,
+              "scmAuthor": "simon.brandhof@sonarsource.com",
+              "scmDate": "2018-12-11T10:48:39+0100",
+              "scmRevision": "80f564becc0c0a1c9abaa006eca83a4fd278c3f0",
+            }
+          }
+          renderDuplicationPopup={[MockFunction]}
+          scroll={[Function]}
+          secondaryIssueLocations={Array []}
+          verticalBuffer={0}
+        />
+        <Line
+          branchLike={
+            Object {
+              "analysisDate": "2018-01-01",
+              "excludedFromPurge": true,
+              "isMain": true,
+              "name": "master",
+            }
+          }
+          displayAllIssues={false}
+          displayCoverage={true}
+          displayDuplications={false}
+          displayIssues={true}
+          displayLocationMarkers={true}
+          displaySCM={false}
           duplications={Array []}
           duplicationsCount={0}
           highlighted={false}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -118,9 +118,11 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
 
     for (const profile of profiles) {
       looper = looper.then(() =>
-        method({ ...data, organization: this.props.organization, targetKey: profile }).then(
-          response => this.processResponse(profile, response)
-        )
+        method({
+          ...data,
+          organization: this.props.organization,
+          targetKey: profile
+        }).then(response => this.processResponse(profile, response))
       );
     }
     return looper;
@@ -192,10 +194,15 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
   render() {
     const { action, profile, total } = this.props;
     const header =
-      // prettier-ignore
       action === 'activate'
-        ? `${translate('coding_rules.activate_in_quality_profile')} (${formatMeasure(total, 'INT')} ${translate('coding_rules._rules')})`
-        : `${translate('coding_rules.deactivate_in_quality_profile')} (${formatMeasure(total, 'INT')} ${translate('coding_rules._rules')})`;
+        ? `${translate('coding_rules.activate_in_quality_profile')} (${formatMeasure(
+            total,
+            'INT'
+          )} ${translate('coding_rules._rules')})`
+        : `${translate('coding_rules.deactivate_in_quality_profile')} (${formatMeasure(
+            total,
+            'INT'
+          )} ${translate('coding_rules._rules')})`;
 
     return (
       <Modal contentLabel={header} onRequestClose={this.props.onClose} size="small">

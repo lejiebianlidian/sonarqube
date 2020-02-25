@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,10 @@ export default class RuleListItem extends React.PureComponent<Props> {
         organization: this.props.organization,
         rule: this.props.rule.key
       };
-      deactivateRule(data).then(() => this.props.onDeactivate(data.key, data.rule), () => {});
+      deactivateRule(data).then(
+        () => this.props.onDeactivate(data.key, data.rule),
+        () => {}
+      );
     }
   };
 
@@ -213,7 +216,7 @@ export default class RuleListItem extends React.PureComponent<Props> {
                   </Link>
                   {rule.isTemplate && (
                     <Tooltip overlay={translate('coding_rules.rule_template.title')}>
-                      <span className="outline-badge spacer-left">
+                      <span className="badge spacer-left">
                         {translate('coding_rules.rule_template')}
                       </span>
                     </Tooltip>
@@ -224,19 +227,27 @@ export default class RuleListItem extends React.PureComponent<Props> {
               <td className="coding-rule-table-meta-cell">
                 <div className="display-flex-center coding-rule-meta">
                   {rule.status !== 'READY' && (
-                    <span className="spacer-left badge badge-normal-size badge-tiny-height badge-danger-light">
+                    <span className="spacer-left badge badge-error">
                       {translate('rules.status', rule.status)}
                     </span>
                   )}
-                  <span className="spacer-left note">{rule.langName}</span>
+                  <span className="display-inline-flex-center spacer-left note">
+                    {rule.langName}
+                  </span>
                   <Tooltip overlay={translate('coding_rules.type.tooltip', rule.type)}>
                     <span className="display-inline-flex-center spacer-left note">
-                      <IssueTypeIcon className="little-spacer-right" query={rule.type} />
-                      {translate('issue.type', rule.type)}
+                      <IssueTypeIcon query={rule.type} />
+                      <span className="little-spacer-left text-middle">
+                        {translate('issue.type', rule.type)}
+                      </span>
                     </span>
                   </Tooltip>
                   {allTags.length > 0 && (
-                    <TagsList allowUpdate={false} className="note spacer-left" tags={allTags} />
+                    <TagsList
+                      allowUpdate={false}
+                      className="display-inline-flex-center note spacer-left"
+                      tags={allTags}
+                    />
                   )}
                   <SimilarRulesFilter onFilterChange={this.props.onFilterChange} rule={rule} />
                 </div>

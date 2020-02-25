@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -62,21 +62,31 @@ export default class ProfilePermissionsForm extends React.PureComponent<Props, S
     }
   };
 
-  handleUserAdd = (user: T.UserSelected) =>
+  handleUserAdd = (user: T.UserSelected) => {
+    const {
+      profile: { language, name },
+      organization
+    } = this.props;
     addUser({
-      language: this.props.profile.language,
+      language,
       login: user.login,
-      organization: this.props.organization,
-      qualityProfile: this.props.profile.name
+      organization,
+      qualityProfile: name
     }).then(() => this.props.onUserAdd(user), this.stopSubmitting);
+  };
 
-  handleGroupAdd = (group: Group) =>
+  handleGroupAdd = (group: Group) => {
+    const {
+      profile: { language, name },
+      organization
+    } = this.props;
     addGroup({
       group: group.name,
-      language: this.props.profile.language,
-      organization: this.props.organization,
-      qualityProfile: this.props.profile.name
+      language,
+      organization,
+      qualityProfile: name
     }).then(() => this.props.onGroupAdd(group), this.stopSubmitting);
+  };
 
   handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -100,9 +110,13 @@ export default class ProfilePermissionsForm extends React.PureComponent<Props, S
       qualityProfile: profile.name,
       selected: 'deselected'
     };
-    return Promise.all([searchUsers(parameters), searchGroups(parameters)]).then(
-      ([usersResponse, groupsResponse]) => [...usersResponse.users, ...groupsResponse.groups]
-    );
+    return Promise.all([
+      searchUsers(parameters),
+      searchGroups(parameters)
+    ]).then(([usersResponse, groupsResponse]) => [
+      ...usersResponse.users,
+      ...groupsResponse.groups
+    ]);
   };
 
   handleValueChange = (selected: T.UserSelected | Group) => {

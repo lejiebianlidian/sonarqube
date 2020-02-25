@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ public class PostJobExtensionDictionnaryTest {
 
   }
 
-  @Phase(name = Phase.Name.POST)
+  @Phase(name = Phase.Name.POST) static
   class PostSensor implements Sensor {
 
     @Override
@@ -83,7 +83,7 @@ public class PostJobExtensionDictionnaryTest {
 
   }
 
-  class NormalPostJob implements PostJob {
+  static class NormalPostJob implements PostJob {
 
     @Override
     public void describe(PostJobDescriptor descriptor) {
@@ -95,7 +95,7 @@ public class PostJobExtensionDictionnaryTest {
 
   }
 
-  @Phase(name = Phase.Name.PRE)
+  @Phase(name = Phase.Name.PRE) static
   class PrePostJob implements PostJob {
 
     @Override

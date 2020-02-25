@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -246,7 +246,11 @@ export default class ListStyleFacet<S> extends React.Component<Props<S>, State<S
 
     const sortedItems = this.props.getSortedItems
       ? this.props.getSortedItems()
-      : sortBy(Object.keys(stats), key => -stats[key], key => this.props.getFacetItemText(key));
+      : sortBy(
+          Object.keys(stats),
+          key => -stats[key],
+          key => this.props.getFacetItemText(key)
+        );
 
     const limitedList = this.state.showFullList
       ? sortedItems

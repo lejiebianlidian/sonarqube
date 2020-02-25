@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,10 +34,7 @@ if (process.env.NODE_ENV === 'development') {
   composed.push(__REDUX_DEVTOOLS_EXTENSION__ ? __REDUX_DEVTOOLS_EXTENSION__() : (f: Function) => f);
 }
 
-const finalCreateStore = compose(
-  applyMiddleware(...middlewares),
-  ...composed
-)(createStore);
+const finalCreateStore = compose(applyMiddleware(...middlewares), ...composed)(createStore);
 
 export default function configureStore(rootReducer: RootReducer, initialState?: State) {
   return finalCreateStore(rootReducer, initialState);

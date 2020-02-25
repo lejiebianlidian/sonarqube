@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -253,8 +253,16 @@ small,
   text-transform: none;
 }
 
+.text-light {
+  font-weight: 300 !important;
+}
+
 .text-normal {
   font-weight: normal !important;
+}
+
+.text-bold {
+  font-weight: bold !important;
 }
 
 .text-muted {
@@ -266,19 +274,19 @@ small,
 }
 
 .text-danger {
-  color: var(--red);
+  color: var(--red) !important;
 }
 
 .text-warning {
-  color: var(--orange);
+  color: var(--orange) !important;
 }
 
 .text-info {
-  color: var(--blue);
+  color: var(--blue) !important;
 }
 
 .text-success {
-  color: var(--green);
+  color: var(--green) !important;
 }
 
 .monospaced {

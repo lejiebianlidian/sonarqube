@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -226,7 +226,7 @@ public class Rule {
    * @param severity severity to set, if null, uses the default priority.
    * @since 2.5
    */
-  public Rule setSeverity(RulePriority severity) {
+  public Rule setSeverity(@Nullable RulePriority severity) {
     if (severity == null) {
       this.priority = DEFAULT_PRIORITY;
     } else {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,8 +29,14 @@ module.exports = {
     `gatsby-plugin-layout`,
     'gatsby-plugin-react-helmet',
     {
+      resolve: `gatsby-plugin-polyfill-io`,
+      options: {
+        features: [`Promise`, `fetch`, `Object.assign`, `Symbol`, `Array.from`]
+      }
+    },
+    {
       resolve: `sonarsource-source-filesystem`,
-      options: { name: 'src', path: `${__dirname}/src/` }
+      options: { name: 'src', path: `${__dirname}/src/pages/` }
     },
     {
       resolve: 'gatsby-plugin-typography',

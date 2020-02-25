@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -101,11 +101,6 @@ public class InternalCeQueueImpl extends CeQueueImpl implements InternalCeQueue 
       }
       return Optional.empty();
     }
-  }
-
-  @Override
-  public int clear() {
-    return cancelAll(true);
   }
 
   @Override

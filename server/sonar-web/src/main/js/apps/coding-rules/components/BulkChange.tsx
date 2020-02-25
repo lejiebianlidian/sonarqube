@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ import { translate } from 'sonar-ui-common/helpers/l10n';
 import { Profile } from '../../../api/quality-profiles';
 import { Query } from '../query';
 import BulkChangeModal from './BulkChangeModal';
+import { PopupPlacement } from 'sonar-ui-common/components/ui/popups';
 
 interface Props {
   languages: T.Languages;
@@ -101,6 +102,7 @@ export default class BulkChange extends React.PureComponent<Props, State> {
       <>
         <Dropdown
           className="pull-left"
+          overlayPlacement={PopupPlacement.BottomLeft}
           overlay={
             <ul className="menu">
               <li>

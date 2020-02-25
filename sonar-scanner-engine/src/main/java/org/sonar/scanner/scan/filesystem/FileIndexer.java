@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ public class FileIndexer {
       projectRelativePath.toString(),
       moduleRelativePath.toString(),
       type, language, scannerComponentIdGenerator.getAsInt(), sensorStrategy);
-    DefaultInputFile inputFile = new DefaultInputFile(indexedFile, f -> metadataGenerator.setMetadata(module.getKeyWithBranch(), f, module.getEncoding()));
+    DefaultInputFile inputFile = new DefaultInputFile(indexedFile, f -> metadataGenerator.setMetadata(module.key(), f, module.getEncoding()));
     if (language != null) {
       inputFile.setPublished(true);
     }

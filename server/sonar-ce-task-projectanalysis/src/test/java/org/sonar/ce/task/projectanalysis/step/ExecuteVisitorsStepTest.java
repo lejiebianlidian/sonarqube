@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -207,7 +207,7 @@ public class ExecuteVisitorsStepTest {
     }
   }
 
-  public class Counter {
+  public static class Counter {
     private int value = 0;
 
     public void add(int value) {

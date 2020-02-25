@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.sonar.api.config.EmailSettings;
 import org.sonar.api.notifications.Notification;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.rules.RuleType;
 import org.sonar.core.i18n.I18n;
 import org.sonar.server.issue.notification.FPOrWontFixNotification.FpOrWontFix;
 import org.sonar.server.issue.notification.IssuesChangesNotificationBuilder.AnalysisChange;
@@ -51,8 +52,12 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonar.api.rules.RuleType.SECURITY_HOTSPOT;
 import static org.sonar.server.issue.notification.FPOrWontFixNotification.FpOrWontFix.FP;
 import static org.sonar.server.issue.notification.FPOrWontFixNotification.FpOrWontFix.WONT_FIX;
+import static org.sonar.server.issue.notification.IssuesChangesNotificationBuilderTesting.newRandomNotAHotspotRule;
+import static org.sonar.server.issue.notification.IssuesChangesNotificationBuilderTesting.newSecurityHotspotRule;
+import static org.sonar.server.issue.notification.IssuesChangesNotificationBuilderTesting.randomRuleTypeHotspotExcluded;
 
 @RunWith(DataProviderRunner.class)
 public class FpOrWontFixEmailTemplateTest {
@@ -134,15 +139,13 @@ public class FpOrWontFixEmailTemplateTest {
   public void formats_returns_html_message_with_only_footer_and_header_when_no_issue(Change change, FpOrWontFix fpOrWontFix, String fpOrWontFixLabel) {
     String wordingNotification = randomAlphabetic(20);
     String host = randomAlphabetic(15);
-    String instance = randomAlphabetic(17);
     when(i18n.message(Locale.ENGLISH, "notification.dispatcher.NewFalsePositiveIssue", "notification.dispatcher.NewFalsePositiveIssue"))
       .thenReturn(wordingNotification);
     when(emailSettings.getServerBaseURL()).thenReturn(host);
-    when(emailSettings.getInstanceName()).thenReturn(instance);
 
     EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, Collections.emptySet(), fpOrWontFix));
 
-    String footerText = "You received this email because you are subscribed to \"" + wordingNotification + "\" notifications from " + instance + "."
+    String footerText = "You received this email because you are subscribed to \"" + wordingNotification + "\" notifications from SonarQube."
       + " Click here to edit your email preferences.";
     HtmlFragmentAssert.assertThat(emailMessage.getMessage())
       .hasParagraph("Hi,")
@@ -162,7 +165,7 @@ public class FpOrWontFixEmailTemplateTest {
     Project project = newProject("1");
     String ruleName = randomAlphabetic(8);
     String host = randomAlphabetic(15);
-    ChangedIssue changedIssue = newChangedIssue("key", project, ruleName);
+    ChangedIssue changedIssue = newChangedIssue("key", project, ruleName, randomRuleTypeHotspotExcluded());
     when(emailSettings.getServerBaseURL()).thenReturn(host);
 
     EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, ImmutableSet.of(changedIssue), fpOrWontFix));
@@ -178,13 +181,33 @@ public class FpOrWontFixEmailTemplateTest {
 
   @Test
   @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
+  public void formats_returns_html_message_for_single_hotspot_on_master(Change change, FpOrWontFix fpOrWontFix) {
+    Project project = newProject("1");
+    String ruleName = randomAlphabetic(8);
+    String host = randomAlphabetic(15);
+    ChangedIssue changedIssue = newChangedIssue("key", project, ruleName, SECURITY_HOTSPOT);
+    when(emailSettings.getServerBaseURL()).thenReturn(host);
+
+    EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, ImmutableSet.of(changedIssue), fpOrWontFix));
+
+    HtmlFragmentAssert.assertThat(emailMessage.getMessage())
+      .hasParagraph().hasParagraph() // skip header
+      .hasParagraph(project.getProjectName())
+      .hasList("Rule " + ruleName + " - See the single hotspot")
+      .withLink("See the single hotspot", host + "/project/issues?id=" + project.getKey() + "&issues=" + changedIssue.getKey() + "&open=" + changedIssue.getKey())
+      .hasParagraph().hasParagraph() // skip footer
+      .noMoreBlock();
+  }
+
+  @Test
+  @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
   public void formats_returns_html_message_for_single_issue_on_branch(Change change, FpOrWontFix fpOrWontFix) {
     String branchName = randomAlphabetic(6);
     Project project = newBranch("1", branchName);
     String ruleName = randomAlphabetic(8);
     String host = randomAlphabetic(15);
     String key = "key";
-    ChangedIssue changedIssue = newChangedIssue(key, project, ruleName);
+    ChangedIssue changedIssue = newChangedIssue(key, project, ruleName, randomRuleTypeHotspotExcluded());
     when(emailSettings.getServerBaseURL()).thenReturn(host);
 
     EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, ImmutableSet.of(changedIssue), fpOrWontFix));
@@ -201,11 +224,34 @@ public class FpOrWontFixEmailTemplateTest {
 
   @Test
   @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
+  public void formats_returns_html_message_for_single_hotspot_on_branch(Change change, FpOrWontFix fpOrWontFix) {
+    String branchName = randomAlphabetic(6);
+    Project project = newBranch("1", branchName);
+    String ruleName = randomAlphabetic(8);
+    String host = randomAlphabetic(15);
+    String key = "key";
+    ChangedIssue changedIssue = newChangedIssue(key, project, ruleName, SECURITY_HOTSPOT);
+    when(emailSettings.getServerBaseURL()).thenReturn(host);
+
+    EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, ImmutableSet.of(changedIssue), fpOrWontFix));
+
+    HtmlFragmentAssert.assertThat(emailMessage.getMessage())
+      .hasParagraph().hasParagraph() // skip header
+      .hasParagraph(project.getProjectName() + ", " + branchName)
+      .hasList("Rule " + ruleName + " - See the single hotspot")
+      .withLink("See the single hotspot",
+        host + "/project/issues?id=" + project.getKey() + "&branch=" + branchName + "&issues=" + changedIssue.getKey() + "&open=" + changedIssue.getKey())
+      .hasParagraph().hasParagraph() // skip footer
+      .noMoreBlock();
+  }
+
+  @Test
+  @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
   public void formats_returns_html_message_for_multiple_issues_of_same_rule_on_same_project_on_master(Change change, FpOrWontFix fpOrWontFix) {
     Project project = newProject("1");
     String ruleName = randomAlphabetic(8);
     String host = randomAlphabetic(15);
-    Rule rule = newRule(ruleName);
+    Rule rule = newRandomNotAHotspotRule(ruleName);
     List<ChangedIssue> changedIssues = IntStream.range(0, 2 + new Random().nextInt(5))
       .mapToObj(i -> newChangedIssue("issue_" + i, project, rule))
       .collect(toList());
@@ -227,12 +273,38 @@ public class FpOrWontFixEmailTemplateTest {
 
   @Test
   @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
+  public void formats_returns_html_message_for_multiple_hotspots_of_same_rule_on_same_project_on_master(Change change, FpOrWontFix fpOrWontFix) {
+    Project project = newProject("1");
+    String ruleName = randomAlphabetic(8);
+    String host = randomAlphabetic(15);
+    Rule rule = newSecurityHotspotRule(ruleName);
+    List<ChangedIssue> changedIssues = IntStream.range(0, 2 + new Random().nextInt(5))
+      .mapToObj(i -> newChangedIssue("issue_" + i, project, rule))
+      .collect(toList());
+    when(emailSettings.getServerBaseURL()).thenReturn(host);
+
+    EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, ImmutableSet.copyOf(changedIssues), fpOrWontFix));
+
+    String expectedHref = host + "/project/issues?id=" + project.getKey()
+      + "&issues=" + changedIssues.stream().map(ChangedIssue::getKey).collect(joining("%2C"));
+    String expectedLinkText = "See all " + changedIssues.size() + " hotspots";
+    HtmlFragmentAssert.assertThat(emailMessage.getMessage())
+      .hasParagraph().hasParagraph() // skip header
+      .hasParagraph(project.getProjectName())
+      .hasList("Rule " + ruleName + " - " + expectedLinkText)
+      .withLink(expectedLinkText, expectedHref)
+      .hasParagraph().hasParagraph() // skip footer
+      .noMoreBlock();
+  }
+
+  @Test
+  @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
   public void formats_returns_html_message_for_multiple_issues_of_same_rule_on_same_project_on_branch(Change change, FpOrWontFix fpOrWontFix) {
     String branchName = randomAlphabetic(19);
     Project project = newBranch("1", branchName);
     String ruleName = randomAlphabetic(8);
     String host = randomAlphabetic(15);
-    Rule rule = newRule(ruleName);
+    Rule rule = newRandomNotAHotspotRule(ruleName);
     List<ChangedIssue> changedIssues = IntStream.range(0, 2 + new Random().nextInt(5))
       .mapToObj(i -> newChangedIssue("issue_" + i, project, rule))
       .collect(toList());
@@ -254,6 +326,33 @@ public class FpOrWontFixEmailTemplateTest {
 
   @Test
   @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
+  public void formats_returns_html_message_for_multiple_hotspots_of_same_rule_on_same_project_on_branch(Change change, FpOrWontFix fpOrWontFix) {
+    String branchName = randomAlphabetic(19);
+    Project project = newBranch("1", branchName);
+    String ruleName = randomAlphabetic(8);
+    String host = randomAlphabetic(15);
+    Rule rule = newSecurityHotspotRule(ruleName);
+    List<ChangedIssue> changedIssues = IntStream.range(0, 2 + new Random().nextInt(5))
+      .mapToObj(i -> newChangedIssue("issue_" + i, project, rule))
+      .collect(toList());
+    when(emailSettings.getServerBaseURL()).thenReturn(host);
+
+    EmailMessage emailMessage = underTest.format(new FPOrWontFixNotification(change, ImmutableSet.copyOf(changedIssues), fpOrWontFix));
+
+    String expectedHref = host + "/project/issues?id=" + project.getKey() + "&branch=" + branchName
+      + "&issues=" + changedIssues.stream().map(ChangedIssue::getKey).collect(joining("%2C"));
+    String expectedLinkText = "See all " + changedIssues.size() + " hotspots";
+    HtmlFragmentAssert.assertThat(emailMessage.getMessage())
+      .hasParagraph().hasParagraph() // skip header
+      .hasParagraph(project.getProjectName() + ", " + branchName)
+      .hasList("Rule " + ruleName + " - " + expectedLinkText)
+      .withLink(expectedLinkText, expectedHref)
+      .hasParagraph().hasParagraph() // skip footer
+      .noMoreBlock();
+  }
+
+  @Test
+  @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
   public void formats_returns_html_message_with_projects_ordered_by_name(Change change, FpOrWontFix fpOrWontFix) {
     Project project1 = newProject("1");
     Project project1Branch1 = newBranch("1", "a");
@@ -263,7 +362,7 @@ public class FpOrWontFixEmailTemplateTest {
     Project project3 = newProject("C");
     String host = randomAlphabetic(15);
     List<ChangedIssue> changedIssues = Stream.of(project1, project1Branch1, project1Branch2, project2, project2Branch1, project3)
-      .map(project -> newChangedIssue("issue_" + project.getUuid(), project, newRule(randomAlphabetic(2))))
+      .map(project -> newChangedIssue("issue_" + project.getUuid(), project, newRandomNotAHotspotRule(randomAlphabetic(2))))
       .collect(toList());
     Collections.shuffle(changedIssues);
     when(emailSettings.getServerBaseURL()).thenReturn(host);
@@ -292,10 +391,10 @@ public class FpOrWontFixEmailTemplateTest {
   @UseDataProvider("fpOrWontFixValuesByUserOrAnalysisChange")
   public void formats_returns_html_message_with_rules_ordered_by_name(Change change, FpOrWontFix fpOrWontFix) {
     Project project = newProject("1");
-    Rule rule1 = newRule("1");
-    Rule rule2 = newRule("a");
-    Rule rule3 = newRule("b");
-    Rule rule4 = newRule("X");
+    Rule rule1 = newRandomNotAHotspotRule("1");
+    Rule rule2 = newRandomNotAHotspotRule("a");
+    Rule rule3 = newRandomNotAHotspotRule("b");
+    Rule rule4 = newRandomNotAHotspotRule("X");
     String host = randomAlphabetic(15);
     List<ChangedIssue> changedIssues = Stream.of(rule1, rule2, rule3, rule4)
       .map(rule -> newChangedIssue("issue_" + rule.getName(), project, rule))
@@ -323,8 +422,8 @@ public class FpOrWontFixEmailTemplateTest {
     Project project1 = newProject("1");
     Project project2 = newProject("V");
     Project project2Branch = newBranch("V", "AB");
-    Rule rule1 = newRule("1");
-    Rule rule2 = newRule("a");
+    Rule rule1 = newRandomNotAHotspotRule("1");
+    Rule rule2 = newRandomNotAHotspotRule("a");
     String host = randomAlphabetic(15);
     List<ChangedIssue> changedIssues = Stream.of(
       IntStream.range(0, 39).mapToObj(i -> newChangedIssue("39_" + i, project1, rule1)),
@@ -395,8 +494,8 @@ public class FpOrWontFixEmailTemplateTest {
     };
   }
 
-  private static ChangedIssue newChangedIssue(String key, Project project, String ruleName) {
-    return newChangedIssue(key, project, newRule(ruleName));
+  private static ChangedIssue newChangedIssue(String key, Project project, String ruleName, RuleType ruleType) {
+    return newChangedIssue(key, project, newRule(ruleName, ruleType));
   }
 
   private static ChangedIssue newChangedIssue(String key, Project project, Rule rule) {
@@ -407,8 +506,8 @@ public class FpOrWontFixEmailTemplateTest {
       .build();
   }
 
-  private static Rule newRule(String ruleName) {
-    return new Rule(RuleKey.of(randomAlphabetic(6), randomAlphabetic(7)), ruleName);
+  private static Rule newRule(String ruleName, RuleType ruleType) {
+    return new Rule(RuleKey.of(randomAlphabetic(6), randomAlphabetic(7)), ruleType, ruleName);
   }
 
   private static Project newProject(String uuid) {

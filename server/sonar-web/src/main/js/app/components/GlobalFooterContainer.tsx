@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,17 +19,18 @@
  */
 import { connect } from 'react-redux';
 import { getAppState, Store } from '../../store/rootReducer';
+import { EditionKey } from '../../types/editions';
 import GlobalFooter from './GlobalFooter';
 
 interface StateProps {
   productionDatabase: boolean;
-  sonarqubeEdition?: T.EditionKey;
+  sonarqubeEdition?: EditionKey;
   sonarqubeVersion?: string;
 }
 
 const mapStateToProps = (state: Store): StateProps => ({
   productionDatabase: getAppState(state).productionDatabase,
-  sonarqubeEdition: getAppState(state).edition,
+  sonarqubeEdition: getAppState(state).edition as EditionKey, // TODO: Fix once AppState is no longer ambiant.
   sonarqubeVersion: getAppState(state).version
 });
 

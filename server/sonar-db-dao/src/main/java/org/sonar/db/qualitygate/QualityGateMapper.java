@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -56,6 +56,8 @@ public interface QualityGateMapper {
   void update(QualityGateDto qGate);
 
   void ensureOneBuiltInQualityGate(String builtInQualityName);
+
+  QualityGateDto selectByUuid(String uuid);
 
   QualityGateDto selectByProjectUuid(@Param("projectUuid") String projectUuid);
 }

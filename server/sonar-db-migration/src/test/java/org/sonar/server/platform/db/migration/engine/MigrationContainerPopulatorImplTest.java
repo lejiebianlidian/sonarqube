@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.server.platform.db.migration.engine;
 
-import java.sql.SQLException;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class MigrationContainerPopulatorImplTest {
   private MigrationContainerPopulatorImpl underTest = new MigrationContainerPopulatorImpl();
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     migrationContainer.add(migrationSteps);
   }
 
@@ -116,7 +115,7 @@ public class MigrationContainerPopulatorImplTest {
 
   private static abstract class NoopMigrationStep implements MigrationStep {
     @Override
-    public void execute() throws SQLException {
+    public void execute() {
       throw new UnsupportedOperationException("execute not implemented");
     }
   }

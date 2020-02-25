@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ public class OneToOneResilientIndexingListenerTest {
     try (DbSession otherSession = db.getDbClient().openSession(false)) {
       List<String> uuidsInDb = db.getDbClient().esQueueDao().selectForRecovery(otherSession, Long.MAX_VALUE, 10)
         .stream().map(EsQueueDto::getUuid).collect(toList());
-      String expectedUuids[] = Arrays.stream(expected).map(EsQueueDto::getUuid).toArray(String[]::new);
+      String[] expectedUuids = Arrays.stream(expected).map(EsQueueDto::getUuid).toArray(String[]::new);
       assertThat(uuidsInDb).containsExactlyInAnyOrder(expectedUuids);
     }
   }

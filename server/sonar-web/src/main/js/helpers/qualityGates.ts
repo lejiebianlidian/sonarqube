@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,15 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import {
+  QualityGateApplicationStatusChildProject,
+  QualityGateProjectStatus,
+  QualityGateStatusCondition
+} from '../types/quality-gates';
+
 export function extractStatusConditionsFromProjectStatus(
-  projectStatus: T.QualityGateProjectStatus
-): T.QualityGateStatusCondition[] {
+  projectStatus: QualityGateProjectStatus
+): QualityGateStatusCondition[] {
   const { conditions } = projectStatus;
   return conditions
     ? conditions.map(c => ({
@@ -33,16 +39,18 @@ export function extractStatusConditionsFromProjectStatus(
     : [];
 }
 
-export function isSameStatusConditionList(
-  conditions: T.QualityGateStatusCondition[] = [],
-  prevConditions: T.QualityGateStatusCondition[] = []
-): boolean {
-  if (conditions.length !== prevConditions.length) {
-    return false;
-  } else {
-    const filtered = conditions.filter(c1 => {
-      return !prevConditions.find(c2 => c2.metric === c1.metric && c2.level === c1.level);
-    });
-    return filtered.length === 0;
-  }
+export function extractStatusConditionsFromApplicationStatusChildProject(
+  projectStatus: QualityGateApplicationStatusChildProject
+): QualityGateStatusCondition[] {
+  const { conditions } = projectStatus;
+  return conditions
+    ? conditions.map(c => ({
+        actual: c.value,
+        error: c.errorThreshold,
+        level: c.status,
+        metric: c.metric,
+        op: c.comparator,
+        period: c.periodIndex
+      }))
+    : [];
 }

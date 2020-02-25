@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,13 +20,12 @@
 package org.sonar.ce.task.projectanalysis.measure;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.SetMultimap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.junit.Before;
@@ -46,7 +45,11 @@ import org.sonar.ce.task.projectanalysis.metric.ReportMetricValidator;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
+import org.sonar.db.component.ComponentDto;
+import org.sonar.db.component.SnapshotDto;
 import org.sonar.db.measure.MeasureDto;
+import org.sonar.db.metric.MetricDto;
+import org.sonar.db.organization.OrganizationDto;
 import org.sonar.scanner.protocol.output.ScannerReport;
 import org.sonar.scanner.protocol.output.ScannerReport.Measure.StringValue;
 
@@ -58,6 +61,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonar.db.component.ComponentTesting.newFileDto;
 
 @RunWith(DataProviderRunner.class)
 public class MeasureRepositoryImplTest {
@@ -137,21 +141,30 @@ public class MeasureRepositoryImplTest {
 
   @Test
   public void getBaseMeasure_returns_Measure_if_measure_of_last_snapshot_only_in_DB() {
-    dbTester.prepareDbUnit(getClass(), "shared.xml");
-    dbClient.measureDao().insert(dbSession, createMeasureDto(METRIC_ID_1, FILE_COMPONENT.getUuid(), LAST_ANALYSIS_UUID));
-    dbClient.measureDao().insert(dbSession, createMeasureDto(METRIC_ID_2, FILE_COMPONENT.getUuid(), OTHER_ANALYSIS_UUID));
+    OrganizationDto organization = dbTester.organizations().insert();
+    ComponentDto project = dbTester.components().insertPrivateProject(organization);
+    dbTester.components().insertComponent(newFileDto(project).setUuid(FILE_COMPONENT.getUuid()));
+    SnapshotDto lastAnalysis = dbTester.components().insertSnapshot(project, t -> t.setLast(true));
+    SnapshotDto oldAnalysis = dbTester.components().insertSnapshot(project, t -> t.setLast(false));
+    MetricDto metric1 = dbTester.measures().insertMetric(t -> t.setValueType(org.sonar.api.measures.Metric.ValueType.STRING.name()));
+    MetricDto metric2 = dbTester.measures().insertMetric(t -> t.setValueType(org.sonar.api.measures.Metric.ValueType.STRING.name()));
+    dbClient.measureDao().insert(dbSession, createMeasureDto(metric1.getId(), FILE_COMPONENT.getUuid(), lastAnalysis.getUuid()));
+    dbClient.measureDao().insert(dbSession, createMeasureDto(metric1.getId(), FILE_COMPONENT.getUuid(), oldAnalysis.getUuid()));
     dbSession.commit();
 
     // metric 1 is associated to snapshot with "last=true"
-    Optional<Measure> res = underTest.getBaseMeasure(FILE_COMPONENT, metric1);
-
-    assertThat(res).isPresent();
-    assertThat(res.get().getStringValue()).isEqualTo(SOME_DATA);
-
+    assertThat(underTest.getBaseMeasure(FILE_COMPONENT, metricOf(metric1)).get().getStringValue())
+      .isEqualTo(SOME_DATA);
     // metric 2 is associated to snapshot with "last=false" => not retrieved
-    res = underTest.getBaseMeasure(FILE_COMPONENT, metric2);
+    assertThat(underTest.getBaseMeasure(FILE_COMPONENT, metricOf(metric2))).isNotPresent();
+  }
 
-    assertThat(res).isNotPresent();
+  private Metric metricOf(MetricDto metricDto) {
+    Metric res = mock(Metric.class);
+    when(res.getKey()).thenReturn(metricDto.getKey());
+    when(res.getId()).thenReturn(metricDto.getId());
+    when(res.getType()).thenReturn(Metric.MetricType.valueOf(metricDto.getValueType()));
+    return res;
   }
 
   @Test
@@ -263,12 +276,7 @@ public class MeasureRepositoryImplTest {
   }
 
   private Measure getSomeMeasureByValueType(final Metric.MetricType metricType) {
-    return from(MEASURES).filter(new Predicate<Measure>() {
-      @Override
-      public boolean apply(@Nullable Measure input) {
-        return input.getValueType() == metricType.getValueType();
-      }
-    }).first().get();
+    return from(MEASURES).filter(input -> input.getValueType() == metricType.getValueType()).first().get();
   }
 
   @Test
@@ -380,23 +388,6 @@ public class MeasureRepositoryImplTest {
   }
 
   @Test
-  public void getRawMeasures_for_metric_throws_NPE_if_Component_arg_is_null() {
-    expectedException.expect(NullPointerException.class);
-    underTest.getRawMeasures(null, metric1);
-  }
-
-  @Test
-  public void getRawMeasures_for_metric_throws_NPE_if_Metric_arg_is_null() {
-    expectedException.expect(NullPointerException.class);
-    underTest.getRawMeasures(FILE_COMPONENT, null);
-  }
-
-  @Test
-  public void getRawMeasures_for_metric_returns_empty_if_repository_is_empty() {
-    assertThat(underTest.getRawMeasures(FILE_COMPONENT, metric1)).isEmpty();
-  }
-
-  @Test
   public void getRawMeasures_returns_added_measures_over_batch_measures() {
     when(reportMetricValidator.validate(METRIC_KEY_1)).thenReturn(true);
     when(reportMetricValidator.validate(METRIC_KEY_2)).thenReturn(true);
@@ -407,11 +398,11 @@ public class MeasureRepositoryImplTest {
     Measure addedMeasure = SOME_MEASURE;
     underTest.add(FILE_COMPONENT, metric1, addedMeasure);
 
-    SetMultimap<String, Measure> rawMeasures = underTest.getRawMeasures(FILE_COMPONENT);
+    Map<String, Measure> rawMeasures = underTest.getRawMeasures(FILE_COMPONENT);
 
     assertThat(rawMeasures.keySet()).hasSize(2);
-    assertThat(rawMeasures.get(METRIC_KEY_1)).containsOnly(addedMeasure);
-    assertThat(rawMeasures.get(METRIC_KEY_2)).extracting(Measure::getStringValue).containsOnly("some value");
+    assertThat(rawMeasures.get(METRIC_KEY_1)).isEqualTo(addedMeasure);
+    assertThat(rawMeasures.get(METRIC_KEY_2)).extracting(Measure::getStringValue).isEqualTo("some value");
   }
 
   private static MeasureDto createMeasureDto(int metricId, String componentUuid, String analysisUuid) {

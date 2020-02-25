@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,16 +21,17 @@ import * as React from 'react';
 import { Link } from 'react-router';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
-import { EDITIONS } from '../../apps/marketplace/utils';
 import InstanceMessage from '../../components/common/InstanceMessage';
+import { getEdition } from '../../helpers/editions';
 import { isSonarCloud } from '../../helpers/system';
+import { EditionKey } from '../../types/editions';
 import GlobalFooterBranding from './GlobalFooterBranding';
 import GlobalFooterSonarCloud from './GlobalFooterSonarCloud';
 
 interface Props {
   hideLoggedInInfo?: boolean;
   productionDatabase: boolean;
-  sonarqubeEdition?: T.EditionKey;
+  sonarqubeEdition?: EditionKey;
   sonarqubeVersion?: string;
 }
 
@@ -44,7 +45,7 @@ export default function GlobalFooter({
     return <GlobalFooterSonarCloud />;
   }
 
-  const currentEdition = EDITIONS.find(edition => edition.key === sonarqubeEdition);
+  const currentEdition = sonarqubeEdition && getEdition(sonarqubeEdition);
 
   return (
     <div className="page-footer page-container" id="footer">
@@ -75,9 +76,7 @@ export default function GlobalFooter({
           <a href="http://www.sonarqube.org">{translate('footer.community')}</a>
         </li>
         <li className="page-footer-menu-item">
-          <a href="https://redirect.sonarsource.com/doc/home.html">
-            {translate('footer.documentation')}
-          </a>
+          <Link to="/documentation">{translate('footer.documentation')}</Link>
         </li>
         <li className="page-footer-menu-item">
           <a href="https://redirect.sonarsource.com/doc/community.html">

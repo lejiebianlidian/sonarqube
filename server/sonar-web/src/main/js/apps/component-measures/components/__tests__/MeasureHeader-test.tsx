@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { mockBranch } from '../../../../helpers/mocks/branch-like';
 import MeasureHeader from '../MeasureHeader';
 
 const METRIC = {
@@ -64,20 +65,13 @@ it('should render correctly for leak', () => {
   ).toMatchSnapshot();
 });
 
-it('should render with long living branch', () => {
-  const longBranch = { isMain: false, name: 'branch-6.7', type: 'LONG' };
-  expect(
-    shallow(<MeasureHeader branchLike={longBranch} {...PROPS} />).find('Link')
-  ).toMatchSnapshot();
-});
-
-it('should render with short living branch', () => {
-  const shortBranch = { isMain: false, name: 'feature', mergeBranch: 'master', type: 'SHORT' };
+it('should render with a branch', () => {
+  const branch = mockBranch({ name: 'feature' });
   expect(
     shallow(
       <MeasureHeader
         {...PROPS}
-        branchLike={shortBranch}
+        branchLike={branch}
         measureValue={LEAK_MEASURE}
         metric={LEAK_METRIC}
       />

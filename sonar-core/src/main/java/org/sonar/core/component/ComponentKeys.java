@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -69,25 +69,6 @@ public final class ComponentKeys {
    */
   public static void checkProjectKey(String keyCandidate) {
     checkArgument(isValidProjectKey(keyCandidate), "Malformed key for '%s'. %s", keyCandidate, "Project key cannot be empty nor contain whitespaces.");
-  }
-
-  /**
-   * <p>Test if given parameter is valid for a branch. Valid format is:</p>
-   * <ul>
-   * <li>Allowed characters:
-   * <ul>
-   * <li>Uppercase ASCII letters A-Z</li>
-   * <li>Lowercase ASCII letters a-z</li>
-   * <li>ASCII digits 0-9</li>
-   * <li>Punctuation signs dash '-', underscore '_', period '.', and '/'</li>
-   * </ul>
-   * </li>
-   * </ul>
-   *
-   * @return <code>true</code> if <code>branchCandidate</code> can be used for a project
-   */
-  public static boolean isValidLegacyBranch(String branchCandidate) {
-    return branchCandidate.matches(VALID_BRANCH_REGEXP);
   }
 
   /**

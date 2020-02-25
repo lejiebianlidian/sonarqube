@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.db.rule;
 
-import com.hazelcast.map.impl.querycache.accumulator.Accumulator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -958,8 +957,8 @@ public class RuleDaoTest {
     assertThat(firstRule.getStatus()).isEqualTo(r1.getStatus());
     assertThat(firstRule.isExternal()).isFalse();
     assertThat(firstRule.isTemplate()).isEqualTo(r1.isTemplate());
-    assertThat(firstRule.getSystemTagsAsSet()).isEqualTo(r1.getSystemTags());
-    assertThat(firstRule.getSecurityStandardsAsSet()).isEqualTo(r1.getSecurityStandards());
+    assertThat(firstRule.getSystemTags()).isEqualTo(r1.getSystemTags());
+    assertThat(firstRule.getSecurityStandards()).isEqualTo(r1.getSecurityStandards());
     assertThat(firstRule.getTemplateRuleKey()).isNull();
     assertThat(firstRule.getTemplateRepository()).isNull();
     assertThat(firstRule.getInternalKey()).isEqualTo(r1.getConfigKey());
@@ -1037,8 +1036,8 @@ public class RuleDaoTest {
     assertThat(firstRule.getSeverityAsString()).isEqualTo(SeverityUtil.getSeverityFromOrdinal(r1.getSeverity()));
     assertThat(firstRule.getStatus()).isEqualTo(r1.getStatus());
     assertThat(firstRule.isTemplate()).isEqualTo(r1.isTemplate());
-    assertThat(firstRule.getSystemTagsAsSet()).isEqualTo(r1.getSystemTags());
-    assertThat(firstRule.getSecurityStandardsAsSet()).isEqualTo(r1.getSecurityStandards());
+    assertThat(firstRule.getSystemTags()).isEqualTo(r1.getSystemTags());
+    assertThat(firstRule.getSecurityStandards()).isEqualTo(r1.getSecurityStandards());
     assertThat(firstRule.getInternalKey()).isEqualTo(r1.getConfigKey());
     assertThat(firstRule.getLanguage()).isEqualTo(r1.getLanguage());
     assertThat(firstRule.getType()).isEqualTo(r1.getType());

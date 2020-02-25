@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.db.user;
 
-import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,15 +27,16 @@ import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.api.user.UserQuery;
 import org.sonar.api.utils.DateUtils;
-import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.db.DatabaseUtils;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.organization.OrganizationDto;
+import org.sonar.db.project.ProjectDto;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -321,7 +321,7 @@ public class UserDaoTest {
 
   @Test
   public void insert_user() {
-    Long date = DateUtils.parseDate("2014-06-20").getTime();
+    long date = DateUtils.parseDate("2014-06-20").getTime();
 
     UserDto userDto = new UserDto()
       .setId(1)
@@ -458,35 +458,6 @@ public class UserDaoTest {
   }
 
   @Test
-  public void deactivate_sonarcloud_user() {
-    UserDto user = insertActiveUser();
-    insertUserGroup(user);
-    UserDto otherUser = insertActiveUser();
-    underTest.update(db.getSession(), user.setLastConnectionDate(10_000_000_000L));
-    session.commit();
-
-    underTest.deactivateSonarCloudUser(session, user);
-
-    UserDto userReloaded = underTest.selectUserById(session, user.getId());
-    assertThat(userReloaded.isActive()).isFalse();
-    assertThat(userReloaded.getName()).isNull();
-    assertThat(userReloaded.getLogin()).isEqualTo(user.getLogin());
-    assertThat(userReloaded.getExternalId()).isEqualTo(user.getExternalId());
-    assertThat(userReloaded.getExternalLogin()).isEqualTo(user.getExternalLogin());
-    assertThat(userReloaded.getExternalIdentityProvider()).isEqualTo(user.getExternalIdentityProvider());
-    assertThat(userReloaded.getEmail()).isNull();
-    assertThat(userReloaded.getScmAccounts()).isNull();
-    assertThat(userReloaded.getSalt()).isNull();
-    assertThat(userReloaded.getCryptedPassword()).isNull();
-    assertThat(userReloaded.isRoot()).isFalse();
-    assertThat(userReloaded.getUpdatedAt()).isEqualTo(NOW);
-    assertThat(userReloaded.getHomepageType()).isNull();
-    assertThat(userReloaded.getHomepageParameter()).isNull();
-    assertThat(userReloaded.getLastConnectionDate()).isNull();
-    assertThat(underTest.selectUserById(session, otherUser.getId())).isNotNull();
-  }
-
-  @Test
   public void clean_users_homepage_when_deleting_organization() {
 
     UserDto userUnderTest = newUserDto().setHomepageType("ORGANIZATION").setHomepageParameter("dummy-organization-UUID");
@@ -521,7 +492,7 @@ public class UserDaoTest {
 
     session.commit();
 
-    underTest.cleanHomepage(session, new ComponentDto().setUuid("dummy-project-UUID"));
+    underTest.cleanHomepage(session, new ProjectDto().setUuid("dummy-project-UUID"));
 
     UserDto userWithAHomepageReloaded = underTest.selectUserById(session, userUnderTest.getId());
     assertThat(userWithAHomepageReloaded.getUpdatedAt()).isEqualTo(NOW);

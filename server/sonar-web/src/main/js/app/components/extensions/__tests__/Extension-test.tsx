@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getExtensionStart } from '../../../../helpers/extensions';
@@ -25,14 +25,18 @@ import { mockCurrentUser, mockLocation, mockRouter } from '../../../../helpers/t
 import { Extension } from '../Extension';
 
 jest.mock('../../../../helpers/extensions', () => ({
-  getExtensionStart: jest.fn().mockResolvedValue(jest.fn())
+  getExtensionStart: jest.fn().mockResolvedValue({})
+}));
+
+jest.mock('react-helmet-async', () => ({
+  Helmet: () => null
 }));
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
-it('should render extension correctly', async () => {
+it('should render React extensions correctly', async () => {
   const start = jest.fn().mockReturnValue(<div className="extension" />);
   (getExtensionStart as jest.Mock).mockResolvedValue(start);
 
@@ -44,8 +48,45 @@ it('should render extension correctly', async () => {
   expect(wrapper).toMatchSnapshot();
 });
 
+it('should handle Function extensions correctly', async () => {
+  const stop = jest.fn();
+  const start = jest.fn(() => {
+    return stop;
+  });
+  (getExtensionStart as jest.Mock).mockResolvedValue(start);
+
+  const wrapper = shallowRender();
+  await waitAndUpdate(wrapper);
+  expect(start).toBeCalled();
+
+  wrapper.setProps({ extension: { key: 'bar', name: 'Bar' } });
+  await waitAndUpdate(wrapper);
+  expect(stop).toBeCalled();
+});
+
+it('should unmount an extension before starting a new one', async done => {
+  const reactExtension = jest.fn().mockReturnValue(<div className="extension" />);
+  (getExtensionStart as jest.Mock).mockResolvedValue(reactExtension);
+
+  const wrapper = shallowRender();
+  await waitAndUpdate(wrapper);
+  expect(wrapper.state('extensionElement')).not.toBeUndefined();
+
+  const start = jest.fn((options: any) => {
+    expect(options.el).not.toBeUndefined();
+    done();
+  });
+  (getExtensionStart as jest.Mock).mockResolvedValue(start);
+
+  wrapper.setProps({ extension: { key: 'bar', name: 'Bar' } });
+  await waitAndUpdate(wrapper);
+  expect(wrapper.state('extensionElement')).toBeUndefined();
+  expect(start).toBeCalled();
+});
+
 function shallowRender(props: Partial<Extension['props']> = {}) {
-  return shallow(
+  // We need to mount, as we rely on refs.
+  return mount<Extension>(
     <Extension
       currentUser={mockCurrentUser()}
       extension={{ key: 'foo', name: 'Foo' }}

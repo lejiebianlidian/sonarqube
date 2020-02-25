@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ public class HazelcastMemberBuilderTest {
     HazelcastMember member = underTest
       .setProcessId(ProcessId.COMPUTE_ENGINE)
       .setNodeName("bar")
-      .setPort(NetworkUtilsImpl.INSTANCE.getNextAvailablePort(loopback))
+      .setPort(NetworkUtilsImpl.INSTANCE.getNextLoopbackAvailablePort())
       .setNetworkInterface(loopback.getHostAddress())
       .build();
 

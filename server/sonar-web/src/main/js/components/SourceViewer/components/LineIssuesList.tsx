@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +18,13 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { BranchLike } from '../../../types/branch-like';
 import Issue from '../../issue/Issue';
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
+  displayIssueLocationsCount?: boolean;
+  displayIssueLocationsLink?: boolean;
   issuePopup: { issue: string; name: string } | undefined;
   issues: T.Issue[];
   onIssueChange: (issue: T.Issue) => void;
@@ -38,6 +41,8 @@ export default function LineIssuesList(props: Props) {
       {props.issues.map(issue => (
         <Issue
           branchLike={props.branchLike}
+          displayLocationsCount={props.displayIssueLocationsCount}
+          displayLocationsLink={props.displayIssueLocationsLink}
           issue={issue}
           key={issue.key}
           onChange={props.onIssueChange}

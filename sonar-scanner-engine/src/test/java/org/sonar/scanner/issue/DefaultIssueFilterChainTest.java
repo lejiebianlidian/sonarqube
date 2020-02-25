@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,28 +36,28 @@ public class DefaultIssueFilterChainTest {
     assertThat(new DefaultIssueFilterChain().accept(issue)).isTrue();
   }
 
-  class PassingFilter implements IssueFilter {
+  static class PassingFilter implements IssueFilter {
     @Override
     public boolean accept(FilterableIssue issue, IssueFilterChain chain) {
       return chain.accept(issue);
     }
   }
 
-  class AcceptingFilter implements IssueFilter {
+  static class AcceptingFilter implements IssueFilter {
     @Override
     public boolean accept(FilterableIssue issue, IssueFilterChain chain) {
       return true;
     }
   }
 
-  class RefusingFilter implements IssueFilter {
+  static class RefusingFilter implements IssueFilter {
     @Override
     public boolean accept(FilterableIssue issue, IssueFilterChain chain) {
       return false;
     }
   }
 
-  class FailingFilter implements IssueFilter {
+  static class FailingFilter implements IssueFilter {
     @Override
     public boolean accept(FilterableIssue issue, IssueFilterChain chain) {
       fail();

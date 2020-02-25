@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@ public class RuleRepositoryRule extends ExternalResource implements RuleReposito
 
   public RuleRepositoryRule add(DumbRule rule) {
     rulesByKey.put(requireNonNull(rule.getKey()), rule);
-    rulesById.put(requireNonNull(rule.getId()), rule);
+    rulesById.put(rule.getId(), rule);
     return this;
   }
 

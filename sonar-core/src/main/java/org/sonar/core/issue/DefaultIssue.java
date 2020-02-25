@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,12 +24,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,14 +89,12 @@ public class DefaultIssue implements Issue, Trackable, org.sonar.api.ce.measure.
   private Date updateDate;
   private Date closeDate;
 
-  private boolean isFromHotspot = false;
-
   // Current changes
   private FieldDiffs currentChange = null;
 
   // all changes
   // -- contains only current change (if any) on CE side unless reopening a closed issue or copying issue from base branch
-  //    when analyzing a long living branch from the first time
+  //    when analyzing a branch from the first time
   private List<FieldDiffs> changes = null;
 
   // true if the issue did not exist in the previous scan.
@@ -454,7 +452,7 @@ public class DefaultIssue implements Issue, Trackable, org.sonar.api.ce.measure.
 
   public DefaultIssue setAttribute(String key, @Nullable String value) {
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new HashMap<>();
     }
     if (value == null) {
       attributes.remove(key);
@@ -472,7 +470,7 @@ public class DefaultIssue implements Issue, Trackable, org.sonar.api.ce.measure.
   public DefaultIssue setAttributes(@Nullable Map<String, String> map) {
     if (map != null) {
       if (attributes == null) {
-        attributes = Maps.newHashMap();
+        attributes = new HashMap<>();
       }
       attributes.putAll(map);
     }
@@ -605,15 +603,6 @@ public class DefaultIssue implements Issue, Trackable, org.sonar.api.ce.measure.
     } else {
       return ImmutableSet.copyOf(tags);
     }
-  }
-
-  public DefaultIssue setIsFromHotspot(boolean value) {
-    this.isFromHotspot = value;
-    return this;
-  }
-
-  public boolean isFromHotspot() {
-    return isFromHotspot;
   }
 
   public DefaultIssue setTags(Collection<String> tags) {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,9 +42,16 @@ public interface DefaultTransitions {
   String WONT_FIX = "wontfix";
 
   /**
-   * @since 7.8
+   * @deprecated since 8.1, transition has no effect
    */
   String SET_AS_IN_REVIEW = "setinreview";
+
+  /**
+   * @since 7.8
+   * @deprecated since 8.1, security hotspots can no longer be converted to vulnerabilities
+   */
+  @Deprecated
+  String OPEN_AS_VULNERABILITY = "openasvulnerability";
 
   /**
    * @since 7.8
@@ -52,9 +59,9 @@ public interface DefaultTransitions {
   String RESOLVE_AS_REVIEWED = "resolveasreviewed";
 
   /**
-   * @since 7.8
+   * @since 8.1
    */
-  String OPEN_AS_VULNERABILITY = "openasvulnerability";
+  String RESOLVE_AS_SAFE = "resolveassafe";
 
   /**
    * @since 7.8
@@ -65,5 +72,5 @@ public interface DefaultTransitions {
    * @since 4.4
    */
   List<String> ALL = unmodifiableList(asList(CONFIRM, UNCONFIRM, REOPEN, RESOLVE, FALSE_POSITIVE, WONT_FIX, CLOSE,
-    SET_AS_IN_REVIEW, RESOLVE_AS_REVIEWED, OPEN_AS_VULNERABILITY,RESET_AS_TO_REVIEW));
+    SET_AS_IN_REVIEW, RESOLVE_AS_REVIEWED, RESET_AS_TO_REVIEW));
 }

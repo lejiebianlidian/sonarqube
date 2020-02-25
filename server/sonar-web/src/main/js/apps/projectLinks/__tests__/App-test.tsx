@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,12 +25,10 @@ import App from '../App';
 
 // import { getProjectLinks, createLink, deleteLink } from '../../api/projectLinks';
 jest.mock('../../../api/projectLinks', () => ({
-  getProjectLinks: jest
-    .fn()
-    .mockResolvedValue([
-      { id: '1', type: 'homepage', url: 'http://example.com' },
-      { id: '2', name: 'foo', type: 'foo', url: 'http://example.com/foo' }
-    ]),
+  getProjectLinks: jest.fn().mockResolvedValue([
+    { id: '1', type: 'homepage', url: 'http://example.com' },
+    { id: '2', name: 'foo', type: 'foo', url: 'http://example.com/foo' }
+  ]),
   createLink: jest
     .fn()
     .mockResolvedValue({ id: '3', name: 'bar', type: 'bar', url: 'http://example.com/bar' }),

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ public class DefaultProfilerTest {
   Profiler underTest = Profiler.create(Loggers.get("DefaultProfilerTest"));
 
   @Test
-  public void test_levels() throws Exception {
+  public void test_levels() {
     // info by default
     assertThat(underTest.isDebugEnabled()).isFalse();
     assertThat(underTest.isTraceEnabled()).isFalse();

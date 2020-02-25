@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ package org.sonar.server.platform.db.migration.step;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import org.sonar.api.config.Configuration;
 import org.sonar.db.Database;
 import org.sonar.db.dialect.Dialect;
 
@@ -63,10 +62,6 @@ public abstract class DataChange implements MigrationStep {
     return res;
   }
 
-  protected static boolean isSonarCloud(Configuration configuration) {
-    return configuration.getBoolean("sonar.sonarcloud.enabled").orElse(false);
-  }
-
   public static class Context {
     private final Database db;
     private final Connection readConnection;
@@ -83,7 +78,7 @@ public abstract class DataChange implements MigrationStep {
     }
 
     public Upsert prepareUpsert(String sql) throws SQLException {
-      return UpsertImpl.create(db, writeConnection, sql);
+      return UpsertImpl.create(writeConnection, sql);
     }
 
     public MassUpdate prepareMassUpdate() {

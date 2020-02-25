@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -136,13 +136,9 @@ export class AboutApp extends React.PureComponent<Props, State> {
                   {translate('layout.login')}
                 </Link>
               )}
-              <a
-                className="button"
-                href="https://redirect.sonarsource.com/doc/home.html"
-                rel="noopener noreferrer"
-                target="_blank">
+              <Link className="button" to="/documentation">
                 {translate('about_page.read_documentation')}
-              </a>
+              </Link>
             </div>
 
             <div className="about-page-instance">
@@ -205,7 +201,4 @@ const mapStateToProps = (state: Store) => {
 
 const mapDispatchToProps = { fetchAboutPageSettings } as any;
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(AboutApp);
+export default connect(mapStateToProps, mapDispatchToProps)(AboutApp);

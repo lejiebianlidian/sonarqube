@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -170,24 +170,6 @@ public class ManagedProcessHandlerTest {
       underTest.refreshState();
       verifyNoMoreInteractions(listener);
       assertThat(testProcess.askedForRestart).isFalse();
-    }
-  }
-
-  @Test
-  public void stopForcibly_stops_the_process_without_graceful_request_for_stop() {
-    ManagedProcessHandler underTest = newHanderBuilder(A_PROCESS_ID).build();
-
-    try (TestManagedProcess testProcess = new TestManagedProcess()) {
-      underTest.start(() -> testProcess);
-
-      underTest.stopForcibly();
-      assertThat(underTest.getState()).isEqualTo(ManagedProcessLifecycle.State.STOPPED);
-      assertThat(testProcess.askedForHardStop).isFalse();
-      assertThat(testProcess.destroyedForcibly).isTrue();
-
-      // second execution of stopForcibly does nothing. It's still stopped.
-      underTest.stopForcibly();
-      assertThat(underTest.getState()).isEqualTo(ManagedProcessLifecycle.State.STOPPED);
     }
   }
 

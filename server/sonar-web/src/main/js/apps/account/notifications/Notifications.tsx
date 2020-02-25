@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,161 +17,58 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { groupBy, partition, uniq, uniqBy, uniqWith } from 'lodash';
+import { partition } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import * as api from '../../../api/notifications';
-import { withAppState } from '../../../components/hoc/withAppState';
+import {
+  withNotifications,
+  WithNotificationsProps
+} from '../../../components/hoc/withNotifications';
 import GlobalNotifications from './GlobalNotifications';
 import Projects from './Projects';
-import { NotificationProject } from './types';
 
-export interface Props {
-  appState: Pick<T.AppState, 'organizationsEnabled'>;
-  fetchOrganizations: (organizations: string[]) => void;
+export function Notifications(props: WithNotificationsProps) {
+  const {
+    addNotification,
+    channels,
+    globalTypes,
+    loading,
+    notifications,
+    perProjectTypes,
+    removeNotification
+  } = props;
+
+  const [globalNotifications, projectNotifications] = partition(notifications, n => !n.project);
+
+  return (
+    <div className="account-body account-container">
+      <Helmet defer={false} title={translate('my_account.notifications')} />
+      <Alert variant="info">{translate('notification.dispatcher.information')}</Alert>
+      <DeferredSpinner loading={loading}>
+        {notifications && (
+          <>
+            <GlobalNotifications
+              addNotification={addNotification}
+              channels={channels}
+              notifications={globalNotifications}
+              removeNotification={removeNotification}
+              types={globalTypes}
+            />
+            <Projects
+              addNotification={addNotification}
+              channels={channels}
+              notifications={projectNotifications}
+              removeNotification={removeNotification}
+              types={perProjectTypes}
+            />
+          </>
+        )}
+      </DeferredSpinner>
+    </div>
+  );
 }
 
-interface State {
-  channels: string[];
-  globalTypes: string[];
-  loading: boolean;
-  notifications: T.Notification[];
-  perProjectTypes: string[];
-}
-
-export class Notifications extends React.PureComponent<Props, State> {
-  mounted = false;
-  state: State = {
-    channels: [],
-    globalTypes: [],
-    loading: true,
-    notifications: [],
-    perProjectTypes: []
-  };
-
-  componentDidMount() {
-    this.mounted = true;
-    this.fetchNotifications();
-  }
-
-  componentWillUnmount() {
-    this.mounted = false;
-  }
-
-  fetchNotifications = () => {
-    api.getNotifications().then(
-      response => {
-        if (this.mounted) {
-          if (this.props.appState.organizationsEnabled) {
-            const organizations = uniq(response.notifications
-              .filter(n => n.organization)
-              .map(n => n.organization) as string[]);
-            this.props.fetchOrganizations(organizations);
-          }
-
-          this.setState({
-            channels: response.channels,
-            globalTypes: response.globalTypes,
-            loading: false,
-            notifications: response.notifications,
-            perProjectTypes: response.perProjectTypes
-          });
-        }
-      },
-      () => {
-        if (this.mounted) {
-          this.setState({ loading: false });
-        }
-      }
-    );
-  };
-
-  addNotificationToState = (added: T.Notification) => {
-    this.setState(state => ({
-      notifications: uniqWith([...state.notifications, added], areNotificationsEqual)
-    }));
-  };
-
-  removeNotificationFromState = (removed: T.Notification) => {
-    this.setState(state => ({
-      notifications: state.notifications.filter(
-        notification => !areNotificationsEqual(notification, removed)
-      )
-    }));
-  };
-
-  addNotification = (added: T.Notification) => {
-    // optimistic update
-    this.addNotificationToState(added);
-
-    // recreate `data` to omit `projectName` and `organization` from `Notification`
-    const data = { channel: added.channel, project: added.project, type: added.type };
-    api.addNotification(data).catch(() => {
-      this.removeNotificationFromState(added);
-    });
-  };
-
-  removeNotification = (removed: T.Notification) => {
-    // optimistic update
-    this.removeNotificationFromState(removed);
-
-    // recreate `data` to omit `projectName` and `organization` from `Notification`
-    const data = { channel: removed.channel, project: removed.project, type: removed.type };
-    api.removeNotification(data).catch(() => {
-      this.addNotificationToState(removed);
-    });
-  };
-
-  render() {
-    const [globalNotifications, projectNotifications] = partition(
-      this.state.notifications,
-      n => !n.project
-    );
-    const projects = uniqBy(
-      projectNotifications.map(n => ({
-        key: n.project,
-        name: n.projectName,
-        organization: n.organization
-      })) as NotificationProject[],
-      project => project.key
-    );
-    const notificationsByProject = groupBy(projectNotifications, n => n.project);
-
-    return (
-      <div className="account-body account-container">
-        <Helmet title={translate('my_account.notifications')} />
-        <Alert variant="info">{translate('notification.dispatcher.information')}</Alert>
-        <DeferredSpinner loading={this.state.loading}>
-          {this.state.notifications && (
-            <>
-              <GlobalNotifications
-                addNotification={this.addNotification}
-                channels={this.state.channels}
-                notifications={globalNotifications}
-                removeNotification={this.removeNotification}
-                types={this.state.globalTypes}
-              />
-              <Projects
-                addNotification={this.addNotification}
-                channels={this.state.channels}
-                notificationsByProject={notificationsByProject}
-                projects={projects}
-                removeNotification={this.removeNotification}
-                types={this.state.perProjectTypes}
-              />
-            </>
-          )}
-        </DeferredSpinner>
-      </div>
-    );
-  }
-}
-
-export default withAppState(Notifications);
-
-function areNotificationsEqual(a: T.Notification, b: T.Notification) {
-  return a.channel === b.channel && a.type === b.type && a.project === b.project;
-}
+export default withNotifications(Notifications);

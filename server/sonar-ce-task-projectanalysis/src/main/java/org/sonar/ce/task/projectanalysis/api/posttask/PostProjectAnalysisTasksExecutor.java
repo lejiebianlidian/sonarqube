@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,8 +45,10 @@ import org.sonar.ce.task.projectanalysis.qualitygate.QualityGateHolder;
 import org.sonar.ce.task.projectanalysis.qualitygate.QualityGateStatus;
 import org.sonar.ce.task.projectanalysis.qualitygate.QualityGateStatusHolder;
 import org.sonar.ce.task.step.ComputationStepExecutor;
+import org.sonar.core.util.logs.Profiler;
 import org.sonar.core.util.stream.MoreCollectors;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
@@ -109,10 +111,56 @@ public class PostProjectAnalysisTasksExecutor implements ComputationStepExecutor
   }
 
   private static void executeTask(ProjectAnalysisImpl projectAnalysis, PostProjectAnalysisTask postProjectAnalysisTask) {
+    String status = "FAILED";
+    Profiler task = Profiler.create(LOG).logTimeLast(true);
     try {
-      postProjectAnalysisTask.finished(projectAnalysis);
+      task.start();
+      postProjectAnalysisTask.finished(new ContextImpl(projectAnalysis, task));
+      status = "SUCCESS";
     } catch (Exception e) {
       LOG.error("Execution of task " + postProjectAnalysisTask.getClass() + " failed", e);
+    } finally {
+      task.addContext("status", status);
+      task.stopInfo("{}", postProjectAnalysisTask.getDescription());
+    }
+  }
+
+  private static class ContextImpl implements PostProjectAnalysisTask.Context {
+    private final ProjectAnalysisImpl projectAnalysis;
+    private final Profiler task;
+
+    private ContextImpl(ProjectAnalysisImpl projectAnalysis, Profiler task) {
+      this.projectAnalysis = projectAnalysis;
+      this.task = task;
+    }
+
+    @Override
+    public PostProjectAnalysisTask.ProjectAnalysis getProjectAnalysis() {
+      return projectAnalysis;
+    }
+
+    @Override
+    public PostProjectAnalysisTask.LogStatistics getLogStatistics() {
+      return new LogStatisticsImpl(task);
+    }
+  }
+
+  private static class LogStatisticsImpl implements PostProjectAnalysisTask.LogStatistics {
+    private final Profiler profiler;
+
+    private LogStatisticsImpl(Profiler profiler) {
+      this.profiler = profiler;
+    }
+
+    @Override
+    public PostProjectAnalysisTask.LogStatistics add(String key, Object value) {
+      requireNonNull(key, "Statistic has null key");
+      requireNonNull(value, () -> format("Statistic with key [%s] has null value", key));
+      checkArgument(!key.equalsIgnoreCase("time") && !key.equalsIgnoreCase("status"),
+        "Statistic with key [%s] is not accepted", key);
+      checkArgument(!profiler.hasContext(key), "Statistic with key [%s] is already present", key);
+      profiler.addContext(key, value);
+      return this;
     }
   }
 
@@ -182,11 +230,8 @@ public class PostProjectAnalysisTasksExecutor implements ComputationStepExecutor
   @CheckForNull
   private BranchImpl createBranch() {
     org.sonar.ce.task.projectanalysis.analysis.Branch analysisBranch = analysisMetadataHolder.getBranch();
-    if (!analysisBranch.isLegacyFeature()) {
-      String branchKey = analysisBranch.getType() == PULL_REQUEST ? analysisBranch.getPullRequestKey() : analysisBranch.getName();
-      return new BranchImpl(analysisBranch.isMain(), branchKey, Branch.Type.valueOf(analysisBranch.getType().name()));
-    }
-    return null;
+    String branchKey = analysisBranch.getType() == PULL_REQUEST ? analysisBranch.getPullRequestKey() : analysisBranch.getName();
+    return new BranchImpl(analysisBranch.isMain(), branchKey, Branch.Type.valueOf(analysisBranch.getType().name()));
   }
 
   private static QualityGate.Status convert(QualityGateStatus status) {

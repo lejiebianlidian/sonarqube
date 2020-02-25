@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,56 +20,51 @@
 import { sortBy } from 'lodash';
 import * as React from 'react';
 import Select from 'sonar-ui-common/components/controls/Select';
-import {
-  getLocalizedMetricDomain,
-  getLocalizedMetricName,
-  translate
-} from 'sonar-ui-common/helpers/l10n';
+import { getLocalizedMetricDomain, translate } from 'sonar-ui-common/helpers/l10n';
+import { getLocalizedMetricNameNoDiffMetric } from '../utils';
 
 interface Props {
+  metric?: T.Metric;
   metrics: T.Metric[];
   onMetricChange: (metric: T.Metric) => void;
 }
 
-interface State {
-  value: number;
-}
-
 interface Option {
   disabled?: boolean;
-  domain?: string;
   label: string;
-  value: number;
+  value: string;
 }
 
-export default class MetricSelect extends React.PureComponent<Props, State> {
-  state = { value: -1 };
-
+export default class MetricSelect extends React.PureComponent<Props> {
   handleChange = (option: Option | null) => {
-    const value = option ? option.value : -1;
-    this.setState({ value });
-    this.props.onMetricChange(this.props.metrics[value]);
+    if (option) {
+      const { metrics } = this.props;
+      const selectedMetric = metrics.find(metric => metric.key === option.value);
+      if (selectedMetric) {
+        this.props.onMetricChange(selectedMetric);
+      }
+    }
   };
 
   render() {
-    const { metrics } = this.props;
+    const { metric, metrics } = this.props;
 
-    const options: Option[] = sortBy(
-      metrics.map((metric, index) => ({
-        value: index,
-        label: getLocalizedMetricName(metric),
+    const options: Array<Option & { domain?: string }> = sortBy(
+      metrics.map(metric => ({
+        value: metric.key,
+        label: getLocalizedMetricNameNoDiffMetric(metric),
         domain: metric.domain
       })),
       'domain'
     );
 
-    // use "disabled" property to emulate optgroups
+    // Use "disabled" property to emulate optgroups.
     const optionsWithDomains: Option[] = [];
     options.forEach((option, index, options) => {
       const previous = index > 0 ? options[index - 1] : null;
       if (option.domain && (!previous || previous.domain !== option.domain)) {
         optionsWithDomains.push({
-          value: 0,
+          value: '<domain>',
           label: getLocalizedMetricDomain(option.domain),
           disabled: true
         });
@@ -79,12 +74,12 @@ export default class MetricSelect extends React.PureComponent<Props, State> {
 
     return (
       <Select
-        className="text-middle"
+        className="text-middle quality-gate-metric-select"
         id="condition-metric"
         onChange={this.handleChange}
         options={optionsWithDomains}
         placeholder={translate('search.search_for_metrics')}
-        value={this.state.value}
+        value={metric && metric.key}
       />
     );
   }

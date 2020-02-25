@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,12 +18,13 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { parseDate } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import A11ySkipTarget from '../../../app/components/a11y/A11ySkipTarget';
 import Suggestions from '../../../app/components/embed-docs-modal/Suggestions';
-import { MeasureHistory, ParsedAnalysis, Query } from '../utils';
+import { MeasureHistory } from '../../../types/project-activity';
+import { Query } from '../utils';
 import './projectActivity.css';
 import ProjectActivityAnalysesList from './ProjectActivityAnalysesList';
 import ProjectActivityGraphs from './ProjectActivityGraphs';
@@ -32,7 +33,7 @@ import ProjectActivityPageHeader from './ProjectActivityPageHeader';
 interface Props {
   addCustomEvent: (analysis: string, name: string, category?: string) => Promise<void>;
   addVersion: (analysis: string, version: string) => Promise<void>;
-  analyses: ParsedAnalysis[];
+  analyses: T.ParsedAnalysis[];
   analysesLoading: boolean;
   changeEvent: (event: string, name: string) => Promise<void>;
   deleteAnalysis: (analysis: string) => Promise<void>;
@@ -56,7 +57,7 @@ export default function ProjectActivityApp(props: Props) {
   return (
     <div className="page page-limited" id="project-activity">
       <Suggestions suggestions="project_activity" />
-      <Helmet title={translate('project_activity.page')} />
+      <Helmet defer={false} title={translate('project_activity.page')} />
 
       <A11ySkipTarget anchor="activity_main" />
 
@@ -78,10 +79,12 @@ export default function ProjectActivityApp(props: Props) {
             canAdmin={canAdmin}
             canDeleteAnalyses={canDeleteAnalyses}
             changeEvent={props.changeEvent}
-            className="boxed-group-inner"
             deleteAnalysis={props.deleteAnalysis}
             deleteEvent={props.deleteEvent}
             initializing={props.initializing}
+            leakPeriodDate={
+              props.project.leakPeriodDate ? parseDate(props.project.leakPeriodDate) : undefined
+            }
             project={props.project}
             query={props.query}
             updateQuery={props.updateQuery}

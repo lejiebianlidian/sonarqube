@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { click } from 'sonar-ui-common/helpers/testUtils';
+import { mockBranch } from '../../../../helpers/mocks/branch-like';
 import { DefinitionChangeEvent, DefinitionChangeEventInner } from '../DefinitionChangeEventInner';
 
 it('should render', () => {
@@ -43,7 +44,7 @@ it('should render', () => {
 });
 
 it('should render for a branch', () => {
-  const branch: T.LongLivingBranch = { name: 'feature-x', isMain: false, type: 'LONG' };
+  const branch = mockBranch({ name: 'feature-x' });
   const event: DefinitionChangeEvent = {
     category: 'DEFINITION_CHANGE',
     key: 'foo1234',

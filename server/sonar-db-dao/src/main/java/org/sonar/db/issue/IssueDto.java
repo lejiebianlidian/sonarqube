@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -122,7 +122,6 @@ public final class IssueDto implements Serializable {
       .setRuleId(ruleId)
       .setRuleKey(issue.ruleKey().repository(), issue.ruleKey().rule())
       .setExternal(issue.isFromExternalRuleEngine())
-      .setIsFromHotspot(issue.isFromHotspot())
       .setTags(issue.tags())
       .setComponentUuid(issue.componentUuid())
       .setComponentKey(issue.componentKey())
@@ -171,7 +170,6 @@ public final class IssueDto implements Serializable {
       .setAuthorLogin(issue.authorLogin())
       .setRuleKey(issue.ruleKey().repository(), issue.ruleKey().rule())
       .setExternal(issue.isFromExternalRuleEngine())
-      .setIsFromHotspot(issue.isFromHotspot())
       .setTags(issue.tags())
       .setComponentUuid(issue.componentUuid())
       .setComponentKey(issue.componentKey())
@@ -489,15 +487,6 @@ public final class IssueDto implements Serializable {
     return this;
   }
 
-  public boolean isFromHotspot() {
-    return isFromHotspot;
-  }
-
-  public IssueDto setIsFromHotspot(boolean value) {
-    isFromHotspot = value;
-    return this;
-  }
-
   public String getComponentKey() {
     return componentKey;
   }
@@ -742,7 +731,6 @@ public final class IssueDto implements Serializable {
     issue.setSelectedAt(selectedAt);
     issue.setLocations(parseLocations());
     issue.setIsFromExternalRuleEngine(isExternal);
-    issue.setIsFromHotspot(isFromHotspot);
     return issue;
   }
 }

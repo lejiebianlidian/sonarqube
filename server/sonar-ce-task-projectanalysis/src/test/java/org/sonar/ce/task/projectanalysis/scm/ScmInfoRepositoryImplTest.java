@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -287,7 +287,7 @@ public class ScmInfoRepositoryImplTest {
       .setScmAuthor("author1")
       .setScmDate(10L)
       .build();
-    DbScmInfo scmInfo = DbScmInfo.create(Collections.singleton(line1), hash).get();
+    DbScmInfo scmInfo = DbScmInfo.create(Collections.singletonList(line1), 1, hash).get();
     when(dbLoader.getScmInfo(FILE)).thenReturn(Optional.of(scmInfo));
     return scmInfo;
   }

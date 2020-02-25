@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,12 +33,13 @@ import {
 } from '../../../components/SourceViewer/helpers/indexing';
 import { SourceViewerContext } from '../../../components/SourceViewer/SourceViewerContext';
 import { WorkspaceContext } from '../../../components/workspace/context';
-import { getBranchLikeQuery } from '../../../helpers/branches';
+import { getBranchLikeQuery } from '../../../helpers/branch-like';
+import { BranchLike } from '../../../types/branch-like';
 import ComponentSourceSnippetViewer from './ComponentSourceSnippetViewer';
 import { groupLocationsByComponent } from './utils';
 
 interface Props {
-  branchLike: T.Branch | T.PullRequest | undefined;
+  branchLike: BranchLike | undefined;
   highlightedLocationMessage?: { index: number; text: string | undefined };
   issue: T.Issue;
   issues: T.Issue[];
@@ -223,7 +224,7 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
           }
           return (
             <SourceViewerContext.Provider
-              key={`${this.props.issue.key}-${this.props.selectedFlowIndex}-${i}`}
+              key={`${this.props.issue.key}-${this.props.selectedFlowIndex || 0}-${i}`}
               value={{ branchLike: this.props.branchLike, file: snippetGroup.component }}>
               <ComponentSourceSnippetViewer
                 branchLike={this.props.branchLike}

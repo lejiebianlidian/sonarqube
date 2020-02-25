@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,11 +46,11 @@
   color: var(--sonarcloudBlack300);
 }
 
-.navbar-latest-notification-wrapper .badge-new {
+.navbar-latest-notification-wrapper .badge-info {
   position: absolute;
   margin-right: var(--gridSize);
-  left: calc(var(--gridSize) / 2);
-  top: 5px;
+  left: 6px;
+  top: 6px;
 }
 
 .navbar-latest-notification-wrapper .label {

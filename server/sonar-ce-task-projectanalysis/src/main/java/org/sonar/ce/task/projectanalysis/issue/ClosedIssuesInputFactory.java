@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ public class ClosedIssuesInputFactory extends BaseInputFactory {
   }
 
   public Input<DefaultIssue> create(Component component) {
-    return new ClosedIssuesLazyInput(dbClient, component, movedFilesRepository.getOriginalFile(component).orNull());
+    return new ClosedIssuesLazyInput(dbClient, component, movedFilesRepository.getOriginalFile(component).orElse(null));
   }
 
   private class ClosedIssuesLazyInput extends BaseLazyInput {

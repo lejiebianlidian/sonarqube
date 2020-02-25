@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@ import org.sonar.api.notifications.Notification;
 import org.sonar.server.issue.notification.EmailMessage;
 import org.sonar.server.issue.notification.EmailTemplate;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonar.api.utils.DateUtils.formatDateTime;
 
 public class ReportAnalysisFailureNotificationEmailTemplate implements EmailTemplate {
@@ -94,7 +95,7 @@ public class ReportAnalysisFailureNotificationEmailTemplate implements EmailTemp
 
   private static String encode(String toEncode) {
     try {
-      return URLEncoder.encode(toEncode, "UTF-8");
+      return URLEncoder.encode(toEncode, UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException("Encoding not supported", e);
     }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,31 +22,20 @@ package org.sonar.server.measure.index;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
-import static org.sonar.api.measures.CoreMetrics.NCLOC_KEY;
 
 public class ProjectMeasuresStatistics {
   private final long projectCount;
-  private final long ncloc;
   private final Map<String, Long> projectCountByLanguage;
   private final Map<String, Long> nclocByLanguage;
 
   private ProjectMeasuresStatistics(Builder builder) {
     projectCount = builder.projectCount;
-    ncloc = builder.ncloc;
     projectCountByLanguage = builder.projectCountByLanguage;
     nclocByLanguage = builder.nclocByLanguage;
   }
 
   public long getProjectCount() {
     return projectCount;
-  }
-
-  /**
-   * @deprecated since 7.2 Global Ncloc computation should rely on org.sonar.db.measure.LiveMeasureDao#countNcloc(org.sonar.db.DbSession)
-   */
-  @Deprecated
-  public long getNcloc() {
-    return ncloc;
   }
 
   public Map<String, Long> getProjectCountByLanguage() {
@@ -63,7 +52,6 @@ public class ProjectMeasuresStatistics {
 
   public static class Builder {
     private Long projectCount;
-    private Long ncloc;
     private Map<String, Long> projectCountByLanguage;
     private Map<String, Long> nclocByLanguage;
 
@@ -76,17 +64,9 @@ public class ProjectMeasuresStatistics {
       return this;
     }
 
-    public Builder setSum(String metric, long value) {
-      if (NCLOC_KEY.equals(metric)) {
-        this.ncloc = value;
-      } else {
-        throw new IllegalStateException("Metric not supported: " + metric);
-      }
-      return this;
-    }
-
-    public void setProjectCountByLanguage(Map<String, Long> projectCountByLanguage) {
+    public Builder setProjectCountByLanguage(Map<String, Long> projectCountByLanguage) {
       this.projectCountByLanguage = projectCountByLanguage;
+      return this;
     }
 
     public Builder setNclocByLanguage(Map<String, Long> nclocByLanguage) {
@@ -96,7 +76,6 @@ public class ProjectMeasuresStatistics {
 
     public ProjectMeasuresStatistics build() {
       requireNonNull(projectCount);
-      requireNonNull(ncloc);
       requireNonNull(projectCountByLanguage);
       requireNonNull(nclocByLanguage);
       return new ProjectMeasuresStatistics(this);

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,10 @@ const issueBase: T.Issue = {
 };
 
 it('render issues list', () => {
-  const issues: T.Issue[] = [{ ...issueBase, key: 'foo' }, { ...issueBase, key: 'bar' }];
+  const issues: T.Issue[] = [
+    { ...issueBase, key: 'foo' },
+    { ...issueBase, key: 'bar' }
+  ];
   const onIssueClick = jest.fn();
   const wrapper = shallow(
     <LineIssuesList

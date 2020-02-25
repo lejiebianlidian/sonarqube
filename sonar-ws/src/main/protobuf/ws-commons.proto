@@ -93,6 +93,51 @@ message TextRange {
   optional int32 endOffset = 4;
 }
 
+message Flow {
+  repeated Location locations = 1;
+}
+
+message Location {
+  optional string component = 4;
+  optional string unusedComponentId = 1;
+  // Only when component is a file. Can be empty for a file if this is an issue global to the file.
+  optional sonarqube.ws.commons.TextRange textRange = 2;
+  optional string msg = 3;
+}
+
+message User {
+  optional string login = 1;
+  optional string name = 2;
+  optional string avatar = 3;
+  optional bool active = 4;
+}
+
+message Changelog {
+  optional string user = 1;
+  optional string userName = 2;
+  // Email is no more returned since 6.3
+  optional string deprecatedEmail = 3;
+  optional string creationDate = 4;
+  repeated Diff diffs = 5;
+  optional string avatar = 6;
+  optional bool isUserActive = 7;
+
+  message Diff {
+    optional string key = 1;
+    optional string newValue = 2;
+    optional string oldValue = 3;
+  }
+}
+
+message Comment {
+  optional string key = 1;
+  optional string login = 2;
+  optional string htmlText = 5;
+  optional string markdown = 6;
+  optional bool updatable = 7;
+  optional string createdAt = 8;
+}
+
 message Metric {
   optional string key = 1;
   optional string name = 2;
@@ -122,13 +167,11 @@ enum RuleType {
 }
 
 enum BranchType {
-  // Zero is required in order to not get LONG as default value
-  // See http://androiddevblog.com/protocol-buffers-pitfall-adding-enum-values/
-  UNKNOWN_BRANCH_TYPE = 0;
+  reserved 1, 2;
 
-  LONG = 1;
-  SHORT = 2;
+  UNKNOWN_BRANCH_TYPE = 0;
   PULL_REQUEST = 3;
+  BRANCH = 4;
 }
 
 message Organization {

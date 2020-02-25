@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { click } from 'sonar-ui-common/helpers/testUtils';
+import { click, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { changeProfileParent, createQualityProfile } from '../../../../api/quality-profiles';
 import { mockQualityProfile } from '../../../../helpers/testMocks';
 import ExtendProfileForm from '../ExtendProfileForm';
@@ -46,14 +46,14 @@ it('should correctly create a new profile and extend the existing one', async ()
 
   wrapper.setState({ name }).update();
   click(wrapper.find('SubmitButton'));
-  await Promise.resolve(setImmediate);
+  await waitAndUpdate(wrapper);
 
   const data = new FormData();
   data.append('language', profile.language);
   data.append('name', name);
   data.append('organization', organization);
   expect(createQualityProfile).toHaveBeenCalledWith(data);
-  expect(changeProfileParent).toHaveBeenCalledWith('new-profile', profile.key);
+  expect(changeProfileParent).toHaveBeenCalledWith({ key: 'new-profile' }, profile);
 });
 
 function shallowRender(props: Partial<ExtendProfileForm['props']> = {}) {

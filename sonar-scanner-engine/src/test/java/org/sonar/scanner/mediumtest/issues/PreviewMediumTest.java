@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ public class PreviewMediumTest {
   public ScannerMediumTester tester = new ScannerMediumTester();
 
   @Test
-  public void failWhenUsingPreviewMode() throws Exception {
+  public void failWhenUsingPreviewMode() {
     try {
       tester.newAnalysis()
         .properties(ImmutableMap.<String, String>builder()
@@ -55,7 +55,7 @@ public class PreviewMediumTest {
   }
 
   @Test
-  public void failWhenUsingIssuesMode() throws Exception {
+  public void failWhenUsingIssuesMode() {
     try {
       tester.newAnalysis()
         .properties(ImmutableMap.<String, String>builder()

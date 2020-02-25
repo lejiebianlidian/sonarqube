@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,10 +22,12 @@ import * as React from 'react';
 import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import withKeyboardNavigation from '../../../components/hoc/withKeyboardNavigation';
 import SourceViewer from '../../../components/SourceViewer/SourceViewer';
+import { BranchLike } from '../../../types/branch-like';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   component: string;
+  componentMeasures: T.Measure[] | undefined;
   location: Pick<Location, 'query'>;
   onIssueChange?: (issue: T.Issue) => void;
 }
@@ -44,7 +46,7 @@ export class SourceViewerWrapper extends React.PureComponent<Props> {
   };
 
   render() {
-    const { branchLike, component, location } = this.props;
+    const { branchLike, component, componentMeasures, location } = this.props;
     const { line } = location.query;
     const finalLine = line ? Number(line) : undefined;
 
@@ -53,6 +55,7 @@ export class SourceViewerWrapper extends React.PureComponent<Props> {
         aroundLine={finalLine}
         branchLike={branchLike}
         component={component}
+        componentMeasures={componentMeasures}
         highlightedLine={finalLine}
         onIssueChange={this.props.onIssueChange}
         onLoaded={this.scrollToLine}

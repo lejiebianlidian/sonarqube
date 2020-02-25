@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ public class NotificationFactory {
 
   private IssuesChangesNotificationBuilder.Rule getRuleByRuleKey(RuleKey ruleKey) {
     return ruleRepository.findByKey(ruleKey)
-      .map(t -> new IssuesChangesNotificationBuilder.Rule(ruleKey, t.getName()))
+      .map(t -> new IssuesChangesNotificationBuilder.Rule(ruleKey, t.getType(), t.getName()))
       .orElseThrow(() -> new IllegalStateException("Can not find rule " + ruleKey + " in RuleRepository"));
   }
 
@@ -121,7 +121,7 @@ public class NotificationFactory {
     Project.Builder builder = new Project.Builder(project.getUuid())
       .setKey(project.getKey())
       .setProjectName(project.getName());
-    if (!branch.isLegacyFeature() && branch.getType() != PULL_REQUEST && !branch.isMain()) {
+    if (branch.getType() != PULL_REQUEST && !branch.isMain()) {
       builder.setBranchName(branch.getName());
     }
     return builder.build();

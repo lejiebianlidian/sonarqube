@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@ import org.sonar.server.qualityprofile.QualityProfile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.guava.api.Assertions.assertThat;
 import static org.sonar.api.measures.CoreMetrics.QUALITY_PROFILES;
 import static org.sonar.api.measures.CoreMetrics.QUALITY_PROFILES_KEY;
 import static org.sonar.ce.task.projectanalysis.component.Component.Type.DIRECTORY;
@@ -64,10 +63,10 @@ public class ComputeQProfileMeasureStepTest {
 
   private static final Component MULTI_MODULE_PROJECT = ReportComponent.builder(PROJECT, PROJECT_REF).setKey(PROJECT_KEY)
     .addChildren(ReportComponent.builder(DIRECTORY, FOLDER_1_REF)
-        .addChildren(
-          ReportComponent.builder(FILE, FILE_1_1_REF).setFileAttributes(new FileAttributes(false, "java", 1)).build(),
-          ReportComponent.builder(FILE, FILE_1_2_REF).setFileAttributes(new FileAttributes(false, "java", 1)).build())
-        .build(),
+      .addChildren(
+        ReportComponent.builder(FILE, FILE_1_1_REF).setFileAttributes(new FileAttributes(false, "java", 1)).build(),
+        ReportComponent.builder(FILE, FILE_1_2_REF).setFileAttributes(new FileAttributes(false, "java", 1)).build())
+      .build(),
       ReportComponent.builder(DIRECTORY, FOLDER_2_REF)
         .addChildren(
           ReportComponent.builder(FILE, FILE_2_1_REF).setFileAttributes(new FileAttributes(false, null, 1)).build(),
@@ -102,7 +101,7 @@ public class ComputeQProfileMeasureStepTest {
     underTest.execute(new TestComputationStepContext());
 
     assertThat(measureRepository.getAddedRawMeasures(PROJECT_REF).get(QUALITY_PROFILES_KEY))
-      .extracting("data").containsOnly(toJson(qpJava, qpPhp));
+      .extracting("data").isEqualTo(toJson(qpJava, qpPhp));
   }
 
   @Test

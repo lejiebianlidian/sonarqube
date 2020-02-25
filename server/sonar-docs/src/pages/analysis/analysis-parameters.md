@@ -8,7 +8,7 @@ Project analysis settings can be configured in multiple places. Here is the hier
 <!-- sonarqube -->
 * Global properties, defined in the UI, apply to all projects (From the top bar, go to **[Administration > Configuration > General Settings](/#sonarqube-admin#/admin/settings)**)
 <!-- /sonarqube -->
-* Project properties, defined in the UI, override global property values (At a project level, go to **Administration > General Settings**)
+* Project properties, defined in the UI, override global property values (At a project level, go to **Project Settings > General Settings**)
 * Project analysis parameters, defined in a project analysis configuration file or an analyzer configuration file, override the ones defined in the UI
 * Analysis / Command line parameters, defined when launching an analysis (with `-D` on the command line), override project analysis parameters
 
@@ -25,7 +25,7 @@ For language-specific parameters related to external issue reports, see [Externa
 ### Server
 Key | Description | Default
 ---|----|---
-`sonar.host.url`| the server URL | <!-- sonarqube -->http://localhost:9000<!-- /sonarqube --><!-- sonarcloud -->https://sonarcloud.io<!-- /sonarcloud -->
+`sonar.host.url`| the server URL | http://localhost:9000
 
 ### Project Configuration
 Key | Description | Default
@@ -68,7 +68,7 @@ Key | Description | Default
 `sonar.externalIssuesReportPaths` | Comma-delimited list of paths to Generic Issue reports. | 
 `sonar.projectDate` | Assign a date to the analysis. This parameter is only useful when you need to retroactively create the history of a not-analyzed-before project. The format is `yyyy-MM-dd`, for example: 2010-12-01. Since you cannot perform an analysis dated prior to the most recent one in the database, you must analyze recreate your project history in chronological order, oldest first. ![](/images/exclamation.svg) Note: You may need to adjust your housekeeping settings if you wish to create a long-running history. | Current date
 `sonar.projectBaseDir` | Use this property when you need analysis to take place in a directory other than the one from which it was launched. E.G. analysis begins from `jenkins/jobs/myjob/workspace` but the files to be analyzed are in `ftpdrop/cobol/project1`. The path may be relative or absolute. Specify not the the source directory, but some parent of the source directory. The value specified here becomes the new "analysis directory", and other paths are then specified as though the analysis were starting from the specified value of `sonar.projectBaseDir`. Note that the analysis process will need write permissions in this directory; it is where the `sonar.working.directory` will be created. |
-`sonar.working.directory` | Set the working directory for an analysis triggered with the SonarScanner or the SonarScanner for Ant (versions greater than 2.0). This property is not compatible with the SonarScanner for MSBuild. Path must be relative, and unique for each project. ![](/images/exclamation.svg) Beware: the specified folder is deleted before each analysis. | `.sonar`
+`sonar.working.directory` | Set the working directory for an analysis triggered with the SonarScanner or the SonarScanner for Ant (versions greater than 2.0). This property is not compatible with the SonarScanner for MSBuild. Path must be relative, and unique for each project. ![](/images/exclamation.svg) Beware: the specified folder is deleted before each analysis. | `.scannerwork`
 `sonar.scm.provider` | This property can be used to explicitly tell {instance} which SCM plugin should be used to grab SCM data on the project (in case auto-detection does not work). The value of this property is always lowercase and depends on the plugin (ex. "tfvc" for the TFVC plugin). Check the documentation page of each plugin for more. |  
 `sonar.scm.forceReloadAll` | By default, blame information is only retrieved for changed files. Set this property to `true` to load blame information for all files. This can be useful is you feel that some SCM data is outdated but {instance} does not get the latest information from the SCM engine. | 
 `sonar.scm.exclusions.disabled`| For supported engines, files ignored by the SCM, i.e. files listed in `.gitignore`, will automatically be ignored by analysis too. Set this property to `true` to disable that feature.|
@@ -89,14 +89,13 @@ Key | Description | Default
 ---|----|---
 `sonar.log.level` | Control the quantity / level of logs produced during an analysis. `DEBUG`: Display `INFO` logs + more details at `DEBUG` level. Similar to `sonar.verbose=true`. `TRACE`: Display `DEBUG` logs + the timings of all ElasticSearch queries and Web API calls executed by the SonarScanner. | `INFO`
 `sonar.verbose` | Add more detail to both client and server-side analysis logs. Activates `DEBUG` mode for the scanner, and adds client-side environment variables and system properties to server-side log of analysis report processing. ![](/images/exclamation.svg)NOTE: There is the potential for this setting to expose sensitive information such as passwords if they are stored as server-side environment variables. | false
-`sonar.showProfiling` | Display logs to see where the analyzer spends time. This parameter generates a file containing these timing infos in `<workingDir>/profiling/<moduleKey>-profiler.xml` where `<workingDir>` is: `.sonar/profiling/` when analysis is run with SonarScanner, and `target/sonar/profiling/` when SonarScanner for Maven is used. | `false`
 `sonar.scanner.dumpToFile` | Outputs to the specified file the full list of properties passed to the scanner API as a means to debug analysis. |  
 `sonar.scanner.metadataFilePath` | Set the location where the scanner writes the `report-task.txt` file containing among other things the `ceTaskId`. | value of `sonar.working.directory`
 
 <!-- sonarqube -->
 ### Deprecated
 [[danger]]
-| ![](/images/cross.svg) These parameters are listed for completeness, but are deprecated and should not be used in new analyses.
+| These parameters are listed for completeness, but are deprecated and should not be used in new analyses.
 
 Key | Description
 ---|----|--- 

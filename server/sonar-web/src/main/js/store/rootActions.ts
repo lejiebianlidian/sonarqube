@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { debounce } from 'lodash';
 import { InjectedRouter } from 'react-router';
 import { Dispatch } from 'redux';
 import * as auth from '../api/auth';
@@ -25,8 +24,9 @@ import { getLanguages } from '../api/languages';
 import { getAllMetrics } from '../api/metrics';
 import { getOrganization, getOrganizationNavigation, getOrganizations } from '../api/organizations';
 import { getQualityGateProjectStatus } from '../api/quality-gates';
-import { getBranchLikeQuery } from '../helpers/branches';
+import { getBranchLikeQuery } from '../helpers/branch-like';
 import { extractStatusConditionsFromProjectStatus } from '../helpers/qualityGates';
+import { BranchLike } from '../types/branch-like';
 import { requireAuthorization as requireAuthorizationAction } from './appState';
 import { registerBranchStatusAction } from './branches';
 import { addGlobalErrorMessage } from './globalMessages';
@@ -36,13 +36,19 @@ import { receiveOrganizations } from './organizations';
 
 export function fetchLanguages() {
   return (dispatch: Dispatch) => {
-    getLanguages().then(languages => dispatch(receiveLanguages(languages)), () => {});
+    getLanguages().then(
+      languages => dispatch(receiveLanguages(languages)),
+      () => {}
+    );
   };
 }
 
 export function fetchMetrics() {
   return (dispatch: Dispatch) => {
-    getAllMetrics().then(metrics => dispatch(receiveMetrics(metrics)), () => {});
+    getAllMetrics().then(
+      metrics => dispatch(receiveMetrics(metrics)),
+      () => {}
+    );
   };
 }
 
@@ -66,8 +72,8 @@ export const fetchOrganization = (key: string) => (dispatch: Dispatch) => {
   );
 };
 
-export function fetchBranchStatus(branchLike: T.BranchLike, projectKey: string) {
-  return debounce((dispatch: Dispatch<any>) => {
+export function fetchBranchStatus(branchLike: BranchLike, projectKey: string) {
+  return (dispatch: Dispatch<any>) => {
     getQualityGateProjectStatus({ projectKey, ...getBranchLikeQuery(branchLike) }).then(
       projectStatus => {
         const { ignoredConditions, status } = projectStatus;
@@ -80,7 +86,7 @@ export function fetchBranchStatus(branchLike: T.BranchLike, projectKey: string) 
         dispatch(addGlobalErrorMessage('Fetching Quality Gate status failed'));
       }
     );
-  }, 1000);
+  };
 }
 
 export function doLogin(login: string, password: string) {
@@ -115,11 +121,7 @@ export function requireAuthorization(router: Pick<InjectedRouter, 'replace'>) {
   return requireAuthorizationAction();
 }
 
-export function registerBranchStatus(
-  branchLike: T.BranchLike,
-  component: string,
-  status: T.Status
-) {
+export function registerBranchStatus(branchLike: BranchLike, component: string, status: T.Status) {
   return (dispatch: Dispatch) => {
     dispatch(registerBranchStatusAction(branchLike, component, status));
   };

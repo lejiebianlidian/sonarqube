@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.resources.Qualifiers;
-import org.sonar.api.resources.Scopes;
 import org.sonar.core.util.CloseableIterator;
 import org.sonar.db.DatabaseUtils;
 import org.sonar.db.DbSession;
@@ -60,9 +59,13 @@ public class ProjectMeasuresIndexerIterator extends CloseableIterator<ProjectMea
     CoreMetrics.SQALE_RATING_KEY,
     CoreMetrics.RELIABILITY_RATING_KEY,
     CoreMetrics.SECURITY_RATING_KEY,
+    CoreMetrics.SECURITY_HOTSPOTS_REVIEWED_KEY,
+    CoreMetrics.SECURITY_REVIEW_RATING_KEY,
     CoreMetrics.ALERT_STATUS_KEY,
     CoreMetrics.NCLOC_LANGUAGE_DISTRIBUTION_KEY,
     CoreMetrics.NEW_SECURITY_RATING_KEY,
+    CoreMetrics.NEW_SECURITY_HOTSPOTS_REVIEWED_KEY,
+    CoreMetrics.NEW_SECURITY_REVIEW_RATING_KEY,
     CoreMetrics.NEW_MAINTAINABILITY_RATING_KEY,
     CoreMetrics.NEW_COVERAGE_KEY,
     CoreMetrics.NEW_DUPLICATED_LINES_DENSITY_KEY,
@@ -72,7 +75,7 @@ public class ProjectMeasuresIndexerIterator extends CloseableIterator<ProjectMea
   private static final String SQL_PROJECTS = "SELECT p.organization_uuid, p.uuid, p.kee, p.name, s.created_at, p.tags " +
     "FROM projects p " +
     "LEFT OUTER JOIN snapshots s ON s.component_uuid=p.uuid AND s.islast=? " +
-    "WHERE p.enabled=? AND p.scope=? AND p.qualifier=? and p.main_branch_project_uuid is null ";
+    "WHERE p.qualifier=?";
 
   private static final String PROJECT_FILTER = " AND p.uuid=?";
 
@@ -130,11 +133,9 @@ public class ProjectMeasuresIndexerIterator extends CloseableIterator<ProjectMea
       }
       PreparedStatement stmt = session.getConnection().prepareStatement(sql.toString());
       stmt.setBoolean(1, true);
-      stmt.setBoolean(2, true);
-      stmt.setString(3, Scopes.PROJECT);
-      stmt.setString(4, Qualifiers.PROJECT);
+      stmt.setString(2, Qualifiers.PROJECT);
       if (projectUuid != null) {
-        stmt.setString(5, projectUuid);
+        stmt.setString(3, projectUuid);
       }
       return stmt;
     } catch (SQLException e) {

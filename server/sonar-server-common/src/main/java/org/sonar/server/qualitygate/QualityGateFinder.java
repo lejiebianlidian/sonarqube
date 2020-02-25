@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@ package org.sonar.server.qualitygate;
 import java.util.Optional;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.component.ComponentDto;
 import org.sonar.db.organization.OrganizationDto;
+import org.sonar.db.project.ProjectDto;
 import org.sonar.db.qualitygate.QGateWithOrgDto;
 import org.sonar.db.qualitygate.QualityGateDto;
 
@@ -31,8 +31,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.ofNullable;
 
 public class QualityGateFinder {
-
-  public static final String SONAR_QUALITYGATE_PROPERTY = "sonar.qualitygate";
 
   private final DbClient dbClient;
 
@@ -45,9 +43,13 @@ public class QualityGateFinder {
    *
    * It will first try to get the quality gate explicitly defined on a project, if none it will try to return default quality gate of the organization
    */
-  public Optional<QualityGateData> getQualityGate(DbSession dbSession, OrganizationDto organization, ComponentDto component) {
-    Optional<QualityGateData> res = dbClient.projectQgateAssociationDao().selectQGateIdByComponentId(dbSession, component.getId())
-      .map(qualityGateId -> dbClient.qualityGateDao().selectById(dbSession, qualityGateId))
+  public Optional<QualityGateData> getQualityGate(DbSession dbSession, OrganizationDto organization, ProjectDto projectDto) {
+    return getQualityGate(dbSession, organization, projectDto.getUuid());
+  }
+
+  public Optional<QualityGateData> getQualityGate(DbSession dbSession, OrganizationDto organization, String projectUuid) {
+    Optional<QualityGateData> res = dbClient.projectQgateAssociationDao().selectQGateUuidByProjectUuid(dbSession, projectUuid)
+      .map(qualityGateUuid -> dbClient.qualityGateDao().selectByUuid(dbSession, qualityGateUuid))
       .map(qualityGateDto -> new QualityGateData(qualityGateDto, false));
     if (res.isPresent()) {
       return res;

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -69,6 +69,6 @@ public class ProgressLoggerTest {
   }
 
   private boolean hasInfoLog(String expectedLog) {
-    return logTester.logs(LoggerLevel.INFO).stream().filter(s -> s.startsWith(expectedLog)).findFirst().isPresent();
+    return logTester.logs(LoggerLevel.INFO).stream().anyMatch(s -> s.startsWith(expectedLog));
   }
 }

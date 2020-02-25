@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ import org.sonar.api.utils.log.Loggers;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolder;
 import org.sonar.ce.task.projectanalysis.analysis.Branch;
 import org.sonar.ce.task.projectanalysis.component.Component;
-import org.sonar.ce.task.projectanalysis.component.MergeAndTargetBranchComponentUuids;
+import org.sonar.ce.task.projectanalysis.component.ReferenceBranchComponentUuids;
+import org.sonar.ce.task.projectanalysis.filemove.MovedFilesRepository;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.source.FileSourceDto;
@@ -34,13 +35,16 @@ public class ScmInfoDbLoader {
   private static final Logger LOGGER = Loggers.get(ScmInfoDbLoader.class);
 
   private final AnalysisMetadataHolder analysisMetadataHolder;
+  private final MovedFilesRepository movedFilesRepository;
   private final DbClient dbClient;
-  private final MergeAndTargetBranchComponentUuids mergeBranchComponentUuid;
+  private final ReferenceBranchComponentUuids referenceBranchComponentUuid;
 
-  public ScmInfoDbLoader(AnalysisMetadataHolder analysisMetadataHolder, DbClient dbClient, MergeAndTargetBranchComponentUuids mergeBranchComponentUuid) {
+  public ScmInfoDbLoader(AnalysisMetadataHolder analysisMetadataHolder, MovedFilesRepository movedFilesRepository, DbClient dbClient,
+    ReferenceBranchComponentUuids referenceBranchComponentUuid) {
     this.analysisMetadataHolder = analysisMetadataHolder;
+    this.movedFilesRepository = movedFilesRepository;
     this.dbClient = dbClient;
-    this.mergeBranchComponentUuid = mergeBranchComponentUuid;
+    this.referenceBranchComponentUuid = referenceBranchComponentUuid;
   }
 
   public Optional<DbScmInfo> getScmInfo(Component file) {
@@ -55,23 +59,23 @@ public class ScmInfoDbLoader {
       if (dto == null) {
         return Optional.empty();
       }
-      return DbScmInfo.create(dto.getSourceData().getLinesList(), dto.getSrcHash());
+      return DbScmInfo.create(dto.getSourceData().getLinesList(), dto.getLineCount(), dto.getSrcHash());
     }
   }
 
   private Optional<String> getFileUUid(Component file) {
-    if (!analysisMetadataHolder.isFirstAnalysis() && !analysisMetadataHolder.isSLBorPR()) {
+    if (!analysisMetadataHolder.isFirstAnalysis() && !analysisMetadataHolder.isPullRequest()) {
+      Optional<MovedFilesRepository.OriginalFile> originalFile = movedFilesRepository.getOriginalFile(file);
+      if (originalFile.isPresent()) {
+        return originalFile.map(MovedFilesRepository.OriginalFile::getUuid);
+      }
       return Optional.of(file.getUuid());
     }
 
-    // at this point, it's the first analysis of a LLB with copyFromPrevious flag true or any analysis of a PR/SLB
+    // at this point, it's the first analysis of a branch with copyFromPrevious flag true or any analysis of a PR
     Branch branch = analysisMetadataHolder.getBranch();
     if (!branch.isMain()) {
-      String uuid = mergeBranchComponentUuid.getTargetBranchComponentUuid(file.getDbKey());
-      if (uuid == null) {
-        uuid = mergeBranchComponentUuid.getMergeBranchComponentUuid(file.getDbKey());
-      }
-      return Optional.ofNullable(uuid);
+      return Optional.ofNullable(referenceBranchComponentUuid.getComponentUuid(file.getDbKey()));
     }
 
     return Optional.empty();

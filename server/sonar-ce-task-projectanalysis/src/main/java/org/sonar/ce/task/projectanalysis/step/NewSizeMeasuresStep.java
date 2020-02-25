@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 package org.sonar.ce.task.projectanalysis.step;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -129,7 +130,7 @@ public class NewSizeMeasuresStep implements ComputationStep {
       Iterable<Duplication> duplications = duplicationRepository.getDuplications(component);
       for (Duplication duplication : duplications) {
         duplicationCounters.addBlock(duplication.getOriginal());
-        duplication.getDuplicates().stream()
+        Arrays.stream(duplication.getDuplicates())
           .filter(InnerDuplicate.class::isInstance)
           .map(duplicate -> (InnerDuplicate) duplicate)
           .forEach(duplicate -> duplicationCounters.addBlock(duplicate.getTextBlock()));

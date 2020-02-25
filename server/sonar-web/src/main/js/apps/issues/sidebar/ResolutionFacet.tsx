@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -114,7 +114,6 @@ export default class ResolutionFacet extends React.PureComponent<Props> {
     return (
       <FacetBox property={this.property}>
         <FacetHeader
-          clearLabel="reset_verb"
           fetching={this.props.fetching}
           name={translate('issues.facet', this.property)}
           onClear={this.handleClear}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -75,23 +75,7 @@ public interface AnalysisMetadataHolder {
    *
    * @throws IllegalStateException if branch has not been set
    */
-  boolean isShortLivingBranch();
-
-  /**
-   * Convenience method equivalent to do the check using {@link #getBranch()}
-   *
-   * @throws IllegalStateException if branch has not been set
-   */
-  default boolean isSLBorPR() {
-    return isShortLivingBranch() || isPullRequest();
-  }
-
-  /**
-   * Convenience method equivalent to do the check using {@link #getBranch()}
-   *
-   * @throws IllegalStateException if branch has not been set
-   */
-  boolean isLongLivingBranch();
+  boolean isBranch();
 
   /**
    * Convenience method equivalent to do the check using {@link #getBranch()}
@@ -106,7 +90,7 @@ public interface AnalysisMetadataHolder {
   boolean isCrossProjectDuplicationEnabled();
 
   /**
-   * Branch being analyzed. Can be of any type: long or short, main or not.
+   * Branch being analyzed.
    *
    * @throws IllegalStateException if branch has not been set
    */

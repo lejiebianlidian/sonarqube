@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import org.apache.ibatis.annotations.Param;
 
 public interface AnalysisPropertiesMapper {
 
-  List<AnalysisPropertyDto> selectBySnapshotUuid(@Param("snapshotUuid") String snapshotUuid);
+  List<AnalysisPropertyDto> selectByAnalysisUuid(@Param("analysisUuid") String analysisUuid);
 
   void insertAsEmpty(@Param("analysisPropertyDto") AnalysisPropertyDto analysisPropertyDto, @Param("createdAt") long createdAt);
 

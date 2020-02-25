@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -292,7 +292,7 @@ public class DefaultHttpDownloader extends HttpDownloader {
 
         InputStream resultingInputStream;
         // create the appropriate stream wrapper based on the encoding type
-        if (encoding != null && "gzip".equalsIgnoreCase(encoding)) {
+        if ("gzip".equalsIgnoreCase(encoding)) {
           resultingInputStream = new GZIPInputStream(connection.getInputStream());
         } else {
           resultingInputStream = connection.getInputStream();

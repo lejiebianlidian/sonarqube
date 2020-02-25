@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -139,11 +139,7 @@ public class ComponentsPublisher implements ReportPublisherStep {
 
   @CheckForNull
   private static String getName(AbstractProjectOrModule module) {
-    if (StringUtils.isNotEmpty(module.definition().getBranch())) {
-      return module.definition().getName() + " " + module.definition().getBranch();
-    } else {
-      return module.definition().getOriginalName();
-    }
+    return module.definition().getOriginalName();
   }
 
   @CheckForNull

@@ -5,7 +5,8 @@ url: /requirements/requirements/
 ## Prerequisite
 The only prerequisite for running SonarQube is to have Java (Oracle JRE 11 or OpenJDK 11) installed on your machine.
 
-![](/images/exclamation.svg) **Note:** _On Mac OS X it is highly recommended to install Oracle JDK 11 instead of the corresponding Oracle JRE since the JRE installation does not fully set up your Java environment properly. See [this post](http://stackoverflow.com/questions/15624667/mac-osx-java-terminal-version-incorrect) for more information._
+[[warning]]
+| **Note:** _On Mac OS X it is highly recommended to install Oracle JDK 11 instead of the corresponding Oracle JRE since the JRE installation does not fully set up your Java environment properly. See [this post](http://stackoverflow.com/questions/15624667/mac-osx-java-terminal-version-incorrect) for more information._
 
 ## Hardware Requirements
 1. A small-scale (individual or small team) instance of the SonarQube server requires at least 2GB of RAM to run efficiently and 1GB of free RAM for the OS. If you are installing an instance for a large teams or Enterprise, please consider the additional recommendations below.
@@ -14,19 +15,21 @@ The only prerequisite for running SonarQube is to have Java (Oracle JRE 11 or Op
 4. SonarQube does not support 32-bit systems on the server side. SonarQube does, however, support 32-bit systems on the scanner side.
 
 ### Enterprise Hardware Recommendations
-For large teams or Enterprise-scale installations of SonarQube, additional hardware is required. At the Enterprise level, monitoring your SonarQube instance/instance-administration/java-process-memory is essential and should guide further hardware upgrades as your instance grows. A starting configuration should include at least:
+For large teams or Enterprise-scale installations of SonarQube, additional hardware is required. At the Enterprise level, [monitoring your SonarQube instance](/instance-administration/monitoring/) is essential and should guide further hardware upgrades as your instance grows. A starting configuration should include at least:
 
 * 8 cores, to allow the main SonarQube platform to run with multiple Compute Engine workers
 * 16GB of RAM
-For additional requirements and recommendations relating to database and ElasticSearch, see Hardware Recommendations/requirements/hardware-recommendations.
+For additional requirements and recommendations relating to database and ElasticSearch, see [Hardware Recommendations](/requirements/hardware-recommendations/).
 
 ## Supported Platforms
 ### Java
-The SonarQube Java analyzer is able to analyze any kind of Java source files regardless of the version of Java they comply to. However, SonarQube analysis requires version 8+ of the JVM and the SonarQube Server requires version 11+.
+SonarQube scanners require version 8 or 11 of the JVM and the SonarQube server requires version 11. Versions beyond Java 11 are not officially supported. 
+
+The SonarQube Java analyzer is able to analyze any kind of Java source files regardless of the version of Java they comply to. 
 
 We recommend using the Critical Patch Update (CPU) releases.
 
-| Java           | Server                    | Analysis                  |
+| Java           | Server                    | Scanners                  |
 | -------------- | ------------------------- | ------------------------- |
 | Oracle JRE     | ![](/images/check.svg) 11 | ![](/images/check.svg) 11 |
 |                | ![](/images/cross.svg) 8  | ![](/images/check.svg) 8  |
@@ -35,8 +38,10 @@ We recommend using the Critical Patch Update (CPU) releases.
 
 | Database                                                    |                                                                                                                                                                                                                                                                   |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [PostgreSQL](http://www.postgresql.org/)                    | ![](/images/check.svg) 10                                                                                                                                                                                                                                  |
-|                                                             | ![](/images/check.svg) 9.3–9.6                                                                                                                                                                                                                                         |
+| [PostgreSQL](http://www.postgresql.org/)                    | ![](/images/check.svg) 12                                                                                                                                                                                                                                         |
+|                                                             | ![](/images/check.svg) 11                                                                                                                                                                                                                                         |
+|                                                             | ![](/images/check.svg) 10                                                                                                                                                                                                                                         |
+|                                                             | ![](/images/check.svg) 9.3–9.6                                                                                                                                                                                                                                    |
 |                                                             | ![](/images/exclamation.svg) Must be configured to use UTF-8 charset                                                                                                                                                                                              |
 | [Microsoft SQL Server](http://www.microsoft.com/sqlserver/) | ![](/images/check.svg) 2017 (MSSQL Server 14.0) with bundled Microsoft JDBC driver. Express Edition is supported.                                                                                                                                                 |
 |                                                             | ![](/images/check.svg) 2016 (MSSQL Server 13.0) with bundled Microsoft JDBC driver. Express Edition is supported.                                                                                                                                                 |
@@ -46,12 +51,12 @@ We recommend using the Critical Patch Update (CPU) releases.
 |                                                             | ![](/images/info.svg) Both Windows authentication (“Integrated Security”) and SQL Server authentication are supported. See the Microsoft SQL Server section in Installing/installation/installing-the-server page for instructions on configuring authentication. |
 | [Oracle](http://www.oracle.com/database/)                   | ![](/images/check.svg) 19C                                                                                                                                                                                                                                        |
 |                                                             | ![](/images/check.svg) 18C                                                                                                                                                                                                                                        |
-|                                                             | ![](/images/check.svg) 12C                                                                                                    |
-|                                                             | ![](/images/check.svg) 11G                                                                                                    |
-|                                                             | ![](/images/check.svg) XE Editions                                                                                                                           
+|                                                             | ![](/images/check.svg) 12C                                                                                                                                                                                                                                        |
+|                                                             | ![](/images/check.svg) 11G                                                                                                                                                                                                                                        |
+|                                                             | ![](/images/check.svg) XE Editions                                                                                                                                                                                                                                |
 |                                                             | ![](/images/exclamation.svg) Must be configured to use a UTF8-family charset (see NLS_CHARACTERSET)                                                                                                                                                               |
-|                                                             | ![](/images/exclamation.svg) The driver ojdbc14.jar is not supported    
-|                                                             | ![](/images/info.svg) We recommend using the latest Oracle JDBC driver                                                                                                                                |
+|                                                             | ![](/images/exclamation.svg) The driver ojdbc14.jar is not supported                                                                                                                                                                                              |
+|                                                             | ![](/images/info.svg) We recommend using the latest Oracle JDBC driver                                                                                                                                                                                            |
 |                                                             | ![](/images/exclamation.svg) Only the thin mode is supported, not OCI                                                                                                                                                                                             |
 
 ### Web Browser

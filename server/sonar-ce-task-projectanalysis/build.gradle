@@ -14,17 +14,12 @@ sourceSets {
   }
 }
 
-configurations {
-  tests
-  testCompile.extendsFrom compileOnly
-}
-
 dependencies {
   // please keep the list grouped by configuration and ordered by name
 
   compile 'org.slf4j:jul-to-slf4j'
   compile 'org.slf4j:slf4j-api'
-
+  compile 'net.sf.trove4j:core:3.1.0'
   compile 'commons-codec:commons-codec'
   compile 'commons-io:commons-io'
   compile 'commons-lang:commons-lang'
@@ -35,11 +30,9 @@ dependencies {
   compile 'com.googlecode.java-diff-utils:diffutils'
   compile 'org.mybatis:mybatis'
   compile 'org.picocontainer:picocontainer'
-  
+
   compile project(':sonar-core')
   compile project(':server:sonar-ce-task')
-  compile project(':server:sonar-db-core')
-  compile project(':server:sonar-db-dao')
   compile project(':server:sonar-db-migration')
   compile project(':server:sonar-process')
   compile project(':server:sonar-server-common')
@@ -51,27 +44,19 @@ dependencies {
   compileOnly 'com.google.code.findbugs:jsr305'
 
   testCompile 'com.google.code.findbugs:jsr305'
-  testCompile 'com.h2database:h2'
   testCompile 'com.tngtech.java:junit-dataprovider'
-  testCompile 'junit:junit'
   testCompile 'org.apache.logging.log4j:log4j-api'
   testCompile 'org.apache.logging.log4j:log4j-core'
   testCompile 'org.assertj:assertj-core'
   testCompile 'org.assertj:assertj-guava'
-  testCompile 'org.mockito:mockito-core'
   testCompile 'org.reflections:reflections'
-  testCompile project(':server:sonar-db-testing')
   testCompile project(':sonar-testing-harness')
-  testCompile project(path: ":server:sonar-ce-task", configuration: "tests")
-  testCompile project(path: ":server:sonar-server", configuration: "tests")
-  testCompile project(path: ":server:sonar-server-common", configuration: "tests")
-}
+  testCompile testFixtures(project(':server:sonar-server-common'))
 
-task testJar(type: Jar) {
-  classifier = 'tests'
-  from sourceSets.test.output
-}
+  testFixturesApi 'junit:junit'
+  testFixturesApi 'org.assertj:assertj-core'
+  testFixturesApi 'org.mockito:mockito-core'
+  testFixturesApi testFixtures(project(':server:sonar-ce-task'))
 
-artifacts {
- tests testJar
+  testFixturesCompileOnly 'com.google.code.findbugs:jsr305'
 }

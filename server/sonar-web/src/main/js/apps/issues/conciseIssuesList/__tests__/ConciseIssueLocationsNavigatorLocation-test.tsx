@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,16 +25,16 @@ it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot();
 });
 it('should render vulnerabilities correctly', () => {
-  expect(shallowRender({ index: 0, issueType: 'VULNERABILITY', totalCount: 4 })).toMatchSnapshot();
-  expect(shallowRender({ index: 1, issueType: 'VULNERABILITY', totalCount: 4 })).toMatchSnapshot();
-  expect(shallowRender({ index: 3, issueType: 'VULNERABILITY', totalCount: 4 })).toMatchSnapshot();
+  expect(shallowRender({ index: 0, isTaintAnalysis: true, totalCount: 4 })).toMatchSnapshot();
+  expect(shallowRender({ index: 1, isTaintAnalysis: true, totalCount: 4 })).toMatchSnapshot();
+  expect(shallowRender({ index: 3, isTaintAnalysis: true, totalCount: 4 })).toMatchSnapshot();
 });
 
 const shallowRender = (props: Partial<ConciseIssueLocationsNavigatorLocation['props']> = {}) => {
   return shallow(
     <ConciseIssueLocationsNavigatorLocation
       index={0}
-      issueType="BUG"
+      isTaintAnalysis={false}
       message=""
       onClick={jest.fn()}
       scroll={jest.fn()}

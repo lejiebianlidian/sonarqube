@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -142,7 +142,6 @@ public class IssueDaoTest {
     IssueDto openIssueOnProject = db.issues().insert(rule, project, project, i -> i.setStatus("OPEN").setResolution(null).setType(randomRuleTypeExceptHotspot()));
 
     IssueDto securityHotspot = db.issues().insert(rule, project, file, i -> i.setType(RuleType.SECURITY_HOTSPOT));
-    IssueDto manualVulnerability = db.issues().insert(rule, project, file, i -> i.setType(RuleType.VULNERABILITY).setIsFromHotspot(true));
 
     RuleDefinitionDto external = db.rules().insert(ruleDefinitionDto -> ruleDefinitionDto.setIsExternal(true));
     IssueDto issueFromExteralruleOnFile = db.issues().insert(external, project, file, i -> i.setKee("ON_FILE_FROM_EXTERNAL").setType(randomRuleTypeExceptHotspot()));
@@ -174,7 +173,6 @@ public class IssueDaoTest {
       i -> i.setStatus("OPEN").setResolution(null).setType(randomRuleTypeExceptHotspot()));
 
     IssueDto securityHotspot = db.issues().insert(rule, project, file, i -> i.setType(RuleType.SECURITY_HOTSPOT));
-    IssueDto manualVulnerability = db.issues().insert(rule, project, file, i -> i.setType(RuleType.VULNERABILITY).setIsFromHotspot(true));
 
     RuleDefinitionDto external = db.rules().insert(ruleDefinitionDto -> ruleDefinitionDto.setIsExternal(true));
     IssueDto issueFromExteralruleOnFile = db.issues().insert(external, project, file, i -> i.setKee("ON_FILE_FROM_EXTERNAL").setType(randomRuleTypeExceptHotspot()));
@@ -195,10 +193,10 @@ public class IssueDaoTest {
   @Test
   public void selectOpenByComponentUuid() {
     RuleDefinitionDto rule = db.rules().insert();
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto projectBranch = db.components().insertProjectBranch(project,
       b -> b.setKey("feature/foo")
-        .setBranchType(BranchType.SHORT));
+        .setBranchType(BranchType.BRANCH));
 
     ComponentDto file = db.components().insertComponent(newFileDto(projectBranch));
 
@@ -217,15 +215,15 @@ public class IssueDaoTest {
   @Test
   public void selectOpenByComponentUuid_should_correctly_map_required_fields() {
     RuleDefinitionDto rule = db.rules().insert();
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto projectBranch = db.components().insertProjectBranch(project,
       b -> b.setKey("feature/foo")
-        .setBranchType(BranchType.SHORT));
+        .setBranchType(BranchType.BRANCH));
 
     ComponentDto file = db.components().insertComponent(newFileDto(projectBranch));
     IssueDto fpIssue = db.issues().insert(rule, projectBranch, file, i -> i.setStatus("RESOLVED").setResolution("FALSE-POSITIVE"));
 
-    ShortBranchIssueDto fp = underTest.selectOpenByComponentUuids(db.getSession(), Collections.singletonList(file.uuid())).get(0);
+    PrIssueDto fp = underTest.selectOpenByComponentUuids(db.getSession(), Collections.singletonList(file.uuid())).get(0);
     assertThat(fp.getLine()).isEqualTo(fpIssue.getLine());
     assertThat(fp.getMessage()).isEqualTo(fpIssue.getMessage());
     assertThat(fp.getChecksum()).isEqualTo(fpIssue.getChecksum());
@@ -293,6 +291,11 @@ public class IssueDaoTest {
 
     // test leak
     result = underTest.selectIssueGroupsByBaseComponent(db.getSession(), file, 999_999_999L);
+    assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> !g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
+
+    // test leak using exact creation time of criticalBug2 issue
+    result = underTest.selectIssueGroupsByBaseComponent(db.getSession(), file, criticalBug2.getIssueCreationTime());
     assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
     assertThat(result.stream().filter(g -> !g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
   }

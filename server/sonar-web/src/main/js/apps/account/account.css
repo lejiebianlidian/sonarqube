@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,9 +59,7 @@
   padding: 40px 0;
 }
 
-.account-separator {
-  height: 0;
-  margin: 40px 0;
+.account-profile .boxed-group-inner:not(:first-child) {
   border-top: 1px solid var(--barBorderColor);
 }
 
@@ -230,4 +228,22 @@
 .my-activity-projects .more {
   margin-top: 30px;
   text-align: center;
+}
+
+.notifications-table {
+  margin-top: calc(-2 * var(--gridSize));
+}
+
+.notifications-add-project-no-search-results {
+  padding: var(--gridSize);
+}
+
+.notifications-add-project-search-results li {
+  padding: var(--gridSize);
+  cursor: pointer;
+}
+
+.notifications-add-project-search-results li:hover,
+.notifications-add-project-search-results li.active {
+  background-color: var(--barBackgroundColor);
 }

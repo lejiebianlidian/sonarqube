@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 package org.sonar.scanner.mediumtest.coverage;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Rule;
@@ -41,7 +40,7 @@ public class GenericCoverageMediumTest {
     .addDefaultQProfile("xoo", "Sonar Way");
 
   @Test
-  public void singleReport() throws IOException {
+  public void singleReport() {
 
     File projectDir = new File("test-resources/mediumtest/xoo/sample-generic-coverage");
 
@@ -66,23 +65,9 @@ public class GenericCoverageMediumTest {
     assertThat(logs).noneMatch(l -> l.contains("Please use 'sonar.coverageReportPaths'"));
 
   }
-  
-  @Test
-  public void warnAboutDeprecatedProperty() {
-    File projectDir = new File("test-resources/mediumtest/xoo/sample-generic-coverage");
-
-    tester
-      .setLogOutput((msg, level) -> logs.add(msg))
-      .newAnalysis(new File(projectDir, "sonar-project.properties"))
-      .property("sonar.genericcoverage.reportPath", "coverage.xml")
-      .execute();
-      
-      
-    assertThat(logs).anyMatch(l -> l.contains("Please use 'sonar.coverageReportPaths'"));
-  }
 
   @Test
-  public void twoReports() throws IOException {
+  public void twoReports() {
 
     File projectDir = new File("test-resources/mediumtest/xoo/sample-generic-coverage");
 

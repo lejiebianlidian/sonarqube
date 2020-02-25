@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,16 +27,12 @@ interface Props {
 }
 
 export default function BuiltInQualityGateBadge({ className }: Props) {
-  const badge = (
-    <div className={classNames('outline-badge', className)}>
-      {translate('quality_gates.built_in')}
-    </div>
-  );
-
   return (
     <DocTooltip
-      doc={import(/* webpackMode: "eager" */ 'Docs/tooltips/quality-gates/built-in-quality-gate.md')}>
-      {badge}
+      doc={import(
+        /* webpackMode: "eager" */ 'Docs/tooltips/quality-gates/built-in-quality-gate.md'
+      )}>
+      <div className={classNames('badge', className)}>{translate('quality_gates.built_in')}</div>
     </DocTooltip>
   );
 }

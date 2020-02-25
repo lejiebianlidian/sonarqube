@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,9 +22,6 @@ package org.sonar.db.metric;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
-import static org.sonar.api.measures.Metric.ValueType.DATA;
-import static org.sonar.api.measures.Metric.ValueType.DISTRIB;
-import static org.sonar.api.measures.Metric.ValueType.STRING;
 import static org.sonar.db.metric.MetricValidator.checkMetricDescription;
 import static org.sonar.db.metric.MetricValidator.checkMetricDomain;
 import static org.sonar.db.metric.MetricValidator.checkMetricKey;

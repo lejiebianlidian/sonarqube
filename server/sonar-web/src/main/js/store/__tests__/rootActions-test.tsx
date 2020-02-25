@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +17,10 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { mockLongLivingBranch, mockQualityGateStatusCondition } from '../../helpers/testMocks';
+import { mockBranch } from '../../helpers/mocks/branch-like';
+import { mockQualityGateStatusCondition } from '../../helpers/mocks/quality-gates';
 import { registerBranchStatusAction } from '../branches';
 import { fetchBranchStatus, registerBranchStatus } from '../rootActions';
-
-jest.useFakeTimers();
 
 jest.mock('../branches', () => ({
   ...require.requireActual('../branches'),
@@ -29,7 +28,9 @@ jest.mock('../branches', () => ({
 }));
 
 jest.mock('../../api/quality-gates', () => {
-  const { mockQualityGateProjectStatus } = require.requireActual('../../helpers/testMocks');
+  const { mockQualityGateProjectStatus } = require.requireActual(
+    '../../helpers/mocks/quality-gates'
+  );
   return {
     getQualityGateProjectStatus: jest.fn().mockResolvedValue(
       mockQualityGateProjectStatus({
@@ -49,7 +50,7 @@ jest.mock('../../api/quality-gates', () => {
 });
 
 describe('branch store actions', () => {
-  const branchLike = mockLongLivingBranch();
+  const branchLike = mockBranch();
   const component = 'foo';
   const status = 'OK';
 
@@ -65,8 +66,6 @@ describe('branch store actions', () => {
     const dispatch = jest.fn();
 
     fetchBranchStatus(branchLike, component)(dispatch);
-
-    jest.runAllTimers();
     await new Promise(setImmediate);
 
     expect(registerBranchStatusAction).toBeCalledWith(

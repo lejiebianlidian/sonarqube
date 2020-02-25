@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -74,6 +74,8 @@ public interface PurgeMapper {
 
   void deleteComponentsByProjectUuid(@Param("rootUuid") String rootUuid);
 
+  void deleteProjectsByProjectUuid(@Param("projectUuid") String projectUuid);
+
   void deleteComponentsByUuids(@Param("componentUuids") List<String> componentUuids);
 
   void deleteGroupRolesByComponentId(@Param("rootId") long rootId);
@@ -86,9 +88,7 @@ public interface PurgeMapper {
 
   void deleteEventComponentChangesByComponentUuid(@Param("componentUuid") String componentUuid);
 
-  List<PurgeableAnalysisDto> selectPurgeableAnalysesWithEvents(@Param("componentUuid") String componentUuid);
-
-  List<PurgeableAnalysisDto> selectPurgeableAnalysesWithoutEvents(@Param("componentUuid") String componentUuid);
+  List<PurgeableAnalysisDto> selectPurgeableAnalyses(@Param("componentUuid") String componentUuid);
 
   void deleteIssueChangesByProjectUuid(@Param("projectUuid") String projectUuid);
 
@@ -96,10 +96,10 @@ public interface PurgeMapper {
 
   List<String> selectOldClosedIssueKeys(@Param("projectUuid") String projectUuid, @Nullable @Param("toDate") Long toDate);
 
-  List<String> selectStaleShortLivingBranchesAndPullRequests(@Param("projectUuid") String projectUuid, @Param("toDate") Long toDate);
+  List<String> selectStaleBranchesAndPullRequests(@Param("projectUuid") String projectUuid, @Param("toDate") Long toDate);
 
   @CheckForNull
-  String selectManualBaseline(@Param("projectUuid") String projectUuid);
+  String selectSpecificAnalysisNewCodePeriod(@Param("projectUuid") String projectUuid);
 
   List<IdUuidPair> selectDisabledComponentsWithoutIssues(@Param("projectUuid") String projectUuid);
 
@@ -152,4 +152,7 @@ public interface PurgeMapper {
   void deleteLiveMeasuresByProjectUuid(@Param("projectUuid") String projectUuid);
 
   void deleteLiveMeasuresByComponentUuids(@Param("componentUuids") List<String> componentUuids);
+
+  void deleteNewCodePeriodsByRootUuid(String rootUuid);
+
 }

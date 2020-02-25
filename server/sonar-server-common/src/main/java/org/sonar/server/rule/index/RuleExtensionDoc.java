@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 package org.sonar.server.rule.index;
 
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
@@ -36,7 +36,7 @@ public class RuleExtensionDoc extends BaseDoc {
   }
 
   public RuleExtensionDoc() {
-    super(TYPE_RULE_EXTENSION, Maps.newHashMapWithExpectedSize(4));
+    super(TYPE_RULE_EXTENSION, new HashMap<>(4));
   }
 
   @Override
@@ -81,7 +81,7 @@ public class RuleExtensionDoc extends BaseDoc {
     return new RuleExtensionDoc()
       .setRuleId(rule.getId())
       .setScope(RuleExtensionScope.system())
-      .setTags(rule.getSystemTagsAsSet());
+      .setTags(rule.getSystemTags());
   }
 
   public static RuleExtensionDoc of(RuleExtensionForIndexingDto rule) {

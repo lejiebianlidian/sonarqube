@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,30 +30,33 @@ interface Props {
   extendsBuiltIn?: boolean;
   language: string;
   organization: string | null;
-  profile: {
-    activeRuleCount: number;
-    isBuiltIn: boolean;
-    key: string;
-    language: string;
-    name: string;
-    overridingRuleCount?: number;
-  };
+  profile: T.ProfileInheritanceDetails;
+  type?: string;
 }
 
-export default function ProfileInheritanceBox({ displayLink = true, ...props }: Props) {
-  const { profile, className, extendsBuiltIn } = props;
-  const offset = 25 * props.depth;
+export default function ProfileInheritanceBox(props: Props) {
+  const {
+    className,
+    depth,
+    extendsBuiltIn,
+    language,
+    organization,
+    profile,
+    displayLink = true,
+    type = 'current'
+  } = props;
+  const offset = 25 * depth;
 
   return (
-    <tr className={className}>
+    <tr className={className} data-test={`quality-profiles__inheritance-${type}`}>
       <td>
         <div style={{ paddingLeft: offset }}>
           {displayLink ? (
             <ProfileLink
               className="text-middle"
-              language={props.language}
+              language={language}
               name={profile.name}
-              organization={props.organization}>
+              organization={organization}>
               {profile.name}
             </ProfileLink>
           ) : (

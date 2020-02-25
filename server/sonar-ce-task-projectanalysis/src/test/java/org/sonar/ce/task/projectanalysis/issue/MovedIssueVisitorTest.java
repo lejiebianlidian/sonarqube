@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 package org.sonar.ce.task.projectanalysis.issue;
 
-import com.google.common.base.Optional;
 import java.util.Date;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -60,10 +60,10 @@ public class MovedIssueVisitorTest {
   private MovedIssueVisitor underTest = new MovedIssueVisitor(analysisMetadataHolder, movedFilesRepository, new IssueFieldsSetter());
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     analysisMetadataHolder.setAnalysisDate(ANALYSIS_DATE);
     when(movedFilesRepository.getOriginalFile(any(Component.class)))
-      .thenReturn(Optional.absent());
+      .thenReturn(Optional.empty());
   }
 
   @Test

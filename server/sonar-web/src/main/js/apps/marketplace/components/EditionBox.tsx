@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,12 +23,13 @@ import tooltipEE from 'Docs/tooltips/editions/enterprise.md';
 import * as React from 'react';
 import { lazyLoad } from 'sonar-ui-common/components/lazyLoad';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import { Edition, getEditionUrl } from '../utils';
+import { getEditionUrl } from '../../../helpers/editions';
+import { Edition, EditionKey } from '../../../types/editions';
 
 const DocMarkdownBlock = lazyLoad(() => import('../../../components/docs/DocMarkdownBlock'));
 
 interface Props {
-  currentEdition?: T.EditionKey;
+  currentEdition?: EditionKey;
   edition: Edition;
   ncloc?: number;
   serverId?: string;
@@ -45,7 +46,7 @@ export default function EditionBox({ edition, ncloc, serverId, currentEdition }:
           href={getEditionUrl(edition, { ncloc, serverId, sourceEdition: currentEdition })}
           rel="noopener noreferrer"
           target="_blank">
-          {translate('marketplace.ask_for_information')}
+          {translate('marketplace.request_free_trial')}
         </a>
       </div>
     </div>

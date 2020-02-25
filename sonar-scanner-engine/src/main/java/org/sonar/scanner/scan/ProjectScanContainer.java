@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +20,10 @@
 package org.sonar.scanner.scan;
 
 import javax.annotation.Nullable;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.fs.internal.DefaultInputModule;
 import org.sonar.api.batch.fs.internal.FileMetadata;
 import org.sonar.api.batch.fs.internal.SensorStrategy;
+import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.issue.internal.DefaultNoSonarFilter;
 import org.sonar.api.resources.Languages;
 import org.sonar.api.resources.ResourceTypes;
@@ -78,9 +76,11 @@ import org.sonar.scanner.notifications.DefaultAnalysisWarnings;
 import org.sonar.scanner.postjob.DefaultPostJobContext;
 import org.sonar.scanner.postjob.PostJobOptimizer;
 import org.sonar.scanner.postjob.PostJobsExecutor;
+import org.sonar.scanner.qualitygate.QualityGateCheck;
 import org.sonar.scanner.report.ActiveRulesPublisher;
 import org.sonar.scanner.report.AnalysisContextReportPublisher;
 import org.sonar.scanner.report.AnalysisWarningsPublisher;
+import org.sonar.scanner.report.CeTaskReportDataHolder;
 import org.sonar.scanner.report.ChangedLinesPublisher;
 import org.sonar.scanner.report.ComponentsPublisher;
 import org.sonar.scanner.report.ContextPropertiesPublisher;
@@ -250,6 +250,11 @@ public class ProjectScanContainer extends ComponentContainer {
       SourcePublisher.class,
       ChangedLinesPublisher.class,
 
+      CeTaskReportDataHolder.class,
+
+      // QualityGate check
+      QualityGateCheck.class,
+
       // Cpd
       CpdExecutor.class,
       CpdSettings.class,
@@ -322,30 +327,20 @@ public class ProjectScanContainer extends ComponentContainer {
     GlobalAnalysisMode analysisMode = getComponentByType(GlobalAnalysisMode.class);
     InputModuleHierarchy tree = getComponentByType(InputModuleHierarchy.class);
     ScanProperties properties = getComponentByType(ScanProperties.class);
-    SonarRuntime sonarRuntime = getComponentByType(SonarRuntime.class);
     properties.validate();
 
     properties.organizationKey().ifPresent(k -> LOG.info("Organization key: {}", k));
-    if (sonarRuntime.getEdition() == SonarEdition.SONARCLOUD) {
-      String branch = tree.root().definition().getBranch();
-      if (branch != null) {
-        LOG.info("Branch key: {}", branch);
-        LOG.warn("The use of \"sonar.branch\" is deprecated and replaced by \"{}\". See {}.",
-          ScannerProperties.BRANCH_NAME, ScannerProperties.BRANCHES_DOC_LINK);
-      }
-    } else {
-      properties.get("sonar.branch").ifPresent(deprecatedBranch -> {
-        throw MessageException.of("The 'sonar.branch' parameter is no longer supported. You should stop using it. " +
-          "Branch analysis is available in Developer Edition and above. See https://redirect.sonarsource.com/editions/developer.html for more information.");
-      });
-    }
+    properties.get("sonar.branch").ifPresent(deprecatedBranch -> {
+      throw MessageException.of("The 'sonar.branch' parameter is no longer supported. You should stop using it. " +
+        "Branch analysis is available in Developer Edition and above. See https://redirect.sonarsource.com/editions/developer.html for more information.");
+    });
 
     BranchConfiguration branchConfig = getComponentByType(BranchConfiguration.class);
     if (branchConfig.branchType() == BranchType.PULL_REQUEST) {
       LOG.info("Pull request {} for merge into {} from {}", branchConfig.pullRequestKey(), pullRequestBaseToDisplayName(branchConfig.targetBranchName()),
         branchConfig.branchName());
     } else if (branchConfig.branchName() != null) {
-      LOG.info("Branch name: {}, type: {}", branchConfig.branchName(), branchTypeToDisplayName(branchConfig.branchType()));
+      LOG.info("Branch name: {}", branchConfig.branchName());
     }
 
     getComponentByType(ProjectFileIndexer.class).index();
@@ -363,6 +358,11 @@ public class ProjectScanContainer extends ComponentContainer {
     getComponentByType(CpdExecutor.class).execute();
     getComponentByType(ReportPublisher.class).execute();
 
+    if (properties.shouldWaitForQualityGate()) {
+      LOG.info("------------- Check Quality Gate status");
+      getComponentByType(QualityGateCheck.class).await();
+    }
+
     getComponentByType(PostJobsExecutor.class).execute();
 
     if (analysisMode.isMediumTest()) {
@@ -372,17 +372,6 @@ public class ProjectScanContainer extends ComponentContainer {
 
   private static String pullRequestBaseToDisplayName(@Nullable String pullRequestBase) {
     return pullRequestBase != null ? pullRequestBase : "default branch";
-  }
-
-  private static String branchTypeToDisplayName(BranchType branchType) {
-    switch (branchType) {
-      case LONG:
-        return "long living";
-      case SHORT:
-        return "short living";
-      default:
-        throw new UnsupportedOperationException("unknown branch type: " + branchType);
-    }
   }
 
   private void scanRecursively(InputModuleHierarchy tree, DefaultInputModule module) {

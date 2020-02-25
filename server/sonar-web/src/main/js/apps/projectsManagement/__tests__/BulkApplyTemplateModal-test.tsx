@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
-import { mount, shallow } from 'enzyme';
+import { shallow } from 'enzyme';
 import * as React from 'react';
 import { parseDate } from 'sonar-ui-common/helpers/dates';
 import { click, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
@@ -38,8 +37,8 @@ beforeEach(() => {
   getPermissionTemplates.mockClear();
 });
 
-it('fetches permission templates on mount', () => {
-  mount(render());
+it('fetches permission templates on component mount', () => {
+  shallow(render());
   expect(getPermissionTemplates).toBeCalledWith('org');
 });
 
@@ -51,7 +50,10 @@ it('bulk applies template to all results', async () => {
   wrapper.setState({
     loading: false,
     permissionTemplate: 'foo',
-    permissionTemplates: [{ id: 'foo', name: 'Foo' }, { id: 'bar', name: 'Bar' }]
+    permissionTemplates: [
+      { id: 'foo', name: 'Foo' },
+      { id: 'bar', name: 'Bar' }
+    ]
   });
   expect(wrapper).toMatchSnapshot();
 
@@ -78,7 +80,10 @@ it('bulk applies template to selected results', async () => {
   wrapper.setState({
     loading: false,
     permissionTemplate: 'foo',
-    permissionTemplates: [{ id: 'foo', name: 'Foo' }, { id: 'bar', name: 'Bar' }]
+    permissionTemplates: [
+      { id: 'foo', name: 'Foo' },
+      { id: 'bar', name: 'Bar' }
+    ]
   });
   expect(wrapper).toMatchSnapshot();
 

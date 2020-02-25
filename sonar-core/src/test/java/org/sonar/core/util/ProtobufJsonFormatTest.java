@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ public class ProtobufJsonFormatTest {
   }
 
   @Test
-  public void write_map_of_arrays() throws Exception {
+  public void write_map_of_arrays() {
     // this is a trick to have arrays in map values
     TestMapOfArray.Builder msg = TestMapOfArray.newBuilder();
 
@@ -198,7 +198,7 @@ public class ProtobufJsonFormatTest {
   }
 
   @Test
-  public void write_map_of_map() throws Exception {
+  public void write_map_of_map() {
     // this is a trick to have maps in map values
     TestMapOfMap.Builder msg = TestMapOfMap.newBuilder();
 

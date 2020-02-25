@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 import { debounce, uniq, without } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import ListFooter from 'sonar-ui-common/components/controls/ListFooter';
-import { toNotSoISOString } from 'sonar-ui-common/helpers/dates';
+import { toShortNotSoISOString } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getComponents, Project } from '../../api/components';
 import Suggestions from '../../app/components/embed-docs-modal/Suggestions';
@@ -86,7 +86,7 @@ export default class App extends React.PureComponent<Props, State> {
   requestProjects = () => {
     const { analyzedBefore } = this.state;
     const parameters = {
-      analyzedBefore: analyzedBefore && toNotSoISOString(analyzedBefore),
+      analyzedBefore: analyzedBefore && toShortNotSoISOString(analyzedBefore),
       onProvisionedOnly: this.state.provisioned || undefined,
       organization: this.props.organization.key,
       p: this.state.page !== 1 ? this.state.page : undefined,
@@ -183,7 +183,7 @@ export default class App extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited" id="projects-management-page">
         <Suggestions suggestions="projects_management" />
-        <Helmet title={translate('projects_management')} />
+        <Helmet defer={false} title={translate('projects_management')} />
 
         <Header
           hasProvisionPermission={this.props.hasProvisionPermission}

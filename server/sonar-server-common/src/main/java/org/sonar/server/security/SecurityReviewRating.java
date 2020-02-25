@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,17 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.server.security;
 
+import java.util.Optional;
+import javax.annotation.Nullable;
 import org.sonar.server.measure.Rating;
+
+import static org.sonar.server.measure.Rating.A;
+import static org.sonar.server.measure.Rating.B;
+import static org.sonar.server.measure.Rating.C;
+import static org.sonar.server.measure.Rating.D;
+import static org.sonar.server.measure.Rating.E;
 
 public class SecurityReviewRating {
 
@@ -28,21 +35,24 @@ public class SecurityReviewRating {
     // Only static method
   }
 
-  public static Rating compute(int ncloc, int securityHotspots) {
-    if (ncloc == 0) {
-      return Rating.A;
+  public static Optional<Double> computePercent(long hotspotsToReview, long hotspotsReviewed) {
+    long total = hotspotsToReview + hotspotsReviewed;
+    if (total == 0) {
+      return Optional.empty();
     }
-    double ratio = (double) securityHotspots * 1000d / (double) ncloc;
-    if (ratio <= 3d) {
-      return Rating.A;
-    } else if (ratio <= 10) {
-      return Rating.B;
-    } else if (ratio <= 15) {
-      return Rating.C;
-    } else if (ratio <= 25) {
-      return Rating.D;
-    } else {
-      return Rating.E;
+    return Optional.of(hotspotsReviewed * 100.0 / total);
+  }
+
+  public static Rating computeRating(@Nullable Double percent) {
+    if (percent == null || percent >= 80.0) {
+      return A;
+    } else if (percent >= 70.0) {
+      return B;
+    } else if (percent >= 50.0) {
+      return C;
+    } else if (percent >= 30.0) {
+      return D;
     }
+    return E;
   }
 }

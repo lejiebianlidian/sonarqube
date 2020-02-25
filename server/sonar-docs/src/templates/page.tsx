@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -167,7 +167,12 @@ function replaceDynamicLinks(content: string) {
  */
 function removeExtraHeadings(content: string, headings: MarkdownHeading[]) {
   return headings
-    .filter(heading => content.indexOf(`<div class="collapse"><h2>${heading.value}</h2>`) < 0)
+    .filter(
+      heading =>
+        content.indexOf(
+          `<div class="custom-block collapse"><div class="custom-block-body"><h2>${heading.value}</h2>`
+        ) < 0
+    )
     .filter(heading => !heading.value || !heading.value.match(/Table of content/i))
     .filter(heading => {
       const regex = new RegExp(

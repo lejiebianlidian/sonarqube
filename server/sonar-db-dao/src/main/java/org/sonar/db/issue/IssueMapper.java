@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ public interface IssueMapper {
 
   List<IssueDto> selectByKeysIfNotUpdatedAt(@Param("keys") List<String> keys, @Param("updatedAt") long updatedAt);
 
-  List<ShortBranchIssueDto> selectOpenByComponentUuids(List<String> componentUuids);
+  List<PrIssueDto> selectOpenByComponentUuids(List<String> componentUuids);
 
   void insert(IssueDto issue);
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -268,7 +268,7 @@ public class DefaultHttpDownloaderTest {
   @Test
   public void shouldGetProxySynthesis() throws URISyntaxException {
     ProxySelector proxySelector = mock(ProxySelector.class);
-    when(proxySelector.select(any(URI.class))).thenReturn(Arrays.<Proxy>asList(new FakeProxy()));
+    when(proxySelector.select(any(URI.class))).thenReturn(Arrays.asList(new FakeProxy()));
     assertThat(DefaultHttpDownloader.BaseHttpDownloader.getProxySynthesis(new URI("http://an_url"), proxySelector)).isEqualTo("HTTP proxy: /123.45.67.89:4040");
   }
 

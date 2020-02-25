@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n
 
 interface Props {
   children?: React.ReactNode;
-  clearLabel?: string;
   fetching?: boolean;
   helper?: string;
   name: React.ReactNode;
@@ -60,7 +59,7 @@ export default class FacetHeader extends React.PureComponent<Props> {
     const value =
       values.length === 1 ? values[0] : translateWithParameters('x_selected', values.length);
     return (
-      <span className="badge badge-secondary text-ellipsis" title={value}>
+      <span className="badge text-ellipsis" title={value}>
         {value}
       </span>
     );
@@ -103,7 +102,7 @@ export default class FacetHeader extends React.PureComponent<Props> {
           <Button
             className="search-navigator-facet-header-button button-small button-red"
             onClick={this.props.onClear}>
-            {translate(this.props.clearLabel || 'clear')}
+            {translate('clear')}
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -153,7 +153,7 @@ public class AnalysisMetadataHolderImpl implements MutableAnalysisMetadataHolder
     checkState(!this.branch.isInitialized(), "Branch has already been set");
     boolean isCommunityEdition = editionProvider.get().filter(t -> t == EditionProvider.Edition.COMMUNITY).isPresent();
     checkState(
-      !isCommunityEdition || branch.isMain() || branch.isLegacyFeature(),
+      !isCommunityEdition || branch.isMain(),
       "Branches and Pull Requests are not supported in Community Edition");
     this.branch.setProperty(branch);
     return this;
@@ -247,17 +247,10 @@ public class AnalysisMetadataHolderImpl implements MutableAnalysisMetadataHolder
   }
 
   @Override
-  public boolean isShortLivingBranch() {
+  public boolean isBranch() {
     checkState(this.branch.isInitialized(), BRANCH_NOT_SET);
     Branch prop = branch.getProperty();
-    return prop != null && prop.getType() == BranchType.SHORT;
-  }
-
-  @Override
-  public boolean isLongLivingBranch() {
-    checkState(this.branch.isInitialized(), BRANCH_NOT_SET);
-    Branch prop = branch.getProperty();
-    return prop != null && prop.getType() == BranchType.LONG;
+    return prop != null && prop.getType() == BranchType.BRANCH;
   }
 
   @Override

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,9 +18,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as key from 'keymaster';
-import { keyBy, omit, without } from 'lodash';
+import { debounce, keyBy, omit, without } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { FormattedMessage } from 'react-intl';
 import { connect } from 'react-redux';
 import { Button } from 'sonar-ui-common/components/controls/buttons';
@@ -47,11 +47,11 @@ import {
   fillBranchLike,
   getBranchLikeQuery,
   isPullRequest,
-  isSameBranchLike,
-  isShortLivingBranch
-} from '../../../helpers/branches';
+  isSameBranchLike
+} from '../../../helpers/branch-like';
 import { isSonarCloud } from '../../../helpers/system';
 import { fetchBranchStatus } from '../../../store/rootActions';
+import { BranchLike } from '../../../types/branch-like';
 import * as actions from '../actions';
 import ConciseIssuesList from '../conciseIssuesList/ConciseIssuesList';
 import ConciseIssuesListHeader from '../conciseIssuesList/ConciseIssuesListHeader';
@@ -73,7 +73,6 @@ import {
   saveMyIssues,
   scrollToIssue,
   serializeQuery,
-  shouldOpenSeverityFacet,
   shouldOpenSonarSourceSecurityFacet,
   shouldOpenStandardsChildFacet,
   shouldOpenStandardsFacet,
@@ -99,10 +98,10 @@ interface FetchIssuesPromise {
 }
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   component?: T.Component;
   currentUser: T.CurrentUser;
-  fetchBranchStatus: (branchLike: T.BranchLike, projectKey: string) => Promise<void>;
+  fetchBranchStatus: (branchLike: BranchLike, projectKey: string) => Promise<void>;
   fetchIssues: (query: T.RawQuery, requestOrganizations?: boolean) => Promise<FetchIssuesPromise>;
   hideAuthorFacet?: boolean;
   location: Pick<Location, 'pathname' | 'query'>;
@@ -116,6 +115,7 @@ interface Props {
 
 export interface State {
   bulkChangeModal: boolean;
+  cannotShowOpenIssue?: boolean;
   checkAll?: boolean;
   checked: string[];
   effortTotal?: number;
@@ -142,6 +142,7 @@ export interface State {
 }
 
 const DEFAULT_QUERY = { resolved: 'false' };
+const MAX_INITAL_FETCH = 1000;
 
 export class App extends React.PureComponent<Props, State> {
   mounted = false;
@@ -162,7 +163,7 @@ export class App extends React.PureComponent<Props, State> {
       openFacets: {
         owaspTop10: shouldOpenStandardsChildFacet({}, query, 'owaspTop10'),
         sansTop25: shouldOpenStandardsChildFacet({}, query, 'sansTop25'),
-        severities: shouldOpenSeverityFacet({}, query),
+        severities: true,
         sonarsourceSecurity: shouldOpenSonarSourceSecurityFacet({}, query),
         standards: shouldOpenStandardsFacet({}, query),
         types: true
@@ -175,6 +176,7 @@ export class App extends React.PureComponent<Props, State> {
       referencedUsers: {},
       selected: getOpen(props.location.query)
     };
+    this.refreshBranchStatus = debounce(this.refreshBranchStatus, 1000);
   }
 
   componentDidMount() {
@@ -458,8 +460,25 @@ export class App extends React.PureComponent<Props, State> {
 
   fetchFirstIssues() {
     const prevQuery = this.props.location.query;
+    const openIssueKey = getOpen(this.props.location.query);
+    let fetchPromise;
+
     this.setState({ checked: [], loading: true });
-    return this.fetchIssues({}, true).then(
+    if (openIssueKey !== undefined) {
+      fetchPromise = this.fetchIssuesUntil(1, (pageIssues: T.Issue[], paging: T.Paging) => {
+        if (
+          paging.total <= paging.pageIndex * paging.pageSize ||
+          paging.pageIndex * paging.pageSize >= MAX_INITAL_FETCH
+        ) {
+          return true;
+        }
+        return pageIssues.some(issue => issue.key === openIssueKey);
+      });
+    } else {
+      fetchPromise = this.fetchIssues({}, true);
+    }
+
+    return fetchPromise.then(
       ({ effortTotal, facets, issues, paging, ...other }) => {
         if (this.mounted && areQueriesEqual(prevQuery, this.props.location.query)) {
           const openIssue = this.getOpenIssue(this.props, issues);
@@ -468,6 +487,7 @@ export class App extends React.PureComponent<Props, State> {
             selected = openIssue ? openIssue.key : issues[0].key;
           }
           this.setState(state => ({
+            cannotShowOpenIssue: Boolean(openIssueKey && !openIssue),
             effortTotal,
             facets: { ...state.facets, ...parseFacets(facets) },
             loading: false,
@@ -501,24 +521,15 @@ export class App extends React.PureComponent<Props, State> {
 
   fetchIssuesUntil = (
     p: number,
-    done: (lastIssue: T.Issue, paging: T.Paging) => boolean
-  ): Promise<{ issues: T.Issue[]; paging: T.Paging }> => {
-    const recursiveFetch = (
-      p: number,
-      issues: T.Issue[]
-    ): Promise<{ issues: T.Issue[]; paging: T.Paging }> => {
-      return this.fetchIssuesPage(p)
-        .then(response => {
-          return {
-            issues: [...issues, ...response.issues],
-            paging: response.paging
-          };
-        })
-        .then(({ issues, paging }) => {
-          return done(issues[issues.length - 1], paging)
-            ? { issues, paging }
-            : recursiveFetch(p + 1, issues);
-        });
+    done: (pageIssues: T.Issue[], paging: T.Paging) => boolean
+  ): Promise<FetchIssuesPromise> => {
+    const recursiveFetch = (p: number, prevIssues: T.Issue[]): Promise<FetchIssuesPromise> => {
+      return this.fetchIssuesPage(p).then(({ issues: pageIssues, paging, ...other }) => {
+        const issues = [...prevIssues, ...pageIssues];
+        return done(pageIssues, paging)
+          ? { issues, paging, ...other }
+          : recursiveFetch(p + 1, issues);
+      });
     };
 
     return recursiveFetch(p, []);
@@ -561,7 +572,8 @@ export class App extends React.PureComponent<Props, State> {
 
     const isSameComponent = (issue: T.Issue) => issue.component === openIssue.component;
 
-    const done = (lastIssue: T.Issue, paging: T.Paging) => {
+    const done = (pageIssues: T.Issue[], paging: T.Paging) => {
+      const lastIssue = pageIssues[pageIssues.length - 1];
       if (paging.total <= paging.pageIndex * paging.pageSize) {
         return true;
       }
@@ -571,7 +583,7 @@ export class App extends React.PureComponent<Props, State> {
       return lastIssue.textRange !== undefined && lastIssue.textRange.endLine > to;
     };
 
-    if (done(issues[issues.length - 1], paging)) {
+    if (done(issues, paging)) {
       return Promise.resolve(issues.filter(isSameComponent));
     }
 
@@ -667,7 +679,6 @@ export class App extends React.PureComponent<Props, State> {
     this.setState(({ openFacets }) => ({
       openFacets: {
         ...openFacets,
-        severities: shouldOpenSeverityFacet(openFacets, changes),
         sonarsourceSecurity: shouldOpenSonarSourceSecurityFacet(openFacets, changes),
         standards: shouldOpenStandardsFacet(openFacets, changes)
       }
@@ -765,13 +776,15 @@ export class App extends React.PureComponent<Props, State> {
 
   handlePopupToggle = (issue: string, popupName: string, open?: boolean) => {
     this.setState((state: State) => {
-      const samePopup =
-        state.openPopup && state.openPopup.name === popupName && state.openPopup.issue === issue;
+      const { openPopup } = state;
+      const samePopup = openPopup && openPopup.name === popupName && openPopup.issue === issue;
+
       if (open !== false && !samePopup) {
-        return { openPopup: { issue, name: popupName } };
+        return { ...state, openPopup: { issue, name: popupName } };
       } else if (open !== true && samePopup) {
-        return { openPopup: undefined };
+        return { ...state, openPopup: undefined };
       }
+
       return state;
     });
   };
@@ -812,14 +825,14 @@ export class App extends React.PureComponent<Props, State> {
   handleReload = () => {
     this.fetchFirstIssues();
     this.refreshBranchStatus();
-    if (isShortLivingBranch(this.props.branchLike) || isPullRequest(this.props.branchLike)) {
+    if (isPullRequest(this.props.branchLike)) {
       this.props.onBranchesChange();
     }
   };
 
   handleReloadAndOpenFirst = () => {
     this.fetchFirstIssues().then(
-      issues => {
+      (issues: T.Issue[]) => {
         if (issues.length > 0) {
           this.openIssue(issues[0].key);
         }
@@ -865,7 +878,7 @@ export class App extends React.PureComponent<Props, State> {
 
   refreshBranchStatus = () => {
     const { branchLike, component } = this.props;
-    if (branchLike && component && (isPullRequest(branchLike) || isShortLivingBranch(branchLike))) {
+    if (branchLike && component && isPullRequest(branchLike)) {
       this.props.fetchBranchStatus(branchLike, component.key);
     }
   };
@@ -1106,7 +1119,7 @@ export class App extends React.PureComponent<Props, State> {
   }
 
   renderPage() {
-    const { checkAll, issues, loading, openIssue, paging } = this.state;
+    const { cannotShowOpenIssue, checkAll, issues, loading, openIssue, paging } = this.state;
     return (
       <div className="layout-page-main-inner">
         {openIssue ? (
@@ -1133,6 +1146,14 @@ export class App extends React.PureComponent<Props, State> {
                 />
               </Alert>
             )}
+            {cannotShowOpenIssue && (
+              <Alert className="big-spacer-bottom" variant="warning">
+                {translateWithParameters(
+                  'issues.cannot_open_issue_max_initial_X_fetched',
+                  MAX_INITAL_FETCH
+                )}
+              </Alert>
+            )}
             {this.renderList()}
           </DeferredSpinner>
         )}
@@ -1146,7 +1167,7 @@ export class App extends React.PureComponent<Props, State> {
     return (
       <div className="layout-page issues" id="issues-page">
         <Suggestions suggestions="issues" />
-        <Helmet title={openIssue ? openIssue.message : translate('issues.page')} />
+        <Helmet defer={false} title={openIssue ? openIssue.message : translate('issues.page')} />
 
         {this.renderSide(openIssue)}
 
@@ -1162,9 +1183,4 @@ export class App extends React.PureComponent<Props, State> {
 
 const mapDispatchToProps = { fetchBranchStatus: fetchBranchStatus as any };
 
-export default withRouter(
-  connect(
-    null,
-    mapDispatchToProps
-  )(App)
-);
+export default withRouter(connect(null, mapDispatchToProps)(App));

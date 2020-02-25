@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@ import Level from 'sonar-ui-common/components/ui/Level';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import DateFromNow from '../../../components/intl/DateFromNow';
 import DateTimeFormatter from '../../../components/intl/DateTimeFormatter';
-import MetaLink from '../../overview/meta/MetaLink';
-import { orderLinks } from '../../projectLinks/utils';
+import MetaLink from '../../../app/components/nav/component/projectInformation/meta/MetaLink';
+import { orderLinks } from '../../../helpers/projectLinks';
 
 interface Props {
   project: T.MyProject;
@@ -76,7 +76,7 @@ export default function ProjectCard({ project }: Props) {
                 overlay={translate('quality_gates.conditions.warning.tooltip')}
               />
             )}
-            <Level level={project.qualityGate} />
+            <Level aria-label={translate('quality_gates.status')} level={project.qualityGate} />
           </div>
         )}
       </aside>

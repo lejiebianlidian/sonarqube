@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,31 +20,31 @@
 package org.sonar.server.issue.notification;
 
 public class MetricStatsInt {
-  private int onLeak = 0;
-  private int offLeak = 0;
+  private int onCurrentAnalysis = 0;
+  private int offCurrentAnalysis = 0;
 
-  MetricStatsInt increment(boolean onLeak) {
-    if (onLeak) {
-      this.onLeak += 1;
+  MetricStatsInt increment(boolean onCurrentAnalysis) {
+    if (onCurrentAnalysis) {
+      this.onCurrentAnalysis += 1;
     } else {
-      this.offLeak += 1;
+      this.offCurrentAnalysis += 1;
     }
     return this;
   }
 
-  public int getOnLeak() {
-    return onLeak;
+  public int getOnCurrentAnalysis() {
+    return onCurrentAnalysis;
   }
 
   public int getTotal() {
-    return onLeak + offLeak;
+    return onCurrentAnalysis + offCurrentAnalysis;
   }
 
   @Override
   public String toString() {
     return "MetricStatsInt{" +
-      "onLeak=" + onLeak +
-      ", offLeak=" + offLeak +
+      "on=" + onCurrentAnalysis +
+      ", off=" + offCurrentAnalysis +
       '}';
   }
 }

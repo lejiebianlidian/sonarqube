@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,8 @@ import {
   getDuplications,
   getSources
 } from '../../api/components';
-import { getBranchLikeQuery, isSameBranchLike } from '../../helpers/branches';
+import { getBranchLikeQuery, isSameBranchLike } from '../../helpers/branch-like';
+import { BranchLike } from '../../types/branch-like';
 import { WorkspaceContext } from '../workspace/context';
 import DuplicationPopup from './components/DuplicationPopup';
 import {
@@ -54,9 +55,12 @@ import './styles.css';
 
 export interface Props {
   aroundLine?: number;
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   component: string;
+  componentMeasures?: T.Measure[];
   displayAllIssues?: boolean;
+  displayIssueLocationsCount?: boolean;
+  displayIssueLocationsLink?: boolean;
   displayLocationMarkers?: boolean;
   highlightedLine?: number;
   // `undefined` elements mean they are located in a different file,
@@ -65,19 +69,19 @@ export interface Props {
   highlightedLocationMessage?: { index: number; text: string | undefined };
   loadComponent: (
     component: string,
-    branchLike: T.BranchLike | undefined
+    branchLike: BranchLike | undefined
   ) => Promise<T.SourceViewerFile>;
   loadIssues: (
     component: string,
     from: number,
     to: number,
-    branchLike: T.BranchLike | undefined
+    branchLike: BranchLike | undefined
   ) => Promise<T.Issue[]>;
   loadSources: (
     component: string,
     from: number,
     to: number,
-    branchLike: T.BranchLike | undefined
+    branchLike: BranchLike | undefined
   ) => Promise<T.SourceLine[]>;
   onLoaded?: (component: T.SourceViewerFile, sources: T.SourceLine[], issues: T.Issue[]) => void;
   onLocationSelect?: (index: number) => void;
@@ -123,6 +127,8 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
 
   static defaultProps = {
     displayAllIssues: false,
+    displayIssueLocationsCount: true,
+    displayIssueLocationsLink: true,
     displayLocationMarkers: true,
     loadComponent: defaultLoadComponent,
     loadIssues: defaultLoadIssues,
@@ -263,7 +269,7 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
       );
     };
 
-    const onFailLoadComponent = ({ response }: { response: Response }) => {
+    const onFailLoadComponent = (response: Response) => {
       // TODO handle other statuses
       if (this.mounted) {
         if (response.status === 403) {
@@ -354,7 +360,7 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
 
   loadSources = (): Promise<T.SourceLine[]> => {
     return new Promise((resolve, reject) => {
-      const onFailLoadSources = ({ response }: { response: Response }) => {
+      const onFailLoadSources = (response: Response) => {
         // TODO handle other statuses
         if (this.mounted) {
           if ([403, 404].includes(response.status)) {
@@ -612,6 +618,8 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
         branchLike={this.props.branchLike}
         componentKey={this.props.component}
         displayAllIssues={this.props.displayAllIssues}
+        displayIssueLocationsCount={this.props.displayIssueLocationsCount}
+        displayIssueLocationsLink={this.props.displayIssueLocationsLink}
         displayLocationMarkers={this.props.displayLocationMarkers}
         duplications={this.state.duplications}
         duplicationsByLine={this.state.duplicationsByLine}
@@ -650,7 +658,7 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
     );
   }
 
-  renderHeader(branchLike: T.BranchLike | undefined, sourceViewerFile: T.SourceViewerFile) {
+  renderHeader(branchLike: BranchLike | undefined, sourceViewerFile: T.SourceViewerFile) {
     return this.props.slimHeader ? (
       <SourceViewerHeaderSlim branchLike={branchLike} sourceViewerFile={sourceViewerFile} />
     ) : (
@@ -658,7 +666,7 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
         {({ openComponent }) => (
           <SourceViewerHeader
             branchLike={this.props.branchLike}
-            issues={this.state.issues}
+            componentMeasures={this.props.componentMeasures}
             openComponent={openComponent}
             showMeasures={this.props.showMeasures}
             sourceViewerFile={sourceViewerFile}
@@ -715,7 +723,7 @@ export default class SourceViewerBase extends React.PureComponent<Props, State> 
   }
 }
 
-function defaultLoadComponent(component: string, branchLike: T.BranchLike | undefined) {
+function defaultLoadComponent(component: string, branchLike: BranchLike | undefined) {
   return Promise.all([
     getComponentForSourceViewer({ component, ...getBranchLikeQuery(branchLike) }),
     getComponentData({ component, ...getBranchLikeQuery(branchLike) })
@@ -729,7 +737,7 @@ function defaultLoadSources(
   key: string,
   from: number | undefined,
   to: number | undefined,
-  branchLike: T.BranchLike | undefined
+  branchLike: BranchLike | undefined
 ) {
   return getSources({ key, from, to, ...getBranchLikeQuery(branchLike) });
 }

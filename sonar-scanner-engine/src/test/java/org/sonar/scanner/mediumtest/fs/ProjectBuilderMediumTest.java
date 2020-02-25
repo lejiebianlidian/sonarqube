@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ public class ProjectBuilderMediumTest {
     .addDefaultQProfile("xoo", "Sonar Way")
     .addActiveRule("xoo", "OneIssuePerLine", null, "One issue per line", "MAJOR", "OneIssuePerLine.internal", "xoo");
 
-  private class XooPluginWithBuilder extends XooPlugin {
+  private static class XooPluginWithBuilder extends XooPlugin {
     private ProjectBuilder builder;
 
     XooPluginWithBuilder(ProjectBuilder builder) {
@@ -131,46 +131,6 @@ public class ProjectBuilderMediumTest {
       .extracting("msg", "textRange.startLine", "gap")
       .contains(tuple("This issue is generated on each line", 1, 0.0));
 
-  }
-
-  @Test
-  // SONAR-6976
-  public void testProjectBuilderWithNewLine() throws IOException {
-    File baseDir = prepareProject();
-
-    exception.expect(MessageException.class);
-    exception.expectMessage("is not a valid branch name");
-    tester.newAnalysis()
-      .properties(ImmutableMap.<String, String>builder()
-        .put("sonar.projectBaseDir", baseDir.getAbsolutePath())
-        .put("sonar.projectKey", "com.foo.project")
-        .put("sonar.branch", "branch\n")
-        .put("sonar.sources", ".")
-        .put("sonar.xoo.enableProjectBuilder", "true")
-        .build())
-      .execute();
-  }
-
-  @Test
-  public void testProjectBuilderWithBranch() throws IOException {
-    File baseDir = prepareProject();
-
-    AnalysisResult result = tester.newAnalysis()
-      .properties(ImmutableMap.<String, String>builder()
-        .put("sonar.projectBaseDir", baseDir.getAbsolutePath())
-        .put("sonar.projectKey", "com.foo.project")
-        .put("sonar.branch", "my-branch")
-        .put("sonar.sources", ".")
-        .put("sonar.xoo.enableProjectBuilder", "true")
-        .build())
-      .execute();
-
-    List<Issue> issues = result.issuesFor(result.inputFile("module1/src/sample.xoo"));
-    assertThat(issues).hasSize(10);
-
-    assertThat(issues)
-      .extracting("msg", "textRange.startLine", "gap")
-      .contains(tuple("This issue is generated on each line", 1, 0.0));
   }
 
   private File prepareProject() throws IOException {

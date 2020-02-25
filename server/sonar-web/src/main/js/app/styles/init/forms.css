@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -138,6 +138,10 @@ textarea.width-100 {
   max-width: 100%;
 }
 
+textarea.fixed-width {
+  resize: vertical;
+}
+
 select {
   height: var(--controlHeight);
   line-height: var(--controlHeight);
@@ -181,7 +185,7 @@ select {
 }
 
 em.mandatory {
-  color: #990000;
+  color: var(--mandatoryFieldColor);
   font-style: italic;
 }
 

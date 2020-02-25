@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -61,8 +61,8 @@ export class EmailForm extends React.PureComponent<Props, State> {
     this.mounted = false;
   }
 
-  handleError = (error: { response: Response }) => {
-    return parseError(error).then(message => {
+  handleError = (response: Response) => {
+    return parseError(response).then(message => {
       if (this.mounted) {
         this.setState({ error: message, loading: false });
       }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import * as React from 'react';
 import classNames from 'classnames';
+import * as React from 'react';
 import ExpandSnippetIcon from 'sonar-ui-common/components/icons/ExpandSnippetIcon';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { scrollHorizontally } from 'sonar-ui-common/helpers/scrolling';
@@ -30,14 +30,17 @@ import {
   optimizeLocationMessage,
   optimizeSelectedIssue
 } from '../../../components/SourceViewer/helpers/lines';
-import { inSnippet, LINES_BELOW_LAST } from './utils';
+import { BranchLike } from '../../../types/branch-like';
+import './SnippetViewer.css';
+import { inSnippet, LINES_BELOW_ISSUE } from './utils';
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   component: T.SourceViewerFile;
+  displaySCM?: boolean;
   duplications?: T.Duplication[];
   duplicationsByLine?: { [line: number]: number[] };
-  expandBlock: (snippetIndex: number, direction: T.ExpandDirection) => void;
+  expandBlock: (snippetIndex: number, direction: T.ExpandDirection) => Promise<void>;
   handleCloseIssues: (line: T.SourceLine) => void;
   handleLinePopupToggle: (line: T.SourceLine) => void;
   handleOpenIssues: (line: T.SourceLine) => void;
@@ -45,7 +48,7 @@ interface Props {
   highlightedLocationMessage: { index: number; text: string | undefined } | undefined;
   highlightedSymbols: string[];
   index: number;
-  issue: T.Issue;
+  issue: Pick<T.Issue, 'key' | 'textRange' | 'line'>;
   issuePopup?: { issue: string; name: string };
   issuesByLine: T.IssuesByLine;
   last: boolean;
@@ -58,25 +61,25 @@ interface Props {
   onLocationSelect: (index: number) => void;
   openIssuesByLine: T.Dict<boolean>;
   renderDuplicationPopup: (index: number, line: number) => React.ReactNode;
-  scroll?: (element: HTMLElement) => void;
+  scroll?: (element: HTMLElement, offset?: number) => void;
   snippet: T.SourceLine[];
 }
 
 const SCROLL_LEFT_OFFSET = 32;
 
 export default class SnippetViewer extends React.PureComponent<Props> {
-  node: React.RefObject<HTMLDivElement>;
+  snippetNodeRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: Props) {
     super(props);
-    this.node = React.createRef();
+    this.snippetNodeRef = React.createRef();
   }
 
   doScroll = (element: HTMLElement) => {
     if (this.props.scroll) {
       this.props.scroll(element);
     }
-    const parent = this.node.current as Element;
+    const parent = this.snippetNodeRef.current as Element;
 
     if (parent) {
       scrollHorizontally(element, {
@@ -87,11 +90,28 @@ export default class SnippetViewer extends React.PureComponent<Props> {
     }
   };
 
+  scrollToLastExpandedRow = () => {
+    if (this.props.scroll) {
+      const snippetNode = this.snippetNodeRef.current as Element;
+      if (!snippetNode) {
+        return;
+      }
+      const rows = snippetNode.querySelectorAll('tr');
+      const lastRow = rows[rows.length - 1];
+      this.props.scroll(lastRow, 100);
+    }
+  };
+
   expandBlock = (direction: T.ExpandDirection) => () =>
-    this.props.expandBlock(this.props.index, direction);
+    this.props.expandBlock(this.props.index, direction).then(() => {
+      if (direction === 'down') {
+        this.scrollToLastExpandedRow();
+      }
+    });
 
   renderLine({
     displayDuplications,
+    displaySCM,
     index,
     issuesForLine,
     issueLocations,
@@ -101,6 +121,7 @@ export default class SnippetViewer extends React.PureComponent<Props> {
     verticalBuffer
   }: {
     displayDuplications: boolean;
+    displaySCM?: boolean;
     index: number;
     issuesForLine: T.Issue[];
     issueLocations: T.LinearIssueLocation[];
@@ -126,6 +147,7 @@ export default class SnippetViewer extends React.PureComponent<Props> {
         displayDuplications={displayDuplications}
         displayIssues={!isSinkLine || issuesForLine.length > 1}
         displayLocationMarkers={true}
+        displaySCM={displaySCM}
         duplications={lineDuplications}
         duplicationsCount={duplicationsCount}
         highlighted={false}
@@ -165,6 +187,7 @@ export default class SnippetViewer extends React.PureComponent<Props> {
   render() {
     const {
       component,
+      displaySCM,
       issue,
       issuesByLine = {},
       last,
@@ -185,13 +208,13 @@ export default class SnippetViewer extends React.PureComponent<Props> {
         .filter(l => inSnippet(l, snippet) && (l === issueLine || openIssuesByLine[l]))
     );
     const verticalBuffer = last
-      ? Math.max(0, LINES_BELOW_LAST - (bottomLine - lowestVisibleIssue))
+      ? Math.max(0, LINES_BELOW_ISSUE - (bottomLine - lowestVisibleIssue))
       : 0;
 
     const displayDuplications = snippet.some(s => !!s.duplicated);
 
     return (
-      <div className="source-viewer-code snippet" ref={this.node}>
+      <div className="source-viewer-code snippet" ref={this.snippetNodeRef}>
         <div>
           {snippet[0].line > 1 && (
             <div className="expand-block expand-block-above">
@@ -212,6 +235,7 @@ export default class SnippetViewer extends React.PureComponent<Props> {
               {snippet.map((line, index) =>
                 this.renderLine({
                   displayDuplications,
+                  displaySCM,
                   index,
                   issuesForLine: issuesByLine[line.line] || [],
                   issueLocations: locationsByLine[line.line] || [],

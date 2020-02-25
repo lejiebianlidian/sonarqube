@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,6 @@ import org.sonar.ce.monitoring.DistributedCEQueueStatusImpl;
 import org.sonar.ce.platform.CECoreExtensionsInstaller;
 import org.sonar.ce.platform.ComputeEngineExtensionInstaller;
 import org.sonar.ce.platform.DatabaseCompatibility;
-import org.sonar.ce.queue.CeQueueCleaner;
 import org.sonar.ce.queue.PurgeCeActivities;
 import org.sonar.ce.task.projectanalysis.ProjectAnalysisTaskModule;
 import org.sonar.ce.task.projectanalysis.analysis.ProjectConfigurationFactory;
@@ -71,7 +70,6 @@ import org.sonar.core.component.DefaultResourceTypes;
 import org.sonar.core.config.CorePropertyDefinitions;
 import org.sonar.core.extension.CoreExtensionRepositoryImpl;
 import org.sonar.core.extension.CoreExtensionsLoader;
-import org.sonar.core.i18n.RuleI18nManager;
 import org.sonar.core.platform.ComponentContainer;
 import org.sonar.core.platform.EditionProvider;
 import org.sonar.core.platform.Module;
@@ -117,7 +115,6 @@ import org.sonar.server.notification.email.EmailNotificationChannel;
 import org.sonar.server.organization.BillingValidationsProxyImpl;
 import org.sonar.server.organization.DefaultOrganizationProviderImpl;
 import org.sonar.server.organization.OrganizationFlagsImpl;
-import org.sonar.server.platform.DefaultServerUpgradeStatus;
 import org.sonar.server.platform.OfficialDistribution;
 import org.sonar.server.platform.ServerFileSystemImpl;
 import org.sonar.server.platform.ServerImpl;
@@ -149,6 +146,7 @@ import org.sonar.server.setting.ThreadLocalSettings;
 import org.sonar.server.user.index.UserIndex;
 import org.sonar.server.user.index.UserIndexer;
 import org.sonar.server.util.OkHttpClientProvider;
+import org.sonar.server.util.Paths2Impl;
 import org.sonar.server.view.index.ViewIndex;
 import org.sonar.server.view.index.ViewIndexer;
 import org.sonar.server.webhook.WebhookModule;
@@ -295,6 +293,7 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
       ServerFileSystemImpl.class,
       new TempFolderProvider(),
       System2.INSTANCE,
+      Paths2Impl.getInstance(),
       Clock.systemDefaultZone(),
 
       // DB
@@ -330,7 +329,6 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
 
       // add ReadOnlyPropertiesDao at level2 again so that it shadows PropertiesDao
       ReadOnlyPropertiesDao.class,
-      DefaultServerUpgradeStatus.class,
 
       // plugins
       PluginClassloaderFactory.class,
@@ -342,7 +340,6 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
 
       // depends on plugins
       ServerI18n.class, // used by RuleI18nManager
-      RuleI18nManager.class, // used by DebtRulesXMLImporter
       Durations.class // used in Web Services and DebtCalculator
     );
   }
@@ -485,8 +482,7 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
   private static Object[] startupComponents() {
     return new Object[] {
       ServerLifecycleNotifier.class,
-      PurgeCeActivities.class,
-      CeQueueCleaner.class
+      PurgeCeActivities.class
     };
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ public class CorePropertyDefinitionsTest {
   @Test
   public void all() {
     List<PropertyDefinition> defs = CorePropertyDefinitions.all();
-    assertThat(defs).hasSize(52);
+    assertThat(defs).hasSize(51);
   }
 
   @Test

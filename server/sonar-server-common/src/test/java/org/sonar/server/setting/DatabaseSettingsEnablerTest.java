@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,9 +23,6 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.sonar.server.setting.DatabaseSettingLoader;
-import org.sonar.server.setting.DatabaseSettingsEnabler;
-import org.sonar.server.setting.ThreadLocalSettings;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

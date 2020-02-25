@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -117,7 +117,10 @@ function shallowRender(props: Partial<AutoOrganizationCreate['props']> = {}) {
       onOrgCreated={jest.fn()}
       onUpgradeFail={jest.fn()}
       step={Step.OrganizationDetails}
-      subscriptionPlans={[{ maxNcloc: 100000, price: 10 }, { maxNcloc: 250000, price: 75 }]}
+      subscriptionPlans={[
+        { maxNcloc: 100000, price: 10 },
+        { maxNcloc: 250000, price: 75 }
+      ]}
       unboundOrganizations={[]}
       {...props}
     />

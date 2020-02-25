@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.sonar.api.ce.posttask.Branch;
 import org.sonar.api.ce.posttask.CeTask;
+import org.sonar.api.ce.posttask.PostProjectAnalysisTask.LogStatistics;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTaskTester;
 import org.sonar.api.ce.posttask.Project;
 import org.sonar.api.ce.posttask.QualityGate;
@@ -74,6 +75,11 @@ public class WebhookPostTaskTest {
   public void wireMocks() {
     when(payloadFactory.create(any(ProjectAnalysis.class))).thenReturn(webhookPayload);
     when(configurationRepository.getConfiguration()).thenReturn(configuration);
+  }
+
+  @Test
+  public void has_description() {
+    assertThat(underTest.getDescription()).isNotEmpty();
   }
 
   @Test
@@ -136,7 +142,8 @@ public class WebhookPostTaskTest {
         eq(new WebHooks.Analysis(project.getUuid(),
           analysisUUid,
           ceTask.getId())),
-        supplierCaptor.capture());
+        supplierCaptor.capture(),
+        any(LogStatistics.class));
 
     assertThat(supplierCaptor.getValue().get()).isSameAs(webhookPayload);
 

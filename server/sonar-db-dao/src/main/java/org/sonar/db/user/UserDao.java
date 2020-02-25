@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@ import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.organization.OrganizationDto;
+import org.sonar.db.project.ProjectDto;
 
 import static java.util.Locale.ENGLISH;
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
@@ -135,12 +136,12 @@ public class UserDao implements Dao {
     mapper(dbSession).deactivateUser(user.getLogin(), system2.now());
   }
 
-  public void deactivateSonarCloudUser(DbSession dbSession, UserDto user) {
-    mapper(dbSession).deactivateSonarCloudUser(user.getLogin(), system2.now());
-  }
-
   public void cleanHomepage(DbSession dbSession, OrganizationDto organization) {
     mapper(dbSession).clearHomepages("ORGANIZATION", organization.getUuid(), system2.now());
+  }
+
+  public void cleanHomepage(DbSession dbSession, ProjectDto project) {
+    mapper(dbSession).clearHomepages("PROJECT", project.getUuid(), system2.now());
   }
 
   public void cleanHomepage(DbSession dbSession, ComponentDto project) {

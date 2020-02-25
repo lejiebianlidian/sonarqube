@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ public class ProjectBuildersExecutorTest {
     new ProjectBuildersExecutor(projectBuilders).execute(reactor);
   }
 
-  class MyProjectBuilder extends ProjectBuilder {
+  static class MyProjectBuilder extends ProjectBuilder {
     @Override
     public void build(Context context) {
       throw new IllegalStateException();

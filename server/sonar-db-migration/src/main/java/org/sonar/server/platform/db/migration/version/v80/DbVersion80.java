@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,14 @@ public class DbVersion80 implements DbVersion {
   public void addSteps(MigrationStepRegistry registry) {
     registry
       .add(3000, "Set Organizations#guarded column nullable", MakeOrganizationsGuardedNullable.class)
-      .add(3001, "Create ProjectQualityGates table", CreateProjectQualityGatesTable.class);
+      .add(3001, "Create ProjectQualityGates table", CreateProjectQualityGatesTable.class)
+      .add(3002, "Make index on DEPRECATED_RULE_KEYS.RULE_ID non unique", MakeDeprecatedRuleKeysRuleIdIndexNonUnique.class)
+      .add(3003, "Populate ProjectQualityGate table from Properties table", PopulateProjectQualityGatesTable.class)
+      .add(3004, "Rename ANALYSIS_PROPERTIES.SNAPSHOT_UUID to ANALYSIS_UUID", RenameAnalysisPropertiesSnapshotUuid.class)
+      .add(3005, "Remove default quality gate property from Properties table", RemoveDefaultQualityGateFromPropertiesTable.class)
+      .add(3006, "Create NEW_CODE_PERIOD table", CreateNewCodePeriodTable.class)
+      .add(3007, "Populate NEW_CODE_PERIOD table", PopulateNewCodePeriodTable.class)
+      .add(3008, "Remove leak period properties", RemoveLeakPeriodProperties.class)
+      .add(3009, "Remove GitHub login generation strategy property", RemoveGitHubLoginGenerationStrategyProperty.class);
   }
 }

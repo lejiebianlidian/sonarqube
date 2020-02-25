@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,10 @@ export function getTask(id: string, additionalFields?: string[]): Promise<T.Task
 }
 
 export function cancelTask(id: string): Promise<any> {
-  return post('/api/ce/cancel', { id }).then(() => getTask(id), () => getTask(id));
+  return post('/api/ce/cancel', { id }).then(
+    () => getTask(id),
+    () => getTask(id)
+  );
 }
 
 export function cancelAllTasks(): Promise<any> {

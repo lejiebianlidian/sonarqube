@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,9 @@ import org.sonar.core.platform.Module;
 import org.sonar.db.alm.AlmAppInstallDao;
 import org.sonar.db.alm.OrganizationAlmBindingDao;
 import org.sonar.db.alm.ProjectAlmBindingDao;
+import org.sonar.db.alm.pat.AlmPatDao;
+import org.sonar.db.alm.setting.AlmSettingDao;
+import org.sonar.db.alm.setting.ProjectAlmSettingDao;
 import org.sonar.db.ce.CeActivityDao;
 import org.sonar.db.ce.CeQueueDao;
 import org.sonar.db.ce.CeScannerContextDao;
@@ -49,6 +52,7 @@ import org.sonar.db.measure.LiveMeasureDao;
 import org.sonar.db.measure.MeasureDao;
 import org.sonar.db.measure.custom.CustomMeasureDao;
 import org.sonar.db.metric.MetricDao;
+import org.sonar.db.newcodeperiod.NewCodePeriodDao;
 import org.sonar.db.notification.NotificationQueueDao;
 import org.sonar.db.organization.OrganizationDao;
 import org.sonar.db.organization.OrganizationMemberDao;
@@ -58,6 +62,7 @@ import org.sonar.db.permission.UserPermissionDao;
 import org.sonar.db.permission.template.PermissionTemplateCharacteristicDao;
 import org.sonar.db.permission.template.PermissionTemplateDao;
 import org.sonar.db.plugin.PluginDao;
+import org.sonar.db.project.ProjectDao;
 import org.sonar.db.property.InternalComponentPropertiesDao;
 import org.sonar.db.property.InternalPropertiesDao;
 import org.sonar.db.property.PropertiesDao;
@@ -71,6 +76,7 @@ import org.sonar.db.qualityprofile.QProfileChangeDao;
 import org.sonar.db.qualityprofile.QProfileEditGroupsDao;
 import org.sonar.db.qualityprofile.QProfileEditUsersDao;
 import org.sonar.db.qualityprofile.QualityProfileDao;
+import org.sonar.db.qualityprofile.QualityProfileExportDao;
 import org.sonar.db.rule.RuleDao;
 import org.sonar.db.rule.RuleRepositoryDao;
 import org.sonar.db.schemamigration.SchemaMigrationDao;
@@ -113,6 +119,9 @@ public class DaoModule extends Module {
     GroupMembershipDao.class,
     GroupPermissionDao.class,
     AlmAppInstallDao.class,
+    AlmSettingDao.class,
+    AlmPatDao.class,
+    ProjectAlmSettingDao.class,
     ProjectAlmBindingDao.class,
     InternalComponentPropertiesDao.class,
     InternalPropertiesDao.class,
@@ -121,6 +130,7 @@ public class DaoModule extends Module {
     LiveMeasureDao.class,
     MeasureDao.class,
     MetricDao.class,
+    NewCodePeriodDao.class,
     NotificationQueueDao.class,
     OrganizationAlmBindingDao.class,
     OrganizationDao.class,
@@ -128,6 +138,7 @@ public class DaoModule extends Module {
     PermissionTemplateCharacteristicDao.class,
     PermissionTemplateDao.class,
     PluginDao.class,
+    ProjectDao.class,
     ProjectLinkDao.class,
     ProjectMappingsDao.class,
     ProjectQgateAssociationDao.class,
@@ -139,6 +150,7 @@ public class DaoModule extends Module {
     QualityGateConditionDao.class,
     QualityGateDao.class,
     QualityProfileDao.class,
+    QualityProfileExportDao.class,
     RoleDao.class,
     RuleDao.class,
     RuleRepositoryDao.class,

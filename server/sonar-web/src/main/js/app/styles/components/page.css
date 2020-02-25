@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -161,6 +161,10 @@
   max-width: 980px;
 }
 
+.no-footer-page #footer {
+  display: none;
+}
+
 .page-footer-menu-item {
   display: inline-block;
 }
@@ -263,7 +267,7 @@
 
 .layout-page-side {
   position: fixed;
-  z-index: 40;
+  z-index: var(--pageSideZIndex);
   top: 30px;
   bottom: 0;
   left: 0;

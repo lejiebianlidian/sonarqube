@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@ import org.sonar.ce.task.projectanalysis.component.PathAwareVisitorAdapter;
 import org.sonar.ce.task.projectanalysis.formula.counter.RatingValue;
 import org.sonar.ce.task.projectanalysis.issue.ComponentIssuesRepository;
 import org.sonar.ce.task.projectanalysis.measure.MeasureRepository;
+import org.sonar.ce.task.projectanalysis.measure.RatingMeasures;
 import org.sonar.ce.task.projectanalysis.metric.Metric;
 import org.sonar.ce.task.projectanalysis.metric.MetricRepository;
 import org.sonar.server.measure.Rating;
@@ -36,7 +37,6 @@ import static org.sonar.api.measures.CoreMetrics.SECURITY_RATING_KEY;
 import static org.sonar.api.rules.RuleType.BUG;
 import static org.sonar.api.rules.RuleType.VULNERABILITY;
 import static org.sonar.ce.task.projectanalysis.component.CrawlerDepthLimit.FILE;
-import static org.sonar.ce.task.projectanalysis.measure.Measure.newMeasureBuilder;
 import static org.sonar.server.measure.Rating.RATING_BY_SEVERITY;
 
 /**
@@ -83,7 +83,7 @@ public class ReliabilityAndSecurityRatingMeasuresVisitor extends PathAwareVisito
     processIssues(component, path);
     path.current().ratingValueByMetric.forEach((key, value) -> {
       Rating rating = value.getValue();
-      measureRepository.add(component, metricsByKey.get(key), newMeasureBuilder().create(rating.getIndex(), rating.name()));
+      measureRepository.add(component, metricsByKey.get(key), RatingMeasures.get(rating));
     });
     if (!path.isRoot()) {
       path.parent().add(path.current());

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import ClipboardButton from 'sonar-ui-common/components/controls/ClipboardButton';
+import { ClipboardButton } from 'sonar-ui-common/components/controls/clipboard';
 import { toShortNotSoISOString } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import PageActions from './PageActions';
@@ -79,9 +79,9 @@ export default function PageHeader(props: Props) {
 Server ID: ${serverId}
 Version: ${version}
 Date: ${toShortNotSoISOString(Date.now())}
-`}
-            label={translate('system.copy_id_info')}
-          />
+`}>
+            {translate('system.copy_id_info')}
+          </ClipboardButton>
         </div>
       )}
     </header>

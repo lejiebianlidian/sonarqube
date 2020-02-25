@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@ package org.sonar.server.measure.index;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Consumer;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Rule;
@@ -32,6 +33,7 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.SnapshotDto;
 import org.sonar.db.es.EsQueueDto;
 import org.sonar.db.organization.OrganizationDto;
+import org.sonar.db.project.ProjectDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.IndexingResult;
 import org.sonar.server.es.ProjectIndexer;
@@ -137,12 +139,14 @@ public class ProjectMeasuresIndexerTest {
 
   @Test
   public void update_index_when_project_tags_are_updated() {
-    ComponentDto project = db.components().insertPrivateProject(p -> p.setTagsString("foo"));
+    ComponentDto project = db.components().insertPrivateProject(defaults(), p -> p.setTagsString("foo"));
     indexProject(project, PROJECT_CREATION);
     assertThatProjectHasTag(project, "foo");
 
-    project.setTagsString("bar");
-    db.getDbClient().componentDao().updateTags(db.getSession(), project);
+    ProjectDto projectDto = db.components().getProjectDto(project);
+    projectDto.setTagsString("bar");
+    db.getDbClient().projectDao().updateTags(db.getSession(), projectDto);
+    // TODO change indexing?
     IndexingResult result = indexProject(project, PROJECT_TAGS_UPDATE);
 
     assertThatProjectHasTag(project, "bar");
@@ -156,7 +160,7 @@ public class ProjectMeasuresIndexerTest {
     indexProject(project, PROJECT_CREATION);
     assertThatIndexContainsOnly(project);
 
-    db.getDbClient().componentDao().delete(db.getSession(), project.getId());
+    db.getDbClient().purgeDao().deleteProject(db.getSession(), project.uuid());
     IndexingResult result = indexProject(project, PROJECT_DELETION);
 
     assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isEqualTo(0);
@@ -244,6 +248,12 @@ public class ProjectMeasuresIndexerTest {
   private IndexingResult recover() {
     Collection<EsQueueDto> items = db.getDbClient().esQueueDao().selectForRecovery(db.getSession(), System.currentTimeMillis() + 1_000L, 10);
     return underTest.index(db.getSession(), items);
+  }
+
+  private static <T> Consumer<T> defaults() {
+    return t -> {
+      // do nothing
+    };
   }
 
 }

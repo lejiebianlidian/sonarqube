@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +17,14 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { debounce } from 'lodash';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import { getParents } from '../../api/components';
-import { isPullRequest, isShortLivingBranch } from '../../helpers/branches';
+import { isPullRequest } from '../../helpers/branch-like';
 import { fetchBranchStatus } from '../../store/rootActions';
+import { BranchLike } from '../../types/branch-like';
 import SourceViewer from '../SourceViewer/SourceViewer';
 import { ComponentDescriptor } from './context';
 import WorkspaceComponentTitle from './WorkspaceComponentTitle';
@@ -30,7 +32,7 @@ import WorkspaceHeader, { Props as WorkspaceHeaderProps } from './WorkspaceHeade
 
 export interface Props extends T.Omit<WorkspaceHeaderProps, 'children' | 'onClose'> {
   component: ComponentDescriptor;
-  fetchBranchStatus: (branchLike: T.BranchLike, projectKey: string) => Promise<void>;
+  fetchBranchStatus: (branchLike: BranchLike, projectKey: string) => Promise<void>;
   height: number;
   onClose: (componentKey: string) => void;
   onLoad: (details: { key: string; name: string; qualifier: string }) => void;
@@ -38,6 +40,11 @@ export interface Props extends T.Omit<WorkspaceHeaderProps, 'children' | 'onClos
 
 export class WorkspaceComponentViewer extends React.PureComponent<Props> {
   container?: HTMLElement | null;
+
+  constructor(props: Props) {
+    super(props);
+    this.refreshBranchStatus = debounce(this.refreshBranchStatus, 1000);
+  }
 
   componentDidMount() {
     if (document.documentElement) {
@@ -84,7 +91,7 @@ export class WorkspaceComponentViewer extends React.PureComponent<Props> {
   refreshBranchStatus = () => {
     const { component } = this.props;
     const { branchLike } = component;
-    if (branchLike && (isPullRequest(branchLike) || isShortLivingBranch(branchLike))) {
+    if (branchLike && isPullRequest(branchLike)) {
       getParents(component.key).then(
         (parents?: any[]) => {
           if (parents && parents.length > 0) {
@@ -131,7 +138,4 @@ export class WorkspaceComponentViewer extends React.PureComponent<Props> {
 
 const mapDispatchToProps = { fetchBranchStatus: fetchBranchStatus as any };
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(WorkspaceComponentViewer);
+export default connect(null, mapDispatchToProps)(WorkspaceComponentViewer);

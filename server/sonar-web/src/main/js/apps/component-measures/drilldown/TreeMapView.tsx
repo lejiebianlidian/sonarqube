@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,10 +33,12 @@ import { isDefined } from 'sonar-ui-common/helpers/types';
 import { colors } from '../../../app/theme';
 import ColorBoxLegend from '../../../components/charts/ColorBoxLegend';
 import { isDiffMetric } from '../../../helpers/measures';
+import { BranchLike } from '../../../types/branch-like';
+import { MetricKey } from '../../../types/metrics';
 import EmptyResult from './EmptyResult';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   components: T.ComponentMeasureEnhanced[];
   handleSelect: (component: string) => void;
   metric: T.Metric;
@@ -206,7 +208,7 @@ export default class TreeMapView extends React.PureComponent<Props, State> {
               'component_measures.legend.size_x',
               translate(
                 'metric',
-                sizeMeasure && sizeMeasure.metric ? sizeMeasure.metric.key : 'ncloc',
+                sizeMeasure && sizeMeasure.metric ? sizeMeasure.metric.key : MetricKey.ncloc,
                 'name'
               )
             )}

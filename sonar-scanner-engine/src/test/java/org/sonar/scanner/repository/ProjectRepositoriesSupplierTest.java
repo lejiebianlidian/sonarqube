@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +19,13 @@
  */
 package org.sonar.scanner.repository;
 
-import com.google.common.collect.Maps;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.sonar.scanner.bootstrap.ProcessedScannerProperties;
 import org.sonar.scanner.scan.branch.BranchConfiguration;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,9 +45,9 @@ public class ProjectRepositoriesSupplierTest {
   @Before
   public void setUp() {
     underTest = new ProjectRepositoriesSupplier(loader, props, branchConfiguration);
-    Map<String, FileData> fileMap = Maps.newHashMap();
+    Map<String, FileData> fileMap = emptyMap();
     project = new SingleProjectRepository(fileMap);
-    when(props.getKeyWithBranch()).thenReturn("key");
+    when(props.getProjectKey()).thenReturn("key");
   }
 
   @Test
@@ -63,7 +63,7 @@ public class ProjectRepositoriesSupplierTest {
 
     assertThat(repo.exists()).isEqualTo(true);
 
-    verify(props).getKeyWithBranch();
+    verify(props).getProjectKey();
     verify(loader).load(eq("key"), eq(null));
     verifyNoMoreInteractions(loader, props);
   }

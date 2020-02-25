@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 package org.sonar.ce.task.projectanalysis.duplication;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -110,7 +111,7 @@ public class DuplicationMeasures {
     }
 
     protected void initializeForFile(Component file) {
-      // don't use measure since it won't be available for some files in the report tree in SLB
+      // don't use measure since it won't be available for some files in the report tree in PRs
       this.lineCount = file.getFileAttributes().getLines();
       Iterable<Duplication> duplications = requireNonNull(this.duplicationRepository, "DuplicationRepository missing")
         .getDuplications(file);
@@ -124,7 +125,7 @@ public class DuplicationMeasures {
       for (Duplication duplication : duplications) {
         blocks++;
         addLines(duplication.getOriginal(), duplicatedLineNumbers);
-        InnerDuplicate[] innerDuplicates = duplication.getDuplicates().stream()
+        InnerDuplicate[] innerDuplicates = Arrays.stream(duplication.getDuplicates())
           .filter(x -> x instanceof InnerDuplicate)
           .map(d -> (InnerDuplicate) d)
           .toArray(InnerDuplicate[]::new);

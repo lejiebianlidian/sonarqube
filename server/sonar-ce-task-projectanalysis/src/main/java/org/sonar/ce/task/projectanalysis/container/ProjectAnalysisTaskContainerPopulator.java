@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,8 @@ import org.sonar.ce.task.projectanalysis.component.BranchPersisterImpl;
 import org.sonar.ce.task.projectanalysis.component.ConfigurationRepositoryImpl;
 import org.sonar.ce.task.projectanalysis.component.DbIdsRepositoryImpl;
 import org.sonar.ce.task.projectanalysis.component.DisabledComponentsHolderImpl;
-import org.sonar.ce.task.projectanalysis.component.MergeAndTargetBranchComponentUuids;
+import org.sonar.ce.task.projectanalysis.component.ProjectPersister;
+import org.sonar.ce.task.projectanalysis.component.ReferenceBranchComponentUuids;
 import org.sonar.ce.task.projectanalysis.component.ReportModulesPath;
 import org.sonar.ce.task.projectanalysis.component.SiblingComponentsWithOpenIssues;
 import org.sonar.ce.task.projectanalysis.component.TreeRootHolderImpl;
@@ -69,21 +70,21 @@ import org.sonar.ce.task.projectanalysis.issue.IssueTrackingDelegator;
 import org.sonar.ce.task.projectanalysis.issue.IssueVisitors;
 import org.sonar.ce.task.projectanalysis.issue.IssuesRepositoryVisitor;
 import org.sonar.ce.task.projectanalysis.issue.LoadComponentUuidsHavingOpenIssuesVisitor;
-import org.sonar.ce.task.projectanalysis.issue.MergeBranchTrackerExecution;
 import org.sonar.ce.task.projectanalysis.issue.MovedIssueVisitor;
 import org.sonar.ce.task.projectanalysis.issue.NewEffortAggregator;
+import org.sonar.ce.task.projectanalysis.issue.PullRequestTrackerExecution;
+import org.sonar.ce.task.projectanalysis.issue.ReferenceBranchTrackerExecution;
 import org.sonar.ce.task.projectanalysis.issue.RemoveProcessedComponentsVisitor;
 import org.sonar.ce.task.projectanalysis.issue.RuleRepositoryImpl;
 import org.sonar.ce.task.projectanalysis.issue.RuleTagsCopier;
 import org.sonar.ce.task.projectanalysis.issue.ScmAccountToUser;
 import org.sonar.ce.task.projectanalysis.issue.ScmAccountToUserLoader;
-import org.sonar.ce.task.projectanalysis.issue.ShortBranchOrPullRequestTrackerExecution;
 import org.sonar.ce.task.projectanalysis.issue.SiblingsIssueMerger;
 import org.sonar.ce.task.projectanalysis.issue.SiblingsIssuesLoader;
 import org.sonar.ce.task.projectanalysis.issue.TrackerBaseInputFactory;
 import org.sonar.ce.task.projectanalysis.issue.TrackerExecution;
-import org.sonar.ce.task.projectanalysis.issue.TrackerMergeOrTargetBranchInputFactory;
 import org.sonar.ce.task.projectanalysis.issue.TrackerRawInputFactory;
+import org.sonar.ce.task.projectanalysis.issue.TrackerReferenceBranchInputFactory;
 import org.sonar.ce.task.projectanalysis.issue.UpdateConflictResolver;
 import org.sonar.ce.task.projectanalysis.issue.commonrule.BranchCoverageRule;
 import org.sonar.ce.task.projectanalysis.issue.commonrule.CommentDensityRule;
@@ -101,6 +102,7 @@ import org.sonar.ce.task.projectanalysis.measure.MeasureToMeasureDto;
 import org.sonar.ce.task.projectanalysis.metric.MetricModule;
 import org.sonar.ce.task.projectanalysis.notification.NotificationFactory;
 import org.sonar.ce.task.projectanalysis.organization.DefaultOrganizationLoader;
+import org.sonar.ce.task.projectanalysis.period.NewCodePeriodResolver;
 import org.sonar.ce.task.projectanalysis.period.PeriodHolderImpl;
 import org.sonar.ce.task.projectanalysis.qualitygate.EvaluationResultTextConverterImpl;
 import org.sonar.ce.task.projectanalysis.qualitygate.QualityGateHolderImpl;
@@ -109,9 +111,10 @@ import org.sonar.ce.task.projectanalysis.qualitygate.QualityGateStatusHolderImpl
 import org.sonar.ce.task.projectanalysis.qualitymodel.MaintainabilityMeasuresVisitor;
 import org.sonar.ce.task.projectanalysis.qualitymodel.NewMaintainabilityMeasuresVisitor;
 import org.sonar.ce.task.projectanalysis.qualitymodel.NewReliabilityAndSecurityRatingMeasuresVisitor;
+import org.sonar.ce.task.projectanalysis.qualitymodel.NewSecurityReviewMeasuresVisitor;
 import org.sonar.ce.task.projectanalysis.qualitymodel.RatingSettings;
 import org.sonar.ce.task.projectanalysis.qualitymodel.ReliabilityAndSecurityRatingMeasuresVisitor;
-import org.sonar.ce.task.projectanalysis.qualitymodel.SecurityReviewRatingVisitor;
+import org.sonar.ce.task.projectanalysis.qualitymodel.SecurityReviewMeasuresVisitor;
 import org.sonar.ce.task.projectanalysis.qualityprofile.ActiveRulesHolderImpl;
 import org.sonar.ce.task.projectanalysis.qualityprofile.QProfileStatusRepositoryImpl;
 import org.sonar.ce.task.projectanalysis.scm.ScmInfoDbLoader;
@@ -197,7 +200,7 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
       MeasureComputersHolderImpl.class,
       MutableTaskResultHolderImpl.class,
       BatchReportReaderImpl.class,
-      MergeAndTargetBranchComponentUuids.class,
+      ReferenceBranchComponentUuids.class,
       SiblingComponentsWithOpenIssues.class,
 
       // repositories
@@ -266,25 +269,28 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
       NewMaintainabilityMeasuresVisitor.class,
       ReliabilityAndSecurityRatingMeasuresVisitor.class,
       NewReliabilityAndSecurityRatingMeasuresVisitor.class,
-      SecurityReviewRatingVisitor.class,
+      SecurityReviewMeasuresVisitor.class,
+      NewSecurityReviewMeasuresVisitor.class,
       LastCommitVisitor.class,
       MeasureComputersVisitor.class,
 
       UpdateConflictResolver.class,
       TrackerBaseInputFactory.class,
       TrackerRawInputFactory.class,
-      TrackerMergeOrTargetBranchInputFactory.class,
+      TrackerReferenceBranchInputFactory.class,
       ClosedIssuesInputFactory.class,
       Tracker.class,
       TrackerExecution.class,
-      ShortBranchOrPullRequestTrackerExecution.class,
-      MergeBranchTrackerExecution.class,
+      PullRequestTrackerExecution.class,
+      ReferenceBranchTrackerExecution.class,
       ComponentIssuesLoader.class,
       BaseIssuesLoader.class,
       IssueTrackingDelegator.class,
       BranchPersisterImpl.class,
+      ProjectPersister.class,
       SiblingsIssuesLoader.class,
       SiblingsIssueMerger.class,
+      NewCodePeriodResolver.class,
 
       // filemove
       ScoreMatrixDumperImpl.class,

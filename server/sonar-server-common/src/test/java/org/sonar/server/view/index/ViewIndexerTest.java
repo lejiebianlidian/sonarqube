@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.resources.Qualifiers.APP;
 import static org.sonar.db.component.ComponentTesting.newProjectCopy;
+import static org.sonar.db.component.ComponentTesting.newSubView;
 import static org.sonar.server.view.index.ViewIndexDefinition.TYPE_VIEW;
 
 public class ViewIndexerTest {
@@ -63,7 +64,22 @@ public class ViewIndexerTest {
 
   @Test
   public void index_on_startup() {
-    db.prepareDbUnit(getClass(), "index.xml");
+    // simple view
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto view1 = db.components().insertView();
+    db.components().insertSnapshot(view1, t -> t.setLast(true));
+    db.components().insertComponent(newProjectCopy(project1, view1));
+    // view with subview
+    ComponentDto project2 = db.components().insertPrivateProject();
+    ComponentDto project3 = db.components().insertPrivateProject();
+    ComponentDto view2 = db.components().insertView();
+    db.components().insertSnapshot(view2, t -> t.setLast(true));
+    db.components().insertComponent(newProjectCopy(project2, view2));
+    ComponentDto subView = db.components().insertComponent(newSubView(view2));
+    db.components().insertComponent(newProjectCopy(project3, subView));
+    // view without project
+    ComponentDto view3 = db.components().insertView();
+    db.components().insertSnapshot(view3, t -> t.setLast(true));
 
     underTest.indexOnStartup(emptySet());
 
@@ -72,25 +88,40 @@ public class ViewIndexerTest {
 
     Map<String, ViewDoc> viewsByUuid = Maps.uniqueIndex(docs, ViewDoc::uuid);
 
-    assertThat(viewsByUuid.get("ABCD").projects()).containsOnly("JKLM");
-    assertThat(viewsByUuid.get("EFGH").projects()).containsOnly("KLMN", "JKLM");
-    assertThat(viewsByUuid.get("FGHI").projects()).containsOnly("JKLM");
-    assertThat(viewsByUuid.get("IJKL").projects()).isEmpty();
+    assertThat(viewsByUuid.get(view1.uuid()).projects()).containsOnly(project1.uuid());
+    assertThat(viewsByUuid.get(view2.uuid()).projects()).containsOnly(project2.uuid(), project3.uuid());
+    assertThat(viewsByUuid.get(subView.uuid()).projects()).containsOnly(project3.uuid());
+    assertThat(viewsByUuid.get(view3.uuid()).projects()).isEmpty();
   }
 
   @Test
   public void index_root_view() {
-    db.prepareDbUnit(getClass(), "index.xml");
+    // simple view
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto view1 = db.components().insertView();
+    db.components().insertSnapshot(view1, t -> t.setLast(true));
+    db.components().insertComponent(newProjectCopy(project1, view1));
+    // view with subview
+    ComponentDto project2 = db.components().insertPrivateProject();
+    ComponentDto project3 = db.components().insertPrivateProject();
+    ComponentDto view2 = db.components().insertView();
+    db.components().insertSnapshot(view2, t -> t.setLast(true));
+    db.components().insertComponent(newProjectCopy(project2, view2));
+    ComponentDto subView = db.components().insertComponent(newSubView(view2));
+    db.components().insertComponent(newProjectCopy(project3, subView));
+    // view without project
+    ComponentDto view3 = db.components().insertView();
+    db.components().insertSnapshot(view3, t -> t.setLast(true));
 
-    underTest.index("EFGH");
+    underTest.index(view2.uuid());
 
     List<ViewDoc> docs = es.getDocuments(TYPE_VIEW, ViewDoc.class);
     assertThat(docs).hasSize(2);
 
     Map<String, ViewDoc> viewsByUuid = Maps.uniqueIndex(docs, ViewDoc::uuid);
 
-    assertThat(viewsByUuid.get("EFGH").projects()).containsOnly("KLMN", "JKLM");
-    assertThat(viewsByUuid.get("FGHI").projects()).containsOnly("JKLM");
+    assertThat(viewsByUuid.get(view2.uuid()).projects()).containsOnly(project2.uuid(), project3.uuid());
+    assertThat(viewsByUuid.get(subView.uuid()).projects()).containsOnly(project3.uuid());
   }
 
   @Test
@@ -107,7 +138,7 @@ public class ViewIndexerTest {
 
   @Test
   public void index_application() {
-    ComponentDto application = db.components().insertApplication(db.getDefaultOrganization());
+    ComponentDto application = db.components().insertPrivateApplication(db.getDefaultOrganization());
     ComponentDto project = db.components().insertPrivateProject();
     db.components().insertComponent(newProjectCopy("PC1", project, application));
 
@@ -122,7 +153,7 @@ public class ViewIndexerTest {
 
   @Test
   public void index_application_on_startup() {
-    ComponentDto application = db.components().insertApplication(db.getDefaultOrganization());
+    ComponentDto application = db.components().insertPrivateApplication(db.getDefaultOrganization());
     ComponentDto project = db.components().insertPrivateProject();
     db.components().insertComponent(newProjectCopy("PC1", project, application));
 
@@ -137,7 +168,7 @@ public class ViewIndexerTest {
 
   @Test
   public void index_application_branch() {
-    ComponentDto application = db.components().insertMainBranch(c -> c.setQualifier(APP).setDbKey("app"));
+    ComponentDto application = db.components().insertPublicProject(c -> c.setQualifier(APP).setDbKey("app"));
     ComponentDto applicationBranch1 = db.components().insertProjectBranch(application, a -> a.setKey("app-branch1"));
     ComponentDto applicationBranch2 = db.components().insertProjectBranch(application, a -> a.setKey("app-branch2"));
     ComponentDto project1 = db.components().insertPrivateProject(p -> p.setDbKey("prj1"));

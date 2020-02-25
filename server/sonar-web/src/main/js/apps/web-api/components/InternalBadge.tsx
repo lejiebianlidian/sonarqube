@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import { translate } from 'sonar-ui-common/helpers/l10n';
 export default function InternalBadge() {
   return (
     <Tooltip overlay={translate('api_documentation.internal_tooltip')}>
-      <span className="badge badge-danger">{translate('internal')}</span>
+      <span className="badge badge-error">{translate('internal')}</span>
     </Tooltip>
   );
 }

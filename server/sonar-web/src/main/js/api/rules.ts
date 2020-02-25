@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -82,13 +82,13 @@ export function createRule(data: {
 }): Promise<T.RuleDetails> {
   return postJSON('/api/rules/create', data).then(
     r => r.rule,
-    error => {
+    response => {
       // do not show global error if the status code is 409
       // this case should be handled inside a component
-      if (error && error.response && error.response.status === 409) {
-        return Promise.reject(error.response);
+      if (response && response.status === 409) {
+        return Promise.reject(response);
       } else {
-        return throwGlobalError(error);
+        return throwGlobalError(response);
       }
     }
   );

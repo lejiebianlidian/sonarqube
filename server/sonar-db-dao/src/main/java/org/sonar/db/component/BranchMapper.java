@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@ package org.sonar.db.component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.ibatis.annotations.Param;
 
@@ -34,15 +35,20 @@ public interface BranchMapper {
 
   int updateManualBaseline(@Param("uuid") String uuid, @Nullable @Param("analysisUuid") String analysisUuid, @Param("now") long now);
 
+  int updateExcludeFromPurge(@Param("uuid") String uuid, @Param("excludeFromPurge") boolean excludeFromPurge,
+    @Param("now") long now);
+
   BranchDto selectByKey(@Param("projectUuid") String projectUuid, @Param("key") String key, @Param("keyType") KeyType keyType);
 
   BranchDto selectByUuid(@Param("uuid") String uuid);
 
   Collection<BranchDto> selectByProjectUuid(@Param("projectUuid") String projectUuid);
 
+  List<BranchDto> selectByBranchKeys(@Param("branchKeyByProjectUuid") Map<String, String> branchKeyByProjectUuid);
+
   List<BranchDto> selectByUuids(@Param("uuids") Collection<String> uuids);
 
   long countNonMainBranches();
 
-  long countByTypeAndCreationDate(@Param("branchType")String branchType, @Param("sinceDate") long sinceDate);
+  long countByTypeAndCreationDate(@Param("branchType") String branchType, @Param("sinceDate") long sinceDate);
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,9 @@ import org.sonar.db.alm.AlmAppInstallMapper;
 import org.sonar.db.alm.OrganizationAlmBindingMapper;
 import org.sonar.db.alm.ProjectAlmBindingDto;
 import org.sonar.db.alm.ProjectAlmBindingMapper;
+import org.sonar.db.alm.pat.AlmPatMapper;
+import org.sonar.db.alm.setting.AlmSettingMapper;
+import org.sonar.db.alm.setting.ProjectAlmSettingMapper;
 import org.sonar.db.ce.CeActivityMapper;
 import org.sonar.db.ce.CeQueueMapper;
 import org.sonar.db.ce.CeScannerContextMapper;
@@ -48,10 +51,10 @@ import org.sonar.db.ce.CeTaskMessageMapper;
 import org.sonar.db.component.AnalysisPropertiesMapper;
 import org.sonar.db.component.BranchMapper;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.component.ComponentWithModuleUuidDto;
 import org.sonar.db.component.ComponentDtoWithSnapshotId;
 import org.sonar.db.component.ComponentKeyUpdaterMapper;
 import org.sonar.db.component.ComponentMapper;
+import org.sonar.db.component.ComponentWithModuleUuidDto;
 import org.sonar.db.component.FilePathWithHashDto;
 import org.sonar.db.component.KeyWithUuidDto;
 import org.sonar.db.component.ProjectLinkMapper;
@@ -71,7 +74,7 @@ import org.sonar.db.issue.IssueChangeDto;
 import org.sonar.db.issue.IssueChangeMapper;
 import org.sonar.db.issue.IssueDto;
 import org.sonar.db.issue.IssueMapper;
-import org.sonar.db.issue.ShortBranchIssueDto;
+import org.sonar.db.issue.PrIssueDto;
 import org.sonar.db.mapping.ProjectMappingDto;
 import org.sonar.db.mapping.ProjectMappingsMapper;
 import org.sonar.db.measure.LiveMeasureMapper;
@@ -80,6 +83,7 @@ import org.sonar.db.measure.MeasureMapper;
 import org.sonar.db.measure.custom.CustomMeasureDto;
 import org.sonar.db.measure.custom.CustomMeasureMapper;
 import org.sonar.db.metric.MetricMapper;
+import org.sonar.db.newcodeperiod.NewCodePeriodMapper;
 import org.sonar.db.notification.NotificationQueueDto;
 import org.sonar.db.notification.NotificationQueueMapper;
 import org.sonar.db.organization.OrganizationDto;
@@ -99,6 +103,8 @@ import org.sonar.db.permission.template.PermissionTemplateMapper;
 import org.sonar.db.permission.template.PermissionTemplateUserDto;
 import org.sonar.db.plugin.PluginDto;
 import org.sonar.db.plugin.PluginMapper;
+import org.sonar.db.project.ProjectDto;
+import org.sonar.db.project.ProjectMapper;
 import org.sonar.db.property.InternalComponentPropertiesMapper;
 import org.sonar.db.property.InternalComponentPropertyDto;
 import org.sonar.db.property.InternalPropertiesMapper;
@@ -121,6 +127,7 @@ import org.sonar.db.qualityprofile.DefaultQProfileMapper;
 import org.sonar.db.qualityprofile.QProfileChangeMapper;
 import org.sonar.db.qualityprofile.QProfileEditGroupsMapper;
 import org.sonar.db.qualityprofile.QProfileEditUsersMapper;
+import org.sonar.db.qualityprofile.QualityProfileExportMapper;
 import org.sonar.db.qualityprofile.QualityProfileMapper;
 import org.sonar.db.rule.RuleDto;
 import org.sonar.db.rule.RuleMapper;
@@ -186,7 +193,6 @@ public class MyBatis implements Startable {
     confBuilder.loadAlias("IssueChange", IssueChangeDto.class);
     confBuilder.loadAlias("KeyLongValue", KeyLongValue.class);
     confBuilder.loadAlias("Issue", IssueDto.class);
-    confBuilder.loadAlias("ShortBranchIssue", ShortBranchIssueDto.class);
     confBuilder.loadAlias("Measure", MeasureDto.class);
     confBuilder.loadAlias("NotificationQueue", NotificationQueueDto.class);
     confBuilder.loadAlias("Organization", OrganizationDto.class);
@@ -196,8 +202,10 @@ public class MyBatis implements Startable {
     confBuilder.loadAlias("PermissionTemplate", PermissionTemplateDto.class);
     confBuilder.loadAlias("PermissionTemplateUser", PermissionTemplateUserDto.class);
     confBuilder.loadAlias("Plugin", PluginDto.class);
+    confBuilder.loadAlias("PrIssue", PrIssueDto.class);
     confBuilder.loadAlias("ProjectAlmBinding", ProjectAlmBindingDto.class);
     confBuilder.loadAlias("ProjectQgateAssociation", ProjectQgateAssociationDto.class);
+    confBuilder.loadAlias("Project", ProjectDto.class);
     confBuilder.loadAlias("ProjectMapping", ProjectMappingDto.class);
     confBuilder.loadAlias("PurgeableAnalysis", PurgeableAnalysisDto.class);
     confBuilder.loadAlias("QualityGateCondition", QualityGateConditionDto.class);
@@ -222,6 +230,8 @@ public class MyBatis implements Startable {
     Class<?>[] mappers = {
       ActiveRuleMapper.class,
       AlmAppInstallMapper.class,
+      AlmPatMapper.class,
+      AlmSettingMapper.class,
       AnalysisPropertiesMapper.class,
       AuthorizationMapper.class,
       BranchMapper.class,
@@ -251,6 +261,7 @@ public class MyBatis implements Startable {
       IssueMapper.class,
       MeasureMapper.class,
       MetricMapper.class,
+      NewCodePeriodMapper.class,
       NotificationQueueMapper.class,
       OrganizationAlmBindingMapper.class,
       OrganizationMapper.class,
@@ -259,7 +270,9 @@ public class MyBatis implements Startable {
       PermissionTemplateMapper.class,
       PluginMapper.class,
       ProjectAlmBindingMapper.class,
+      ProjectAlmSettingMapper.class,
       ProjectLinkMapper.class,
+      ProjectMapper.class,
       ProjectMappingsMapper.class,
       ProjectQgateAssociationMapper.class,
       PropertiesMapper.class,
@@ -270,6 +283,7 @@ public class MyBatis implements Startable {
       QualityGateConditionMapper.class,
       QualityGateMapper.class,
       QualityProfileMapper.class,
+      QualityProfileExportMapper.class,
       RoleMapper.class,
       RuleMapper.class,
       RuleRepositoryMapper.class,

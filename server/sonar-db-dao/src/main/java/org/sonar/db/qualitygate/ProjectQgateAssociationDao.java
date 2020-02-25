@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,21 +31,11 @@ public class ProjectQgateAssociationDao implements Dao {
   }
 
   /**
-   * @return quality gate id if a specific Quality Gate has been defined for the given component id. <br>
+   * @return quality gate uuid if a specific Quality Gate has been defined for the given project uuid. <br>
    * Returns <code>{@link Optional#empty()}</code> otherwise (ex: default quality gate applies)
    */
-  public Optional<Long> selectQGateIdByComponentId(DbSession dbSession, long componentId) {
-    String id = mapper(dbSession).selectQGateIdByComponentId(componentId);
-
-    return id == null ? Optional.empty() : Optional.of(Long.valueOf(id));
-  }
-
-  /**
-   * @return quality gate uuid if a specific Quality Gate has been defined for the given component uuid. <br>
-   * Returns <code>{@link Optional#empty()}</code> otherwise (ex: default quality gate applies)
-   */
-  public Optional<String> selectQGateUuidByComponentUuid(DbSession dbSession, String componentUuid) {
-    String uuid = mapper(dbSession).selectQGateUuidByComponentUuid(componentUuid);
+  public Optional<String> selectQGateUuidByProjectUuid(DbSession dbSession, String projectUuid) {
+    String uuid = mapper(dbSession).selectQGateUuidByProjectUuid(projectUuid);
     return Optional.ofNullable(uuid);
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,7 +76,10 @@ function setLanguage(lang: string) {
   const langToLoad = lang || DEFAULT_LANGUAGE;
   // No need to load english (default) bundle, it's coming with react-intl
   if (langToLoad !== DEFAULT_LANGUAGE) {
-    return loadLocaleData(langToLoad).then(() => langToLoad, () => DEFAULT_LANGUAGE);
+    return loadLocaleData(langToLoad).then(
+      () => langToLoad,
+      () => DEFAULT_LANGUAGE
+    );
   } else {
     return DEFAULT_LANGUAGE;
   }

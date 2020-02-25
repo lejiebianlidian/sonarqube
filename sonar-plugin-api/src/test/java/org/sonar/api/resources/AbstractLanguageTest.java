@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ public class AbstractLanguageTest {
     new TooLongKeyLanguage();
   }
 
-  class TooLongKeyLanguage extends AbstractLanguage {
+  static class TooLongKeyLanguage extends AbstractLanguage {
     public TooLongKeyLanguage() {
       super("aKeyWhichIsVeryVeryVeryVeryVeryLong");
     }

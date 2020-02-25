@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ public class BuildComponentTreeStep implements ComputationStep {
 
       Component reportTreeRoot = builder.buildProject(reportProject, relativePathFromScmRoot);
 
-      if (analysisMetadataHolder.isSLBorPR()) {
+      if (analysisMetadataHolder.isPullRequest()) {
         Component changedComponentTreeRoot = builder.buildChangedComponentTreeRoot(reportTreeRoot);
         treeRootHolder.setRoots(changedComponentTreeRoot, reportTreeRoot);
       } else {
@@ -135,7 +135,7 @@ public class BuildComponentTreeStep implements ComputationStep {
     Branch branch = analysisMetadataHolder.getBranch();
 
     // for non-legacy branches, the public key is different from the DB key.
-    if (!branch.isLegacyFeature() && !branch.isMain()) {
+    if (!branch.isMain()) {
       return new DefaultBranchImpl();
     }
     return branch;

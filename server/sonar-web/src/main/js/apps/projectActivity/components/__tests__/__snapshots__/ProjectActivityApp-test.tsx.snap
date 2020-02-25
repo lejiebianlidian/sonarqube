@@ -8,8 +8,8 @@ exports[`should render correctly 1`] = `
   <Suggestions
     suggestions="project_activity"
   />
-  <HelmetWrapper
-    defer={true}
+  <Helmet
+    defer={false}
     encodeSpecialCharacters={true}
     title="project_activity.page"
   />
@@ -76,10 +76,10 @@ exports[`should render correctly 1`] = `
         canAdmin={false}
         canDeleteAnalyses={false}
         changeEvent={[MockFunction]}
-        className="boxed-group-inner"
         deleteAnalysis={[MockFunction]}
         deleteEvent={[MockFunction]}
         initializing={false}
+        leakPeriodDate={2017-05-16T11:50:02.000Z}
         project={
           Object {
             "key": "foo",

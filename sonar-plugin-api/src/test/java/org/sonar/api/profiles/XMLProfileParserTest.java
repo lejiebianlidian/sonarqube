@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ public class XMLProfileParserTest {
   private RuleFinder newRuleFinder() {
     RuleFinder ruleFinder = mock(RuleFinder.class);
     when(ruleFinder.findByKey(anyString(), anyString())).thenAnswer(new Answer<Rule>() {
-      public Rule answer(InvocationOnMock iom) throws Throwable {
+      public Rule answer(InvocationOnMock iom) {
         Rule rule = Rule.create((String) iom.getArguments()[0], (String) iom.getArguments()[1], (String) iom.getArguments()[1]);
         rule.createParameter("format");
         rule.createParameter("message");

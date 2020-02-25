@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -249,34 +249,6 @@ public class QualityGateEventsStepTest {
   }
 
   @Test
-  public void verify_branch_name_is_set_in_notification_when_not_main() {
-    String branchName = "feature1";
-    analysisMetadataHolder.setBranch(new DefaultBranchImpl(branchName) {
-      @Override
-      public boolean isMain() {
-        return false;
-      }
-    });
-
-    when(measureRepository.getRawMeasure(PROJECT_COMPONENT, alertStatusMetric))
-      .thenReturn(of(Measure.newMeasureBuilder().setQualityGateStatus(OK_QUALITY_GATE_STATUS).createNoValue()));
-    when(measureRepository.getBaseMeasure(PROJECT_COMPONENT, alertStatusMetric)).thenReturn(
-      of(Measure.newMeasureBuilder().setQualityGateStatus(new QualityGateStatus(ERROR)).createNoValue()));
-
-    underTest.execute(new TestComputationStepContext());
-
-    verify(notificationService).deliver(notificationArgumentCaptor.capture());
-    Notification notification = notificationArgumentCaptor.getValue();
-    assertThat(notification.getType()).isEqualTo("alerts");
-    assertThat(notification.getFieldValue("projectKey")).isEqualTo(PROJECT_COMPONENT.getKey());
-    assertThat(notification.getFieldValue("projectName")).isEqualTo(PROJECT_COMPONENT.getName());
-    assertThat(notification.getFieldValue("projectVersion")).isEqualTo(PROJECT_COMPONENT.getProjectAttributes().getProjectVersion());
-    assertThat(notification.getFieldValue("branch")).isEqualTo(branchName);
-
-    reset(measureRepository, eventRepository, notificationService);
-  }
-
-  @Test
   public void verify_branch_name_is_not_set_in_notification_when_main() {
     analysisMetadataHolder.setBranch(new DefaultBranchImpl());
 
@@ -299,29 +271,10 @@ public class QualityGateEventsStepTest {
   }
 
   @Test
-  public void no_alert_on_short_living_branches() {
-    Branch shortBranch = mock(Branch.class);
-    when(shortBranch.getType()).thenReturn(BranchType.SHORT);
-    analysisMetadataHolder.setBranch(shortBranch);
-    TreeRootHolder treeRootHolder = mock(TreeRootHolder.class);
-    MetricRepository metricRepository = mock(MetricRepository.class);
-    MeasureRepository measureRepository = mock(MeasureRepository.class);
-    EventRepository eventRepository = mock(EventRepository.class);
-    NotificationService notificationService = mock(NotificationService.class);
-
-    QualityGateEventsStep underTest = new QualityGateEventsStep(treeRootHolder, metricRepository, measureRepository,
-      eventRepository, notificationService, analysisMetadataHolder);
-
-    underTest.execute(new TestComputationStepContext());
-
-    verifyZeroInteractions(treeRootHolder, metricRepository, measureRepository, eventRepository, notificationService);
-  }
-
-  @Test
   public void no_alert_on_pull_request_branches() {
-    Branch shortBranch = mock(Branch.class);
-    when(shortBranch.getType()).thenReturn(BranchType.PULL_REQUEST);
-    analysisMetadataHolder.setBranch(shortBranch);
+    Branch pr = mock(Branch.class);
+    when(pr.getType()).thenReturn(BranchType.PULL_REQUEST);
+    analysisMetadataHolder.setBranch(pr);
     TreeRootHolder treeRootHolder = mock(TreeRootHolder.class);
     MetricRepository metricRepository = mock(MetricRepository.class);
     MeasureRepository measureRepository = mock(MeasureRepository.class);

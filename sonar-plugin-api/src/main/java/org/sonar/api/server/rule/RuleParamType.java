@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ public final class RuleParamType {
     if (multiple) {
       sb.append(OPTION_SEPARATOR);
       sb.append(MULTIPLE_PARAM + PARAMETER_SEPARATOR);
-      sb.append(Boolean.toString(multiple));
+      sb.append(multiple);
     }
     if (values.length > 0) {
       sb.append(OPTION_SEPARATOR);

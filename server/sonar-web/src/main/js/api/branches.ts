@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +19,13 @@
  */
 import { getJSON, post } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
+import { Branch, PullRequest } from '../types/branch-like';
 
-export function getBranches(project: string): Promise<T.Branch[]> {
+export function getBranches(project: string): Promise<Branch[]> {
   return getJSON('/api/project_branches/list', { project }).then(r => r.branches, throwGlobalError);
 }
 
-export function getPullRequests(project: string): Promise<T.PullRequest[]> {
+export function getPullRequests(project: string): Promise<PullRequest[]> {
   return getJSON('/api/project_pull_requests/list', { project }).then(
     r => r.pullRequests,
     throwGlobalError
@@ -41,4 +42,12 @@ export function deletePullRequest(data: { project: string; pullRequest: string }
 
 export function renameBranch(project: string, name: string) {
   return post('/api/project_branches/rename', { project, name }).catch(throwGlobalError);
+}
+
+export function excludeBranchFromPurge(projectKey: string, branchName: string, excluded: boolean) {
+  return post('/api/project_branches/set_automatic_deletion_protection', {
+    project: projectKey,
+    branch: branchName,
+    value: excluded
+  }).catch(throwGlobalError);
 }

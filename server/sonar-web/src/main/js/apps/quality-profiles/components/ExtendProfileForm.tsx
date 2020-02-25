@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ export default class ExtendProfileForm extends React.PureComponent<Props, State>
 
       try {
         const { profile: newProfile } = await createQualityProfile(data);
-        await changeProfileParent(newProfile.key, parentProfile.key);
+        await changeProfileParent(newProfile, parentProfile);
         this.props.onExtend(newProfile.name);
       } finally {
         if (this.mounted) {
@@ -126,7 +126,7 @@ export default class ExtendProfileForm extends React.PureComponent<Props, State>
               disabled={this.state.loading || !this.canSubmit(this.state)}
               id="extend-profile-submit"
               onClick={this.handleFormSubmit}>
-              {translate('copy')}
+              {translate('extend')}
             </SubmitButton>
             <ResetButtonLink id="extend-profile-cancel" onClick={this.props.onClose}>
               {translate('cancel')}

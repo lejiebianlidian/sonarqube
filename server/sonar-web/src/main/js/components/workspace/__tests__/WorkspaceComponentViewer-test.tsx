@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,8 @@ import { shallow } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getParents } from '../../../api/components';
-import { mockIssue, mockPullRequest } from '../../../helpers/testMocks';
+import { mockPullRequest } from '../../../helpers/mocks/branch-like';
+import { mockIssue } from '../../../helpers/testMocks';
 import { Props, WorkspaceComponentViewer } from '../WorkspaceComponentViewer';
 
 jest.mock('../../../api/components', () => ({

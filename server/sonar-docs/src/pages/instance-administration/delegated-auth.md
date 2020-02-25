@@ -4,7 +4,7 @@ url: /instance-administration/delegated-auth/
 ---
 
 
-SonarQube comes with an onboard user database, as well as the ability to delegate authentication via HTTP Headers, GitHub Authentication, SAML, or LDAP. Each method offers user identity management, group synchronization/mapping and authentication.
+SonarQube comes with an onboard user database, as well as the ability to delegate authentication via HTTP Headers, GitHub Authentication, GitLab Authentication, SAML, or LDAP. Each method offers user identity management, group synchronization/mapping, and authentication.
 
 ## Group Mapping
 When using group mapping, the following caveats apply regardless of which delegated authentication method is used:
@@ -34,13 +34,13 @@ All the parameters required to activate and configure this feature are available
 Using Http header authentication is an easy way integrate your SonarQube deployment with an in-house SSO implementation.
 
 ## GitHub Authentication
-You can delegate authentication to GitHub Enterprise using a dedicated GitHub OAuth application. Alternately, if you're using the pull request decoration provided as part of [Developer Edition](https://redirect.sonarsource.com/editions/developer.html) and [above](https://www.sonarsource.com/plans-and-pricing/) you can harness the [GitHub application needed for PR decoration](/instance-administration/github-application/) to also provide authentication.
+You can delegate authentication to GitHub Enterprise and GitHub.com using a dedicated GitHub OAuth application. Alternately, if you're using the pull request decoration provided as part of [Developer Edition](https://redirect.sonarsource.com/editions/developer.html) and [above](https://www.sonarsource.com/plans-and-pricing/) you can harness the [GitHub application needed for PR decoration](/analysis/pr-decoration/) to also provide authentication.
 
 ### Dedicated GitHub OAuth application
 1. You'll need to first create a GitHub OAuth application. Click [here](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/) for general instructions:
-   1. "Homepage URL" is the public URL to your SonarQube server, for example "https://sonarqube.mycompany.com". For security reasons HTTP is not supported. HTTPS must be used. The public URL is configured in SonarQube at **[Administration -> General -> Server base URL](/#sonarqube-admin#/admin/settings)**
-   1. "Authorization callback URL" is <Homepage URL>/oauth2/callback, for example "https://sonarqube.mycompany.com/oauth2/callback"
-1. In SonarQube navigate to **[Administration > Configuration > General Settings > GitHub](/#sonarqube-admin#/admin/settings?category=github)**:
+   1. "Homepage URL" is the public URL to your SonarQube server, for example "https://sonarqube.mycompany.com". For security reasons HTTP is not supported. HTTPS must be used. The public URL is configured in SonarQube at **[Administration > General > Server base URL](/#sonarqube-admin#/admin/settings)**
+   1. For **GitHub Enterprise** "Authorization callback URL" and for **GitHub.com** "User authorization callback URL" is <Homepage URL>/oauth2/callback, for example "https://sonarqube.mycompany.com/oauth2/callback"
+1. In SonarQube, navigate to **Administration > Configuration > General Settings > ALM Integrations > GitHub**:
    1. Set **Enabled** to `true`
    1. Set the **Client ID** to the value provided by the GitHub developer application
    1. Set the **Client Secret** to the value provided by the GitHub developer application
@@ -49,9 +49,31 @@ On the login form, the new "Log in with GitHub" button allows users to connect w
 
 ### Re-use GitHub PR decoration application
 1. In the GitHub app, in **Permission & events > User permissions**: Add **Read-only** access in **Emails**.
-1. In SonarQube settings, update the **Client ID** and **Client Secret** and use values defined in the GitHub app
+1. In SonarQube settings, update the **Client ID** and **Client Secret** and use values defined in the GitHub app.
 
 If you previously used a dedicated GitHub OAuth application for authentication, it can be removed.
+
+## GitLab Authentication  
+You can delegate authentication to GitLab using a dedicated GitLab OAuth application.
+
+Create a GitLab OAuth application from your GitLab account. Click [here](https://docs.gitlab.com/ee/integration/oauth_provider.html) for general instructions.
+
+   1. In the **Name** text box, name your app SonarQube.
+   1. In the **Redirect URI** text box, enter your SonarQube URL with the path `/oauth2/callback/gitlab`. For example, `https://sonarqube.mycompany.com/oauth2/callback/gitlab`.
+   1. Under **Scopes**, select **api** if you plan to enable group synchronization. You can instead select **read_user** if you only plan to delegate authentication.
+
+After saving your application, GitLab gives you your **Application ID** and **Secret**. Keep these at hand, open your SonarQube instance, and navigate to **Administration > Configuration > General Settings > ALM Integrations > GitLab** to finish setting up GitLab authentication:
+
+1. Set **Enabled** to `true`.
+1. Enter the Application ID provided by GitLab in the **Application ID** text box.
+1. Enter the Secret provided by GitLab in the **Secret** text box.
+
+On the login form, the new "Log in with GitLab" button allows users to connect with their GitLab accounts.
+
+### GitLab group synchronization
+Setting **Synchronize user groups** to `true` at **Administration > Configuration > General Settings > ALM Integrations > GitLab** associates GitLab groups with SonarQube groups of the same name (if they exist). GitLab users inherit membership to subgroups from parent groups so a user that is a member of a group will also be a member of the group's subgroups. 
+
+To synchronize a GitLab group or subgroup with a SonarQube group, name the SonarQube group with the full path of the of the GitLab group or subgroup URL. For example, say you have a GitLab group named "My Group" with a subgroup named "My Subgroup" and the subgroup URL is `https://YourGitLabURL.com/my-group/my-subgroup`. You would name your SonarQube group `my-group/my-subgroup` to synchronize it with your GitLab subgroup.
 
 ## SAML Authentication  
 You can delegate authentication to a SAML 2.0 Identity Provider using SAML Authentication.
@@ -105,16 +127,16 @@ The following example may be useful if you're using Keycloak as a SAML Identity 
 |       * Single Role Attribute: ON
 |       * Full Group Path: OFF
 |
-| Download the XML configuration file in Installations > Format Option > SAML Metadata IDPSSODescriptor
+| Download the XML configuration file from Keycloak.
 
 [[collapse]]
 | ## In SonarQube, Configure SAML authentication
-| Go to **[Administration > Configuration > General Settings > SAML > Authentication](/#sonarqube-admin#/admin/settings?category=saml)**
+| Go to **[Administration > Configuration > General Settings > Security > SAML](/#sonarqube-admin#/admin/settings?category=security)**
 | * **Enabled** should be set to true
 | * **Application ID** is the value of the "Client ID" you set in Keycloak (for example "sonarqube")
 | * **Provider ID** is the value of the "EntityDescriptor" > "entityID" attribute in the XML configuration file (for example "http://keycloak:8080/auth/realms/sonarqube" where sonarqube is the name of the realm)
 | * **SAML login url** is the value of "SingleSignOnService" > "Location" attribute in the XML configuration file (for example "http://keycloak:8080/auth/realms/sonarqube/protocol/saml")
-| * **Provider certificate** is the value of "dsig:X509Certificate" node in the XML configuration file
+| * **Provider certificate** is the value you get from *Reaml Settings* -> *Keys* -> click on the *Certificate* button
 | * **SAML user login attribute** is the value set in the login mapper in "SAML Attribute Name"
 | * **SAML user name attribute** is the value set in the name mapper in "SAML Attribute Name"
 | * (Optional) **SAML user email attribute** is the value set in the email mapper in "SAML Attribute Name"
@@ -145,7 +167,7 @@ GSSAPI|![](/images/check.svg)|  |  |
 ![](/images/check.svg) = successfully tested
 
 ### Setup
-1. Configure the LDAP plugin by editing _$SONARQUBE-HOME/conf/sonar.properties_ (see table below)
+1. Configure LDAP by editing _$SONARQUBE-HOME/conf/sonar.properties_ (see table below)
 2. Restart the SonarQube server and check the log file for:
 ```
 INFO org.sonar.INFO Security realm: LDAP ...

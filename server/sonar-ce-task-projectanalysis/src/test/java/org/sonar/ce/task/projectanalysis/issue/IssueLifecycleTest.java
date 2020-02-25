@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,6 @@ import org.sonar.core.issue.DefaultIssue;
 import org.sonar.core.issue.DefaultIssueComment;
 import org.sonar.core.issue.FieldDiffs;
 import org.sonar.core.issue.IssueChangeContext;
-import org.sonar.db.component.BranchType;
-import org.sonar.db.component.KeyType;
 import org.sonar.db.protobuf.DbCommons;
 import org.sonar.db.protobuf.DbIssues;
 import org.sonar.server.issue.IssueFieldsSetter;
@@ -58,27 +56,20 @@ import static org.sonar.api.utils.DateUtils.parseDate;
 import static org.sonar.db.rule.RuleTesting.XOO_X1;
 
 public class IssueLifecycleTest {
-
   private static final Date DEFAULT_DATE = new Date();
-
   private static final Duration DEFAULT_DURATION = Duration.create(10);
 
-  DumbRule rule = new DumbRule(XOO_X1);
+  private DumbRule rule = new DumbRule(XOO_X1);
 
-  @org.junit.Rule
+  @Rule
   public RuleRepositoryRule ruleRepository = new RuleRepositoryRule().add(rule);
-
   @Rule
   public AnalysisMetadataHolderRule analysisMetadataHolder = new AnalysisMetadataHolderRule();
 
   private IssueChangeContext issueChangeContext = IssueChangeContext.createUser(DEFAULT_DATE, "default_user_uuid");
-
   private IssueWorkflow workflow = mock(IssueWorkflow.class);
-
   private IssueFieldsSetter updater = mock(IssueFieldsSetter.class);
-
   private DebtCalculator debtCalculator = mock(DebtCalculator.class);
-
   private IssueLifecycle underTest = new IssueLifecycle(analysisMetadataHolder, issueChangeContext, workflow, updater, debtCalculator, ruleRepository);
 
   @Test
@@ -96,7 +87,6 @@ public class IssueLifecycleTest {
     assertThat(issue.effort()).isEqualTo(DEFAULT_DURATION);
     assertThat(issue.isNew()).isTrue();
     assertThat(issue.isCopied()).isFalse();
-    assertThat(issue.isFromHotspot()).isFalse();
   }
 
   @Test
@@ -116,11 +106,10 @@ public class IssueLifecycleTest {
     assertThat(issue.effort()).isEqualTo(DEFAULT_DURATION);
     assertThat(issue.isNew()).isTrue();
     assertThat(issue.isCopied()).isFalse();
-    assertThat(issue.isFromHotspot()).isTrue();
   }
 
   @Test
-  public void mergeIssueFromShortLivingBranchIntoLLB() {
+  public void mergeIssueFromPRIntoBranch() {
     DefaultIssue raw = new DefaultIssue()
       .setKey("raw");
     DefaultIssue fromShort = new DefaultIssue()
@@ -154,7 +143,7 @@ public class IssueLifecycleTest {
     when(branch.getName()).thenReturn("master");
     analysisMetadataHolder.setBranch(branch);
 
-    underTest.mergeConfirmedOrResolvedFromShortLivingBranchOrPr(raw, fromShort, KeyType.BRANCH, "feature/foo");
+    underTest.mergeConfirmedOrResolvedFromPr(raw, fromShort, "2");
 
     assertThat(raw.resolution()).isEqualTo("resolution");
     assertThat(raw.status()).isEqualTo("status");
@@ -167,116 +156,9 @@ public class IssueLifecycleTest {
     assertThat(raw.changes().get(0).issueKey()).isEqualTo("raw");
     assertThat(raw.changes().get(0).diffs()).containsOnlyKeys("severity");
     assertThat(raw.changes().get(1).userUuid()).isEqualTo("default_user_uuid");
-    assertThat(raw.changes().get(1).diffs()).containsOnlyKeys(IssueFieldsSetter.FROM_SHORT_BRANCH);
-    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_SHORT_BRANCH).oldValue()).isEqualTo("feature/foo");
-    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_SHORT_BRANCH).newValue()).isEqualTo("master");
-  }
-
-  @Test
-  public void mergeIssueFromShortLivingBranchIntoPR() {
-    DefaultIssue raw = new DefaultIssue()
-      .setKey("raw");
-    DefaultIssue fromShort = new DefaultIssue()
-      .setKey("short");
-    fromShort.setResolution("resolution");
-    fromShort.setStatus("status");
-
-    Date commentDate = new Date();
-    fromShort.addComment(new DefaultIssueComment()
-      .setIssueKey("short")
-      .setCreatedAt(commentDate)
-      .setUserUuid("user_uuid")
-      .setMarkdownText("A comment"));
-
-    Date diffDate = new Date();
-    // file diff alone
-    fromShort.addChange(new FieldDiffs()
-      .setCreationDate(diffDate)
-      .setIssueKey("short")
-      .setUserUuid("user_uuid")
-      .setDiff("file", "uuidA1", "uuidB1"));
-    // file diff with another field
-    fromShort.addChange(new FieldDiffs()
-      .setCreationDate(diffDate)
-      .setIssueKey("short")
-      .setUserUuid("user_uuid")
-      .setDiff("severity", "MINOR", "MAJOR")
-      .setDiff("file", "uuidA2", "uuidB2"));
-
-    Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.PULL_REQUEST);
-    analysisMetadataHolder.setBranch(branch);
-    analysisMetadataHolder.setPullRequestKey("3");
-
-    underTest.mergeConfirmedOrResolvedFromShortLivingBranchOrPr(raw, fromShort, KeyType.BRANCH, "feature/foo");
-
-    assertThat(raw.resolution()).isEqualTo("resolution");
-    assertThat(raw.status()).isEqualTo("status");
-    assertThat(raw.defaultIssueComments())
-      .extracting(DefaultIssueComment::issueKey, DefaultIssueComment::createdAt, DefaultIssueComment::userUuid, DefaultIssueComment::markdownText)
-      .containsOnly(tuple("raw", commentDate, "user_uuid", "A comment"));
-    assertThat(raw.changes()).hasSize(2);
-    assertThat(raw.changes().get(0).creationDate()).isEqualTo(diffDate);
-    assertThat(raw.changes().get(0).userUuid()).isEqualTo("user_uuid");
-    assertThat(raw.changes().get(0).issueKey()).isEqualTo("raw");
-    assertThat(raw.changes().get(0).diffs()).containsOnlyKeys("severity");
-    assertThat(raw.changes().get(1).userUuid()).isEqualTo("default_user_uuid");
-    assertThat(raw.changes().get(1).diffs()).containsOnlyKeys(IssueFieldsSetter.FROM_SHORT_BRANCH);
-    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_SHORT_BRANCH).oldValue()).isEqualTo("feature/foo");
-    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_SHORT_BRANCH).newValue()).isEqualTo("#3");
-  }
-
-  @Test
-  public void mergeIssueFromPRIntoLLB() {
-    DefaultIssue raw = new DefaultIssue()
-      .setKey("raw");
-    DefaultIssue fromShort = new DefaultIssue()
-      .setKey("short");
-    fromShort.setResolution("resolution");
-    fromShort.setStatus("status");
-
-    Date commentDate = new Date();
-    fromShort.addComment(new DefaultIssueComment()
-      .setIssueKey("short")
-      .setCreatedAt(commentDate)
-      .setUserUuid("user_uuid")
-      .setMarkdownText("A comment"));
-
-    Date diffDate = new Date();
-    // file diff alone
-    fromShort.addChange(new FieldDiffs()
-      .setCreationDate(diffDate)
-      .setIssueKey("short")
-      .setUserUuid("user_uuid")
-      .setDiff("file", "uuidA1", "uuidB1"));
-    // file diff with another field
-    fromShort.addChange(new FieldDiffs()
-      .setCreationDate(diffDate)
-      .setIssueKey("short")
-      .setUserUuid("user_uuid")
-      .setDiff("severity", "MINOR", "MAJOR")
-      .setDiff("file", "uuidA2", "uuidB2"));
-
-    Branch branch = mock(Branch.class);
-    when(branch.getName()).thenReturn("master");
-    analysisMetadataHolder.setBranch(branch);
-
-    underTest.mergeConfirmedOrResolvedFromShortLivingBranchOrPr(raw, fromShort, KeyType.PULL_REQUEST, "1");
-
-    assertThat(raw.resolution()).isEqualTo("resolution");
-    assertThat(raw.status()).isEqualTo("status");
-    assertThat(raw.defaultIssueComments())
-      .extracting(DefaultIssueComment::issueKey, DefaultIssueComment::createdAt, DefaultIssueComment::userUuid, DefaultIssueComment::markdownText)
-      .containsOnly(tuple("raw", commentDate, "user_uuid", "A comment"));
-    assertThat(raw.changes()).hasSize(2);
-    assertThat(raw.changes().get(0).creationDate()).isEqualTo(diffDate);
-    assertThat(raw.changes().get(0).userUuid()).isEqualTo("user_uuid");
-    assertThat(raw.changes().get(0).issueKey()).isEqualTo("raw");
-    assertThat(raw.changes().get(0).diffs()).containsOnlyKeys("severity");
-    assertThat(raw.changes().get(1).userUuid()).isEqualTo("default_user_uuid");
-    assertThat(raw.changes().get(1).diffs()).containsOnlyKeys(IssueFieldsSetter.FROM_SHORT_BRANCH);
-    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_SHORT_BRANCH).oldValue()).isEqualTo("#1");
-    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_SHORT_BRANCH).newValue()).isEqualTo("master");
+    assertThat(raw.changes().get(1).diffs()).containsOnlyKeys(IssueFieldsSetter.FROM_BRANCH);
+    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_BRANCH).oldValue()).isEqualTo("#2");
+    assertThat(raw.changes().get(1).get(IssueFieldsSetter.FROM_BRANCH).newValue()).isEqualTo("master");
   }
 
   @Test
@@ -320,7 +202,7 @@ public class IssueLifecycleTest {
     when(branch.getName()).thenReturn("release-2.x");
     analysisMetadataHolder.setBranch(branch);
 
-    underTest.copyExistingOpenIssueFromLongLivingBranch(raw, base, "master");
+    underTest.copyExistingOpenIssueFromBranch(raw, base, "master");
 
     assertThat(raw.isNew()).isFalse();
     assertThat(raw.isCopied()).isTrue();
@@ -337,8 +219,8 @@ public class IssueLifecycleTest {
     assertThat(raw.effort()).isEqualTo(DEFAULT_DURATION);
     assertThat(raw.isOnDisabledRule()).isTrue();
     assertThat(raw.selectedAt()).isEqualTo(1000L);
-    assertThat(raw.changes().get(0).get(IssueFieldsSetter.FROM_LONG_BRANCH).oldValue()).isEqualTo("master");
-    assertThat(raw.changes().get(0).get(IssueFieldsSetter.FROM_LONG_BRANCH).newValue()).isEqualTo("release-2.x");
+    assertThat(raw.changes().get(0).get(IssueFieldsSetter.FROM_BRANCH).oldValue()).isEqualTo("master");
+    assertThat(raw.changes().get(0).get(IssueFieldsSetter.FROM_BRANCH).newValue()).isEqualTo("release-2.x");
 
     verifyZeroInteractions(updater);
   }
@@ -412,70 +294,6 @@ public class IssueLifecycleTest {
     assertThat(raw.changes().get(1).diffs())
       .containsOnly(entry("file", new FieldDiffs.Diff("A", "B")));
 
-    verify(updater).setPastSeverity(raw, BLOCKER, issueChangeContext);
-    verify(updater).setPastLine(raw, 10);
-    verify(updater).setPastMessage(raw, "message", issueChangeContext);
-    verify(updater).setPastEffort(raw, Duration.create(15L), issueChangeContext);
-    verify(updater).setPastLocations(raw, issueLocations);
-  }
-
-  @Test
-  public void mergeExistingOpenIssue_vulnerability_changed_to_hotspot_should_be_to_review() {
-    rule.setType(RuleType.SECURITY_HOTSPOT);
-    DefaultIssue raw = new DefaultIssue()
-      .setNew(true)
-      .setKey("RAW_KEY")
-      .setRuleKey(XOO_X1)
-      .setCreationDate(parseDate("2015-10-01"))
-      .setUpdateDate(parseDate("2015-10-02"))
-      .setCloseDate(parseDate("2015-10-03"));
-
-    DbIssues.Locations issueLocations = DbIssues.Locations.newBuilder()
-      .setTextRange(DbCommons.TextRange.newBuilder()
-        .setStartLine(10)
-        .setEndLine(12)
-        .build())
-      .build();
-    DefaultIssue base = new DefaultIssue()
-      .setKey("BASE_KEY")
-      .setType(RuleType.VULNERABILITY)
-      // First analysis before rule was changed to hotspot
-      .setIsFromHotspot(false)
-      .setCreationDate(parseDate("2015-01-01"))
-      .setUpdateDate(parseDate("2015-01-02"))
-      .setResolution(RESOLUTION_FALSE_POSITIVE)
-      .setStatus(STATUS_RESOLVED)
-      .setSeverity(BLOCKER)
-      .setAssigneeUuid("base assignee uuid")
-      .setAuthorLogin("base author")
-      .setTags(newArrayList("base tag"))
-      .setSelectedAt(1000L)
-      .setLine(10)
-      .setMessage("message")
-      .setGap(15d)
-      .setEffort(Duration.create(15L))
-      .setManualSeverity(false)
-      .setLocations(issueLocations);
-
-    when(debtCalculator.calculate(raw)).thenReturn(DEFAULT_DURATION);
-
-    underTest.mergeExistingOpenIssue(raw, base);
-
-    assertThat(raw.isNew()).isFalse();
-    assertThat(raw.key()).isEqualTo("BASE_KEY");
-    assertThat(raw.creationDate()).isEqualTo(base.creationDate());
-    assertThat(raw.updateDate()).isEqualTo(base.updateDate());
-    assertThat(raw.assignee()).isEqualTo("base assignee uuid");
-    assertThat(raw.authorLogin()).isEqualTo("base author");
-    assertThat(raw.tags()).containsOnly("base tag");
-    assertThat(raw.effort()).isEqualTo(DEFAULT_DURATION);
-    assertThat(raw.selectedAt()).isEqualTo(1000L);
-    assertThat(raw.isFromHotspot()).isTrue();
-    assertThat(raw.isChanged()).isTrue();
-
-    verify(updater).setType(raw, RuleType.SECURITY_HOTSPOT, issueChangeContext);
-    verify(updater).setStatus(raw, STATUS_TO_REVIEW, issueChangeContext);
-    verify(updater).setResolution(raw, null, issueChangeContext);
     verify(updater).setPastSeverity(raw, BLOCKER, issueChangeContext);
     verify(updater).setPastLine(raw, 10);
     verify(updater).setPastMessage(raw, "message", issueChangeContext);

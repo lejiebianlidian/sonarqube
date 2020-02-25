@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -103,7 +103,7 @@ public class LoadCrossProjectDuplicationsRepositoryStepTest {
     integrateCrossProjectDuplications, dbClient);
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     ComponentDto project = ComponentTesting.newPrivateProjectDto(dbTester.organizations().insert());
     dbClient.componentDao().insert(dbSession, project);
     SnapshotDto projectSnapshot = SnapshotTesting.newAnalysis(project);

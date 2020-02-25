@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,30 +21,25 @@ import * as React from 'react';
 import ConfirmModal from 'sonar-ui-common/components/controls/ConfirmModal';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 
-interface Props {
-  analysis: string;
-  deleteEvent: (analysis: string, event: string) => Promise<void>;
+export interface RemoveEventFormProps {
+  analysisKey: string;
   event: T.AnalysisEvent;
   header: string;
   removeEventQuestion: string;
   onClose: () => void;
+  onConfirm: (analysis: string, event: string) => Promise<void>;
 }
 
-export default class RemoveEventForm extends React.PureComponent<Props> {
-  handleSubmit = () => {
-    return this.props.deleteEvent(this.props.analysis, this.props.event.key);
-  };
-
-  render() {
-    return (
-      <ConfirmModal
-        confirmButtonText={translate('delete')}
-        header={this.props.header}
-        isDestructive={true}
-        onClose={this.props.onClose}
-        onConfirm={this.handleSubmit}>
-        {translate(this.props.removeEventQuestion)}
-      </ConfirmModal>
-    );
-  }
+export default function RemoveEventForm(props: RemoveEventFormProps) {
+  const { analysisKey, event, header, removeEventQuestion } = props;
+  return (
+    <ConfirmModal
+      confirmButtonText={translate('delete')}
+      header={header}
+      isDestructive={true}
+      onClose={props.onClose}
+      onConfirm={() => props.onConfirm(analysisKey, event.key)}>
+      {removeEventQuestion}
+    </ConfirmModal>
+  );
 }

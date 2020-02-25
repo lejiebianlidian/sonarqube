@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ public class ChangedLinesPublisherTest {
   @Before
   public void setUp() {
     writer = new ScannerReportWriter(temp.getRoot());
-    when(branchConfiguration.isShortOrPullRequest()).thenReturn(true);
+    when(branchConfiguration.isPullRequest()).thenReturn(true);
     when(scmConfiguration.isDisabled()).thenReturn(false);
     when(scmConfiguration.provider()).thenReturn(provider);
     when(branchConfiguration.targetBranchName()).thenReturn(TARGET_BRANCH);
@@ -82,8 +82,8 @@ public class ChangedLinesPublisherTest {
   }
 
   @Test
-  public void skip_if_not_pr_or_slb() {
-    when(branchConfiguration.isShortOrPullRequest()).thenReturn(false);
+  public void skip_if_not_pr() {
+    when(branchConfiguration.isPullRequest()).thenReturn(false);
     publisher.publish(writer);
     verifyZeroInteractions(inputComponentStore, inputModuleHierarchy, provider);
     assertNotPublished();

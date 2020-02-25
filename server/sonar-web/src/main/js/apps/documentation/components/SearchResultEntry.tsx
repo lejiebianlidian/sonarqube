@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -96,7 +96,10 @@ export function SearchResultText({ result }: { result: SearchResult }) {
   }
 
   if (tokens.length === 0 && textHighlights && textHighlights.length > 0) {
-    tokens = highlightMarks(text, textHighlights.map(h => ({ from: h[0], to: h[0] + h[1] })));
+    tokens = highlightMarks(
+      text,
+      textHighlights.map(h => ({ from: h[0], to: h[0] + h[1] }))
+    );
   }
 
   if (tokens.length) {

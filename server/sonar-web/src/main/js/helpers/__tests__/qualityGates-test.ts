@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +18,13 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import {
-  extractStatusConditionsFromProjectStatus,
-  isSameStatusConditionList
+  mockQualityGateApplicationStatus,
+  mockQualityGateProjectStatus
+} from '../mocks/quality-gates';
+import {
+  extractStatusConditionsFromApplicationStatusChildProject,
+  extractStatusConditionsFromProjectStatus
 } from '../qualityGates';
-import { mockQualityGateProjectStatus, mockQualityGateStatusCondition } from '../testMocks';
 
 describe('extractStatusConditionsFromProjectStatus', () => {
   it('should correclty extract the conditions for the project status', () => {
@@ -38,34 +41,29 @@ describe('extractStatusConditionsFromProjectStatus', () => {
   });
 });
 
-describe('isSameStatusConditionList', () => {
-  it('should correctly return true if the conditions are the same', () => {
-    expect(isSameStatusConditionList()).toBe(true);
-    expect(isSameStatusConditionList([], [])).toBe(true);
+describe('extractStatusConditionsFromApplicationStatusChildProject', () => {
+  it('should correclty extract the conditions for the application child project status', () => {
     expect(
-      isSameStatusConditionList(
-        [mockQualityGateStatusCondition()],
-        [mockQualityGateStatusCondition()]
+      extractStatusConditionsFromApplicationStatusChildProject(
+        mockQualityGateApplicationStatus().projects[0]
       )
-    ).toBe(true);
-  });
-
-  it('should correctly return false if any condition is different', () => {
-    expect(isSameStatusConditionList([mockQualityGateStatusCondition()])).toBe(false);
-    expect(isSameStatusConditionList(undefined, [mockQualityGateStatusCondition()])).toBe(false);
-    expect(isSameStatusConditionList([], [mockQualityGateStatusCondition()])).toBe(false);
-    expect(isSameStatusConditionList([mockQualityGateStatusCondition()], [])).toBe(false);
-    expect(
-      isSameStatusConditionList(
-        [mockQualityGateStatusCondition({ metric: 'foo' })],
-        [mockQualityGateStatusCondition({ metric: 'bar' })]
-      )
-    ).toBe(false);
-    expect(
-      isSameStatusConditionList(
-        [mockQualityGateStatusCondition({ metric: 'foo', level: '2.0' })],
-        [mockQualityGateStatusCondition({ metric: 'foo', level: '1.0' })]
-      )
-    ).toBe(false);
+    ).toEqual([
+      {
+        actual: '10',
+        error: '1.0',
+        level: 'ERROR',
+        metric: 'coverage',
+        op: 'GT',
+        period: undefined
+      },
+      {
+        actual: '5',
+        error: '1.0',
+        level: 'ERROR',
+        metric: 'new_bugs',
+        op: 'GT',
+        period: 1
+      }
+    ]);
   });
 });

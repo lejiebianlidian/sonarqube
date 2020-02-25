@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { getComponents } from '../../../api/components';
 import App, { Props } from '../App';
+import Search from '../Search';
 
 jest.mock('lodash', () => {
   const lodash = require.requireActual('lodash');
@@ -28,9 +29,9 @@ jest.mock('lodash', () => {
   return lodash;
 });
 
-jest.mock('../../../api/components', () => ({ getComponents: jest.fn() }));
-
-const getComponents = require('../../../api/components').getComponents as jest.Mock<any>;
+jest.mock('../../../api/components', () => ({
+  getComponents: jest.fn().mockResolvedValue({ paging: { total: 0 }, components: [] })
+}));
 
 const organization: T.Organization = { key: 'org', name: 'org', projectVisibility: 'public' };
 
@@ -42,9 +43,7 @@ const defaultSearchParameters = {
 };
 
 beforeEach(() => {
-  getComponents
-    .mockImplementation(() => Promise.resolve({ paging: { total: 0 }, components: [] }))
-    .mockClear();
+  jest.clearAllMocks();
 });
 
 it('fetches all projects on mount', () => {
@@ -75,6 +74,19 @@ it('searches', () => {
   expect(getComponents).lastCalledWith({ ...defaultSearchParameters, q: 'foo', qualifiers: 'TRK' });
 });
 
+it('should handle date filtering', () => {
+  const wrapper = shallowRender();
+  wrapper
+    .find(Search)
+    .props()
+    .onDateChanged(new Date('2019-11-14T06:55:02.663Z'));
+  expect(getComponents).toHaveBeenCalledWith({
+    ...defaultSearchParameters,
+    qualifiers: 'TRK',
+    analyzedBefore: '2019-11-14'
+  });
+});
+
 it('loads more', () => {
   const wrapper = shallowRender();
   wrapper.find('ListFooter').prop<Function>('loadMore')();
@@ -82,7 +94,7 @@ it('loads more', () => {
 });
 
 it('selects and deselects projects', async () => {
-  getComponents.mockImplementation(() =>
+  (getComponents as jest.Mock).mockImplementation(() =>
     Promise.resolve({ paging: { total: 2 }, components: [{ key: 'foo' }, { key: 'bar' }] })
   );
   const wrapper = shallowRender();
@@ -118,7 +130,7 @@ it('creates project', () => {
 
   wrapper.find('CreateProjectForm').prop<Function>('onProjectCreated')();
   wrapper.update();
-  expect(getComponents.mock.calls).toHaveLength(2);
+  expect((getComponents as jest.Mock).mock.calls).toHaveLength(2);
 
   wrapper.find('CreateProjectForm').prop<Function>('onClose')();
   wrapper.update();
@@ -133,7 +145,7 @@ it('changes default project visibility', () => {
 });
 
 function shallowRender(props?: { [P in keyof Props]?: Props[P] }) {
-  return shallow(
+  return shallow<App>(
     <App
       currentUser={{ login: 'foo' }}
       hasProvisionPermission={true}

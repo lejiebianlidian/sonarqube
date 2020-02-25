@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -95,45 +95,6 @@ public class ProjectReactorValidatorTest {
   }
 
   @Test
-  @UseDataProvider("validBranches")
-  public void not_fail_with_valid_branch(String validBranch) {
-    ProjectReactor reactor = createProjectReactor("foo", validBranch);
-
-    underTest.validate(reactor);
-  }
-
-  @DataProvider
-  public static Object[][] validBranches() {
-    return new Object[][] {
-      {"branch"},
-      {"Branch2"},
-      {"bra.nch"},
-      {"bra-nch"},
-      {"1"},
-      {"bra_nch"}
-    };
-  }
-
-  @Test
-  @UseDataProvider("invalidBranches")
-  public void fail_with_invalid_branch(String invalidBranch) {
-    ProjectReactor reactor = createProjectReactor("foo", invalidBranch);
-
-    thrown.expect(MessageException.class);
-    thrown.expectMessage("\"" + invalidBranch + "\" is not a valid branch name");
-
-    underTest.validate(reactor);
-  }
-
-  @DataProvider
-  public static Object[][] invalidBranches() {
-    return new Object[][] {
-      {"bran#ch"},
-      {"bran:ch"}
-    };
-  }
-
-  @Test
   public void fail_when_branch_name_is_specified_but_branch_plugin_not_present() {
     ProjectDefinition def = ProjectDefinition.create().setProperty(CoreProperties.PROJECT_KEY_PROPERTY, "foo");
     ProjectReactor reactor = new ProjectReactor(def);
@@ -142,19 +103,6 @@ public class ProjectReactorValidatorTest {
 
     thrown.expect(MessageException.class);
     thrown.expectMessage("To use the property \"sonar.branch.name\" and analyze branches, Developer Edition or above is required");
-
-    underTest.validate(reactor);
-  }
-
-  @Test
-  public void fail_when_branch_target_is_specified_but_branch_plugin_not_present() {
-    ProjectDefinition def = ProjectDefinition.create().setProperty(CoreProperties.PROJECT_KEY_PROPERTY, "foo");
-    ProjectReactor reactor = new ProjectReactor(def);
-
-    when(settings.get(eq(ScannerProperties.BRANCH_TARGET))).thenReturn(Optional.of("feature1"));
-
-    thrown.expect(MessageException.class);
-    thrown.expectMessage("To use the property \"sonar.branch.target\" and analyze branches, Developer Edition or above is required");
 
     underTest.validate(reactor);
   }
@@ -232,11 +180,6 @@ public class ProjectReactorValidatorTest {
       {"2017-10-16"},
       {randomAscii(100)}
     };
-  }
-
-  private ProjectReactor createProjectReactor(String projectKey, String branch) {
-    return createProjectReactor(projectKey, def -> def
-      .setProperty(CoreProperties.PROJECT_BRANCH_PROPERTY, branch));
   }
 
   private ProjectReactor createProjectReactor(String projectKey, Consumer<ProjectDefinition>... consumers) {

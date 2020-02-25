@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,12 +36,12 @@ import org.junit.rules.TemporaryFolder;
 import org.sonar.api.CoreProperties;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.utils.MessageException;
 import org.sonar.api.utils.PathUtils;
 import org.sonar.api.utils.System2;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
-import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.scanner.mediumtest.AnalysisResult;
 import org.sonar.scanner.mediumtest.ScannerMediumTester;
 import org.sonar.xoo.XooPlugin;
@@ -109,48 +109,6 @@ public class FileSystemMediumTest {
     // file was published, since language matched xoo
     assertThat(file.isPublished()).isTrue();
     assertThat(result.getReportComponent(file.scannerId())).isNotNull();
-  }
-
-  @Test
-  public void logProjectKeyAndOrganizationKey() throws IOException {
-    builder.put("sonar.organization", "my org");
-    builder.put("sonar.branch", "");
-    File srcDir = new File(baseDir, "src");
-    srcDir.mkdir();
-
-    File xooFile = new File(srcDir, "sample.xoo");
-    FileUtils.write(xooFile, "Sample xoo\ncontent", StandardCharsets.UTF_8);
-
-    tester.newAnalysis()
-      .properties(builder
-        .put("sonar.sources", "src")
-        .build())
-      .execute();
-
-    assertThat(logTester.logs()).contains("Project key: com.foo.project");
-    assertThat(logTester.logs()).contains("Organization key: my org");
-    assertThat(logTester.logs().stream().collect(joining("\n"))).doesNotContain("Branch key");
-  }
-
-  @Test
-  public void logBranchKey() throws IOException {
-    builder.put("sonar.branch", "my-branch");
-    File srcDir = new File(baseDir, "src");
-    assertThat(srcDir.mkdir()).isTrue();
-
-    File xooFile = new File(srcDir, "sample.xoo");
-    FileUtils.write(xooFile, "Sample xoo\ncontent", StandardCharsets.UTF_8);
-
-    tester.newAnalysis()
-      .properties(builder
-        .put("sonar.sources", "src")
-        .build())
-      .execute();
-
-    assertThat(logTester.logs()).contains("Project key: com.foo.project");
-    assertThat(logTester.logs()).contains("Branch key: my-branch");
-    assertThat(logTester.logs())
-      .contains("The use of \"sonar.branch\" is deprecated and replaced by \"sonar.branch.name\". See https://redirect.sonarsource.com/doc/branches.html.");
   }
 
   @Test
@@ -804,15 +762,16 @@ public class FileSystemMediumTest {
   @Test
   public void scanProjectWithWrongCase() {
     // To please the quality gate, don't use assumeTrue, or the test will be reported as skipped
-    if (System2.INSTANCE.isOsWindows()) {
-      File projectDir = new File("test-resources/mediumtest/xoo/sample");
-      AnalysisResult result = tester
-        .newAnalysis(new File(projectDir, "sonar-project.properties"))
-        .property("sonar.sources", "XOURCES")
-        .property("sonar.tests", "TESTX")
-        .execute();
+    File projectDir = new File("test-resources/mediumtest/xoo/sample");
+    ScannerMediumTester.AnalysisBuilder analysis = tester
+      .newAnalysis(new File(projectDir, "sonar-project.properties"))
+      .property("sonar.sources", "XOURCES")
+      .property("sonar.tests", "TESTX");
 
-      assertThat(result.inputFiles()).hasSize(3);
+    if (System2.INSTANCE.isOsWindows()) { // Windows is file path case-insensitive
+      AnalysisResult result = analysis.execute();
+
+      assertThat(result.inputFiles()).hasSize(8);
       assertThat(result.inputFiles()).extractingResultOf("relativePath").containsOnly(
         "testx/ClassOneTest.xoo.measures",
         "xources/hello/helloscala.xoo.measures",
@@ -822,6 +781,23 @@ public class FileSystemMediumTest {
         "xources/hello/helloscala.xoo",
         "testx/ClassOneTest.xoo.scm",
         "xources/hello/HelloJava.xoo");
+    } else if (System2.INSTANCE.isOsMac()) {
+      AnalysisResult result = analysis.execute();
+
+      assertThat(result.inputFiles()).hasSize(8);
+      assertThat(result.inputFiles()).extractingResultOf("relativePath").containsOnly(
+        "TESTX/ClassOneTest.xoo.measures",
+        "XOURCES/hello/helloscala.xoo.measures",
+        "XOURCES/hello/HelloJava.xoo.measures",
+        "TESTX/ClassOneTest.xoo",
+        "XOURCES/hello/HelloJava.xoo.scm",
+        "XOURCES/hello/helloscala.xoo",
+        "TESTX/ClassOneTest.xoo.scm",
+        "XOURCES/hello/HelloJava.xoo");
+    } else {
+      thrown.expect(MessageException.class);
+      thrown.expectMessage("The folder 'TESTX' does not exist for 'sample'");
+      analysis.execute();
     }
   }
 

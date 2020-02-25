@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,22 +31,16 @@ public interface Branch extends ComponentKeyGenerator {
   boolean isMain();
 
   /**
-   * Whether branch has been created through the legacy configuration
-   * (scanner parameter sonar.branch) or not
-   */
-  boolean isLegacyFeature();
-
-  /**
    * Name of the branch
    */
   String getName();
 
   /**
-   * Indicates the first LLB branch from which it was forked.
+   * Indicates the UUID of the branch used as reference
    *
    * @throws IllegalStateException for main branches or legacy branches.
    */
-  String getMergeBranchUuid();
+  String getReferenceBranchUuid();
 
   /**
    * Whether the cross-project duplication tracker can be enabled
@@ -60,11 +54,11 @@ public interface Branch extends ComponentKeyGenerator {
   String getPullRequestKey();
 
   /**
-   * The target/base branch name of a SLB or PR.
+   * The target/base branch name of a PR.
    * Correspond to <pre>sonar.pullrequest.base</pre> or <pre>sonar.branch.target</pre>
    * It's not guaranteed to exist.
    *
-   * @throws IllegalStateException if this branch configuration is not a pull request or SLB.
+   * @throws IllegalStateException if this branch configuration is not a pull request.
    */
   String getTargetBranchName();
 }

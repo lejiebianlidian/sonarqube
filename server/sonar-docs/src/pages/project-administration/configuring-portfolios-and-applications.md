@@ -31,6 +31,15 @@ To add projects directly to a Portfolio or standard sub-Portfolio first make sur
 * **Regular Expression** – specify a regular expression and projects with a matching name OR key will be included.
 * **All Remaining Projects** – choose this option to add all projects not already included in this Portfolio (directly or via sub-Portfolio).
 
+## Adding Applications to a Portfolio
+To add an Application to a Portfolio, first make sure your Application is [already created](/user-guide/applications/). Then:
+
+1. Navigate to the Portfolios configuration page by going to **[Administration > Configuration > Portfolios](/#sonarqube-admint#/admin/extension/governance/views_console/)**.
+2. Select the Portfolio where you want to add your Application
+3. Click **Add Portfolio**
+4. Select **Local Reference**
+5. Choose your Application from the drop-down list and click **Add**.
+
 [[info]]
 |**Project unicity under a portfolio**<br/><br/>
 |Projects, applications and sub-portfolios can only appear once in any given hierarchy in order to avoid magnifying their impacts on aggregated ratings. The portfolio configuration interface has some logic to prevent obvious duplications (e.g. manually adding the same project), however in case of more subtle duplications (e.g. due to regex, or other bulk definition), then the calculation of that portfolio will fail with a helpful error message.
@@ -39,7 +48,7 @@ To add projects directly to a Portfolio or standard sub-Portfolio first make sur
 Once your Application exists, you can populate it with manually-selected projects. By default, the configuration interface shows the list of projects currently selected for the application. To add additional projects, choose the "Unselected" or "All" filter.
 
 ## Creating Application Branches
-Once your Application is populated with projects, you can create application branches by choosing long-lived branches from the application's component projects. This option is available in the Application's **Administration > Edit Definition** interface, or from the global administration interface.
+Once your Application is populated with projects, you can create application branches by choosing branches from the application's component projects. This option is available in the Application's **Administration > Edit Definition** interface, or from the global administration interface.
 
 ## Calculation
 By default, Applications and Portfolios are queued to be recalculated after each analysis of an included project. For each relevant Portfolio and Application, a “Background Task” is created, and you can follow the progress on each in the **[Administration > Projects > Background Tasks](/#sonarqube-admin#/admin/background_tasks)** by looking at the logs available for each item.

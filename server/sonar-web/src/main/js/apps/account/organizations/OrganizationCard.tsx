@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ export default function OrganizationCard({ organization }: Props) {
         <OrganizationLink className="spacer-left text-middle" organization={organization}>
           {organization.name}
         </OrganizationLink>
-        {actions.admin && <span className="outline-badge spacer-left">{translate('admin')}</span>}
+        {actions.admin && <span className="badge spacer-left">{translate('admin')}</span>}
       </h3>
 
       {!!organization.description && (

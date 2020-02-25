@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,13 +20,9 @@
 package org.sonar.ce.task.projectanalysis.scm;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.function.IntFunction;
 import javax.annotation.concurrent.Immutable;
-import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.scanner.protocol.output.ScannerReport;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -37,63 +33,46 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
  * ScmInfo implementation based on the changeset information from the Report
  */
 @Immutable
-class ReportScmInfo implements ScmInfo {
-  private final ScmInfo delegate;
+class ReportScmInfo {
 
-  ReportScmInfo(ScannerReport.Changesets changesets) {
+  ReportScmInfo() {
+    // static only
+  }
+
+  public static ScmInfo create(ScannerReport.Changesets changesets) {
     requireNonNull(changesets);
-    this.delegate = convertToScmInfo(changesets);
-    checkState(!delegate.getAllChangesets().isEmpty(), "Report has no changesets");
+    Changeset[] lineChangesets = new Changeset[changesets.getChangesetIndexByLineCount()];
+    LineIndexToChangeset lineIndexToChangeset = new LineIndexToChangeset(changesets);
+
+    for (int i = 0; i < changesets.getChangesetIndexByLineCount(); i++) {
+      lineChangesets[i] = lineIndexToChangeset.apply(i);
+    }
+
+    return new ScmInfoImpl(lineChangesets);
   }
 
-  private static ScmInfo convertToScmInfo(ScannerReport.Changesets changesets) {
-    return new ScmInfoImpl(IntStream.rangeClosed(1, changesets.getChangesetIndexByLineCount())
-      .boxed()
-      .collect(Collectors.toMap(x -> x, new LineIndexToChangeset(changesets), MoreCollectors.mergeNotSupportedMerger(), LinkedHashMap::new)));
-  }
-
-  @Override
-  public Changeset getLatestChangeset() {
-    return this.delegate.getLatestChangeset();
-  }
-
-  @Override
-  public Changeset getChangesetForLine(int lineNumber) {
-    return this.delegate.getChangesetForLine(lineNumber);
-  }
-
-  @Override
-  public boolean hasChangesetForLine(int lineNumber) {
-    return delegate.hasChangesetForLine(lineNumber);
-  }
-
-  @Override
-  public Map<Integer, Changeset> getAllChangesets() {
-    return this.delegate.getAllChangesets();
-  }
-
-  private static class LineIndexToChangeset implements Function<Integer, Changeset> {
+  private static class LineIndexToChangeset implements IntFunction<Changeset> {
     private final ScannerReport.Changesets changesets;
     private final Map<Integer, Changeset> changesetCache;
     private final Changeset.Builder builder = Changeset.newChangesetBuilder();
 
-    public LineIndexToChangeset(ScannerReport.Changesets changesets) {
+    private LineIndexToChangeset(ScannerReport.Changesets changesets) {
       this.changesets = changesets;
-      changesetCache = new HashMap<>(changesets.getChangesetCount());
+      this.changesetCache = new HashMap<>(changesets.getChangesetCount());
     }
 
     @Override
-    public Changeset apply(Integer lineNumber) {
-      int changesetIndex = changesets.getChangesetIndexByLine(lineNumber - 1);
+    public Changeset apply(int lineNumber) {
+      int changesetIndex = changesets.getChangesetIndexByLine(lineNumber);
       return changesetCache.computeIfAbsent(changesetIndex, idx -> convert(changesets.getChangeset(changesetIndex), lineNumber));
     }
 
     private Changeset convert(ScannerReport.Changesets.Changeset changeset, int line) {
-      checkState(isNotEmpty(changeset.getRevision()), "Changeset on line %s must have a revision", line);
-      checkState(changeset.getDate() != 0, "Changeset on line %s must have a date", line);
+      checkState(isNotEmpty(changeset.getRevision()), "Changeset on line %s must have a revision", line + 1);
+      checkState(changeset.getDate() != 0, "Changeset on line %s must have a date", line + 1);
       return builder
-        .setRevision(changeset.getRevision())
-        .setAuthor(isNotEmpty(changeset.getAuthor()) ? changeset.getAuthor() : null)
+        .setRevision(changeset.getRevision().intern())
+        .setAuthor(isNotEmpty(changeset.getAuthor()) ? changeset.getAuthor().intern() : null)
         .setDate(changeset.getDate())
         .build();
     }

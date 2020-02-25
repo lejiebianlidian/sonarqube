@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -315,7 +315,7 @@ public class ReportFormulaExecutorComponentVisitorTest {
     }
   }
 
-  private class FakeCounter implements Counter<FakeCounter> {
+  private static class FakeCounter implements Counter<FakeCounter> {
     private int value = 0;
 
     @Override
@@ -364,7 +364,7 @@ public class ReportFormulaExecutorComponentVisitorTest {
     }
   }
 
-  private class FakeVariationCounter implements Counter<FakeVariationCounter> {
+  private static class FakeVariationCounter implements Counter<FakeVariationCounter> {
     private final IntValue values = new IntValue();
 
     @Override

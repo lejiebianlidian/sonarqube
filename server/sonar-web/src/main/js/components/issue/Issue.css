@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -97,6 +97,11 @@
   white-space: nowrap;
 }
 
+.issue-see-rule {
+  border-bottom: none;
+  font-size: var(--smallFontSize);
+}
+
 .issue-changelog {
   width: 450px;
   max-height: 320px;
@@ -146,6 +151,20 @@
   overflow: hidden;
   outline: none;
   word-break: break-all;
+}
+
+.issue-comment-text.markdown pre {
+  float: none;
+  height: auto;
+  margin: 0;
+  padding: var(--gridSize);
+  background-color: var(--codeBackground);
+  border: none;
+  border-radius: 3px;
+}
+
+.issue-comment-text.markdown br ~ pre {
+  margin-top: var(--gridSize);
 }
 
 .issue-comment-actions {
@@ -214,7 +233,7 @@
 }
 
 .issue:not(.selected) .location-index {
-  background-color: var(--gray80);
+  background-color: var(--gray60);
 }
 
 .issue .menu:not(.issues-similar-issues-menu):not(.issue-changelog) {

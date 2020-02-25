@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ public class ChecksSensor implements Sensor {
   @Override
   public void execute(SensorContext context) {
     Checks<Check> checks = checkFactory.create(XooRulesDefinition.XOO_REPOSITORY);
-    checks.addAnnotatedChecks((Object[]) Check.ALL);
+    checks.addAnnotatedChecks(Check.ALL);
     FilePredicates p = context.fileSystem().predicates();
     for (InputFile file : context.fileSystem().inputFiles(p.and(p.hasLanguages(Xoo.KEY), p.hasType(Type.MAIN)))) {
       for (Check check : checks.all()) {

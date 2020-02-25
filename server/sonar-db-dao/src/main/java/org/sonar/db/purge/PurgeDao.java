@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,9 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.DateUtils;
 import org.sonar.api.utils.System2;
@@ -43,12 +41,12 @@ import org.sonar.db.component.ComponentTreeQuery;
 import org.sonar.db.component.ComponentTreeQuery.Strategy;
 
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 import static org.sonar.api.utils.DateUtils.dateToLong;
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 
 public class PurgeDao implements Dao {
   private static final Logger LOG = Loggers.get(PurgeDao.class);
-  private static final String[] UNPROCESSED_STATUS = new String[] {"U"};
   private static final Set<String> QUALIFIERS_PROJECT_VIEW = ImmutableSet.of("TRK", "VW");
   private static final Set<String> QUALIFIERS_MODULE_SUBVIEW = ImmutableSet.of("BRC", "SVW");
   private static final String SCOPE_PROJECT = "PRJ";
@@ -77,15 +75,16 @@ public class PurgeDao implements Dao {
     purgeStaleBranches(commands, conf, mapper, rootUuid);
   }
 
-  private void purgeStaleBranches(PurgeCommands commands, PurgeConfiguration conf, PurgeMapper mapper, String rootUuid) {
-    Optional<Date> maxDate = conf.maxLiveDateOfInactiveShortLivingBranches();
+  private static void purgeStaleBranches(PurgeCommands commands, PurgeConfiguration conf, PurgeMapper mapper, String rootUuid) {
+    Optional<Date> maxDate = conf.maxLiveDateOfInactiveBranches();
     if (!maxDate.isPresent()) {
       // not available if branch plugin is not installed
       return;
     }
     LOG.debug("<- Purge stale branches");
 
-    List<String> branchUuids = mapper.selectStaleShortLivingBranchesAndPullRequests(conf.projectUuid(), dateToLong(maxDate.get()));
+    Long maxDateValue = ofNullable(dateToLong(maxDate.get())).orElseThrow(IllegalStateException::new);
+    List<String> branchUuids = mapper.selectStaleBranchesAndPullRequests(conf.projectUuid(), maxDateValue);
 
     for (String branchUuid : branchUuids) {
       if (!rootUuid.equals(branchUuid)) {
@@ -125,10 +124,7 @@ public class PurgeDao implements Dao {
 
   private static void deleteAbortedAnalyses(String rootUuid, PurgeCommands commands) {
     LOG.debug("<- Delete aborted builds");
-    PurgeSnapshotQuery query = new PurgeSnapshotQuery(rootUuid)
-      .setIslast(false)
-      .setStatus(UNPROCESSED_STATUS);
-    commands.deleteAnalyses(query);
+    commands.deleteAbortedAnalyses(rootUuid);
   }
 
   private void deleteDataOfComponentsWithoutHistoricalData(DbSession dbSession, String rootUuid, Collection<String> scopesWithoutHistoricalData, PurgeCommands purgeCommands) {
@@ -161,11 +157,8 @@ public class PurgeDao implements Dao {
 
   public List<PurgeableAnalysisDto> selectPurgeableAnalyses(String componentUuid, DbSession session) {
     PurgeMapper mapper = mapper(session);
-    Stream<PurgeableAnalysisDto> allPurgeableAnalyses = Stream.concat(
-      mapper.selectPurgeableAnalysesWithEvents(componentUuid).stream(),
-      mapper.selectPurgeableAnalysesWithoutEvents(componentUuid).stream());
-    return allPurgeableAnalyses
-      .filter(new ManualBaselineAnalysisFilter(mapper, componentUuid))
+    return mapper.selectPurgeableAnalyses(componentUuid).stream()
+      .filter(new NewCodePeriodAnalysisFilter(mapper, componentUuid))
       .sorted()
       .collect(MoreCollectors.toList());
   }
@@ -192,27 +185,17 @@ public class PurgeDao implements Dao {
     commands.deleteCeScannerContextBefore(rootUuid, fourWeeksAgo.getTime());
   }
 
-  private static final class ManualBaselineAnalysisFilter implements Predicate<PurgeableAnalysisDto> {
-    private static final String[] NO_BASELINE = {null};
+  private static final class NewCodePeriodAnalysisFilter implements Predicate<PurgeableAnalysisDto> {
+    @Nullable
+    private String analysisUuid;
 
-    private final PurgeMapper mapper;
-    private final String componentUuid;
-    private String[] manualBaselineAnalysisUuid;
-
-    private ManualBaselineAnalysisFilter(PurgeMapper mapper, String componentUuid) {
-      this.mapper = mapper;
-      this.componentUuid = componentUuid;
+    private NewCodePeriodAnalysisFilter(PurgeMapper mapper, String componentUuid) {
+      this.analysisUuid = mapper.selectSpecificAnalysisNewCodePeriod(componentUuid);
     }
 
     @Override
     public boolean test(PurgeableAnalysisDto purgeableAnalysisDto) {
-      if (manualBaselineAnalysisUuid == null) {
-        manualBaselineAnalysisUuid = Optional.ofNullable(mapper.selectManualBaseline(componentUuid))
-          .map(t -> new String[] {t})
-          .orElse(NO_BASELINE);
-      }
-
-      return !Objects.equals(manualBaselineAnalysisUuid[0], purgeableAnalysisDto.getAnalysisUuid());
+      return analysisUuid == null || !analysisUuid.equals(purgeableAnalysisDto.getAnalysisUuid());
     }
   }
 
@@ -228,8 +211,7 @@ public class PurgeDao implements Dao {
     PurgeMapper purgeMapper = mapper(session);
     PurgeCommands purgeCommands = new PurgeCommands(session, profiler, system2);
 
-    session.getMapper(BranchMapper.class).selectByProjectUuid(uuid)
-      .stream()
+    session.getMapper(BranchMapper.class).selectByProjectUuid(uuid).stream()
       .filter(branch -> !uuid.equals(branch.getUuid()))
       .forEach(branch -> deleteRootComponent(branch.getUuid(), purgeMapper, purgeCommands));
 
@@ -256,8 +238,10 @@ public class PurgeDao implements Dao {
     commands.deleteProjectMappings(rootUuid);
     commands.deleteProjectAlmBindings(rootUuid);
     commands.deletePermissions(rootId);
+    commands.deleteNewCodePeriods(rootUuid);
     commands.deleteBranch(rootUuid);
     commands.deleteComponents(rootUuid);
+    commands.deleteProject(rootUuid);
   }
 
   /**

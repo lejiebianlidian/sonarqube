@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import { debounce } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import { translate } from 'sonar-ui-common/helpers/l10n';
@@ -113,7 +113,7 @@ export class OrganizationEdit extends React.PureComponent<Props, State> {
 
     return (
       <div className="page page-limited">
-        <Helmet title={title} />
+        <Helmet defer={false} title={title} />
 
         <header className="page-header">
           <h1 className="page-title">{title}</h1>
@@ -220,7 +220,4 @@ export class OrganizationEdit extends React.PureComponent<Props, State> {
 
 const mapDispatchToProps = { updateOrganization: updateOrganization as any };
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(whenLoggedIn(OrganizationEdit));
+export default connect(null, mapDispatchToProps)(whenLoggedIn(OrganizationEdit));

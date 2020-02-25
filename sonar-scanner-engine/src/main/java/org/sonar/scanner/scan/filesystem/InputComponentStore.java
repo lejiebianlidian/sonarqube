@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ public class InputComponentStore extends DefaultFileSystem.Cache {
 
   public Iterable<DefaultInputFile> allChangedFilesToPublish() {
     return allFilesToPublishStream()
-      .filter(f -> !branchConfiguration.isShortOrPullRequest() || f.status() != InputFile.Status.SAME)::iterator;
+      .filter(f -> !branchConfiguration.isPullRequest() || f.status() != InputFile.Status.SAME)::iterator;
   }
 
   @Override

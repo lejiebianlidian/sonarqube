@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ import org.sonar.api.utils.Duration;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolderRule;
 import org.sonar.ce.task.projectanalysis.analysis.Branch;
 import org.sonar.ce.task.projectanalysis.component.Component;
-import org.sonar.ce.task.projectanalysis.component.DefaultBranchImpl;
 import org.sonar.ce.task.projectanalysis.component.ReportComponent;
 import org.sonar.ce.task.projectanalysis.measure.Measure;
 import org.sonar.ce.task.projectanalysis.measure.MeasureRepositoryRule;
@@ -36,9 +35,9 @@ import org.sonar.ce.task.projectanalysis.period.Period;
 import org.sonar.ce.task.projectanalysis.period.PeriodHolderRule;
 import org.sonar.core.issue.DefaultIssue;
 import org.sonar.db.component.BranchType;
+import org.sonar.db.newcodeperiod.NewCodePeriodType;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.guava.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonar.api.issue.Issue.RESOLUTION_FIXED;
@@ -51,12 +50,11 @@ import static org.sonar.api.measures.CoreMetrics.NEW_TECHNICAL_DEBT_KEY;
 import static org.sonar.api.rules.RuleType.BUG;
 import static org.sonar.api.rules.RuleType.CODE_SMELL;
 import static org.sonar.api.rules.RuleType.VULNERABILITY;
-import static org.sonar.core.config.CorePropertyDefinitions.LEAK_PERIOD_MODE_PREVIOUS_VERSION;
 
 public class NewEffortAggregatorTest {
 
-  private static final Period PERIOD = new Period(LEAK_PERIOD_MODE_PREVIOUS_VERSION, null, 1_500_000_000L, "U1");
-  private static final long[] OLD_ISSUES_DATES = new long[] {
+  private static final Period PERIOD = new Period(NewCodePeriodType.PREVIOUS_VERSION.name(), null, 1_500_000_000L);
+  private static final long[] OLD_ISSUES_DATES = new long[]{
     PERIOD.getSnapshotDate(),
     PERIOD.getSnapshotDate() - 1,
     PERIOD.getSnapshotDate() - 1_200_000L,
@@ -264,7 +262,7 @@ public class NewEffortAggregatorTest {
   @Test
   public void no_measures_if_no_periods() {
     Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.LONG);
+    when(branch.getType()).thenReturn(BranchType.BRANCH);
     analysisMetadataHolder.setBranch(branch);
     periodsHolder.setPeriod(null);
     DefaultIssue unresolved = newCodeSmellIssue(10);

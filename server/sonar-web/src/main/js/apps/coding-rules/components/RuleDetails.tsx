@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,8 +76,8 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
     this.mounted = false;
   }
 
-  fetchRuleDetails = () =>
-    getRuleDetails({
+  fetchRuleDetails = () => {
+    return getRuleDetails({
       actives: true,
       key: this.props.ruleKey,
       organization: this.props.organization
@@ -93,6 +93,7 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
         }
       }
     );
+  };
 
   handleRuleChange = (ruleDetails: T.RuleDetails) => {
     if (this.mounted) {
@@ -119,8 +120,8 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
     });
   };
 
-  handleActivate = () =>
-    this.fetchRuleDetails().then(() => {
+  handleActivate = () => {
+    return this.fetchRuleDetails().then(() => {
       const { ruleKey, selectedProfile } = this.props;
       if (selectedProfile && this.state.actives) {
         const active = this.state.actives.find(active => active.qProfile === selectedProfile.key);
@@ -129,9 +130,10 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
         }
       }
     });
+  };
 
-  handleDeactivate = () =>
-    this.fetchRuleDetails().then(() => {
+  handleDeactivate = () => {
+    return this.fetchRuleDetails().then(() => {
       const { ruleKey, selectedProfile } = this.props;
       if (
         selectedProfile &&
@@ -141,11 +143,13 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
         this.props.onDeactivate(selectedProfile.key, ruleKey);
       }
     });
+  };
 
-  handleDelete = () =>
-    deleteRule({ key: this.props.ruleKey, organization: this.props.organization }).then(() =>
+  handleDelete = () => {
+    return deleteRule({ key: this.props.ruleKey, organization: this.props.organization }).then(() =>
       this.props.onDelete(this.props.ruleKey)
     );
+  };
 
   render() {
     const { ruleDetails } = this.state;
@@ -224,7 +228,9 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
                     </Button>
                     <DocTooltip
                       className="spacer-left"
-                      doc={import(/* webpackMode: "eager" */ 'Docs/tooltips/rules/custom-rule-removal.md')}
+                      doc={import(
+                        /* webpackMode: "eager" */ 'Docs/tooltips/rules/custom-rule-removal.md'
+                      )}
                     />
                   </>
                 )}
@@ -252,7 +258,7 @@ export default class RuleDetails extends React.PureComponent<Props, State> {
             />
           )}
 
-          {!ruleDetails.isTemplate && (
+          {!ruleDetails.isTemplate && ruleDetails.type !== 'SECURITY_HOTSPOT' && (
             <RuleDetailsIssues organization={organization} ruleDetails={ruleDetails} />
           )}
         </DeferredSpinner>

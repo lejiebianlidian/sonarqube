@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,9 +21,14 @@ interface FrontMatter {
   [x: string]: string;
 }
 
+interface ParsedContent {
+  content: string;
+  frontmatter: FrontMatter;
+}
+
 export function getFrontMatter(content: string): FrontMatter;
 
-export function separateFrontMatter(content: string): { content: string; frontmatter: FrontMatter };
+export function separateFrontMatter(content: string): ParsedContent;
 
 /** Removes SonarQube/SonarCloud only content */
 export function filterContent(content: string): string;

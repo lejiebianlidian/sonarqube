@@ -24,7 +24,8 @@ SonarCloud currently does not trigger analyses automatically - this feature will
 
 After creating a project, the tutorial available on its homepage will guide you to find how to trigger an analysis.
 
-![Info](/images/info.svg) Remember that depending on which cloud solution you are using for your developments, you can rely on dedicated integrations to help you:
+[[info]]
+| Remember that depending on which cloud solution you are using for your developments, you can rely on dedicated integrations to help you:
 
 * [GitHub](/integrations/github/)
 * [Bitbucket Cloud](/integrations/bitbucketcloud/)
@@ -44,7 +45,7 @@ Once the SonarQube platform has been installed, you're ready to install a scanne
 * anything else (CLI) - [SonarScanner](/analysis/scan/sonarscanner/)
 
 [[info]]
-| SonarQube integrations are supported for popular on-premise ALMs: GitHub Enterprise, BitBucket Server, and Azure Devops Server. Integration with the cloud analogs of these ALMs is possible but not officially supported. 
+| SonarQube integrations are supported for popular ALMs: GitHub Enterprise and GitHub.com, BitBucket Server, and Azure Devops Server. 
 
 [[warning]]
 | We do not recommend running an antivirus scanner on the machine where a SonarQube analysis runs, it could result in unpredictable behavior.
@@ -67,7 +68,7 @@ By default, only files that are recognized by a language analyzer are loaded int
 For example if your SonarQube instance had only SonarJava SonarJS on board, all .java and .js files would be loaded, but .xml files would be ignored.
 
 ## What about branches and pull requests?
-_Developer Edition_ adds the ability to analyze your project's release / [long-lived branches](/branches/long-lived-branches/), feature / [short-lived branches](/branches/short-lived-branches/), and [pull requests](/analysis/pull-request/) as well as the ability to automatically decorate pull requests in some SCM interfaces. For more on branches see the [branches overview](/branches/overview/).
+_Developer Edition_ adds the ability to analyze your project's [branches](/branches/overview/) and [pull requests](/analysis/pull-request/) as well as the ability to automatically decorate pull requests in some ALM interfaces. 
 <!-- /sonarqube -->
 
 ## What happens during analysis?

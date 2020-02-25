@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,21 +18,21 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getCurrentUser, Store } from '../../../store/rootReducer';
 import Password from './Password';
 import Tokens from './Tokens';
 
-interface Props {
+export interface SecurityProps {
   user: T.LoggedInUser;
 }
 
-function Security({ user }: Props) {
+export function Security({ user }: SecurityProps) {
   return (
     <div className="account-body account-container">
-      <Helmet title={translate('my_account.security')} />
+      <Helmet defer={false} title={translate('my_account.security')} />
       <Tokens login={user.login} />
       {user.local && <Password user={user} />}
     </div>

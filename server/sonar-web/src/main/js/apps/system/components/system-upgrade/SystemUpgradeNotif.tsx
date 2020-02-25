@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +22,12 @@ import { Button } from 'sonar-ui-common/components/controls/buttons';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getSystemUpgrades } from '../../../../api/system';
+import { SystemUpgrade } from '../../../../types/system';
 import { groupUpgrades, sortUpgrades } from '../../utils';
 import SystemUpgradeForm from './SystemUpgradeForm';
 
 interface State {
-  systemUpgrades: T.SystemUpgrade[][];
+  systemUpgrades: SystemUpgrade[][];
   openSystemUpgradeForm: boolean;
 }
 

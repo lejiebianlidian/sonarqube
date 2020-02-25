@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ import ConfirmButton from 'sonar-ui-common/components/controls/ConfirmButton';
 import ProjectLinkIcon from 'sonar-ui-common/components/icons/ProjectLinkIcon';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import isValidUri from '../../app/utils/isValidUri';
-import { getLinkName, isProvided } from './utils';
+import { getLinkName, isProvided } from '../../helpers/projectLinks';
 
 interface Props {
   link: T.ProjectLink;

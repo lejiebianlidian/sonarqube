@@ -1,3 +1,9 @@
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+Pattern PLUGIN_NAME_PATTERN = Pattern.compile("(sonar-.*-plugin)(.*)")
+
+
 /**
  * This module is building the zip file containing the static web site
  */
@@ -7,6 +13,42 @@ sonarqube {
 }
 
 group = 'com.sonarsource.sonarqube'
+
+configurations {
+  bundledPlugin {
+    transitive = false
+  }
+}
+
+// loads the bundled_plugins.gradle of each edition
+// (they will all add there own bundled plugins to the bundledPlugin dependency configuration)
+apply from: new File(rootDir, 'sonar-application/bundled_plugins.gradle')
+File closeSourceDir = new File(rootDir, 'private');
+if (closeSourceDir.exists()) {
+  apply from: new File(closeSourceDir, 'edition-developer/bundled_plugins.gradle')
+  apply from: new File(closeSourceDir, 'edition-enterprise/bundled_plugins.gradle')
+  apply from: new File(closeSourceDir, 'edition-datacenter/bundled_plugins.gradle')
+}
+
+task extractAnalyzerDocFiles {
+  doLast {
+    configurations.bundledPlugin.files.each {
+      File file = it
+      copy {
+        from(zipTree(file).matching { include 'static/documentation.md' }) {
+          eachFile { fcd ->
+            Matcher m = PLUGIN_NAME_PATTERN.matcher(file.getName())
+            if (m.find()) {
+              fcd.relativePath = new RelativePath(true, m.group(1) + '.md')
+            }
+          }
+          includeEmptyDirs = false
+        }
+        into "$buildDir/tmp/plugin-documentation/"
+      }
+    }
+  }
+}
 
 yarn_run {
   def docsVersion = version.split("[.-]").take(2).join('.')
@@ -48,7 +90,7 @@ task zip(type: Zip) {
   }
 }
 zip.dependsOn yarn_run
-assemble.dependsOn zip
+assemble.dependsOn zip, extractAnalyzerDocFiles
 
 publishing {
   publications {
@@ -75,3 +117,15 @@ artifactoryPublish {
   publishPom = false
   publications(publishing.publications.docs)
 }
+
+def sources = fileTree(dir: "src") + fileTree(dir: "config") + fileTree(dir: "plugins") + file("gatsby-config.js") + file("gatsby-node.js")
+
+task licenseCheckWeb(type: com.hierynomus.gradle.license.tasks.LicenseCheck) {
+  source = sources
+}
+licenseMain.dependsOn licenseCheckWeb
+
+task licenseFormatWeb(type: com.hierynomus.gradle.license.tasks.LicenseFormat) {
+  source = sources
+}
+licenseFormat.dependsOn licenseFormatWeb

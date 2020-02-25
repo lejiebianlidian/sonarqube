@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ import static org.sonar.ce.task.projectanalysis.component.Component.Type.DIRECTO
 import static org.sonar.ce.task.projectanalysis.component.Component.Type.FILE;
 import static org.sonar.ce.task.projectanalysis.component.Component.Type.PROJECT;
 import static org.sonar.ce.task.projectanalysis.component.ReportComponent.builder;
-import static org.sonar.ce.task.projectanalysis.measure.Measure.newMeasureBuilder;
 
 public class DuplicationMeasuresTest {
   private static final int ROOT_REF = 1;
@@ -340,15 +339,11 @@ public class DuplicationMeasuresTest {
     duplicationRepository.addDuplication(fileRef, original, duplicates);
   }
 
-  private void addRawMeasure(int componentRef, String metricKey, int value) {
-    measureRepository.addRawMeasure(componentRef, metricKey, newMeasureBuilder().create(value));
-  }
-
   private void assertNoRawMeasures(String metricKey) {
-    assertThat(measureRepository.getAddedRawMeasures(FILE_1_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(FILE_2_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(DIRECTORY_REF).get(metricKey)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(ROOT_REF).get(metricKey)).isEmpty();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_1_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_2_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(DIRECTORY_REF).get(metricKey)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(ROOT_REF).get(metricKey)).isNull();
   }
 
   private void assertNoRawMeasure(int componentRef, String metricKey) {

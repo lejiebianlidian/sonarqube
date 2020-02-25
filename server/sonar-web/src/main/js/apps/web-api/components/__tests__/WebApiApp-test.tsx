@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@ import { fetchWebApi } from '../../../../api/web-api';
 import { mockLocation, mockRouter } from '../../../../helpers/testMocks';
 import { WebApiApp } from '../WebApiApp';
 
+jest.mock('../../../../components/common/ScreenPositionHelper');
+
 jest.mock('../../../../api/web-api', () => ({
   fetchWebApi: jest.fn().mockResolvedValue([
     {
@@ -40,17 +42,6 @@ jest.mock('../../../../api/web-api', () => ({
 jest.mock('sonar-ui-common/helpers/pages', () => ({
   addSideBarClass: jest.fn(),
   removeSideBarClass: jest.fn()
-}));
-
-jest.mock('../../../../components/common/ScreenPositionHelper', () => ({
-  default: class ScreenPositionHelper extends React.Component<{
-    children: (pos: { top: number }) => React.ReactNode;
-  }> {
-    static displayName = 'ScreenPositionHelper';
-    render() {
-      return this.props.children({ top: 0 });
-    }
-  }
 }));
 
 it('should render correctly', async () => {

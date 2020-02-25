@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ public class GlobalContainer extends ComponentContainer {
     try {
       String.class.getMethod("isBlank");
     } catch (NoSuchMethodException e) {
-      LOG.warn("SonarScanner will require Java 11+ to run starting in SonarQube 8.x");
+      LOG.warn("SonarScanner will require Java 11 to run starting in SonarQube 8.x");
     }
   }
 

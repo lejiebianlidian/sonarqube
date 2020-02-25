@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -154,6 +154,10 @@ export function getAppFacet(serverFacet: string): FacetKey {
 
 export function getOpen(query: T.RawQuery) {
   return query.open;
+}
+
+export function hasRuleKey(query: T.RawQuery) {
+  return Boolean(query.rule_key);
 }
 
 function parseAsInheritance(value?: string): T.RuleInheritance | undefined {

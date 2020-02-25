@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,13 +21,10 @@ import { groupBy, memoize, sortBy, toPairs } from 'lodash';
 import { getLocalizedMetricName } from 'sonar-ui-common/helpers/l10n';
 import { cleanQuery, parseAsString, serializeString } from 'sonar-ui-common/helpers/query';
 import { enhanceMeasure } from '../../components/measure/utils';
-import {
-  isLongLivingBranch,
-  isMainBranch,
-  isPullRequest,
-  isShortLivingBranch
-} from '../../helpers/branches';
+import { isBranch, isPullRequest } from '../../helpers/branch-like';
 import { getDisplayMetrics, isDiffMetric } from '../../helpers/measures';
+import { BranchLike } from '../../types/branch-like';
+import { ComponentQualifier } from '../../types/component';
 import { bubbles } from './config/bubbles';
 import { domains } from './config/domains';
 
@@ -40,6 +37,7 @@ export const KNOWN_DOMAINS = [
   'Releasability',
   'Reliability',
   'Security',
+  'SecurityReview',
   'Maintainability',
   'Coverage',
   'Duplications',
@@ -107,11 +105,31 @@ export function enhanceComponent(
 }
 
 export function isFileType(component: T.ComponentMeasure): boolean {
-  return ['FIL', 'UTS'].includes(component.qualifier);
+  return [ComponentQualifier.File, ComponentQualifier.TestFile].includes(
+    component.qualifier as ComponentQualifier
+  );
 }
 
 export function isViewType(component: T.ComponentMeasure): boolean {
-  return ['VW', 'SVW', 'APP'].includes(component.qualifier);
+  return [
+    ComponentQualifier.Portfolio,
+    ComponentQualifier.SubPortfolio,
+    ComponentQualifier.Application
+  ].includes(component.qualifier as ComponentQualifier);
+}
+
+export function banQualityGateMeasure({
+  measures = [],
+  qualifier
+}: T.ComponentMeasure): T.Measure[] {
+  const bannedMetrics: string[] = [];
+  if (ComponentQualifier.Portfolio !== qualifier && ComponentQualifier.SubPortfolio !== qualifier) {
+    bannedMetrics.push('alert_status');
+  }
+  if (qualifier === ComponentQualifier.Application) {
+    bannedMetrics.push('releasability_rating', 'releasability_effort');
+  }
+  return measures.filter(measure => !bannedMetrics.includes(measure.metric));
 }
 
 export const groupByDomains = memoize((measures: T.MeasureEnhanced[]) => {
@@ -149,14 +167,14 @@ export function hasFacetStat(metric: string): boolean {
   return metric !== 'alert_status';
 }
 
-export function hasFullMeasures(branch?: T.BranchLike) {
-  return !branch || isLongLivingBranch(branch) || isMainBranch(branch);
+export function hasFullMeasures(branch?: BranchLike) {
+  return !branch || isBranch(branch);
 }
 
-export function getMeasuresPageMetricKeys(metrics: T.Dict<T.Metric>, branch?: T.BranchLike) {
+export function getMeasuresPageMetricKeys(metrics: T.Dict<T.Metric>, branch?: BranchLike) {
   const metricKeys = getDisplayMetrics(Object.values(metrics)).map(metric => metric.key);
 
-  if (isPullRequest(branch) || isShortLivingBranch(branch)) {
+  if (isPullRequest(branch)) {
     return metricKeys.filter(key => isDiffMetric(key));
   } else {
     return metricKeys;

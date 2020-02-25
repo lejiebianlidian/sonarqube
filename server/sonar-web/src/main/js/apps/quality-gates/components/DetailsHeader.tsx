@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,10 @@ interface Props {
 export default class DetailsHeader extends React.PureComponent<Props> {
   handleActionRefresh = () => {
     const { refreshItem, refreshList } = this.props;
-    return Promise.all([refreshItem(), refreshList()]).then(() => {}, () => {});
+    return Promise.all([refreshItem(), refreshList()]).then(
+      () => {},
+      () => {}
+    );
   };
 
   handleSetAsDefaultClick = () => {

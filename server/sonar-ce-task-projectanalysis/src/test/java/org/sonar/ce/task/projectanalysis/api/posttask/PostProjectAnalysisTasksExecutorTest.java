@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.RandomStringUtils;
@@ -37,12 +39,13 @@ import org.mockito.InOrder;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.ce.posttask.Project;
 import org.sonar.api.utils.System2;
+import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.ce.task.CeTask;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolderRule;
 import org.sonar.ce.task.projectanalysis.analysis.Branch;
 import org.sonar.ce.task.projectanalysis.analysis.Organization;
 import org.sonar.ce.task.projectanalysis.batch.BatchReportReaderRule;
-import org.sonar.ce.task.projectanalysis.component.DefaultBranchImpl;
 import org.sonar.ce.task.projectanalysis.metric.Metric;
 import org.sonar.ce.task.projectanalysis.qualitygate.Condition;
 import org.sonar.ce.task.projectanalysis.qualitygate.ConditionStatus;
@@ -56,9 +59,12 @@ import org.sonar.scanner.protocol.output.ScannerReport;
 
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -80,12 +86,14 @@ public class PostProjectAnalysisTasksExecutorTest {
   public MutableQualityGateStatusHolderRule qualityGateStatusHolder = new MutableQualityGateStatusHolderRule();
   @Rule
   public BatchReportReaderRule reportReader = new BatchReportReaderRule();
+  @Rule
+  public LogTester logTester = new LogTester();
 
   private String organizationUuid = "org1";
   private String organizationKey = organizationUuid + "_key";
   private String organizationName = organizationUuid + "_name";
   private System2 system2 = mock(System2.class);
-  private ArgumentCaptor<PostProjectAnalysisTask.ProjectAnalysis> projectAnalysisArgumentCaptor = ArgumentCaptor.forClass(PostProjectAnalysisTask.ProjectAnalysis.class);
+  private ArgumentCaptor<PostProjectAnalysisTask.Context> taskContextCaptor = ArgumentCaptor.forClass(PostProjectAnalysisTask.Context.class);
   private CeTask.Component component = new CeTask.Component("component uuid", "component key", "component name");
   private CeTask ceTask = new CeTask.Builder()
     .setOrganizationUuid(organizationUuid)
@@ -94,20 +102,20 @@ public class PostProjectAnalysisTasksExecutorTest {
     .setComponent(component)
     .setMainComponent(component)
     .build();
-  private PostProjectAnalysisTask postProjectAnalysisTask = mock(PostProjectAnalysisTask.class);
+  private PostProjectAnalysisTask postProjectAnalysisTask = newPostProjectAnalysisTask("PT1");
   private PostProjectAnalysisTasksExecutor underTest = new PostProjectAnalysisTasksExecutor(
     ceTask, analysisMetadataHolder, qualityGateHolder, qualityGateStatusHolder,
     reportReader, system2,
     new PostProjectAnalysisTask[] {postProjectAnalysisTask});
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     qualityGateHolder.setQualityGate(new QualityGate(QUALITY_GATE_ID, QUALITY_GATE_NAME, of(CONDITION_1, CONDITION_2)));
     qualityGateStatusHolder.setStatus(QualityGateStatus.OK, ImmutableMap.of(
       CONDITION_1, ConditionStatus.create(ConditionStatus.EvaluationStatus.OK, "value"),
       CONDITION_2, ConditionStatus.NO_VALUE_STATUS));
     Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.LONG);
+    when(branch.getType()).thenReturn(BranchType.BRANCH);
     analysisMetadataHolder
       .setBranch(branch)
       .setOrganizationsEnabled(new Random().nextBoolean())
@@ -127,8 +135,8 @@ public class PostProjectAnalysisTasksExecutorTest {
   @Test
   @UseDataProvider("booleanValues")
   public void finished_calls_all_PostProjectAnalysisTask_in_order_of_the_array_and_passes_the_same_object_to_all(boolean allStepsExecuted) {
-    PostProjectAnalysisTask postProjectAnalysisTask1 = mock(PostProjectAnalysisTask.class);
-    PostProjectAnalysisTask postProjectAnalysisTask2 = mock(PostProjectAnalysisTask.class);
+    PostProjectAnalysisTask postProjectAnalysisTask1 = newPostProjectAnalysisTask("PT1");
+    PostProjectAnalysisTask postProjectAnalysisTask2 = newPostProjectAnalysisTask("PT2");
     InOrder inOrder = inOrder(postProjectAnalysisTask1, postProjectAnalysisTask2);
 
     new PostProjectAnalysisTasksExecutor(
@@ -136,13 +144,22 @@ public class PostProjectAnalysisTasksExecutorTest {
       system2, new PostProjectAnalysisTask[] {postProjectAnalysisTask1, postProjectAnalysisTask2})
       .finished(allStepsExecuted);
 
-    inOrder.verify(postProjectAnalysisTask1).finished(projectAnalysisArgumentCaptor.capture());
-    inOrder.verify(postProjectAnalysisTask2).finished(projectAnalysisArgumentCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask1).finished(taskContextCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask1).getDescription();
+    inOrder.verify(postProjectAnalysisTask2).finished(taskContextCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask2).getDescription();
     inOrder.verifyNoMoreInteractions();
 
-    List<PostProjectAnalysisTask.ProjectAnalysis> allValues = projectAnalysisArgumentCaptor.getAllValues();
+    ArgumentCaptor<PostProjectAnalysisTask.Context> taskContextCaptor = this.taskContextCaptor;
+    List<PostProjectAnalysisTask.ProjectAnalysis> allValues = getAllProjectAnalyses(taskContextCaptor);
     assertThat(allValues).hasSize(2);
     assertThat(allValues.get(0)).isSameAs(allValues.get(1));
+
+    assertThat(logTester.logs()).hasSize(2);
+    List<String> logs = logTester.logs(LoggerLevel.INFO);
+    assertThat(logs).hasSize(2);
+    assertThat(logs.get(0)).matches("^PT1 \\| status=SUCCESS \\| time=\\d+ms$");
+    assertThat(logs.get(1)).matches("^PT2 \\| status=SUCCESS \\| time=\\d+ms$");
   }
 
   @Test
@@ -154,9 +171,9 @@ public class PostProjectAnalysisTasksExecutorTest {
         new OrganizationDto().setKey(organizationKey).setName(organizationName).setUuid(organizationUuid).setDefaultQualityGateUuid("foo")));
     underTest.finished(allStepsExecuted);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getOrganization()).isEmpty();
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getOrganization()).isEmpty();
   }
 
   @Test
@@ -168,9 +185,9 @@ public class PostProjectAnalysisTasksExecutorTest {
         new OrganizationDto().setKey(organizationKey).setName(organizationName).setUuid(organizationUuid).setDefaultQualityGateUuid("foo")));
     underTest.finished(allStepsExecuted);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    org.sonar.api.ce.posttask.Organization organization = projectAnalysisArgumentCaptor.getValue().getOrganization().get();
+    org.sonar.api.ce.posttask.Organization organization = taskContextCaptor.getValue().getProjectAnalysis().getOrganization().get();
     assertThat(organization.getKey()).isEqualTo(organizationKey);
     assertThat(organization.getName()).isEqualTo(organizationName);
   }
@@ -180,9 +197,9 @@ public class PostProjectAnalysisTasksExecutorTest {
   public void CeTask_status_depends_on_finished_method_argument_is_true_or_false(boolean allStepsExecuted) {
     underTest.finished(allStepsExecuted);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getCeTask().getStatus())
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getCeTask().getStatus())
       .isEqualTo(
         allStepsExecuted ? org.sonar.api.ce.posttask.CeTask.Status.SUCCESS : org.sonar.api.ce.posttask.CeTask.Status.FAILED);
   }
@@ -191,9 +208,9 @@ public class PostProjectAnalysisTasksExecutorTest {
   public void ceTask_uuid_is_UUID_of_CeTask() {
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getCeTask().getId())
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getCeTask().getId())
       .isEqualTo(ceTask.getUuid());
   }
 
@@ -201,9 +218,9 @@ public class PostProjectAnalysisTasksExecutorTest {
   public void project_uuid_key_and_name_come_from_CeTask() {
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    Project project = projectAnalysisArgumentCaptor.getValue().getProject();
+    Project project = taskContextCaptor.getValue().getProjectAnalysis().getProject();
     assertThat(project.getUuid()).isEqualTo(ceTask.getComponent().get().getUuid());
     assertThat(project.getKey()).isEqualTo(ceTask.getComponent().get().getKey().get());
     assertThat(project.getName()).isEqualTo(ceTask.getComponent().get().getName().get());
@@ -216,9 +233,9 @@ public class PostProjectAnalysisTasksExecutorTest {
 
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getDate())
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getDate())
       .isEqualTo(new Date(analysisMetadataHolder.getAnalysisDate()));
   }
 
@@ -229,9 +246,9 @@ public class PostProjectAnalysisTasksExecutorTest {
 
     underTest.finished(false);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getDate()).isEqualTo(new Date(now));
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getDate()).isEqualTo(new Date(now));
   }
 
   @Test
@@ -241,11 +258,11 @@ public class PostProjectAnalysisTasksExecutorTest {
 
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getAnalysis().get().getDate())
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getAnalysis().get().getDate())
       .isEqualTo(new Date(analysisMetadataHolder.getAnalysisDate()));
-    assertThat(projectAnalysisArgumentCaptor.getValue().getAnalysis().get().getAnalysisUuid())
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getAnalysis().get().getAnalysisUuid())
       .isEqualTo(analysisMetadataHolder.getUuid());
   }
 
@@ -253,20 +270,9 @@ public class PostProjectAnalysisTasksExecutorTest {
   public void analysis_is_empty_when_not_set_in_AnalysisMetadataHolder() {
     underTest.finished(false);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getAnalysis()).isEmpty();
-  }
-
-  @Test
-  public void branch_is_empty_when_legacy_branch_implementation_is_used() {
-    analysisMetadataHolder.setBranch(new DefaultBranchImpl("feature/foo"));
-
-    underTest.finished(true);
-
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
-
-    assertThat(projectAnalysisArgumentCaptor.getValue().getBranch()).isEmpty();
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getAnalysis()).isEmpty();
   }
 
   @Test
@@ -274,7 +280,7 @@ public class PostProjectAnalysisTasksExecutorTest {
     analysisMetadataHolder.setBranch(new Branch() {
       @Override
       public BranchType getType() {
-        return BranchType.SHORT;
+        return BranchType.BRANCH;
       }
 
       @Override
@@ -283,12 +289,7 @@ public class PostProjectAnalysisTasksExecutorTest {
       }
 
       @Override
-      public boolean isLegacyFeature() {
-        return false;
-      }
-
-      @Override
-      public String getMergeBranchUuid() {
+      public String getReferenceBranchUuid() {
         throw new UnsupportedOperationException();
       }
 
@@ -320,30 +321,30 @@ public class PostProjectAnalysisTasksExecutorTest {
 
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    org.sonar.api.ce.posttask.Branch branch = projectAnalysisArgumentCaptor.getValue().getBranch().get();
+    org.sonar.api.ce.posttask.Branch branch = taskContextCaptor.getValue().getProjectAnalysis().getBranch().get();
     assertThat(branch.isMain()).isFalse();
     assertThat(branch.getName()).hasValue("feature/foo");
-    assertThat(branch.getType()).isEqualTo(BranchImpl.Type.SHORT);
+    assertThat(branch.getType()).isEqualTo(BranchImpl.Type.BRANCH);
   }
 
   @Test
   public void qualityGate_is_null_when_finished_method_argument_is_false() {
     underTest.finished(false);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    assertThat(projectAnalysisArgumentCaptor.getValue().getQualityGate()).isNull();
+    assertThat(taskContextCaptor.getValue().getProjectAnalysis().getQualityGate()).isNull();
   }
 
   @Test
   public void qualityGate_is_populated_when_finished_method_argument_is_true() {
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    org.sonar.api.ce.posttask.QualityGate qualityGate = projectAnalysisArgumentCaptor.getValue().getQualityGate();
+    org.sonar.api.ce.posttask.QualityGate qualityGate = taskContextCaptor.getValue().getProjectAnalysis().getQualityGate();
     assertThat(qualityGate.getStatus()).isEqualTo(org.sonar.api.ce.posttask.QualityGate.Status.OK);
     assertThat(qualityGate.getId()).isEqualTo(String.valueOf(QUALITY_GATE_ID));
     assertThat(qualityGate.getName()).isEqualTo(QUALITY_GATE_NAME);
@@ -355,33 +356,124 @@ public class PostProjectAnalysisTasksExecutorTest {
     reportReader.putContextProperties(asList(ScannerReport.ContextProperty.newBuilder().setKey("foo").setValue("bar").build()));
     underTest.finished(true);
 
-    verify(postProjectAnalysisTask).finished(projectAnalysisArgumentCaptor.capture());
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
 
-    org.sonar.api.ce.posttask.ScannerContext scannerContext = projectAnalysisArgumentCaptor.getValue().getScannerContext();
+    org.sonar.api.ce.posttask.ScannerContext scannerContext = taskContextCaptor.getValue().getProjectAnalysis().getScannerContext();
     assertThat(scannerContext.getProperties()).containsExactly(entry("foo", "bar"));
   }
 
   @Test
   @UseDataProvider("booleanValues")
+  public void logStatistics_add_fails_when_NPE_if_key_or_value_is_null(boolean allStepsExecuted) {
+    underTest.finished(allStepsExecuted);
+
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
+    PostProjectAnalysisTask.LogStatistics logStatistics = taskContextCaptor.getValue().getLogStatistics();
+
+    assertThat(catchThrowable(() -> logStatistics.add(null, "foo")))
+      .isInstanceOf(NullPointerException.class)
+      .hasMessage("Statistic has null key");
+    assertThat(catchThrowable(() -> logStatistics.add(null, null)))
+      .isInstanceOf(NullPointerException.class)
+      .hasMessage("Statistic has null key");
+    assertThat(catchThrowable(() -> logStatistics.add("bar", null)))
+      .isInstanceOf(NullPointerException.class)
+      .hasMessage("Statistic with key [bar] has null value");
+  }
+
+  @Test
+  @UseDataProvider("booleanValues")
+  public void logStatistics_add_fails_with_IAE_if_key_is_time_or_status_ignoring_case(boolean allStepsExecuted) {
+    underTest.finished(allStepsExecuted);
+
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
+    PostProjectAnalysisTask.LogStatistics logStatistics = taskContextCaptor.getValue().getLogStatistics();
+
+    for (String reservedKey : asList("time", "TIME", "TImE", "status", "STATUS", "STaTuS")) {
+      assertThat(catchThrowable(() -> logStatistics.add(reservedKey, "foo")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Statistic with key [" + reservedKey + "] is not accepted");
+    }
+  }
+
+  @Test
+  @UseDataProvider("booleanValues")
+  public void logStatistics_add_fails_with_IAE_if_same_key_with_exact_case_added_twice(boolean allStepsExecuted) {
+    underTest.finished(allStepsExecuted);
+
+    verify(postProjectAnalysisTask).finished(taskContextCaptor.capture());
+    PostProjectAnalysisTask.LogStatistics logStatistics = taskContextCaptor.getValue().getLogStatistics();
+
+    String key = RandomStringUtils.randomAlphabetic(10);
+    logStatistics.add(key, new Object());
+    assertThat(catchThrowable(() -> logStatistics.add(key, "bar")))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Statistic with key [" + key + "] is already present");
+  }
+
+  @Test
+  @UseDataProvider("booleanValues")
+  public void logStatistics_adds_statistics_to_end_of_task_log(boolean allStepsExecuted) {
+    Map<String, Object> stats = new HashMap<>();
+    for (int i = 0; i <= new Random().nextInt(10); i++) {
+      stats.put("statKey_" + i, "statVal_" + i);
+    }
+    PostProjectAnalysisTask logStatisticsTask = mock(PostProjectAnalysisTask.class);
+    when(logStatisticsTask.getDescription()).thenReturn("PT1");
+    doAnswer(i -> {
+      PostProjectAnalysisTask.Context context = i.getArgument(0);
+      stats.forEach((k, v) -> context.getLogStatistics().add(k, v));
+      return null;
+    }).when(logStatisticsTask)
+      .finished(any(PostProjectAnalysisTask.Context.class));
+
+    new PostProjectAnalysisTasksExecutor(
+      ceTask, analysisMetadataHolder, qualityGateHolder, qualityGateStatusHolder, reportReader,
+      system2, new PostProjectAnalysisTask[] {logStatisticsTask})
+      .finished(allStepsExecuted);
+
+    verify(logStatisticsTask).finished(taskContextCaptor.capture());
+
+    assertThat(logTester.logs()).hasSize(1);
+    List<String> logs = logTester.logs(LoggerLevel.INFO);
+    assertThat(logs).hasSize(1);
+    StringBuilder expectedLog = new StringBuilder("^PT1 ");
+    stats.forEach((k, v) -> expectedLog.append("\\| " + k + "=" + v + " "));
+    expectedLog.append("\\| status=SUCCESS \\| time=\\d+ms$");
+    assertThat(logs.get(0)).matches(expectedLog.toString());
+  }
+
+  @Test
+  @UseDataProvider("booleanValues")
   public void finished_does_not_fail_if_listener_throws_exception_and_execute_subsequent_listeners(boolean allStepsExecuted) {
-    PostProjectAnalysisTask postProjectAnalysisTask1 = mock(PostProjectAnalysisTask.class);
-    PostProjectAnalysisTask postProjectAnalysisTask2 = mock(PostProjectAnalysisTask.class);
-    PostProjectAnalysisTask postProjectAnalysisTask3 = mock(PostProjectAnalysisTask.class);
+    PostProjectAnalysisTask postProjectAnalysisTask1 = newPostProjectAnalysisTask("PT1");
+    PostProjectAnalysisTask postProjectAnalysisTask2 = newPostProjectAnalysisTask("PT2");
+    PostProjectAnalysisTask postProjectAnalysisTask3 = newPostProjectAnalysisTask("PT3");
     InOrder inOrder = inOrder(postProjectAnalysisTask1, postProjectAnalysisTask2, postProjectAnalysisTask3);
 
     doThrow(new RuntimeException("Faking a listener throws an exception"))
       .when(postProjectAnalysisTask2)
-      .finished(any(PostProjectAnalysisTask.ProjectAnalysis.class));
+      .finished(any(PostProjectAnalysisTask.Context.class));
 
     new PostProjectAnalysisTasksExecutor(
       ceTask, analysisMetadataHolder, qualityGateHolder, qualityGateStatusHolder, reportReader,
       system2, new PostProjectAnalysisTask[] {postProjectAnalysisTask1, postProjectAnalysisTask2, postProjectAnalysisTask3})
       .finished(allStepsExecuted);
 
-    inOrder.verify(postProjectAnalysisTask1).finished(projectAnalysisArgumentCaptor.capture());
-    inOrder.verify(postProjectAnalysisTask2).finished(projectAnalysisArgumentCaptor.capture());
-    inOrder.verify(postProjectAnalysisTask3).finished(projectAnalysisArgumentCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask1).finished(taskContextCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask1).getDescription();
+    inOrder.verify(postProjectAnalysisTask2).finished(taskContextCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask2).getDescription();
+    inOrder.verify(postProjectAnalysisTask3).finished(taskContextCaptor.capture());
+    inOrder.verify(postProjectAnalysisTask3).getDescription();
     inOrder.verifyNoMoreInteractions();
+
+    assertThat(logTester.logs()).hasSize(4);
+    List<String> logs = logTester.logs(LoggerLevel.INFO);
+    assertThat(logs).hasSize(3);
+    assertThat(logs.get(0)).matches("^PT1 \\| status=SUCCESS \\| time=\\d+ms$");
+    assertThat(logs.get(1)).matches("^PT2 \\| status=FAILED \\| time=\\d+ms$");
+    assertThat(logs.get(2)).matches("^PT3 \\| status=SUCCESS \\| time=\\d+ms$");
   }
 
   @DataProvider
@@ -396,6 +488,20 @@ public class PostProjectAnalysisTasksExecutorTest {
     Metric metric = mock(Metric.class);
     when(metric.getKey()).thenReturn(metricKey);
     return new Condition(metric, Condition.Operator.LESS_THAN.getDbValue(), "error threshold");
+  }
+
+  private static PostProjectAnalysisTask newPostProjectAnalysisTask(String description) {
+    PostProjectAnalysisTask res = mock(PostProjectAnalysisTask.class);
+    when(res.getDescription()).thenReturn(description);
+    doAnswer(i -> null).when(res).finished(any(PostProjectAnalysisTask.Context.class));
+    return res;
+  }
+
+  private static List<PostProjectAnalysisTask.ProjectAnalysis> getAllProjectAnalyses(ArgumentCaptor<PostProjectAnalysisTask.Context> taskContextCaptor) {
+    return taskContextCaptor.getAllValues()
+      .stream()
+      .map(PostProjectAnalysisTask.Context::getProjectAnalysis)
+      .collect(toList());
   }
 
 }

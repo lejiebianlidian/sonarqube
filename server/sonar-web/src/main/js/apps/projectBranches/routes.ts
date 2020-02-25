@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ import { lazyLoad } from 'sonar-ui-common/components/lazyLoad';
 
 const routes = [
   {
-    indexRoute: { component: lazyLoad(() => import('./components/AppContainer')) }
+    indexRoute: { component: lazyLoad(() => import('./components/App')) }
   }
 ];
 

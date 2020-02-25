@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +20,13 @@
 package org.sonar.ce.task.projectanalysis.source;
 
 import java.util.Arrays;
-import javax.annotation.Nullable;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolder;
 import org.sonar.ce.task.projectanalysis.component.Component;
-import org.sonar.ce.task.projectanalysis.component.MergeAndTargetBranchComponentUuids;
+import org.sonar.ce.task.projectanalysis.component.ReferenceBranchComponentUuids;
+import org.sonar.ce.task.projectanalysis.filemove.MutableMovedFilesRepositoryRule;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.ComponentDao;
@@ -45,10 +46,12 @@ public class SourceLinesDiffImplTest {
   private FileSourceDao fileSourceDao = mock(FileSourceDao.class);
   private SourceLinesHashRepository sourceLinesHash = mock(SourceLinesHashRepository.class);
   private AnalysisMetadataHolder analysisMetadataHolder = mock(AnalysisMetadataHolder.class);
-  private MergeAndTargetBranchComponentUuids mergeAndTargetBranchComponentUuids = mock(MergeAndTargetBranchComponentUuids.class);
+  private ReferenceBranchComponentUuids referenceBranchComponentUuids = mock(ReferenceBranchComponentUuids.class);
+  @Rule
+  public MutableMovedFilesRepositoryRule movedFiles = new MutableMovedFilesRepositoryRule();
 
   private SourceLinesDiffImpl underTest = new SourceLinesDiffImpl(dbClient, fileSourceDao, sourceLinesHash,
-    mergeAndTargetBranchComponentUuids, analysisMetadataHolder);
+    referenceBranchComponentUuids, movedFiles, analysisMetadataHolder);
 
   private static final int FILE_REF = 1;
 
@@ -63,36 +66,21 @@ public class SourceLinesDiffImplTest {
   };
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     when(dbClient.openSession(false)).thenReturn(dbSession);
     when(dbClient.componentDao()).thenReturn(componentDao);
     when(dbClient.fileSourceDao()).thenReturn(fileSourceDao);
   }
 
   @Test
-  public void should_find_diff_with_target_branch_for_slbs() {
+  public void should_find_diff_with_reference_branch_for_prs() {
     Component component = fileComponent(FILE_REF);
-    Component componentInTarget = fileComponent(2);
 
     mockLineHashesInDb(2, CONTENT);
     setLineHashesInReport(component, CONTENT);
 
-    when(analysisMetadataHolder.isSLBorPR()).thenReturn(true);
-    when(mergeAndTargetBranchComponentUuids.getTargetBranchComponentUuid(component.getKey())).thenReturn("uuid_2");
-
-    assertThat(underTest.computeMatchingLines(component)).containsExactly(1, 2, 3, 4, 5, 6, 7);
-  }
-
-  @Test
-  public void should_find_diff_with_merge_branch_for_slbs_if_not_found_in_target() {
-    Component component = fileComponent(FILE_REF);
-    Component componentInTarget = fileComponent(2);
-
-    mockLineHashesInDb(2, CONTENT);
-    setLineHashesInReport(component, CONTENT);
-
-    when(analysisMetadataHolder.isSLBorPR()).thenReturn(true);
-    when(mergeAndTargetBranchComponentUuids.getMergeBranchComponentUuid(component.getKey())).thenReturn("uuid_2");
+    when(analysisMetadataHolder.isPullRequest()).thenReturn(true);
+    when(referenceBranchComponentUuids.getComponentUuid(component.getKey())).thenReturn("uuid_2");
 
     assertThat(underTest.computeMatchingLines(component)).containsExactly(1, 2, 3, 4, 5, 6, 7);
   }
@@ -116,7 +104,7 @@ public class SourceLinesDiffImplTest {
     assertThat(underTest.computeMatchingLines(component)).containsExactly(1, 2, 3, 4, 5, 6, 7);
   }
 
-  private void mockLineHashesInDb(int ref, @Nullable String[] lineHashes) {
+  private void mockLineHashesInDb(int ref, String[] lineHashes) {
     when(fileSourceDao.selectLineHashes(dbSession, componentUuidOf(String.valueOf(ref))))
       .thenReturn(Arrays.asList(lineHashes));
   }

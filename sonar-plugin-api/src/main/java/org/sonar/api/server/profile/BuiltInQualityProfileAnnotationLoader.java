@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.api.server.profile;
 
-import javax.annotation.CheckForNull;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.rules.RuleAnnotationUtils;
 import org.sonar.api.server.ServerSide;
@@ -42,7 +41,6 @@ public class BuiltInQualityProfileAnnotationLoader {
     }
   }
 
-  @CheckForNull
   void loadActiveRule(BuiltInQualityProfilesDefinition.NewBuiltInQualityProfile profile, String repositoryKey, Class<?> clazz) {
     BelongsToProfile belongsToProfile = clazz.getAnnotation(BelongsToProfile.class);
     if ((belongsToProfile != null) && StringUtils.equals(belongsToProfile.title(), profile.name())) {

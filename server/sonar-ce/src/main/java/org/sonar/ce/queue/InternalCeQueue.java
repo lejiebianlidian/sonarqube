@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,16 +48,6 @@ public interface InternalCeQueue extends CeQueue {
    * are ignored</p>
    */
   Optional<CeTask> peek(String workerUuid);
-
-  /**
-   * Removes all the tasks from the queue, whatever their status. They are marked
-   * as {@link Status#CANCELED} in past activity.
-   * This method can NOT be called when  workers are being executed, as in progress
-   * tasks can't be killed.
-   *
-   * @return the number of canceled tasks
-   */
-  int clear();
 
   /**
    * Removes a task from the queue and registers it to past activities. This method

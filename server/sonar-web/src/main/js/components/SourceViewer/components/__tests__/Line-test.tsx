@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +19,13 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockIssue, mockPullRequest, mockSourceLine } from '../../../../helpers/testMocks';
+import { mockPullRequest } from '../../../../helpers/mocks/branch-like';
+import { mockIssue, mockSourceLine } from '../../../../helpers/testMocks';
 import Line from '../Line';
 
 it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot();
+  expect(shallowRender({ displaySCM: false })).toMatchSnapshot('no SCM');
 });
 
 it('should render correctly for last, new, and highlighted lines', () => {

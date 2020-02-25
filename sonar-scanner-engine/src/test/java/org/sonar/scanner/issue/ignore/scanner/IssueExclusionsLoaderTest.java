@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -53,14 +53,14 @@ public class IssueExclusionsLoaderTest {
   private IssueExclusionsLoader scanner;
 
   @Before
-  public void before() throws Exception {
+  public void before() {
     ignoreIssuesFilter = mock(IgnoreIssuesFilter.class);
     MockitoAnnotations.initMocks(this);
     scanner = new IssueExclusionsLoader(exclusionPatternInitializer, ignoreIssuesFilter, mock(AnalysisWarnings.class));
   }
 
   @Test
-  public void testToString() throws Exception {
+  public void testToString() {
     assertThat(scanner.toString()).isEqualTo("Issues Exclusions - Source Scanner");
   }
 

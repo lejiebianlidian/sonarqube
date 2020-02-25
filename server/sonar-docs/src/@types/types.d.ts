@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 export type Dict<T> = { [key: string]: T };
 
 export interface DocVersion {
   current: boolean;
+  lts?: boolean;
   value: string;
 }
 
@@ -29,7 +29,7 @@ export type DocNavigationItem = string | DocsNavigationBlock | DocsNavigationExt
 
 export interface DocsNavigationBlock {
   title: string;
-  children: (DocNavigationItem | string)[];
+  children: DocNavigationItem[];
 }
 
 export interface DocsNavigationExternalLink {

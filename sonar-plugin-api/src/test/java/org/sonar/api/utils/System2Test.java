@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -84,6 +84,11 @@ public class System2Test {
   }
 
   @Test
+  public void testIsOsMac() {
+    assertThat(System2.INSTANCE.isOsMac()).isEqualTo(SystemUtils.IS_OS_MAC);
+  }
+
+  @Test
   public void isJavaAtLeast17_always_returns_true() {
     assertThat(System2.INSTANCE.isJavaAtLeast17()).isTrue();
   }
@@ -106,7 +111,7 @@ public class System2Test {
       boolean isClosed = false;
 
       @Override
-      public void close() throws IOException {
+      public void close() {
         isClosed = true;
       }
     }
@@ -118,11 +123,8 @@ public class System2Test {
 
   @Test
   public void close_throws_exception_on_error() {
-    Closeable closeable = new Closeable() {
-      @Override
-      public void close() throws IOException {
-        throw new IOException("expected");
-      }
+    Closeable closeable = () -> {
+      throw new IOException("expected");
     };
     try {
       System2.INSTANCE.close(closeable);

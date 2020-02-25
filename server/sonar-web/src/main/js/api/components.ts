@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 import { getJSON, post, postJSON, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
+import { BranchParameters } from '../types/branch-like';
 
 export interface BaseSearchProjectsParameters {
   analyzedBefore?: string;
@@ -121,13 +122,13 @@ export function getComponentLeaves(
 }
 
 export function getComponent(
-  data: { component: string; metricKeys: string } & T.BranchParameters
+  data: { component: string; metricKeys: string } & BranchParameters
 ): Promise<{ component: T.ComponentMeasure }> {
   return getJSON('/api/measures/component', data);
 }
 
 export interface TreeComponent extends T.LightComponent {
-  id: string;
+  id?: string;
   name: string;
   path?: string;
   refId?: string;
@@ -136,32 +137,48 @@ export interface TreeComponent extends T.LightComponent {
   visibility: T.Visibility;
 }
 
-export function getTree(data: {
+export interface TreeComponentWithPath extends TreeComponent {
+  path: string;
+}
+
+type GetTreeParams = {
   asc?: boolean;
-  branch?: string;
   component: string;
   p?: number;
   ps?: number;
-  pullRequest?: string;
   q?: string;
-  qualifiers?: string;
   s?: string;
   strategy?: 'all' | 'leaves' | 'children';
-}): Promise<{ baseComponent: TreeComponent; components: TreeComponent[]; paging: T.Paging }> {
+} & BranchParameters;
+
+export function getTree<T = TreeComponent>(
+  data: GetTreeParams & { qualifiers?: string }
+): Promise<{ baseComponent: TreeComponent; components: T[]; paging: T.Paging }> {
   return getJSON('/api/components/tree', data).catch(throwGlobalError);
 }
 
-export function getComponentData(data: { component: string } & T.BranchParameters): Promise<any> {
+export function getFiles(data: GetTreeParams) {
+  return getTree<TreeComponentWithPath>({ ...data, qualifiers: 'FIL' });
+}
+
+export function getDirectories(data: GetTreeParams) {
+  return getTree<TreeComponentWithPath>({ ...data, qualifiers: 'DIR' });
+}
+
+export function getComponentData(data: { component: string } & BranchParameters): Promise<any> {
   return getJSON('/api/components/show', data);
 }
 
 export function doesComponentExists(
-  data: { component: string } & T.BranchParameters
+  data: { component: string } & BranchParameters
 ): Promise<boolean> {
-  return getComponentData(data).then(({ component }) => component !== undefined, () => false);
+  return getComponentData(data).then(
+    ({ component }) => component !== undefined,
+    () => false
+  );
 }
 
-export function getComponentShow(data: { component: string } & T.BranchParameters): Promise<any> {
+export function getComponentShow(data: { component: string } & BranchParameters): Promise<any> {
   return getComponentData(data).catch(throwGlobalError);
 }
 
@@ -169,7 +186,7 @@ export function getParents(component: string): Promise<any> {
   return getComponentShow({ component }).then(r => r.ancestors);
 }
 
-export function getBreadcrumbs(data: { component: string } & T.BranchParameters): Promise<any> {
+export function getBreadcrumbs(data: { component: string } & BranchParameters): Promise<any> {
   return getComponentShow(data).then(r => {
     const reversedAncestors = [...r.ancestors].reverse();
     return [...reversedAncestors, r.component];
@@ -262,25 +279,25 @@ export function getSuggestions(
 }
 
 export function getComponentForSourceViewer(
-  data: { component: string } & T.BranchParameters
+  data: { component: string } & BranchParameters
 ): Promise<T.SourceViewerFile> {
   return getJSON('/api/components/app', data);
 }
 
 export function getSources(
-  data: { key: string; from?: number; to?: number } & T.BranchParameters
+  data: { key: string; from?: number; to?: number } & BranchParameters
 ): Promise<T.SourceLine[]> {
   return getJSON('/api/sources/lines', data).then(r => r.sources);
 }
 
 export function getDuplications(
-  data: { key: string } & T.BranchParameters
+  data: { key: string } & BranchParameters
 ): Promise<{ duplications: T.Duplication[]; files: T.Dict<T.DuplicatedFile> }> {
   return getJSON('/api/duplications/show', data).catch(throwGlobalError);
 }
 
 export function getTests(
-  data: { sourceFileKey: string; sourceFileLineNumber: number | string } & T.BranchParameters
+  data: { sourceFileKey: string; sourceFileLineNumber: number | string } & BranchParameters
 ): Promise<any> {
   return getJSON('/api/tests/list', data).then(r => r.tests);
 }

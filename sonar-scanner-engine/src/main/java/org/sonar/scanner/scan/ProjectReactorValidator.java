@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@ import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.sonar.core.config.ScannerProperties.BRANCHES_DOC_LINK;
 import static org.sonar.core.config.ScannerProperties.BRANCH_NAME;
-import static org.sonar.core.config.ScannerProperties.BRANCH_TARGET;
 import static org.sonar.core.config.ScannerProperties.PULL_REQUEST_BASE;
 import static org.sonar.core.config.ScannerProperties.PULL_REQUEST_BRANCH;
 import static org.sonar.core.config.ScannerProperties.PULL_REQUEST_KEY;
@@ -69,16 +68,12 @@ public class ProjectReactorValidator {
       validateModule(moduleDef, validationMessages);
     }
 
-    String deprecatedBranchName = reactor.getRoot().getBranch();
-
     if (isBranchFeatureAvailable()) {
-      branchParamsValidator.validate(validationMessages, deprecatedBranchName);
+      branchParamsValidator.validate(validationMessages);
     } else {
       validateBranchParamsWhenPluginAbsent(validationMessages);
       validatePullRequestParamsWhenPluginAbsent(validationMessages);
     }
-
-    validateLegacyBranch(validationMessages, deprecatedBranchName);
 
     if (!validationMessages.isEmpty()) {
       throw MessageException.of("Validation of project reactor failed:\n  o " +
@@ -87,7 +82,7 @@ public class ProjectReactorValidator {
   }
 
   private void validateBranchParamsWhenPluginAbsent(List<String> validationMessages) {
-    for (String param : Arrays.asList(BRANCH_NAME, BRANCH_TARGET)) {
+    for (String param : Arrays.asList(BRANCH_NAME)) {
       if (isNotEmpty(settings.get(param).orElse(null))) {
         validationMessages.add(format("To use the property \"%s\" and analyze branches, Developer Edition or above is required. "
           + "See %s for more information.", param, BRANCHES_DOC_LINK));
@@ -105,13 +100,6 @@ public class ProjectReactorValidator {
   private static void validateModule(ProjectDefinition moduleDef, List<String> validationMessages) {
     if (!ComponentKeys.isValidProjectKey(moduleDef.getKey())) {
       validationMessages.add(format("\"%s\" is not a valid project or module key. It cannot be empty nor contain whitespaces.", moduleDef.getKey()));
-    }
-  }
-
-  private static void validateLegacyBranch(List<String> validationMessages, @Nullable String branch) {
-    if (isNotEmpty(branch) && !ComponentKeys.isValidLegacyBranch(branch)) {
-      validationMessages.add(format("\"%s\" is not a valid branch name. "
-        + "Allowed characters are alphanumeric, '-', '_', '.' and '/'.", branch));
     }
   }
 

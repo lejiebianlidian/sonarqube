@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,6 @@ import org.sonar.ce.task.projectanalysis.measure.MeasureRepository;
 import org.sonar.ce.task.projectanalysis.metric.Metric;
 import org.sonar.ce.task.projectanalysis.metric.MetricRepository;
 import org.sonar.ce.task.projectanalysis.qualityprofile.MutableQProfileStatusRepository;
-import org.sonar.ce.task.projectanalysis.qualityprofile.QProfileStatusRepository;
 import org.sonar.ce.task.projectanalysis.qualityprofile.QProfileStatusRepositoryImpl;
 import org.sonar.ce.task.step.TestComputationStepContext;
 import org.sonar.core.util.UtcDateUtils;

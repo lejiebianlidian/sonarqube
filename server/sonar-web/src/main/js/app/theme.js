@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 // IMPORTANT: any change in this file requires restart of the dev server
 const grid = 8;
 
@@ -29,16 +28,12 @@ module.exports = {
     darkBlue: '#236a97',
     veryDarkBlue: '#0E516F',
     green: '#00aa00',
-    lineCoverageGreen: '#b4dd78',
     lightGreen: '#b0d513',
     veryLightGreen: '#f5f9fc',
     yellow: '#eabe06',
     orange: '#ed7d20',
     red: '#d4333f',
-    lineCoverageRed: '#a4030f',
     purple: '#9139d4',
-
-    conciseIssueRed: '#d18582',
 
     gray94: '#efefef',
     gray80: '#cdcdcd',
@@ -55,30 +50,46 @@ module.exports = {
     disableGrayBg: '#ebebeb',
 
     barBackgroundColor: '#f3f3f3',
+    barBackgroundColorHighlight: '#f8f8f8',
     barBorderColor: '#e6e6e6',
-
-    baseFontColor: '#444',
-    secondFontColor: '#777',
-
-    leakColor: '#fbf3d5',
-    leakColorHover: '#f0e7c4',
-    leakBorderColor: '#eae3c7',
 
     globalNavBarBg: '#262626',
 
+    // table
+    rowHoverHighlight: '#ecf6fe',
+
+    // fonts
+    baseFontColor: '#444',
+    secondFontColor: '#777',
+
+    // forms
+    mandatoryFieldColor: '#a4030f',
+
+    // leak
+    leakPrimaryColor: '#fbf3d5',
+    leakSecondaryColor: '#f1e8cb',
+
     snippetFontColor: '#f0f0f0',
 
-    //issues
-    issueBgColor: '#ffeaea',
+    // issues
+    issueBgColor: '#f2dede',
     hotspotBgColor: '#eeeff4',
+    issueLocationSelected: '#f4b1b0',
+    issueLocationHighlighted: '#e1e1f2',
+    conciseIssueRed: '#d18582',
+    conciseIssueRedSelected: '#a4030f',
+
+    // coverage
+    lineCoverageRed: '#a4030f',
+    lineCoverageGreen: '#b4dd78',
 
     // alerts
-    warningIconColor: '#e2bf41',
+    warningIconColor: '#eabe06',
 
-    alertBorderError: '#ebccd1',
+    alertBorderError: '#f4b1b0',
     alertBackgroundError: '#f2dede',
     alertTextError: '#862422',
-    alertIconError: '#b81723',
+    alertIconError: '#a4030f',
 
     alertBorderWarning: '#faebcc',
     alertBackgroundWarning: '#fcf8e3',
@@ -94,6 +105,18 @@ module.exports = {
     alertBackgroundInfo: '#d9edf7',
     alertTextInfo: '#0e516f',
     alertIconInfo: '#0271b9',
+
+    // badge
+    badgeBlueBackground: '#2E7CB5',
+    badgeBlueColor: '#FFFFFF',
+
+    // alm
+    azure: '#0078d7',
+    bitbucket: '#0052CC',
+    github: '#e1e4e8',
+
+    // code/pre
+    codeBackground: '#e6e6e6',
 
     // sonarcloud
     sonarcloudOrange500: '#fd6a00',
@@ -125,6 +148,7 @@ module.exports = {
     mediumFontSize: '14px',
     bigFontSize: '16px',
     hugeFontSize: '24px',
+    giganticFontSize: '36px',
 
     hugeControlHeight: `${5 * grid}px`,
     largeControlHeight: `${4 * grid}px`,
@@ -149,9 +173,8 @@ module.exports = {
   },
 
   fonts: {
-    baseFontFamily: "'Helvetica Neue', 'Segoe UI', Helvetica, Arial, sans-serif",
-    systemFontFamily:
-      "-apple-system,'BlinkMacSystemFont','Segoe UI','Helvetica','Arial',sans-serif",
+    baseFontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    systemFontFamily: "-apple-system,'BlinkMacSystemFont','Helvetica','Arial',sans-serif",
     sonarcloudFontFamily:
       "Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
   },
@@ -170,6 +193,7 @@ module.exports = {
 
     // ui elements
     pageMainZIndex: '50',
+    pageSideZIndex: '51',
 
     tooltipZIndex: '8000',
 

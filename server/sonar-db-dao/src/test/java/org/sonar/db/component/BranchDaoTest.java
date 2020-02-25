@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,16 +21,19 @@ package org.sonar.db.component;
 
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.sonar.api.utils.System2;
 import org.sonar.api.impl.utils.TestSystem2;
+import org.sonar.api.utils.System2;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
+import org.sonar.db.project.ProjectDto;
 import org.sonar.db.protobuf.DbProjectBranches;
 
 import static java.util.Arrays.asList;
@@ -39,6 +42,7 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.StringUtils.repeat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.tuple;
 
 @RunWith(DataProviderRunner.class)
 public class BranchDaoTest {
@@ -60,7 +64,7 @@ public class BranchDaoTest {
     BranchDto dto = new BranchDto();
     dto.setProjectUuid("U1");
     dto.setUuid("U2");
-    dto.setBranchType(BranchType.SHORT);
+    dto.setBranchType(BranchType.BRANCH);
     dto.setKey("feature/foo");
 
     underTest.insert(dbSession, dto);
@@ -69,7 +73,7 @@ public class BranchDaoTest {
     assertThat(map).contains(
       entry("projectUuid", "U1"),
       entry("uuid", "U2"),
-      entry("branchType", "SHORT"),
+      entry("branchType", "BRANCH"),
       entry("kee", "feature/foo"),
       entry("mergeBranchUuid", null),
       entry("pullRequestBinary", null),
@@ -82,14 +86,14 @@ public class BranchDaoTest {
     BranchDto dto = new BranchDto();
     dto.setProjectUuid("U1");
     dto.setUuid("U1");
-    dto.setBranchType(BranchType.LONG);
+    dto.setBranchType(BranchType.BRANCH);
     dto.setKey("feature");
     underTest.insert(dbSession, dto);
 
     BranchDto dto2 = new BranchDto();
     dto2.setProjectUuid("U2");
     dto2.setUuid("U2");
-    dto2.setBranchType(BranchType.LONG);
+    dto2.setBranchType(BranchType.BRANCH);
     dto2.setKey("branch");
     underTest.insert(dbSession, dto2);
 
@@ -97,22 +101,23 @@ public class BranchDaoTest {
     BranchDto loaded = underTest.selectByBranchKey(dbSession, "U1", "master").get();
     assertThat(loaded.getMergeBranchUuid()).isNull();
     assertThat(loaded.getProjectUuid()).isEqualTo("U1");
-    assertThat(loaded.getBranchType()).isEqualTo(BranchType.LONG);
+    assertThat(loaded.getBranchType()).isEqualTo(BranchType.BRANCH);
   }
 
   @Test
-  @UseDataProvider("nullOrEmpty")
-  public void insert_null_or_empty_manual_baseline_analysis_uuid_is_null(@Nullable String nullOrEmpty) {
+  public void updateExcludeFromPurge() {
     BranchDto dto = new BranchDto();
     dto.setProjectUuid("U1");
     dto.setUuid("U1");
-    dto.setBranchType(BranchType.LONG);
-    dto.setKey("foo");
-    dto.setManualBaseline(nullOrEmpty);
-
+    dto.setBranchType(BranchType.BRANCH);
+    dto.setKey("feature");
+    dto.setExcludeFromPurge(false);
     underTest.insert(dbSession, dto);
 
-    assertThat(underTest.selectByUuid(dbSession, dto.getUuid()).get().getManualBaseline()).isNull();
+    underTest.updateExcludeFromPurge(dbSession, "U1", true);
+
+    BranchDto loaded = underTest.selectByBranchKey(dbSession, "U1", "feature").get();
+    assertThat(loaded.isExcludeFromPurge()).isTrue();
   }
 
   @DataProvider
@@ -121,48 +126,6 @@ public class BranchDaoTest {
       {null},
       {""}
     };
-  }
-
-  @Test
-  public void insert_manual_baseline_analysis_uuid() {
-    String manualBaselineAnalysisUuid = randomAlphabetic(12);
-    BranchDto dto = new BranchDto();
-    dto.setProjectUuid("U1");
-    dto.setUuid("U1");
-    dto.setBranchType(BranchType.LONG);
-    dto.setKey("foo");
-    dto.setManualBaseline(manualBaselineAnalysisUuid);
-
-    underTest.insert(dbSession, dto);
-
-    assertThat(underTest.selectByUuid(dbSession, dto.getUuid()).get().getManualBaseline()).isEqualTo(manualBaselineAnalysisUuid);
-  }
-
-  @Test
-  @UseDataProvider("oldAndNewValuesCombinations")
-  public void update_manualBaselineAnalysisUuid_if_new_value_is_different(@Nullable String oldValue, @Nullable String newValue) {
-    BranchDto dto = new BranchDto();
-    dto.setProjectUuid("U1");
-    dto.setUuid("U1");
-    dto.setBranchType(BranchType.LONG);
-    dto.setKey("foo");
-    dto.setManualBaseline(oldValue);
-    underTest.insert(dbSession, dto);
-
-    BranchDto otherDtoThatShouldNotChange = new BranchDto();
-    otherDtoThatShouldNotChange.setProjectUuid("U2");
-    otherDtoThatShouldNotChange.setUuid("U2");
-    otherDtoThatShouldNotChange.setBranchType(BranchType.LONG);
-    otherDtoThatShouldNotChange.setKey("branch");
-    otherDtoThatShouldNotChange.setManualBaseline(oldValue);
-    underTest.insert(dbSession, otherDtoThatShouldNotChange);
-
-    assertThat(underTest.updateManualBaseline(dbSession, dto.getUuid(), newValue)).isEqualTo(1);
-
-    assertThat(underTest.selectByUuid(dbSession, dto.getUuid()).get().getManualBaseline())
-      .isEqualTo(emptyToNull(newValue));
-    assertThat(underTest.selectByUuid(dbSession, otherDtoThatShouldNotChange.getUuid()).get().getManualBaseline())
-      .isEqualTo(emptyToNull(oldValue));
   }
 
   @DataProvider
@@ -182,36 +145,11 @@ public class BranchDaoTest {
   }
 
   @Test
-  @UseDataProvider("nonLongBranchType")
-  public void do_not_update_manual_baseline_of_non_long_branches(BranchType branchType) {
-    String analysisUuid = randomAlphabetic(12);
-    String otherAnalysisUuid = randomAlphabetic(12);
-    BranchDto noManualBaselineDto = ComponentTesting.newBranchDto(db.components().insertPrivateProject(), branchType);
-    BranchDto withManualBaselineDto = ComponentTesting.newBranchDto(db.components().insertPrivateProject(), branchType).setManualBaseline(analysisUuid);
-    underTest.insert(dbSession, noManualBaselineDto);
-    underTest.insert(dbSession, withManualBaselineDto);
-    dbSession.commit();
-
-    assertThat(underTest.updateManualBaseline(dbSession, noManualBaselineDto.getUuid(), null)).isZero();
-    assertThat(underTest.updateManualBaseline(dbSession, noManualBaselineDto.getUuid(), otherAnalysisUuid)).isZero();
-    assertThat(underTest.updateManualBaseline(dbSession, withManualBaselineDto.getUuid(), null)).isZero();
-    assertThat(underTest.updateManualBaseline(dbSession, withManualBaselineDto.getUuid(), otherAnalysisUuid)).isZero();
-  }
-
-  @DataProvider
-  public static Object[][] nonLongBranchType() {
-    return new Object[][] {
-      {BranchType.SHORT},
-      {BranchType.PULL_REQUEST}
-    };
-  }
-
-  @Test
   public void insert_branch_with_all_fields_and_max_length_values() {
     BranchDto dto = new BranchDto();
     dto.setProjectUuid(repeat("a", 50));
     dto.setUuid(repeat("b", 50));
-    dto.setBranchType(BranchType.SHORT);
+    dto.setBranchType(BranchType.BRANCH);
     dto.setKey(repeat("c", 255));
     dto.setMergeBranchUuid(repeat("d", 50));
 
@@ -298,7 +236,7 @@ public class BranchDaoTest {
     BranchDto dto = new BranchDto();
     dto.setProjectUuid("U1");
     dto.setUuid("U2");
-    dto.setBranchType(BranchType.LONG);
+    dto.setBranchType(BranchType.BRANCH);
     dto.setKey("foo");
     underTest.insert(dbSession, dto);
 
@@ -307,13 +245,13 @@ public class BranchDaoTest {
 
     // the fields that can't be updated. New values are ignored.
     dto.setProjectUuid("ignored");
-    dto.setBranchType(BranchType.SHORT);
+    dto.setBranchType(BranchType.BRANCH);
     underTest.upsert(dbSession, dto);
 
     BranchDto loaded = underTest.selectByBranchKey(dbSession, "U1", "foo").get();
     assertThat(loaded.getMergeBranchUuid()).isEqualTo("U3");
     assertThat(loaded.getProjectUuid()).isEqualTo("U1");
-    assertThat(loaded.getBranchType()).isEqualTo(BranchType.LONG);
+    assertThat(loaded.getBranchType()).isEqualTo(BranchType.BRANCH);
   }
 
   @Test
@@ -343,7 +281,7 @@ public class BranchDaoTest {
 
     // the fields that can't be updated. New values are ignored.
     dto.setProjectUuid("ignored");
-    dto.setBranchType(BranchType.SHORT);
+    dto.setBranchType(BranchType.BRANCH);
     underTest.upsert(dbSession, dto);
 
     BranchDto loaded = underTest.selectByPullRequestKey(dbSession, "U1", "foo").get();
@@ -417,17 +355,16 @@ public class BranchDaoTest {
     BranchDto mainBranch = new BranchDto();
     mainBranch.setProjectUuid("U1");
     mainBranch.setUuid("U1");
-    mainBranch.setBranchType(BranchType.LONG);
+    mainBranch.setBranchType(BranchType.BRANCH);
     mainBranch.setKey("master");
     underTest.insert(dbSession, mainBranch);
 
     BranchDto featureBranch = new BranchDto();
     featureBranch.setProjectUuid("U1");
     featureBranch.setUuid("U2");
-    featureBranch.setBranchType(BranchType.SHORT);
+    featureBranch.setBranchType(BranchType.BRANCH);
     featureBranch.setKey("feature/foo");
     featureBranch.setMergeBranchUuid("U3");
-    featureBranch.setManualBaseline("analysisUUID");
     underTest.insert(dbSession, featureBranch);
 
     // select the feature branch
@@ -437,10 +374,58 @@ public class BranchDaoTest {
     assertThat(loaded.getProjectUuid()).isEqualTo(featureBranch.getProjectUuid());
     assertThat(loaded.getBranchType()).isEqualTo(featureBranch.getBranchType());
     assertThat(loaded.getMergeBranchUuid()).isEqualTo(featureBranch.getMergeBranchUuid());
-    assertThat(loaded.getManualBaseline()).isEqualTo(featureBranch.getManualBaseline());
 
     // select a branch on another project with same branch name
     assertThat(underTest.selectByBranchKey(dbSession, "U3", "feature/foo")).isEmpty();
+  }
+
+  @Test
+  public void selectByBranchKeys() {
+    ProjectDto project1 = db.components().insertPrivateProjectDto();
+    ProjectDto project2 = db.components().insertPrivateProjectDto();
+    ProjectDto project3 = db.components().insertPrivateProjectDto();
+
+    BranchDto branch1 = db.components().insertProjectBranch(project1, b -> b.setKey("branch1"));
+    BranchDto branch2 = db.components().insertProjectBranch(project2, b -> b.setKey("branch2"));
+    BranchDto branch3 = db.components().insertProjectBranch(project3, b -> b.setKey("branch3"));
+
+    Map<String, String> branchKeysByProjectUuid = new HashMap<>();
+    branchKeysByProjectUuid.put(project1.getUuid(), "branch1");
+    branchKeysByProjectUuid.put(project2.getUuid(), "branch2");
+    branchKeysByProjectUuid.put(project3.getUuid(), "nonexisting");
+
+    List<BranchDto> branchDtos = underTest.selectByBranchKeys(dbSession, branchKeysByProjectUuid);
+    assertThat(branchDtos).hasSize(2);
+    assertThat(branchDtos).extracting(BranchDto::getUuid).containsExactlyInAnyOrder(branch1.getUuid(), branch2.getUuid());
+  }
+
+  @Test
+  public void selectByComponent() {
+    BranchDto mainBranch = new BranchDto();
+    mainBranch.setProjectUuid("U1");
+    mainBranch.setUuid("U1");
+    mainBranch.setBranchType(BranchType.BRANCH);
+    mainBranch.setKey("master");
+    underTest.insert(dbSession, mainBranch);
+
+    BranchDto featureBranch = new BranchDto();
+    featureBranch.setProjectUuid("U1");
+    featureBranch.setUuid("U2");
+    featureBranch.setBranchType(BranchType.BRANCH);
+    featureBranch.setKey("feature/foo");
+    featureBranch.setMergeBranchUuid("U3");
+    underTest.insert(dbSession, featureBranch);
+
+    ComponentDto component = new ComponentDto().setProjectUuid(mainBranch.getUuid());
+
+    // select the component
+    Collection<BranchDto> branches = underTest.selectByComponent(dbSession, component);
+
+    assertThat(branches).hasSize(2);
+
+    assertThat(branches).extracting(BranchDto::getUuid, BranchDto::getKey, BranchDto::getProjectUuid, BranchDto::getBranchType, BranchDto::getMergeBranchUuid)
+      .containsOnly(tuple(mainBranch.getUuid(), mainBranch.getKey(), mainBranch.getProjectUuid(), mainBranch.getBranchType(), mainBranch.getMergeBranchUuid()),
+        tuple(featureBranch.getUuid(), featureBranch.getKey(), featureBranch.getProjectUuid(), featureBranch.getBranchType(), featureBranch.getMergeBranchUuid()));
   }
 
   @Test
@@ -448,7 +433,7 @@ public class BranchDaoTest {
     BranchDto mainBranch = new BranchDto();
     mainBranch.setProjectUuid("U1");
     mainBranch.setUuid("U1");
-    mainBranch.setBranchType(BranchType.LONG);
+    mainBranch.setBranchType(BranchType.BRANCH);
     mainBranch.setKey("master");
     underTest.insert(dbSession, mainBranch);
 
@@ -459,7 +444,6 @@ public class BranchDaoTest {
     pullRequest.setBranchType(BranchType.PULL_REQUEST);
     pullRequest.setKey(pullRequestId);
     pullRequest.setMergeBranchUuid("U3");
-    pullRequest.setManualBaseline("analysisUUID");
     underTest.insert(dbSession, pullRequest);
 
     // select the feature branch
@@ -469,7 +453,6 @@ public class BranchDaoTest {
     assertThat(loaded.getProjectUuid()).isEqualTo(pullRequest.getProjectUuid());
     assertThat(loaded.getBranchType()).isEqualTo(pullRequest.getBranchType());
     assertThat(loaded.getMergeBranchUuid()).isEqualTo(pullRequest.getMergeBranchUuid());
-    assertThat(loaded.getManualBaseline()).isEqualTo(pullRequest.getManualBaseline());
 
     // select a branch on another project with same branch name
     assertThat(underTest.selectByPullRequestKey(dbSession, "U3", pullRequestId)).isEmpty();
@@ -492,6 +475,24 @@ public class BranchDaoTest {
   }
 
   @Test
+  public void selectByProjectUuid() {
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+
+    ComponentDto branch1 = db.components().insertProjectBranch(project1);
+    ComponentDto branch2 = db.components().insertProjectBranch(project1);
+    ComponentDto branch3 = db.components().insertProjectBranch(project2);
+    ComponentDto branch4 = db.components().insertProjectBranch(project2);
+
+    assertThat(underTest.selectByProject(dbSession, new ProjectDto().setUuid(project1.uuid())))
+      .extracting(BranchDto::getUuid)
+      .containsExactlyInAnyOrder(project1.uuid(), branch1.uuid(), branch2.uuid());
+    assertThat(underTest.selectByProject(dbSession, new ProjectDto().setUuid(project2.uuid())))
+      .extracting(BranchDto::getUuid)
+      .containsExactlyInAnyOrder(project2.uuid(), branch3.uuid(), branch4.uuid());
+  }
+
+  @Test
   public void selectByUuid() {
     ComponentDto project = db.components().insertPrivateProject();
     ComponentDto branch1 = db.components().insertProjectBranch(project);
@@ -500,7 +501,7 @@ public class BranchDaoTest {
     assertThat(underTest.selectByUuid(db.getSession(), branch1.uuid()).get())
       .extracting(BranchDto::getUuid)
       .isEqualTo(branch1.uuid());
-    assertThat(underTest.selectByUuid(db.getSession(), project.uuid())).isNotPresent();
+    assertThat(underTest.selectByUuid(db.getSession(), project.uuid())).isPresent();
     assertThat(underTest.selectByUuid(db.getSession(), "unknown")).isNotPresent();
   }
 
@@ -519,15 +520,15 @@ public class BranchDaoTest {
 
   @Test
   public void countByTypeAndCreationDate() {
-    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.LONG, 0L)).isEqualTo(0);
+    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.BRANCH, 0L)).isEqualTo(0);
 
     ComponentDto project = db.components().insertPrivateProject();
-    ComponentDto longBranch1 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.LONG));
-    ComponentDto longBranch2 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.LONG));
+    ComponentDto branch1 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH));
+    ComponentDto branch2 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH));
     ComponentDto pr = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST));
-    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.LONG, 0L)).isEqualTo(2);
-    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.LONG, NOW)).isEqualTo(2);
-    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.LONG, NOW + 100)).isEqualTo(0);
+    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.BRANCH, 0L)).isEqualTo(3);
+    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.BRANCH, NOW)).isEqualTo(3);
+    assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.BRANCH, NOW + 100)).isEqualTo(0);
     assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.PULL_REQUEST, 0L)).isEqualTo(1);
     assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.PULL_REQUEST, NOW)).isEqualTo(1);
     assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.PULL_REQUEST, NOW + 100)).isEqualTo(0);

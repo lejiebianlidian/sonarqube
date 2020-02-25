@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,9 @@ export default class ProfilesList extends React.PureComponent<Props> {
             {translate('quality_profiles.list.projects')}
             <DocTooltip
               className="table-cell-doc"
-              doc={import(/* webpackMode: "eager" */ 'Docs/tooltips/quality-profiles/quality-profile-projects.md')}
+              doc={import(
+                /* webpackMode: "eager" */ 'Docs/tooltips/quality-profiles/quality-profile-projects.md'
+              )}
             />
           </th>
           <th className="text-right nowrap">{translate('quality_profiles.list.rules')}</th>

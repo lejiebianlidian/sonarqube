@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,12 +46,7 @@ import { receiveValues } from './values';
 export function fetchSettings(component?: string) {
   return (dispatch: Dispatch) => {
     return getDefinitions(component).then(definitions => {
-      const filtered = definitions
-        .filter(definition => definition.type !== 'LICENSE')
-        // do not display this setting on project level
-        .filter(
-          definition => !component || definition.key !== 'sonar.branch.longLivedBranches.regex'
-        );
+      const filtered = definitions.filter(definition => definition.type !== 'LICENSE');
       dispatch(receiveDefinitions(filtered));
     });
   };
@@ -130,9 +125,9 @@ export function resetValue(key: string, component?: string) {
 }
 
 function handleError(key: string, dispatch: Dispatch) {
-  return (error: { response: Response }) => {
+  return (response: Response) => {
     dispatch(stopLoading(key));
-    return parseError(error).then(message => {
+    return parseError(response).then(message => {
       dispatch(failValidation(key, message));
       return Promise.reject();
     });

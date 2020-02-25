@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,9 +37,9 @@ import static org.mockito.Mockito.when;
 
 public class IssueTrackingDelegatorTest {
   @Mock
-  private ShortBranchOrPullRequestTrackerExecution shortBranchTracker;
+  private PullRequestTrackerExecution prBranchTracker;
   @Mock
-  private MergeBranchTrackerExecution mergeBranchTracker;
+  private ReferenceBranchTrackerExecution mergeBranchTracker;
   @Mock
   private TrackerExecution tracker;
   @Mock
@@ -54,28 +54,27 @@ public class IssueTrackingDelegatorTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    underTest = new IssueTrackingDelegator(shortBranchTracker, mergeBranchTracker, tracker, analysisMetadataHolder);
+    underTest = new IssueTrackingDelegator(prBranchTracker, mergeBranchTracker, tracker, analysisMetadataHolder);
     when(tracker.track(component)).thenReturn(trackingResult);
     when(mergeBranchTracker.track(component)).thenReturn(trackingResult);
-    when(shortBranchTracker.track(component)).thenReturn(trackingResult);
+    when(prBranchTracker.track(component)).thenReturn(trackingResult);
   }
 
   @Test
   public void delegate_regular_tracker() {
-    when(analysisMetadataHolder.isShortLivingBranch()).thenReturn(false);
     when(analysisMetadataHolder.getBranch()).thenReturn(mock(Branch.class));
 
     underTest.track(component);
 
     verify(tracker).track(component);
-    verifyZeroInteractions(shortBranchTracker);
+    verifyZeroInteractions(prBranchTracker);
     verifyZeroInteractions(mergeBranchTracker);
   }
 
   @Test
   public void delegate_merge_tracker() {
     Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.LONG);
+    when(branch.getType()).thenReturn(BranchType.BRANCH);
     when(branch.isMain()).thenReturn(false);
     when(analysisMetadataHolder.getBranch()).thenReturn(branch);
     when(analysisMetadataHolder.isFirstAnalysis()).thenReturn(true);
@@ -84,22 +83,8 @@ public class IssueTrackingDelegatorTest {
 
     verify(mergeBranchTracker).track(component);
     verifyZeroInteractions(tracker);
-    verifyZeroInteractions(shortBranchTracker);
+    verifyZeroInteractions(prBranchTracker);
 
-  }
-
-  @Test
-  public void delegate_short_branch_tracker() {
-    Branch branch = mock(Branch.class);
-    when(branch.getType()).thenReturn(BranchType.SHORT);
-    when(analysisMetadataHolder.getBranch()).thenReturn(mock(Branch.class));
-    when(analysisMetadataHolder.isSLBorPR()).thenReturn(true);
-
-    underTest.track(component);
-
-    verify(shortBranchTracker).track(component);
-    verifyZeroInteractions(tracker);
-    verifyZeroInteractions(mergeBranchTracker);
   }
 
   @Test
@@ -107,11 +92,11 @@ public class IssueTrackingDelegatorTest {
     Branch branch = mock(Branch.class);
     when(branch.getType()).thenReturn(BranchType.PULL_REQUEST);
     when(analysisMetadataHolder.getBranch()).thenReturn(mock(Branch.class));
-    when(analysisMetadataHolder.isSLBorPR()).thenReturn(true);
+    when(analysisMetadataHolder.isPullRequest()).thenReturn(true);
 
     underTest.track(component);
 
-    verify(shortBranchTracker).track(component);
+    verify(prBranchTracker).track(component);
     verifyZeroInteractions(tracker);
     verifyZeroInteractions(mergeBranchTracker);
   }

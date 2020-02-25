@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ public class DefaultActiveRulesLoaderTest {
   public void setUp() {
     wsClient = mock(DefaultScannerWsClient.class);
     BranchConfiguration branchConfig = mock(BranchConfiguration.class);
-    when(branchConfig.isShortOrPullRequest()).thenReturn(false);
+    when(branchConfig.isPullRequest()).thenReturn(false);
     loader = new DefaultActiveRulesLoader(wsClient);
   }
 

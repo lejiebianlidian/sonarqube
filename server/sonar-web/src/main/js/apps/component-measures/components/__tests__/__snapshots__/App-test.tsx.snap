@@ -7,8 +7,8 @@ exports[`should not render drilldown for estimated duplications 1`] = `
   <Suggestions
     suggestions="component_measures"
   />
-  <HelmetWrapper
-    defer={true}
+  <Helmet
+    defer={false}
     encodeSpecialCharacters={true}
     title="Coverage"
   />
@@ -44,8 +44,8 @@ exports[`should render a message when there are no measures 1`] = `
   <Suggestions
     suggestions="component_measures"
   />
-  <HelmetWrapper
-    defer={true}
+  <Helmet
+    defer={false}
     encodeSpecialCharacters={true}
     title="Coverage"
   />
@@ -60,8 +60,8 @@ exports[`should render correctly 1`] = `
   <Suggestions
     suggestions="component_measures"
   />
-  <HelmetWrapper
-    defer={true}
+  <Helmet
+    defer={false}
     encodeSpecialCharacters={true}
     title="Coverage"
   />
@@ -77,6 +77,7 @@ exports[`should render correctly 1`] = `
       branchLike={
         Object {
           "analysisDate": "2018-01-01",
+          "excludedFromPurge": true,
           "isMain": true,
           "name": "master",
         }

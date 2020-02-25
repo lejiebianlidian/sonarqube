@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,8 +35,8 @@ public final class Changeset {
   private final String author;
 
   private Changeset(Builder builder) {
-    this.revision = builder.revision == null ? null : builder.revision.intern();
-    this.author = builder.author == null ? null : builder.author.intern();
+    this.revision = builder.revision;
+    this.author = builder.author;
     this.date = builder.date;
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,8 +52,10 @@ export default function OrganizationNavigationMeta({
         hasPrivateAccess(currentUser, organization, userOrganizations) && (
           <DocTooltip
             className="spacer-right"
-            doc={import(/* webpackMode: "eager" */ 'Docs/tooltips/organizations/subscription-paid-plan.md')}>
-            <div className="outline-badge">{translate('organization.paid_plan.badge')}</div>
+            doc={import(
+              /* webpackMode: "eager" */ 'Docs/tooltips/organizations/subscription-paid-plan.md'
+            )}>
+            <div className="badge">{translate('organization.paid_plan.badge')}</div>
           </DocTooltip>
         )}
       <div className="text-muted">

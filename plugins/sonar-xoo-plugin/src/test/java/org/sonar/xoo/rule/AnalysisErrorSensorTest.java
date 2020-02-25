@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@ public class AnalysisErrorSensorTest {
   public TemporaryFolder temp = new TemporaryFolder();
 
   private AnalysisErrorSensor sensor;
-  private SensorContextTester context;
 
   @Before
   public void setUp() {
@@ -74,7 +73,7 @@ public class AnalysisErrorSensorTest {
       .setModuleBaseDir(baseDir)
       .setLines(4)
       .build();
-    context = SensorContextTester.create(baseDir);
+    SensorContextTester context = SensorContextTester.create(baseDir);
     context.fileSystem().add(inputFile);
 
     sensor.execute(context);

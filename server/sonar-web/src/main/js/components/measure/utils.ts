@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ export function enhanceMeasure(measure: T.Measure, metrics: T.Dict<T.Metric>): T
   };
 }
 
-export function getLeakValue(measure: T.Measure | undefined): string | undefined {
+export function getLeakValue(measure: T.MeasureIntern | undefined): string | undefined {
   if (!measure || !measure.periods) {
     return undefined;
   }

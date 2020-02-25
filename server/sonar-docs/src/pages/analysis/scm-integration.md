@@ -7,11 +7,11 @@ Collecting SCM data during code analysis can unlock a number of SonarQube featur
 
 * Automatic Issue Assignment
 * code annotation (blame data) in the Code Viewer
-* SCM-driven detection of new code (to help with [Fixing the Water Leak](/user-guide/fixing-the-water-leak/)). Without SCM data, SonarQube determines new code using analysis dates (to timestamp modification of lines).
+* SCM-driven detection of new code (to help with [Clean as You Code](/user-guide/clean-as-you-code/)). Without SCM data, SonarQube determines new code using analysis dates (to timestamp modification of lines).
 
 SCM integration requires support for your individual SCM provider. Git and SVN are supported by default. <!-- sonarqube -->For other SCM providers, see the Marketplace.<!-- /sonarqube -->
 
-If need be, you can toggle it off at global/project level via administration settings.
+If need be, you can toggle it off at global level via administration settings and at a project level via project settings.
 
 ## Git
 [Git](http://www.git-scm.com/) integration is supported out of the box with a pure Java implementation so there's no need to have Git command line tool installed on the machine where analysis is performed.

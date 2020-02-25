@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ import org.sonar.server.platform.ServerFileSystem;
 public class ComputationTempFolderProvider extends ProviderAdapter implements ComponentLifecycle<TempFolder> {
   private boolean started = false;
   @CheckForNull
-  private DefaultTempFolder tempFolder;
+  private DefaultTempFolder tempFolder = null;
 
   public TempFolder provide(ServerFileSystem fs) {
     if (this.tempFolder == null) {

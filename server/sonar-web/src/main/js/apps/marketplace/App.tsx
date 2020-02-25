@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import { sortBy, uniqBy } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import {
   getAvailablePlugins,
@@ -31,6 +31,7 @@ import {
 } from '../../api/plugins';
 import Suggestions from '../../app/components/embed-docs-modal/Suggestions';
 import { Location, Router, withRouter } from '../../components/hoc/withRouter';
+import { EditionKey } from '../../types/editions';
 import EditionBoxes from './EditionBoxes';
 import Footer from './Footer';
 import Header from './Header';
@@ -39,8 +40,8 @@ import Search from './Search';
 import './style.css';
 import { filterPlugins, parseQuery, Query, serializeQuery } from './utils';
 
-export interface Props {
-  currentEdition?: T.EditionKey;
+interface Props {
+  currentEdition?: EditionKey;
   fetchPendingPlugins: () => void;
   pendingPlugins: PluginPendingResult;
   location: Location;
@@ -54,7 +55,7 @@ interface State {
   plugins: Plugin[];
 }
 
-class App extends React.PureComponent<Props, State> {
+export class App extends React.PureComponent<Props, State> {
   mounted = false;
   state: State = { loadingPlugins: true, plugins: [] };
 

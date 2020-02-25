@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,15 @@ public interface Issue extends Serializable {
    */
   String RESOLUTION_WONT_FIX = "WONTFIX";
 
+  /**
+   * Security Hotspot has been reviewed and resolved as safe.
+   * @since 8.1
+   */
+  String RESOLUTION_SAFE = "SAFE";
+
   List<String> RESOLUTIONS = unmodifiableList(asList(RESOLUTION_FALSE_POSITIVE, RESOLUTION_WONT_FIX, RESOLUTION_FIXED, RESOLUTION_REMOVED));
+
+  List<String> SECURITY_HOTSPOT_RESOLUTIONS = unmodifiableList(asList(RESOLUTION_FIXED, RESOLUTION_SAFE));
 
   /**
    * @since 7.8
@@ -82,8 +90,9 @@ public interface Issue extends Serializable {
   String STATUS_TO_REVIEW = "TO_REVIEW";
 
   /**
-   * @since 7.8
+   * @deprecated since 8.1, status has been mapped as `TO_REVIEW`
    */
+  @Deprecated
   String STATUS_IN_REVIEW = "IN_REVIEW";
 
   /**
@@ -97,7 +106,7 @@ public interface Issue extends Serializable {
    * @since 4.4
    */
   List<String> STATUSES = unmodifiableList(asList(STATUS_OPEN, STATUS_CONFIRMED, STATUS_REOPENED, STATUS_RESOLVED, STATUS_CLOSED,
-    STATUS_TO_REVIEW, STATUS_IN_REVIEW, STATUS_REVIEWED));
+    STATUS_TO_REVIEW, STATUS_REVIEWED));
 
   /**
    * Unique generated key. It looks like "d2de809c-1512-4ae2-9f34-f5345c9f1a13".

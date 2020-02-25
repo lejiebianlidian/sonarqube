@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ import org.sonar.api.utils.MessageException;
 import org.sonar.ce.task.projectanalysis.analysis.MutableAnalysisMetadataHolder;
 import org.sonar.scanner.protocol.output.ScannerReport;
 
-import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.sonar.scanner.protocol.output.ScannerReport.Metadata.BranchType.UNSET;
 
 public class BranchLoader {
@@ -41,28 +40,19 @@ public class BranchLoader {
   }
 
   public void load(ScannerReport.Metadata metadata) {
-    String deprecatedBranch = trimToNull(metadata.getDeprecatedBranch());
-    String branchName = trimToNull(metadata.getBranchName());
-
-    if (deprecatedBranch != null && branchName != null) {
-      throw MessageException.of("Properties sonar.branch and sonar.branch.name can't be set together");
-    }
-
-    if (delegate == null && hasBranchProperties(metadata)) {
-      throw MessageException.of("Current edition does not support branch feature");
-    }
-
-    if (delegate != null && deprecatedBranch == null) {
+    if (delegate != null) {
       delegate.load(metadata);
+    } else if (hasBranchProperties(metadata)) {
+      throw MessageException.of("Current edition does not support branch feature");
     } else {
-      metadataHolder.setBranch(new DefaultBranchImpl(deprecatedBranch));
+      metadataHolder.setBranch(new DefaultBranchImpl());
     }
   }
 
   private static boolean hasBranchProperties(ScannerReport.Metadata metadata) {
     return !metadata.getBranchName().isEmpty()
       || !metadata.getPullRequestKey().isEmpty()
-      || !metadata.getMergeBranchName().isEmpty()
+      || !metadata.getReferenceBranchName().isEmpty()
       || metadata.getBranchType() != UNSET;
   }
 

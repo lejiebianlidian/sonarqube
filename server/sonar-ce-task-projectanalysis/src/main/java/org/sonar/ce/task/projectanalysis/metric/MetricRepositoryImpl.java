@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,13 +48,10 @@ public class MetricRepositoryImpl implements MetricRepository, Startable {
 
   @Override
   public void start() {
-    DbSession dbSession = dbClient.openSession(false);
-    try {
+    try (DbSession dbSession = dbClient.openSession(false)) {
       List<MetricDto> metricList = dbClient.metricDao().selectEnabled(dbSession);
       this.metricsByKey = from(metricList).transform(MetricDtoToMetric.INSTANCE).uniqueIndex(MetricToKey.INSTANCE);
       this.metricsById = from(metricList).transform(MetricDtoToMetric.INSTANCE).uniqueIndex(MetricToId.INSTANCE);
-    } finally {
-      dbSession.close();
     }
   }
 

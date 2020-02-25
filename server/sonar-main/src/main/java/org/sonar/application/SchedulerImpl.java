@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ import org.sonar.application.process.ProcessLifecycleListener;
 import org.sonar.process.ProcessId;
 import org.sonar.process.ProcessProperties;
 
+import static org.sonar.application.NodeLifecycle.State.FINALIZE_STOPPING;
 import static org.sonar.application.NodeLifecycle.State.HARD_STOPPING;
 import static org.sonar.application.NodeLifecycle.State.RESTARTING;
 import static org.sonar.application.NodeLifecycle.State.STOPPED;
@@ -53,6 +54,8 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
 
   private static final Logger LOG = LoggerFactory.getLogger(SchedulerImpl.class);
   private static final ManagedProcessHandler.Timeout HARD_STOP_TIMEOUT = newTimeout(1, TimeUnit.MINUTES);
+  private static int hardStopperThreadIndex = 0;
+  private static int restartStopperThreadIndex = 0;
 
   private final AppSettings settings;
   private final AppReloader appReloader;
@@ -91,6 +94,7 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
     if (!nodeLifecycle.tryToMoveTo(NodeLifecycle.State.STARTING)) {
       return;
     }
+    firstWaitingEsLog.set(true);
     processesById.clear();
 
     for (ProcessId processId : ClusterSettings.getEnabledProcesses(settings)) {
@@ -192,9 +196,12 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
         return processLauncher.launch(command);
       });
     } catch (RuntimeException e) {
-      // failed to start command -> stop everything
-      hardStop();
-      throw e;
+      // failed to start command -> do nothing
+      // the process failing to start will move directly to STOP state
+      // this early stop of the process will be picked up by onProcessStop (which calls hardStopAsync)
+      // through interface ProcessLifecycleListener#onProcessState implemented by SchedulerImpl
+      LOG.trace("Failed to start process [{}] (currentThread={})",
+        processHandler.getProcessId().getKey(), Thread.currentThread().getName(), e);
     }
   }
 
@@ -202,8 +209,8 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
   public void stop() {
     if (nodeLifecycle.tryToMoveTo(STOPPING)) {
       LOG.info("Stopping SonarQube");
+      stopImpl();
     }
-    stopImpl();
   }
 
   private void stopImpl() {
@@ -244,8 +251,8 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
   public void hardStop() {
     if (nodeLifecycle.tryToMoveTo(HARD_STOPPING)) {
       LOG.info("Hard stopping SonarQube");
+      hardStopImpl();
     }
-    hardStopImpl();
   }
 
   private void hardStopImpl() {
@@ -273,7 +280,7 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
    * the node state won't be updated on process stopped callback.
    */
   private void finalizeStop() {
-    if (nodeLifecycle.getState() != RESTARTING) {
+    if (nodeLifecycle.tryToMoveTo(FINALIZE_STOPPING)) {
       interrupt(restartStopperThread);
       interrupt(hardStopperThread);
       interrupt(restarterThread);
@@ -285,10 +292,14 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
   }
 
   private static void interrupt(@Nullable Thread thread) {
-    if (thread != null
-      // do not interrupt oneself
-      && Thread.currentThread() != thread) {
+    Thread currentThread = Thread.currentThread();
+    // prevent current thread from interrupting itself
+    if (thread != null && currentThread != thread) {
       thread.interrupt();
+      if (LOG.isTraceEnabled()) {
+        Exception e = new Exception("(capturing stacktrace for debugging purpose)");
+        LOG.trace("{} interrupted {}", currentThread.getName(), thread.getName(), e);
+      }
     }
   }
 
@@ -386,7 +397,7 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
 
   private void hardStopAsync() {
     if (hardStopperThread != null) {
-      LOG.debug("Hard stopper thread was not null (name is \"{}\")", hardStopperThread.getName(), new Exception());
+      logThreadRecreated("Hard stopper", hardStopperThread);
       hardStopperThread.interrupt();
     }
 
@@ -396,12 +407,20 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
 
   private void stopAsyncForRestart() {
     if (restartStopperThread != null) {
-      LOG.debug("Restart stopper thread was not null", new Exception());
+      logThreadRecreated("Restart stopper", restartStopperThread);
       restartStopperThread.interrupt();
     }
 
     restartStopperThread = new RestartStopperThread();
     restartStopperThread.start();
+  }
+
+  private static void logThreadRecreated(String threadType, Thread existingThread) {
+    if (LOG.isDebugEnabled()) {
+      Exception e = new Exception("(capturing stack trace for debugging purpose)");
+      LOG.debug("{} thread was not null (currentThread={},existingThread={})",
+        threadType, Thread.currentThread().getName(), existingThread.getName(), e);
+    }
   }
 
   private void restartAsync() {
@@ -435,9 +454,18 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
     }
   }
 
+  private static int nextRestartStopperThreadIndex() {
+    return restartStopperThreadIndex++;
+  }
+
+  private static int nextHardStopperThreadIndex() {
+    return hardStopperThreadIndex++;
+  }
+
   private class RestartStopperThread extends Thread {
+
     private RestartStopperThread() {
-      super("Restart stopper");
+      super("RestartStopper-" + nextRestartStopperThreadIndex());
     }
 
     @Override
@@ -449,7 +477,7 @@ public class SchedulerImpl implements Scheduler, ManagedProcessEventListener, Pr
   private class HardStopperThread extends Thread {
 
     private HardStopperThread() {
-      super("Hard stopper");
+      super("HardStopper-" + nextHardStopperThreadIndex());
     }
 
     @Override

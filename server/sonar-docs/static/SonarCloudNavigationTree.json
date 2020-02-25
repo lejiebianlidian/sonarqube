@@ -31,24 +31,19 @@
           "/analysis/languages/swift/",
           "/analysis/languages/tsql/",
           "/analysis/languages/typescript/",
-          "/analysis/languages/vb/",
+          "/analysis/languages/vbnet/",
           "/analysis/languages/xml/"
         ]
       },
       "/analysis/coverage/",
-      "/analysis/external-issues/",      
+      "/analysis/external-issues/",
       "/analysis/background-tasks/",
       "/analysis/generic-issue/",
       "/analysis/generic-test/",
       "/analysis/pull-request/",
       {
         "title": "Branches",
-        "children": [
-          "/branches/overview/",
-          "/branches/short-lived-branches/",
-          "/branches/long-lived-branches/",
-          "/branches/branches-faq/"
-        ]
+        "children": ["/branches/overview/", "/branches/branches-faq/"]
       },
       "/analysis/supported-languages/"
     ]
@@ -56,7 +51,7 @@
   {
     "title": "User Guide",
     "children": [
-      "/user-guide/fixing-the-water-leak/",
+      "/user-guide/clean-as-you-code/",
       "/user-guide/project-page/",
       "/user-guide/issues/",
       "/user-guide/security-hotspots/",

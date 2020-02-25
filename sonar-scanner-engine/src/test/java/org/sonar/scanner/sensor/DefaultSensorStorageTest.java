@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -173,9 +173,9 @@ public class DefaultSensorStorageTest {
   }
 
   @Test
-  public void should_skip_issue_on_short_branch_when_file_status_is_SAME() {
+  public void should_skip_issue_on_pr_when_file_status_is_SAME() {
     InputFile file = new TestInputFileBuilder("foo", "src/Foo.php").setStatus(InputFile.Status.SAME).build();
-    when(branchConfiguration.isShortOrPullRequest()).thenReturn(true);
+    when(branchConfiguration.isPullRequest()).thenReturn(true);
 
     DefaultIssue issue = new DefaultIssue(project).at(new DefaultIssueLocation().on(file));
     underTest.store(issue);
@@ -195,11 +195,11 @@ public class DefaultSensorStorageTest {
   }
 
   @Test
-  public void should_skip_highlighting_on_short_branch_when_file_status_is_SAME() {
+  public void should_skip_highlighting_on_pr_when_file_status_is_SAME() {
     DefaultInputFile file = new TestInputFileBuilder("foo", "src/Foo.php")
       .setContents("// comment")
       .setStatus(InputFile.Status.SAME).build();
-    when(branchConfiguration.isShortOrPullRequest()).thenReturn(true);
+    when(branchConfiguration.isPullRequest()).thenReturn(true);
 
     DefaultHighlighting highlighting = new DefaultHighlighting(underTest).onFile(file).highlight(0, 1, TypeOfText.KEYWORD);
     underTest.store(highlighting);
@@ -223,9 +223,9 @@ public class DefaultSensorStorageTest {
   }
 
   @Test
-  public void should_not_skip_file_measures_on_short_lived_branch_or_pull_request_when_file_status_is_SAME() {
+  public void should_not_skip_file_measures_on_pull_request_when_file_status_is_SAME() {
     DefaultInputFile file = new TestInputFileBuilder("foo", "src/Foo.php").setStatus(InputFile.Status.SAME).build();
-    when(branchConfiguration.isShortOrPullRequest()).thenReturn(true);
+    when(branchConfiguration.isPullRequest()).thenReturn(true);
 
     underTest.store(new DefaultMeasure()
       .on(file)
@@ -243,7 +243,7 @@ public class DefaultSensorStorageTest {
       .setStatus(InputFile.Status.SAME)
       .setContents("foo")
       .build();
-    when(branchConfiguration.isShortOrPullRequest()).thenReturn(true);
+    when(branchConfiguration.isPullRequest()).thenReturn(true);
 
     underTest.store(new DefaultSignificantCode()
       .onFile(file)

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ export default class DeleteProfileForm extends React.PureComponent<Props, State>
   handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     this.setState({ loading: true });
-    deleteProfile(this.props.profile.key).then(this.props.onDelete, () => {
+    deleteProfile(this.props.profile).then(this.props.onDelete, () => {
       if (this.mounted) {
         this.setState({ loading: false });
       }

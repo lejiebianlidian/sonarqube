@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,12 +22,11 @@ package org.sonar.server.issue.index;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.CheckForNull;
@@ -39,15 +38,13 @@ import org.sonar.db.DatabaseUtils;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.ResultSetIterator;
+import org.sonar.server.security.SecurityStandards;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonar.api.utils.DateUtils.longToDate;
 import static org.sonar.db.DatabaseUtils.getLong;
-import static org.sonar.server.security.SecurityStandardHelper.getCwe;
-import static org.sonar.server.security.SecurityStandardHelper.getOwaspTop10;
-import static org.sonar.server.security.SecurityStandardHelper.getSansTop25;
-import static org.sonar.server.security.SecurityStandardHelper.getSecurityStandards;
-import static org.sonar.server.security.SecurityStandardHelper.getSonarSourceSecurityCategories;
+import static org.sonar.db.rule.RuleDefinitionDto.deserializeSecurityStandardsString;
+import static org.sonar.server.security.SecurityStandards.fromSecurityStandards;
 
 /**
  * Scrolls over table ISSUES and reads documents to populate
@@ -88,7 +85,7 @@ class IssueIteratorForSingleChunk implements IssueIterator {
 
   private static final String SQL_ALL = "select " + StringUtils.join(FIELDS, ",") + " from issues i " +
     "inner join rules r on r.id = i.rule_id " +
-    "inner join projects c on c.uuid = i.component_uuid ";
+    "inner join components c on c.uuid = i.component_uuid ";
 
   private static final String PROJECT_FILTER = " and c.project_uuid = ? and i.project_uuid = ? ";
   private static final String ISSUE_KEY_FILTER_PREFIX = " and i.kee in (";
@@ -190,7 +187,7 @@ class IssueIteratorForSingleChunk implements IssueIterator {
 
     @Override
     protected IssueDoc read(ResultSet rs) throws SQLException {
-      IssueDoc doc = new IssueDoc(Maps.newHashMapWithExpectedSize(30));
+      IssueDoc doc = new IssueDoc(new HashMap<>(30));
 
       String key = rs.getString(1);
 
@@ -231,14 +228,14 @@ class IssueIteratorForSingleChunk implements IssueIterator {
       String tags = rs.getString(21);
       doc.setTags(IssueIteratorForSingleChunk.TAGS_SPLITTER.splitToList(tags == null ? "" : tags));
       doc.setType(RuleType.valueOf(rs.getInt(22)));
-      String securityStandards = rs.getString(23);
 
-      List<String> standards = getSecurityStandards(securityStandards);
-      doc.setOwaspTop10(getOwaspTop10(standards));
-      List<String> cwe = getCwe(standards);
-      doc.setCwe(cwe);
-      doc.setSansTop25(getSansTop25(cwe));
-      doc.setSonarSourceSecurityCategories(getSonarSourceSecurityCategories(cwe));
+      SecurityStandards securityStandards = fromSecurityStandards(deserializeSecurityStandardsString(rs.getString(23)));
+      SecurityStandards.SQCategory sqCategory = securityStandards.getSqCategory();
+      doc.setOwaspTop10(securityStandards.getOwaspTop10());
+      doc.setCwe(securityStandards.getCwe());
+      doc.setSansTop25(securityStandards.getSansTop25());
+      doc.setSonarSourceSecurityCategory(sqCategory);
+      doc.setVulnerabilityProbability(sqCategory.getVulnerability());
       return doc;
     }
 

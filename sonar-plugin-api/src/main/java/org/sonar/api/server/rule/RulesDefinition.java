@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -359,7 +359,7 @@ public interface RulesDefinition {
    */
   class Context extends AbstractContext {
     private final Map<String, Repository> repositoriesByKey = new HashMap<>();
-    private String currentPluginKey;
+    private String currentPluginKey = null;
 
     @Override
     public RulesDefinition.NewRepository createRepository(String key, String language) {
@@ -499,7 +499,7 @@ public interface RulesDefinition {
   }
 
   enum OwaspTop10 {
-    A1, A2, A3, A4, A5, A6, A7, A8, A9, A10;
+    A1, A2, A3, A4, A5, A6, A7, A8, A9, A10
   }
 
   interface ExtendedRepository {

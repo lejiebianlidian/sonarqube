@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -75,16 +75,13 @@ public class BuildComponentTreeStepTest {
   private static final int UNCHANGED_FILE_REF = 10;
 
   private static final String REPORT_PROJECT_KEY = "REPORT_PROJECT_KEY";
-  private static final String REPORT_MODULE_KEY = "MODULE_KEY";
   private static final String REPORT_DIR_PATH_1 = "src/main/java/dir1";
   private static final String REPORT_FILE_PATH_1 = "src/main/java/dir1/File1.java";
   private static final String REPORT_FILE_NAME_1 = "File1.java";
   private static final String REPORT_DIR_PATH_2 = "src/main/java/dir2";
   private static final String REPORT_FILE_PATH_2 = "src/main/java/dir2/File2.java";
   private static final String REPORT_FILE_PATH_3 = "src/main/java/dir2/File3.java";
-  private static final String REPORT_LEAFLESS_MODULE_KEY = "LEAFLESS_MODULE_KEY";
-  private static final String REPORT_LEAFLESS_DIR_PATH = "src/main/java/leafless";
-  private static final String REPORT_UNCHANGED_FILE_PATH = "src/main/java/leafless/File3.java";
+  private static final String REPORT_UNCHANGED_FILE_PATH = "src/main/File3.java";
 
   private static final long ANALYSIS_DATE = 123456789L;
 
@@ -139,6 +136,65 @@ public class BuildComponentTreeStepTest {
   }
 
   @Test
+  public void verify_tree_is_correctly_built_in_prs() {
+    setAnalysisMetadataHolder(true);
+    reportReader.putComponent(component(ROOT_REF, PROJECT, REPORT_PROJECT_KEY, FILE_1_REF, FILE_2_REF, FILE_3_REF, UNCHANGED_FILE_REF));
+    reportReader.putComponent(componentWithPath(FILE_1_REF, FILE, REPORT_FILE_PATH_1));
+    reportReader.putComponent(componentWithPath(FILE_2_REF, FILE, REPORT_FILE_PATH_2));
+    reportReader.putComponent(componentWithPath(FILE_3_REF, FILE, REPORT_FILE_PATH_3));
+    reportReader.putComponent(unchangedComponentWithPath(UNCHANGED_FILE_REF, FILE, REPORT_UNCHANGED_FILE_PATH));
+
+    TestComputationStepContext context = new TestComputationStepContext();
+    underTest.execute(context);
+
+    // modified root
+    Component mRoot = treeRootHolder.getRoot();
+    verifyComponent(mRoot, Component.Type.PROJECT, ROOT_REF, 1);
+
+    Component mDir = mRoot.getChildren().get(0);
+    assertThat(mDir.getName()).isEqualTo("src/main/java");
+    verifyComponent(mDir, Component.Type.DIRECTORY, null, 2);
+
+    Component mDir1 = mDir.getChildren().get(0);
+    assertThat(mDir1.getName()).isEqualTo("src/main/java/dir1");
+    verifyComponent(mDir1, Component.Type.DIRECTORY, null, 1);
+    verifyComponent(mDir1.getChildren().get(0), Component.Type.FILE, FILE_1_REF, 0);
+
+    Component mDir2 = mDir.getChildren().get(1);
+    assertThat(mDir2.getName()).isEqualTo("src/main/java/dir2");
+    verifyComponent(mDir2, Component.Type.DIRECTORY, null, 2);
+    verifyComponent(mDir2.getChildren().get(0), Component.Type.FILE, FILE_2_REF, 0);
+    verifyComponent(mDir2.getChildren().get(1), Component.Type.FILE, FILE_3_REF, 0);
+
+    // root
+    Component root = treeRootHolder.getReportTreeRoot();
+    verifyComponent(root, Component.Type.PROJECT, ROOT_REF, 1);
+
+    Component dir = root.getChildren().get(0);
+    assertThat(dir.getName()).isEqualTo("src/main");
+    verifyComponent(dir, Component.Type.DIRECTORY, null, 2);
+
+    Component dir1 = dir.getChildren().get(0);
+    assertThat(dir1.getName()).isEqualTo("src/main/java");
+    verifyComponent(dir1, Component.Type.DIRECTORY, null, 2);
+    verifyComponent(dir1.getChildren().get(0), Component.Type.DIRECTORY, null, 1);
+    verifyComponent(dir1.getChildren().get(1), Component.Type.DIRECTORY, null, 2);
+
+    Component dir2 = dir1.getChildren().get(0);
+    assertThat(dir2.getName()).isEqualTo("src/main/java/dir1");
+    verifyComponent(dir2, Component.Type.DIRECTORY, null, 1);
+    verifyComponent(dir2.getChildren().get(0), Component.Type.FILE, FILE_1_REF, 0);
+
+    Component dir3 = dir1.getChildren().get(1);
+    assertThat(dir3.getName()).isEqualTo("src/main/java/dir2");
+    verifyComponent(dir3, Component.Type.DIRECTORY, null, 2);
+    verifyComponent(dir3.getChildren().get(0), Component.Type.FILE, FILE_2_REF, 0);
+    verifyComponent(dir3.getChildren().get(1), Component.Type.FILE, FILE_3_REF, 0);
+
+    context.getStatistics().assertValue("components", 7);
+  }
+
+  @Test
   public void compute_keys_and_uuids() {
     setAnalysisMetadataHolder();
     reportReader.putComponent(component(ROOT_REF, PROJECT, REPORT_PROJECT_KEY, FILE_1_REF));
@@ -178,7 +234,6 @@ public class BuildComponentTreeStepTest {
     Branch branch = mock(Branch.class);
     when(branch.getName()).thenReturn("origin/feature");
     when(branch.isMain()).thenReturn(false);
-    when(branch.isLegacyFeature()).thenReturn(false);
     when(branch.generateKey(any(), any())).thenReturn("generated");
     analysisMetadataHolder.setRootComponentRef(ROOT_REF)
       .setAnalysisDate(ANALYSIS_DATE)
@@ -196,19 +251,13 @@ public class BuildComponentTreeStepTest {
     verifyComponentByRef(FILE_1_REF, "generated", REPORT_PROJECT_KEY + ":" + REPORT_FILE_PATH_1, REPORT_FILE_NAME_1, null);
   }
 
-  @DataProvider
-  public static Object[][] shortLivingBranchAndPullRequest() {
-    return new Object[][] {{BranchType.SHORT}, {BranchType.PULL_REQUEST}};
-  }
-
   @Test
   public void generate_keys_when_using_existing_branch() {
-    ComponentDto projectDto = dbTester.components().insertMainBranch();
+    ComponentDto projectDto = dbTester.components().insertPublicProject();
     ComponentDto branchDto = dbTester.components().insertProjectBranch(projectDto);
     Branch branch = mock(Branch.class);
     when(branch.getName()).thenReturn(branchDto.getBranch());
     when(branch.isMain()).thenReturn(false);
-    when(branch.isLegacyFeature()).thenReturn(false);
     when(branch.generateKey(any(), any())).thenReturn(branchDto.getDbKey());
     analysisMetadataHolder.setRootComponentRef(ROOT_REF)
       .setAnalysisDate(ANALYSIS_DATE)
@@ -238,23 +287,6 @@ public class BuildComponentTreeStepTest {
     verifyComponentByRef(ROOT_REF, REPORT_PROJECT_KEY, REPORT_PROJECT_KEY, analysisMetadataHolder.getProject().getName(), null);
     verifyComponentByKey(REPORT_PROJECT_KEY + ":" + REPORT_DIR_PATH_1, REPORT_DIR_PATH_1);
     verifyComponentByRef(FILE_1_REF, REPORT_PROJECT_KEY + ":" + REPORT_FILE_PATH_1, REPORT_PROJECT_KEY + ":" + REPORT_FILE_PATH_1, REPORT_FILE_NAME_1, null);
-  }
-
-  @Test
-  public void generate_keys_when_using_legacy_branch() {
-    analysisMetadataHolder.setRootComponentRef(ROOT_REF)
-      .setAnalysisDate(ANALYSIS_DATE)
-      .setProject(Project.from(newPrivateProjectDto(newOrganizationDto()).setDbKey(REPORT_PROJECT_KEY)))
-      .setBranch(new DefaultBranchImpl("origin/feature"));
-    BuildComponentTreeStep underTest = new BuildComponentTreeStep(dbClient, reportReader, treeRootHolder, analysisMetadataHolder, reportModulesPath);
-    reportReader.putComponent(component(ROOT_REF, PROJECT, REPORT_PROJECT_KEY, FILE_1_REF));
-    reportReader.putComponent(componentWithPath(FILE_1_REF, FILE, REPORT_FILE_PATH_1));
-
-    underTest.execute(new TestComputationStepContext());
-
-    verifyComponentByRef(ROOT_REF, REPORT_PROJECT_KEY + ":origin/feature", analysisMetadataHolder.getProject().getName(), null);
-    verifyComponentByKey(REPORT_PROJECT_KEY + ":origin/feature:" + REPORT_DIR_PATH_1, REPORT_DIR_PATH_1);
-    verifyComponentByRef(FILE_1_REF, REPORT_PROJECT_KEY + ":origin/feature:" + REPORT_FILE_PATH_1, REPORT_FILE_NAME_1, null);
   }
 
   @Test
@@ -451,18 +483,22 @@ public class BuildComponentTreeStepTest {
   }
 
   private static ScannerReport.Component component(int componentRef, ComponentType componentType, String key, int... children) {
-    return component(componentRef, componentType, key, null, children);
+    return component(componentRef, componentType, key, FileStatus.CHANGED, null, children);
+  }
+
+  private static ScannerReport.Component unchangedComponentWithPath(int componentRef, ComponentType componentType, String path, int... children) {
+    return component(componentRef, componentType, REPORT_PROJECT_KEY + ":" + path, FileStatus.SAME, path, children);
   }
 
   private static ScannerReport.Component componentWithPath(int componentRef, ComponentType componentType, String path, int... children) {
-    return component(componentRef, componentType, REPORT_PROJECT_KEY + ":" + path, path, children);
+    return component(componentRef, componentType, REPORT_PROJECT_KEY + ":" + path, FileStatus.CHANGED, path, children);
   }
 
-  private static ScannerReport.Component component(int componentRef, ComponentType componentType, String key, @Nullable String path, int... children) {
+  private static ScannerReport.Component component(int componentRef, ComponentType componentType, String key, FileStatus status, @Nullable String path, int... children) {
     ScannerReport.Component.Builder builder = ScannerReport.Component.newBuilder()
       .setType(componentType)
       .setRef(componentRef)
-      .setStatus(FileStatus.UNAVAILABLE)
+      .setStatus(status)
       .setLines(1)
       .setKey(key);
     if (path != null) {
@@ -515,9 +551,14 @@ public class BuildComponentTreeStepTest {
   }
 
   private void setAnalysisMetadataHolder() {
+    setAnalysisMetadataHolder(false);
+  }
+
+  private void setAnalysisMetadataHolder(boolean isPr) {
+    Branch branch = isPr ? new PrBranch() : new DefaultBranchImpl();
     analysisMetadataHolder.setRootComponentRef(ROOT_REF)
       .setAnalysisDate(ANALYSIS_DATE)
-      .setBranch(new DefaultBranchImpl(null))
+      .setBranch(branch)
       .setProject(Project.from(newPrivateProjectDto(newOrganizationDto()).setDbKey(REPORT_PROJECT_KEY)));
   }
 
@@ -530,4 +571,10 @@ public class BuildComponentTreeStepTest {
     return builder.build();
   }
 
+  private static class PrBranch extends DefaultBranchImpl {
+    @Override
+    public BranchType getType() {
+      return BranchType.PULL_REQUEST;
+    }
+  }
 }

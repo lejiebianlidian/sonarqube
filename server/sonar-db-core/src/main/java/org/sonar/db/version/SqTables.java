@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -53,6 +53,8 @@ public final class SqTables {
     "active_rules",
     "active_rule_parameters",
     "alm_app_installs",
+    "alm_settings",
+    "alm_pats",
     "analysis_properties",
     "ce_activity",
     "ce_queue",
@@ -60,6 +62,7 @@ public final class SqTables {
     "ce_task_input",
     "ce_task_message",
     "ce_scanner_context",
+    "components",
     "default_qprofiles",
     "deprecated_rule_keys",
     "duplications_index",
@@ -77,6 +80,7 @@ public final class SqTables {
     "live_measures",
     "manual_measures",
     "metrics",
+    "new_code_periods",
     "notifications",
     "organizations",
     "organization_alm_bindings",
@@ -90,6 +94,7 @@ public final class SqTables {
     "plugins",
     "projects",
     "project_alm_bindings",
+    "project_alm_settings",
     "project_branches",
     "project_links",
     "project_mappings",

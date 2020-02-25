@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@ public class Duration implements Serializable {
   public static final String MINUTE = "min";
 
   private static final short MINUTES_IN_ONE_HOUR = 60;
+  private static final Pattern PATTERN = Pattern.compile("\\s*+(?:(\\d++)\\s*+" + DAY + ")?+\\s*+(?:(\\d++)\\s*+" + HOUR + ")?+\\s*+(?:(\\d++)\\s*+" + MINUTE + ")?+\\s*+");
+
 
   private final long durationInMinutes;
 
@@ -65,8 +67,7 @@ public class Duration implements Serializable {
     int hours = 0;
     int minutes = 0;
     String sanitizedText = StringUtils.deleteWhitespace(text);
-    Pattern pattern = Pattern.compile("\\s*+(?:(\\d++)\\s*+" + DAY + ")?+\\s*+(?:(\\d++)\\s*+" + HOUR + ")?+\\s*+(?:(\\d++)\\s*+" + MINUTE + ")?+\\s*+");
-    Matcher matcher = pattern.matcher(text);
+    Matcher matcher = PATTERN.matcher(text);
 
     try {
       if (matcher.find()) {
@@ -103,10 +104,10 @@ public class Duration implements Serializable {
    */
   public String encode(int hoursInDay) {
     int days = ((Double) ((double) durationInMinutes / hoursInDay / MINUTES_IN_ONE_HOUR)).intValue();
-    Long remainingDuration = durationInMinutes - (days * hoursInDay * MINUTES_IN_ONE_HOUR);
-    int hours = ((Double) (remainingDuration.doubleValue() / MINUTES_IN_ONE_HOUR)).intValue();
+    long remainingDuration = durationInMinutes - (days * hoursInDay * MINUTES_IN_ONE_HOUR);
+    int hours = ((Double) ((double) remainingDuration / MINUTES_IN_ONE_HOUR)).intValue();
     remainingDuration = remainingDuration - (hours * MINUTES_IN_ONE_HOUR);
-    int minutes = remainingDuration.intValue();
+    int minutes = (int) remainingDuration;
 
     StringBuilder stringBuilder = new StringBuilder();
     if (days > 0) {

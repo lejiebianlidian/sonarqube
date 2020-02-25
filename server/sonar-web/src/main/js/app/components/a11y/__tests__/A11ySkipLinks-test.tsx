@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,10 @@ jest.mock('../A11yContext', () => ({
   A11yContext: {
     Consumer: ({ children }: any) => {
       return children({
-        links: [{ key: 'link1', label: 'Label 1' }, { key: 'link2', label: 'Label 2' }]
+        links: [
+          { key: 'link1', label: 'Label 1' },
+          { key: 'link2', label: 'Label 2' }
+        ]
       });
     }
   }

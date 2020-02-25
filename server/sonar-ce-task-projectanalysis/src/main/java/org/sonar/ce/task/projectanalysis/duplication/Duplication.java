@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +19,9 @@
  */
 package org.sonar.ce.task.projectanalysis.duplication;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,7 +36,7 @@ public final class Duplication {
     .thenComparing(DuplicateToFileKey.INSTANCE).thenComparing(DuplicateToTextBlock.INSTANCE);
 
   private final TextBlock original;
-  private final SortedSet<Duplicate> duplicates;
+  private final Duplicate[] duplicates;
 
   /**
    * @throws NullPointerException     if {@code original} is {@code null} or {@code duplicates} is {@code null} or {@code duplicates} contains {@code null}
@@ -48,8 +46,7 @@ public final class Duplication {
   public Duplication(TextBlock original, List<Duplicate> duplicates) {
     this.original = requireNonNull(original, "original TextBlock can not be null");
     validateDuplicates(original, duplicates);
-    this.duplicates = new TreeSet<>(DUPLICATE_COMPARATOR);
-    this.duplicates.addAll(duplicates);
+    this.duplicates = duplicates.stream().sorted(DUPLICATE_COMPARATOR).distinct().toArray(Duplicate[]::new);
   }
 
   private static void validateDuplicates(TextBlock original, List<Duplicate> duplicates) {
@@ -80,7 +77,7 @@ public final class Duplication {
    * </ul
    * <p>The returned set can not be empty and no inner duplicate can contain the original {@link TextBlock}.</p>
    */
-  public SortedSet<Duplicate> getDuplicates() {
+  public Duplicate[] getDuplicates() {
     return this.duplicates;
   }
 
@@ -93,19 +90,19 @@ public final class Duplication {
       return false;
     }
     Duplication that = (Duplication) o;
-    return original.equals(that.original) && duplicates.equals(that.duplicates);
+    return original.equals(that.original) && Arrays.equals(duplicates, that.duplicates);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(original, duplicates);
+    return Arrays.deepHashCode(new Object[] {original, duplicates});
   }
 
   @Override
   public String toString() {
     return "Duplication{" +
       "original=" + original +
-      ", duplicates=" + duplicates +
+      ", duplicates=" + Arrays.toString(duplicates) +
       '}';
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,8 @@
 package org.sonarqube.ws.client;
 
 import javax.annotation.Generated;
+import org.sonarqube.ws.client.almintegrations.AlmIntegrationsService;
+import org.sonarqube.ws.client.almsettings.AlmSettingsService;
 import org.sonarqube.ws.client.analysisreports.AnalysisReportsService;
 import org.sonarqube.ws.client.applications.ApplicationsService;
 import org.sonarqube.ws.client.authentication.AuthenticationService;
@@ -32,14 +34,15 @@ import org.sonarqube.ws.client.duplications.DuplicationsService;
 import org.sonarqube.ws.client.editions.EditionsService;
 import org.sonarqube.ws.client.emails.EmailsService;
 import org.sonarqube.ws.client.favorites.FavoritesService;
-import org.sonarqube.ws.client.favourites.FavouritesService;
 import org.sonarqube.ws.client.governancereports.GovernanceReportsService;
+import org.sonarqube.ws.client.hotspots.HotspotsService;
 import org.sonarqube.ws.client.issues.IssuesService;
 import org.sonarqube.ws.client.l10n.L10nService;
 import org.sonarqube.ws.client.languages.LanguagesService;
 import org.sonarqube.ws.client.measures.MeasuresService;
 import org.sonarqube.ws.client.metrics.MetricsService;
 import org.sonarqube.ws.client.navigation.NavigationService;
+import org.sonarqube.ws.client.newcodeperiods.NewCodePeriodsService;
 import org.sonarqube.ws.client.notifications.NotificationsService;
 import org.sonarqube.ws.client.organizations.OrganizationsService;
 import org.sonarqube.ws.client.permissions.PermissionsService;
@@ -84,6 +87,8 @@ class DefaultWsClient implements WsClient {
 
   private final WsConnector wsConnector;
 
+  private final AlmIntegrationsService almIntegrationsService;
+  private final AlmSettingsService almSettingsService;
   private final AnalysisReportsService analysisReportsService;
   private final ApplicationsService applicationsService;
   private final AuthenticationService authenticationService;
@@ -95,14 +100,15 @@ class DefaultWsClient implements WsClient {
   private final EditionsService editionsService;
   private final EmailsService emailsService;
   private final FavoritesService favoritesService;
-  private final FavouritesService favouritesService;
   private final GovernanceReportsService governanceReportsService;
+  private final HotspotsService hotspotsService;
   private final IssuesService issuesService;
   private final L10nService l10nService;
   private final LanguagesService languagesService;
   private final MeasuresService measuresService;
   private final MetricsService metricsService;
   private final NavigationService navigationService;
+  private final NewCodePeriodsService newCodePeriodsService;
   private final NotificationsService notificationsService;
   private final OrganizationsService organizationsService;
   private final PermissionsService permissionsService;
@@ -140,6 +146,8 @@ class DefaultWsClient implements WsClient {
   DefaultWsClient(WsConnector wsConnector) {
     this.wsConnector = wsConnector;
 
+    this.almIntegrationsService = new AlmIntegrationsService(wsConnector);
+    this.almSettingsService = new AlmSettingsService(wsConnector);
     this.analysisReportsService = new AnalysisReportsService(wsConnector);
     this.applicationsService = new ApplicationsService(wsConnector);
     this.authenticationService = new AuthenticationService(wsConnector);
@@ -151,14 +159,15 @@ class DefaultWsClient implements WsClient {
     this.editionsService = new EditionsService(wsConnector);
     this.emailsService = new EmailsService(wsConnector);
     this.favoritesService = new FavoritesService(wsConnector);
-    this.favouritesService = new FavouritesService(wsConnector);
     this.governanceReportsService = new GovernanceReportsService(wsConnector);
+    this.hotspotsService = new HotspotsService(wsConnector);
     this.issuesService = new IssuesService(wsConnector);
     this.l10nService = new L10nService(wsConnector);
     this.languagesService = new LanguagesService(wsConnector);
     this.measuresService = new MeasuresService(wsConnector);
     this.metricsService = new MetricsService(wsConnector);
     this.navigationService = new NavigationService(wsConnector);
+    this.newCodePeriodsService = new NewCodePeriodsService(wsConnector);
     this.notificationsService = new NotificationsService(wsConnector);
     this.organizationsService = new OrganizationsService(wsConnector);
     this.permissionsService = new PermissionsService(wsConnector);
@@ -198,6 +207,16 @@ class DefaultWsClient implements WsClient {
   @Deprecated
   public WsConnector wsConnector() {
     return wsConnector;
+  }
+
+  @Override
+  public AlmIntegrationsService almIntegrations() {
+    return almIntegrationsService;
+  }
+
+  @Override
+  public AlmSettingsService almSettings() {
+    return almSettingsService;
   }
 
   @Override
@@ -256,13 +275,13 @@ class DefaultWsClient implements WsClient {
   }
 
   @Override
-  public FavouritesService favourites() {
-    return favouritesService;
+  public GovernanceReportsService governanceReports() {
+    return governanceReportsService;
   }
 
   @Override
-  public GovernanceReportsService governanceReports() {
-    return governanceReportsService;
+  public HotspotsService hotspots() {
+    return hotspotsService;
   }
 
   @Override
@@ -293,6 +312,11 @@ class DefaultWsClient implements WsClient {
   @Override
   public NavigationService navigation() {
     return navigationService;
+  }
+
+  @Override
+  public NewCodePeriodsService newCodePeriods() {
+    return newCodePeriodsService;
   }
 
   @Override

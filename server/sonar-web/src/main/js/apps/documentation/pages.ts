@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,19 +19,56 @@
  */
 import remark from 'remark';
 import visit from 'unist-util-visit';
-import { filterContent, separateFrontMatter } from '../../helpers/markdown';
+import { filterContent, ParsedContent, separateFrontMatter } from '../../helpers/markdown';
 import * as Docs from './documentation.directory-loader';
 import { DocumentationEntry, DocumentationEntryScope } from './utils';
 
-export default function getPages(): DocumentationEntry[] {
-  return ((Docs as unknown) as Array<{ content: string; path: string }>).map(file => {
-    const parsed = separateFrontMatter(file.content);
-    const content = filterContent(parsed.content);
-    const text = getText(content);
+export default function getPages(
+  parsedOverrides: T.Dict<ParsedContent> = {}
+): DocumentationEntry[] {
+  // Get entries, merge with overrides if applicable.
+  const pages = ((Docs as unknown) as Array<{ content: string; path: string }>).map(file => {
+    let parsed = separateFrontMatter(file.content);
+
+    if (parsedOverrides[file.path]) {
+      const parsedOverride = parsedOverrides[file.path];
+      parsed = {
+        content: parsedOverride.content,
+        frontmatter: { ...parsed.frontmatter, ...parsedOverride.frontmatter }
+      };
+      delete parsedOverrides[file.path];
+    }
+
+    return { parsed, file };
+  });
+
+  // Add new entries.
+  Object.keys(parsedOverrides).forEach(path => {
+    const parsed = parsedOverrides[path];
+    pages.push({
+      parsed,
+      file: { content: parsed.content, path }
+    });
+  });
+
+  return pages.map(({ parsed, file }) => {
+    let content = '';
+    let text = '';
+    try {
+      content = filterContent(parsed.content);
+      text = getText(content);
+    } catch (e) {
+      /* eslint-disable-next-line no-console */
+      console.error(
+        `Documentation - an error occured while parsing page "${parsed.frontmatter.url ||
+          file.path}":`,
+        e
+      );
+    }
 
     return {
       relativeName: file.path,
-      url: parsed.frontmatter.url || `/${file.path}`,
+      url: parsed.frontmatter.url || `/${file.path}/`,
       title: parsed.frontmatter.title,
       navTitle: parsed.frontmatter.nav || undefined,
       order: Number(parsed.frontmatter.order || -1),
@@ -39,7 +76,7 @@ export default function getPages(): DocumentationEntry[] {
         ? (parsed.frontmatter.scope.toLowerCase() as DocumentationEntryScope)
         : undefined,
       text,
-      content: file.content
+      content
     };
   });
 }

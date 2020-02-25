@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ public class QualityProfilesProvider extends ProviderAdapter {
   public QualityProfiles provide(QualityProfileLoader loader, ProcessedScannerProperties props) {
     if (this.profiles == null) {
       Profiler profiler = Profiler.create(LOG).startInfo(LOG_MSG);
-      profiles = new QualityProfiles(loader.load(props.getKeyWithBranch()));
+      profiles = new QualityProfiles(loader.load(props.getProjectKey()));
       profiler.stopInfo();
     }
 

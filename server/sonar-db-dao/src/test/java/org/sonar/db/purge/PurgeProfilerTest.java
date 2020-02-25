@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ public class PurgeProfilerTest {
     verify(logger).info(contains("bar: 5ms"));
   }
 
-  private class MockedClock extends PurgeProfiler.Clock {
+  private static class MockedClock extends PurgeProfiler.Clock {
     private long now = 0;
 
     @Override

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ export default function ProjectCardQualityGate({ status }: Props) {
     <div className="project-card-quality-gate big-spacer-left">
       <Tooltip overlay={tooltip}>
         <div className="project-card-measure-inner">
-          <Level level={status} small={true} />
+          <Level aria-label={translate('quality_gates.status')} level={status} small={true} />
           {status === 'WARN' && (
             <HelpTooltip
               className="little-spacer-left"

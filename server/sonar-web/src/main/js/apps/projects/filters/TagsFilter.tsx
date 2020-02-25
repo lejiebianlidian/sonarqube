@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -95,8 +95,6 @@ export default class TagsFilter extends React.PureComponent<Props, State> {
   getSortedOptions = (facet: Facet = {}) =>
     sortBy(Object.keys(facet), [(option: string) => -facet[option], (option: string) => option]);
 
-  getFacetValueForOption = (facet: Facet = {}, option: string) => facet[option];
-
   renderOption = (option: string) => <SearchableFilterOption optionKey={option} />;
 
   render() {
@@ -117,7 +115,6 @@ export default class TagsFilter extends React.PureComponent<Props, State> {
             query={this.props.query}
           />
         }
-        getFacetValueForOption={this.getFacetValueForOption}
         header={<FilterHeader name={translate('projects.facets.tags')} />}
         maxFacetValue={this.props.maxFacetValue}
         onQueryChange={this.props.onQueryChange}

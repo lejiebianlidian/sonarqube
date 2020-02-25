@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,6 @@ public class DefaultProjectSettingsLoader extends AbstractSettingsLoader impleme
 
   @Override
   public Map<String, String> loadProjectSettings() {
-    return load(scannerProperties.getKeyWithBranch());
+    return load(scannerProperties.getProjectKey());
   }
 }

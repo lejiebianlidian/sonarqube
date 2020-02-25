@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@ import org.sonar.ce.task.step.ComputationStep;
 import org.sonar.ce.task.step.TestComputationStepContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.guava.api.Assertions.assertThat;
 import static org.sonar.api.measures.CoreMetrics.COMMENT_LINES;
 import static org.sonar.api.measures.CoreMetrics.COMMENT_LINES_DENSITY;
 import static org.sonar.api.measures.CoreMetrics.COMMENT_LINES_DENSITY_KEY;
@@ -73,7 +72,7 @@ public class ReportCommentMeasuresStepTest {
   ComputationStep underTest = new CommentMeasuresStep(treeRootHolder, metricRepository, measureRepository);
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     treeRootHolder.setRoot(
       builder(PROJECT, ROOT_REF)
         .addChildren(
@@ -274,9 +273,9 @@ public class ReportCommentMeasuresStepTest {
   }
 
   private void assertNoNewMeasures(String metric) {
-    assertThat(measureRepository.getAddedRawMeasures(FILE_1_REF).get(metric)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(FILE_2_REF).get(metric)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(DIRECTORY_REF).get(metric)).isEmpty();
-    assertThat(measureRepository.getAddedRawMeasures(ROOT_REF).get(metric)).isEmpty();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_1_REF).get(metric)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(FILE_2_REF).get(metric)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(DIRECTORY_REF).get(metric)).isNull();
+    assertThat(measureRepository.getAddedRawMeasures(ROOT_REF).get(metric)).isNull();
   }
 }

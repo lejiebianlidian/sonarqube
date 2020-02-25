@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -84,15 +84,6 @@ table.spacedicon td {
   background-color: var(--orange);
   color: #000;
   padding: 0 5px;
-}
-
-.admin hr {
-  background: transparent;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  border-bottom: 1px dashed #ffd324;
-  height: 1px;
 }
 
 .table > thead > tr > th {
@@ -278,7 +269,7 @@ table.data.boxed-padding > thead + tbody > tr:first-child > td {
 }
 
 table.data.zebra-hover > tbody > tr:hover {
-  background-color: #ecf6fe !important;
+  background-color: var(--rowHoverHighlight) !important;
 }
 
 table.data.zebra > tbody > tr.selected {
@@ -295,4 +286,16 @@ table.data.zebra.zebra-inversed > tbody > tr:nth-child(odd) {
 
 table#project-history tr > td {
   vertical-align: top;
+}
+
+table.fixed {
+  table-layout: fixed;
+}
+
+table.fixed th.action-small {
+  width: 30px;
+}
+
+table.fixed th.action {
+  width: 50px;
 }

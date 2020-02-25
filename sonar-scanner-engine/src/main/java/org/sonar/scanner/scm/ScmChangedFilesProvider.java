@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ public class ScmChangedFilesProvider extends ProviderAdapter {
   @CheckForNull
   private static Collection<Path> loadChangedFilesIfNeeded(ScmConfiguration scmConfiguration, BranchConfiguration branchConfiguration, Path rootBaseDir) {
     final String targetBranchName = branchConfiguration.targetBranchName();
-    if (branchConfiguration.isShortOrPullRequest() && targetBranchName != null) {
+    if (branchConfiguration.isPullRequest() && targetBranchName != null) {
       ScmProvider scmProvider = scmConfiguration.provider();
       if (scmProvider != null) {
         Profiler profiler = Profiler.create(LOG).startInfo(LOG_MSG);

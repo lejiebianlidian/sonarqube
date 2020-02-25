@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.config.Configuration;
-import org.sonar.db.component.ComponentDto;
+import org.sonar.db.project.ProjectDto;
 
 import static java.util.Objects.requireNonNull;
 
@@ -35,9 +36,9 @@ public interface WebHooks {
    *
    * <p>
    * This can be used to not do consuming operations before calling
-   * {@link #sendProjectAnalysisUpdate(Analysis, Supplier)}
+   * {@link #sendProjectAnalysisUpdate(Analysis, Supplier, PostProjectAnalysisTask.LogStatistics)}
    */
-  boolean isEnabled(ComponentDto projectDto);
+  boolean isEnabled(ProjectDto projectDto);
 
   /**
    * Calls all WebHooks configured in the specified {@link Configuration} for the specified analysis with the
@@ -45,12 +46,17 @@ public interface WebHooks {
    */
   void sendProjectAnalysisUpdate(Analysis analysis, Supplier<WebhookPayload> payloadSupplier);
 
+  /**
+   * Override to be called from a {@link PostProjectAnalysisTask} implementation.
+   */
+  void sendProjectAnalysisUpdate(Analysis analysis, Supplier<WebhookPayload> payloadSupplier, PostProjectAnalysisTask.LogStatistics taskLogStatistics);
+
   final class Analysis {
     private final String projectUuid;
     private final String ceTaskUuid;
     private final String analysisUuid;
 
-    public Analysis(String projectUuid, @Nullable String analysisUuid, @Nullable  String ceTaskUuid) {
+    public Analysis(String projectUuid, @Nullable String analysisUuid, @Nullable String ceTaskUuid) {
       this.projectUuid = requireNonNull(projectUuid, "projectUuid can't be null");
       this.analysisUuid = analysisUuid;
       this.ceTaskUuid = ceTaskUuid;

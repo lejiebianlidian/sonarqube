@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,15 @@ import { RuleDetailsIssues } from '../RuleDetailsIssues';
 
 jest.mock('../../../../api/issues', () => ({
   getFacet: jest.fn().mockResolvedValue({
-    facet: [{ count: 13, val: 'sample-key' }, { count: 5, val: 'example-key' }],
+    facet: [
+      { count: 13, val: 'sample-key' },
+      { count: 5, val: 'example-key' }
+    ],
     response: {
-      components: [{ key: 'sample-key', name: 'Sample' }, { key: 'example-key', name: 'Example' }],
+      components: [
+        { key: 'sample-key', name: 'Sample' },
+        { key: 'example-key', name: 'Example' }
+      ],
       paging: { total: 18 }
     }
   })
@@ -38,30 +44,26 @@ beforeEach(() => {
 });
 
 it('should fetch issues and render', async () => {
-  await check('BUG', undefined);
-});
-
-it('should handle hotspot rules', async () => {
-  await check('SECURITY_HOTSPOT', ['VULNERABILITY', 'SECURITY_HOTSPOT']);
-});
-
-async function check(ruleType: T.RuleType, requestedTypes: T.RuleType[] | undefined) {
-  const wrapper = shallow(
-    <RuleDetailsIssues
-      appState={{ branchesEnabled: false }}
-      organization="org"
-      ruleDetails={{ key: 'foo', type: ruleType }}
-    />
-  );
+  const wrapper = shallowRender();
   await waitAndUpdate(wrapper);
   expect(wrapper).toMatchSnapshot();
   expect(getFacet).toBeCalledWith(
     {
       organization: 'org',
       resolved: 'false',
-      rules: 'foo',
-      types: requestedTypes && requestedTypes.join()
+      rules: 'foo'
     },
     'projects'
+  );
+});
+
+function shallowRender(props: Partial<RuleDetailsIssues['props']> = {}) {
+  return shallow(
+    <RuleDetailsIssues
+      appState={{ branchesEnabled: false }}
+      organization="org"
+      ruleDetails={{ key: 'foo', type: 'BUG' }}
+      {...props}
+    />
   );
 }

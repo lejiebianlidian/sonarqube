@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +20,14 @@
 package org.sonar.db.component;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import org.sonar.api.utils.System2;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
+import org.sonar.db.project.ProjectDto;
 
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 
@@ -64,21 +66,20 @@ public class BranchDao implements Dao {
     return mapper(dbSession).updateMainBranchName(projectUuid, newBranchKey, now);
   }
 
-  /**
-   * Set or unset the uuid of the manual baseline analysis by updating the manual_baseline_analysis_uuid column, if:
-   *
-   * - the specified uuid exists
-   * - and the specified uuid corresponds to a long-living branch (including the main branch)
-   *
-   * @return the number of rows that were updated
-   */
-  public int updateManualBaseline(DbSession dbSession, String uuid, @Nullable String analysisUuid) {
+  public int updateExcludeFromPurge(DbSession dbSession, String branchUuid, boolean excludeFromPurge) {
     long now = system2.now();
-    return mapper(dbSession).updateManualBaseline(uuid, analysisUuid == null || analysisUuid.isEmpty() ? null : analysisUuid, now);
+    return mapper(dbSession).updateExcludeFromPurge(branchUuid, excludeFromPurge, now);
   }
 
   public Optional<BranchDto> selectByBranchKey(DbSession dbSession, String projectUuid, String key) {
     return selectByKey(dbSession, projectUuid, key, KeyType.BRANCH);
+  }
+
+  public List<BranchDto> selectByBranchKeys(DbSession dbSession, Map<String, String> branchKeyByProjectUuid) {
+    if (branchKeyByProjectUuid.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return mapper(dbSession).selectByBranchKeys(branchKeyByProjectUuid);
   }
 
   public Optional<BranchDto> selectByPullRequestKey(DbSession dbSession, String projectUuid, String key) {
@@ -95,6 +96,10 @@ public class BranchDao implements Dao {
       projectUuid = component.projectUuid();
     }
     return mapper(dbSession).selectByProjectUuid(projectUuid);
+  }
+
+  public Collection<BranchDto> selectByProject(DbSession dbSession, ProjectDto project) {
+    return mapper(dbSession).selectByProjectUuid(project.getUuid());
   }
 
   public List<BranchDto> selectByUuids(DbSession session, Collection<String> uuids) {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -104,8 +104,7 @@ public class CeDistributedInformationImplTest {
     connectedClients.add(clientUUID1);
     connectedClients.add(clientUUID2);
     connectedClients.add(clientUUID3);
-    Map modifiableWorkerMap = new HashMap();
-    modifiableWorkerMap.putAll(workerMap);
+    Map modifiableWorkerMap = new HashMap(workerMap);
 
     when(hzClientWrapper.getUuid()).thenReturn(clientUUID1);
     when(hzClientWrapper.getMemberUuids()).thenReturn(connectedClients);

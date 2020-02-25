@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import { Location } from 'history';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import Suggestions from '../../../app/components/embed-docs-modal/Suggestions';
 import NotFound from '../../../app/components/NotFound';
@@ -97,7 +97,11 @@ export class OrganizationPage extends React.PureComponent<Props, State> {
 
     return (
       <div>
-        <Helmet defaultTitle={organization.name} titleTemplate={'%s - ' + organization.name} />
+        <Helmet
+          defaultTitle={organization.name}
+          defer={false}
+          titleTemplate={`%s - ${organization.name}`}
+        />
         <Suggestions suggestions="organization_space" />
         <OrganizationNavigation
           currentUser={this.props.currentUser}
@@ -119,7 +123,4 @@ const mapStateToProps = (state: Store, ownProps: OwnProps) => ({
 
 const mapDispatchToProps = { fetchOrganization: fetchOrganization as any };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(OrganizationPage);
+export default connect(mapStateToProps, mapDispatchToProps)(OrganizationPage);

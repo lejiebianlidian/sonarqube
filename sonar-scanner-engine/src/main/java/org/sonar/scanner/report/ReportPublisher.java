@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,13 +40,14 @@ import org.sonar.api.utils.TempFolder;
 import org.sonar.api.utils.ZipUtils;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.scanner.bootstrap.GlobalAnalysisMode;
 import org.sonar.scanner.bootstrap.DefaultScannerWsClient;
+import org.sonar.scanner.bootstrap.GlobalAnalysisMode;
 import org.sonar.scanner.fs.InputModuleHierarchy;
 import org.sonar.scanner.protocol.output.ScannerReportReader;
 import org.sonar.scanner.protocol.output.ScannerReportWriter;
 import org.sonar.scanner.scan.ScanProperties;
 import org.sonar.scanner.scan.branch.BranchConfiguration;
+import org.sonar.scanner.scan.branch.BranchType;
 import org.sonarqube.ws.Ce;
 import org.sonarqube.ws.MediaTypes;
 import org.sonarqube.ws.client.HttpException;
@@ -57,9 +58,7 @@ import static java.net.URLEncoder.encode;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.sonar.core.util.FileUtils.deleteQuietly;
-import static org.sonar.scanner.scan.branch.BranchType.LONG;
 import static org.sonar.scanner.scan.branch.BranchType.PULL_REQUEST;
-import static org.sonar.scanner.scan.branch.BranchType.SHORT;
 
 public class ReportPublisher implements Startable {
 
@@ -79,13 +78,15 @@ public class ReportPublisher implements Startable {
   private final Server server;
   private final BranchConfiguration branchConfiguration;
   private final ScanProperties properties;
+  private final CeTaskReportDataHolder ceTaskReportDataHolder;
 
   private Path reportDir;
   private ScannerReportWriter writer;
   private ScannerReportReader reader;
 
   public ReportPublisher(ScanProperties properties, DefaultScannerWsClient wsClient, Server server, AnalysisContextReportPublisher contextPublisher,
-    InputModuleHierarchy moduleHierarchy, GlobalAnalysisMode analysisMode, TempFolder temp, ReportPublisherStep[] publishers, BranchConfiguration branchConfiguration) {
+    InputModuleHierarchy moduleHierarchy, GlobalAnalysisMode analysisMode, TempFolder temp, ReportPublisherStep[] publishers, BranchConfiguration branchConfiguration,
+    CeTaskReportDataHolder ceTaskReportDataHolder) {
     this.wsClient = wsClient;
     this.server = server;
     this.contextPublisher = contextPublisher;
@@ -95,6 +96,7 @@ public class ReportPublisher implements Startable {
     this.publishers = publishers;
     this.branchConfiguration = branchConfiguration;
     this.properties = properties;
+    this.ceTaskReportDataHolder = ceTaskReportDataHolder;
   }
 
   @Override
@@ -132,15 +134,26 @@ public class ReportPublisher implements Startable {
   }
 
   public void execute() {
-    String taskId = null;
     File report = generateReportFile();
     if (properties.shouldKeepReport()) {
       LOG.info("Analysis report generated in " + reportDir);
     }
     if (!analysisMode.isMediumTest()) {
-      taskId = upload(report);
+      String taskId = upload(report);
+      prepareAndDumpMetadata(taskId);
     }
-    logSuccess(taskId);
+
+    logSuccess();
+  }
+
+  private void logSuccess() {
+    if (analysisMode.isMediumTest()) {
+      LOG.info("ANALYSIS SUCCESSFUL");
+    } else if (!properties.shouldWaitForQualityGate()) {
+      LOG.info("ANALYSIS SUCCESSFUL, you can browse {}", ceTaskReportDataHolder.getDashboardUrl());
+      LOG.info("Note that you will be able to access the updated dashboard once the server has processed the submitted analysis report");
+      LOG.info("More about the report processing at {}", ceTaskReportDataHolder.getCeTaskUrl());
+    }
   }
 
   private File generateReportFile() {
@@ -175,7 +188,6 @@ public class ReportPublisher implements Startable {
       .setParam("organization", properties.organizationKey().orElse(null))
       .setParam("projectKey", moduleHierarchy.root().key())
       .setParam("projectName", moduleHierarchy.root().getOriginalName())
-      .setParam("projectBranch", moduleHierarchy.root().getBranch())
       .setPart("report", filePart);
 
     String branchName = branchConfiguration.branchName();
@@ -205,36 +217,28 @@ public class ReportPublisher implements Startable {
     }
   }
 
-  void logSuccess(@Nullable String taskId) {
-    if (taskId == null) {
-      LOG.info("ANALYSIS SUCCESSFUL");
-    } else {
+  void prepareAndDumpMetadata(String taskId) {
+    Map<String, String> metadata = new LinkedHashMap<>();
 
-      Map<String, String> metadata = new LinkedHashMap<>();
-      String effectiveKey = moduleHierarchy.root().getKeyWithBranch();
-      properties.organizationKey().ifPresent(org -> metadata.put("organization", org));
-      metadata.put("projectKey", effectiveKey);
-      metadata.put("serverUrl", server.getPublicRootUrl());
-      metadata.put("serverVersion", server.getVersion());
-      properties.branch().ifPresent(branch -> metadata.put("branch", branch));
+    properties.organizationKey().ifPresent(org -> metadata.put("organization", org));
+    metadata.put("projectKey", moduleHierarchy.root().key());
+    metadata.put("serverUrl", server.getPublicRootUrl());
+    metadata.put("serverVersion", server.getVersion());
+    properties.branch().ifPresent(branch -> metadata.put("branch", branch));
 
-      URL dashboardUrl = buildDashboardUrl(server.getPublicRootUrl(), effectiveKey);
-      metadata.put("dashboardUrl", dashboardUrl.toExternalForm());
+    URL dashboardUrl = buildDashboardUrl(server.getPublicRootUrl(), moduleHierarchy.root().key());
+    metadata.put("dashboardUrl", dashboardUrl.toExternalForm());
 
-      URL taskUrl = HttpUrl.parse(server.getPublicRootUrl()).newBuilder()
-        .addPathSegment("api").addPathSegment("ce").addPathSegment("task")
-        .addQueryParameter(ID, taskId)
-        .build()
-        .url();
-      metadata.put("ceTaskId", taskId);
-      metadata.put("ceTaskUrl", taskUrl.toExternalForm());
+    URL taskUrl = HttpUrl.parse(server.getPublicRootUrl()).newBuilder()
+      .addPathSegment("api").addPathSegment("ce").addPathSegment("task")
+      .addQueryParameter(ID, taskId)
+      .build()
+      .url();
+    metadata.put("ceTaskId", taskId);
+    metadata.put("ceTaskUrl", taskUrl.toExternalForm());
 
-      LOG.info("ANALYSIS SUCCESSFUL, you can browse {}", dashboardUrl);
-      LOG.info("Note that you will be able to access the updated dashboard once the server has processed the submitted analysis report");
-      LOG.info("More about the report processing at {}", taskUrl);
-
-      dumpMetadata(metadata);
-    }
+    ceTaskReportDataHolder.init(taskId, taskUrl.toExternalForm(), dashboardUrl.toExternalForm());
+    dumpMetadata(metadata);
   }
 
   private URL buildDashboardUrl(String publicUrl, String effectiveKey) {
@@ -249,21 +253,11 @@ public class ReportPublisher implements Startable {
         .url();
     }
 
-    if (onLongLivingBranch(branchConfiguration)) {
+    if (onBranch(branchConfiguration)) {
       return httpUrl.newBuilder()
         .addPathSegment(DASHBOARD)
         .addEncodedQueryParameter(ID, encoded(effectiveKey))
         .addEncodedQueryParameter(BRANCH, encoded(branchConfiguration.branchName()))
-        .build()
-        .url();
-    }
-
-    if (onShortLivingBranch(branchConfiguration)) {
-      return httpUrl.newBuilder()
-        .addPathSegment(DASHBOARD)
-        .addEncodedQueryParameter(ID, encoded(effectiveKey))
-        .addEncodedQueryParameter(BRANCH, encoded(branchConfiguration.branchName()))
-        .addQueryParameter(RESOLVED, "false")
         .build()
         .url();
     }
@@ -283,12 +277,8 @@ public class ReportPublisher implements Startable {
     return branchConfiguration.branchName() != null && (branchConfiguration.branchType() == PULL_REQUEST);
   }
 
-  private static boolean onShortLivingBranch(BranchConfiguration branchConfiguration) {
-    return branchConfiguration.branchName() != null && (branchConfiguration.branchType() == SHORT);
-  }
-
-  private static boolean onLongLivingBranch(BranchConfiguration branchConfiguration) {
-    return branchConfiguration.branchName() != null && (branchConfiguration.branchType() == LONG);
+  private static boolean onBranch(BranchConfiguration branchConfiguration) {
+    return branchConfiguration.branchName() != null && (branchConfiguration.branchType() == BranchType.BRANCH);
   }
 
   private static boolean onMainBranch(BranchConfiguration branchConfiguration) {
@@ -300,7 +290,7 @@ public class ReportPublisher implements Startable {
       return EMPTY;
     }
     try {
-      return encode(queryParameter, "UTF-8");
+      return encode(queryParameter, StandardCharsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException("Unable to urlencode " + queryParameter, e);
     }

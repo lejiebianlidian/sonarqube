@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@ package org.sonar.ce.task.projectanalysis.scm;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.rules.ExternalResource;
 import org.sonar.ce.task.projectanalysis.component.Component;
 
@@ -46,13 +44,12 @@ public class ScmInfoRepositoryRule extends ExternalResource implements ScmInfoRe
   }
 
   public ScmInfoRepositoryRule setScmInfo(int fileRef, Changeset... changesetList) {
-    Map<Integer, Changeset> changeset = IntStream.rangeClosed(1, changesetList.length).boxed().collect(Collectors.toMap(x -> x, x -> changesetList[x - 1]));
-    scmInfoByFileRef.put(fileRef, new ScmInfoImpl(changeset));
+    scmInfoByFileRef.put(fileRef, new ScmInfoImpl(changesetList));
     return this;
   }
 
   public ScmInfoRepositoryRule setScmInfo(int fileRef, Map<Integer, Changeset> changesets) {
-    scmInfoByFileRef.put(fileRef, new ScmInfoImpl(changesets));
+    scmInfoByFileRef.put(fileRef, new ScmInfoImpl(changesets.values().toArray(new Changeset[0])));
     return this;
   }
 }

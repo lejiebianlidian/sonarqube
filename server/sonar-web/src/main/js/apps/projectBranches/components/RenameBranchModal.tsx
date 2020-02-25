@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,10 +22,11 @@ import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/contro
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { renameBranch } from '../../../api/branches';
+import { MainBranch } from '../../../types/branch-like';
 
 interface Props {
-  branch: T.MainBranch;
-  component: string;
+  branch: MainBranch;
+  component: T.Component;
   onClose: () => void;
   onRename: () => void;
 }
@@ -53,7 +54,7 @@ export default class RenameBranchModal extends React.PureComponent<Props, State>
       return;
     }
     this.setState({ loading: true });
-    renameBranch(this.props.component, this.state.name).then(
+    renameBranch(this.props.component.key, this.state.name).then(
       () => {
         if (this.mounted) {
           this.setState({ loading: false });
@@ -74,7 +75,7 @@ export default class RenameBranchModal extends React.PureComponent<Props, State>
 
   render() {
     const { branch } = this.props;
-    const header = translate('branches.rename');
+    const header = translate('project_branch_pull_request.branch.rename');
     const submitDisabled =
       this.state.loading || !this.state.name || this.state.name === branch.name;
 

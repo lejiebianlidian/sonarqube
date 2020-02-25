@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 package org.sonar.application;
 
-import java.io.IOException;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.internal.MetadataLoader;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.application.command.CommandFactory;
 import org.sonar.application.command.CommandFactoryImpl;
 import org.sonar.application.command.JavaVersion;
@@ -32,6 +32,7 @@ import org.sonar.core.extension.ServiceLoaderWrapper;
 import org.sonar.process.System2;
 import org.sonar.process.SystemExit;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.sonar.application.config.SonarQubeVersionHelper.getSonarqubeVersion;
 import static org.sonar.process.ProcessProperties.Property.CLUSTER_NAME;
 
@@ -46,8 +47,8 @@ public class App {
     this.javaVersion = javaVersion;
   }
 
-  public void start(String[] cliArguments) throws IOException, InterruptedException {
-    AppSettingsLoader settingsLoader = new AppSettingsLoaderImpl(cliArguments, new ServiceLoaderWrapper());
+  public void start(String[] cliArguments) {
+    AppSettingsLoader settingsLoader = new AppSettingsLoaderImpl(System2.INSTANCE, cliArguments, new ServiceLoaderWrapper());
     AppSettings settings = settingsLoader.load();
     // order is important - logging must be configured before any other components (AppFileSystem, ...)
     AppLogging logging = new AppLogging(settings);
@@ -79,6 +80,8 @@ public class App {
         scheduler.awaitTermination();
         hardStopRequestWatcher.stopWatching();
       }
+    } catch (Exception e) {
+      Loggers.get(App.class).error("Startup failure", e);
     }
 
     systemExit.exit(0);
@@ -88,10 +91,7 @@ public class App {
     if (MetadataLoader.loadEdition(org.sonar.api.utils.System2.INSTANCE) == SonarEdition.SONARCLOUD) {
       return;
     }
-
-    if (!javaVersion.isAtLeastJava11()) {
-      throw new IllegalStateException("SonarQube requires Java 11+ to run");
-    }
+    checkState(javaVersion.isAtLeastJava11(), "SonarQube requires Java 11 to run");
   }
 
   public static void main(String[] args) throws Exception {

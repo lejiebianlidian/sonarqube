@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 import org.sonar.db.RowNotFoundException;
@@ -74,7 +73,7 @@ public class IssueDao implements Dao {
     return mapper(dbSession).selectNonClosedByModuleOrProject(module.projectUuid(), likeModuleUuidPath);
   }
 
-  public List<ShortBranchIssueDto> selectOpenByComponentUuids(DbSession dbSession, Collection<String> componentUuids) {
+  public List<PrIssueDto> selectOpenByComponentUuids(DbSession dbSession, Collection<String> componentUuids) {
     return executeLargeInputs(componentUuids, mapper(dbSession)::selectOpenByComponentUuids);
   }
 

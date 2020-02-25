@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,7 +76,6 @@ import static org.sonar.api.rules.RuleType.BUG;
 import static org.sonar.api.rules.RuleType.CODE_SMELL;
 import static org.sonar.api.rules.RuleType.SECURITY_HOTSPOT;
 import static org.sonar.api.rules.RuleType.VULNERABILITY;
-import static org.sonar.api.utils.DateUtils.truncateToSeconds;
 
 /**
  * For each component, computes the measures related to number of issues:
@@ -149,11 +148,11 @@ public class IssueCounter extends IssueVisitor {
   @Override
   public void onIssue(Component component, DefaultIssue issue) {
     currentCounters.add(issue);
-    if (analysisMetadataHolder.isSLBorPR()) {
+    if (analysisMetadataHolder.isPullRequest()) {
       currentCounters.addOnPeriod(issue);
     } else if (periodHolder.hasPeriod()) {
       Period period = periodHolder.getPeriod();
-      if (issue.creationDate().getTime() > truncateToSeconds(period.getSnapshotDate())) {
+      if (period.isOnPeriod(issue.creationDate())){
         currentCounters.addOnPeriod(issue);
       }
     }
@@ -197,10 +196,10 @@ public class IssueCounter extends IssueVisitor {
   }
 
   private void addNewMeasures(Component component) {
-    if (!periodHolder.hasPeriod() && !analysisMetadataHolder.isSLBorPR()) {
+    if (!periodHolder.hasPeriod() && !analysisMetadataHolder.isPullRequest()) {
       return;
     }
-    double unresolvedVariations = (double) currentCounters.counterForPeriod().unresolved;
+    double unresolvedVariations = currentCounters.counterForPeriod().unresolved;
     measureRepository.add(component, metricRepository.getByKey(NEW_VIOLATIONS_KEY), Measure.newMeasureBuilder()
       .setVariation(unresolvedVariations)
       .createNoValue());
@@ -211,7 +210,7 @@ public class IssueCounter extends IssueVisitor {
       Multiset<String> bag = currentCounters.counterForPeriod().severityBag;
       Metric metric = metricRepository.getByKey(metricKey);
       measureRepository.add(component, metric, Measure.newMeasureBuilder()
-        .setVariation((double) bag.count(severity))
+        .setVariation(bag.count(severity))
         .createNoValue());
     }
 
@@ -223,7 +222,7 @@ public class IssueCounter extends IssueVisitor {
       Multiset<RuleType> bag = currentCounters.counterForPeriod().typeBag;
       Metric metric = metricRepository.getByKey(metricKey);
       measureRepository.add(component, metric, Measure.newMeasureBuilder()
-        .setVariation((double) bag.count(type))
+        .setVariation(bag.count(type))
         .createNoValue());
     }
   }

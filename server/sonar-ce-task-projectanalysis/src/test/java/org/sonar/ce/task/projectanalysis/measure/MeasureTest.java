@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.sonar.ce.task.projectanalysis.measure.Measure.ValueType;
-import org.sonar.server.util.WrapInSingleElementArray;
+import org.sonar.ce.task.projectanalysis.util.WrapInSingleElementArray;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.ce.task.projectanalysis.measure.Measure.newMeasureBuilder;
@@ -218,7 +218,7 @@ public class MeasureTest {
     assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create(false, null).getQualityGateStatus()).isEqualTo(someStatus);
     assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create(1, null).getQualityGateStatus()).isEqualTo(someStatus);
     assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create((long) 1, null).getQualityGateStatus()).isEqualTo(someStatus);
-    assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create((double) 1, 1, null).getQualityGateStatus()).isEqualTo(someStatus);
+    assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create(1, 1, null).getQualityGateStatus()).isEqualTo(someStatus);
     assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create("str").getQualityGateStatus()).isEqualTo(someStatus);
     assertThat(newMeasureBuilder().setQualityGateStatus(someStatus).create(Measure.Level.OK).getQualityGateStatus()).isEqualTo(someStatus);
   }
@@ -263,7 +263,7 @@ public class MeasureTest {
     assertThat(newMeasureBuilder().create(false, someData).getData()).isEqualTo(someData);
     assertThat(newMeasureBuilder().create(1, someData).getData()).isEqualTo(someData);
     assertThat(newMeasureBuilder().create((long) 1, someData).getData()).isEqualTo(someData);
-    assertThat(newMeasureBuilder().create((double) 1, 1, someData).getData()).isEqualTo(someData);
+    assertThat(newMeasureBuilder().create(1, 1, someData).getData()).isEqualTo(someData);
   }
 
   @Test

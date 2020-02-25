@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,9 +18,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as key from 'keymaster';
-import { keyBy } from 'lodash';
+import { debounce, keyBy } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { connect } from 'react-redux';
 import { withRouter, WithRouterProps } from 'react-router';
 import {
@@ -40,17 +40,14 @@ import Suggestions from '../../../app/components/embed-docs-modal/Suggestions';
 import ScreenPositionHelper from '../../../components/common/ScreenPositionHelper';
 import { enhanceMeasure } from '../../../components/measure/utils';
 import '../../../components/search-navigator.css';
-import {
-  getBranchLikeQuery,
-  isPullRequest,
-  isSameBranchLike,
-  isShortLivingBranch
-} from '../../../helpers/branches';
+import { getBranchLikeQuery, isPullRequest, isSameBranchLike } from '../../../helpers/branch-like';
 import { getLeakPeriod } from '../../../helpers/periods';
 import { fetchBranchStatus } from '../../../store/rootActions';
+import { BranchLike } from '../../../types/branch-like';
 import Sidebar from '../sidebar/Sidebar';
 import '../style.css';
 import {
+  banQualityGateMeasure,
   getMeasuresPageMetricKeys,
   groupByDomains,
   hasBubbleChart,
@@ -68,9 +65,9 @@ import MeasureOverviewContainer from './MeasureOverviewContainer';
 import MeasuresEmpty from './MeasuresEmpty';
 
 interface Props extends WithRouterProps {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   component: T.ComponentMeasure;
-  fetchBranchStatus: (branchLike: T.BranchLike, projectKey: string) => Promise<void>;
+  fetchBranchStatus: (branchLike: BranchLike, projectKey: string) => Promise<void>;
 }
 
 interface State {
@@ -82,11 +79,17 @@ interface State {
 
 export class App extends React.PureComponent<Props, State> {
   mounted = false;
-  state: State = {
-    loading: true,
-    measures: [],
-    metrics: {}
-  };
+  state: State;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      loading: true,
+      measures: [],
+      metrics: {}
+    };
+    this.refreshBranchStatus = debounce(this.refreshBranchStatus, 1000);
+  }
 
   componentDidMount() {
     this.mounted = true;
@@ -134,24 +137,13 @@ export class App extends React.PureComponent<Props, State> {
 
     const filteredKeys = getMeasuresPageMetricKeys(metrics, branchLike);
 
-    const banQualityGate = ({ measures = [], qualifier }: T.ComponentMeasure) => {
-      const bannedMetrics: string[] = [];
-      if (!['VW', 'SVW'].includes(qualifier)) {
-        bannedMetrics.push('alert_status', 'security_review_rating');
-      }
-      if (qualifier === 'APP') {
-        bannedMetrics.push('releasability_rating', 'releasability_effort');
-      }
-      return measures.filter(measure => !bannedMetrics.includes(measure.metric));
-    };
-
     getMeasuresAndMeta(componentKey, filteredKeys, {
       additionalFields: 'periods',
       ...getBranchLikeQuery(branchLike)
     }).then(
       ({ component, periods }) => {
         if (this.mounted) {
-          const measures = banQualityGate(component).map(measure =>
+          const measures = banQualityGateMeasure(component).map(measure =>
             enhanceMeasure(measure, metrics)
           );
 
@@ -234,7 +226,7 @@ export class App extends React.PureComponent<Props, State> {
 
   refreshBranchStatus = () => {
     const { branchLike, component } = this.props;
-    if (branchLike && component && (isPullRequest(branchLike) || isShortLivingBranch(branchLike))) {
+    if (branchLike && component && isPullRequest(branchLike)) {
       this.props.fetchBranchStatus(branchLike, component.key);
     }
   };
@@ -264,7 +256,7 @@ export class App extends React.PureComponent<Props, State> {
     }
 
     const hideDrilldown =
-      (isShortLivingBranch(branchLike) || isPullRequest(branchLike)) &&
+      isPullRequest(branchLike) &&
       (metric.key === 'coverage' || metric.key === 'duplicated_lines_density');
 
     if (hideDrilldown) {
@@ -308,7 +300,7 @@ export class App extends React.PureComponent<Props, State> {
     return (
       <div id="component-measures">
         <Suggestions suggestions="component_measures" />
-        <Helmet title={this.getHelmetTitle(query, displayOverview, metric)} />
+        <Helmet defer={false} title={this.getHelmetTitle(query, displayOverview, metric)} />
 
         {measures.length > 0 ? (
           <div className="layout-page">
@@ -340,9 +332,4 @@ export class App extends React.PureComponent<Props, State> {
 
 const mapDispatchToProps = { fetchBranchStatus: fetchBranchStatus as any };
 
-export default withRouter(
-  connect(
-    null,
-    mapDispatchToProps
-  )(App)
-);
+export default withRouter(connect(null, mapDispatchToProps)(App));

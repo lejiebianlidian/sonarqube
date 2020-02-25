@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,10 +20,9 @@
 package org.sonar.scanner.scan.branch;
 
 import java.util.List;
-import javax.annotation.Nullable;
 import org.sonar.api.scanner.ScannerSide;
 
 @ScannerSide
 public interface BranchParamsValidator {
-  void validate(List<String> validationMessages, @Nullable String deprecatedBranchName);
+  void validate(List<String> validationMessages);
 }

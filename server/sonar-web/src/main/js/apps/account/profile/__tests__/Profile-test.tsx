@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,41 +19,36 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { isSonarCloud } from '../../../../helpers/system';
 import { mockLoggedInUser } from '../../../../helpers/testMocks';
-import { Profile, Props } from '../Profile';
+import { Profile, ProfileProps } from '../Profile';
 
-jest.mock('../../../../helpers/system', () => ({ isSonarCloud: jest.fn().mockReturnValue(false) }));
-
-it('should render correctly', () => {
-  expect(shallowRender()).toMatchSnapshot();
+it('should render correctly a local user', () => {
+  expect(shallowRender({ local: true, externalProvider: 'sonarqube' })).toMatchSnapshot();
 });
 
-it('should render email', () => {
+it('should render correctly a IDP user', () => {
   expect(
-    shallowRender(mockLoggedInUser({ email: 'john@doe.com' }))
-      .find('#email')
-      .exists()
-  ).toBe(true);
+    shallowRender({
+      local: false,
+      externalProvider: 'github',
+      email: undefined,
+      login: undefined,
+      scmAccounts: []
+    })
+  ).toMatchSnapshot();
 });
 
-it('should render external identity', () => {
-  expect(
-    shallowRender(mockLoggedInUser({ local: false, externalProvider: 'github' }))
-      .find('UserExternalIdentity')
-      .exists()
-  ).toBe(true);
-});
-
-it('should not display user groups', () => {
-  (isSonarCloud as jest.Mock).mockReturnValueOnce(true);
-  expect(
-    shallowRender()
-      .find('UserGroups')
-      .exists()
-  ).toBe(false);
-});
-
-function shallowRender(currentUser: Props['currentUser'] = mockLoggedInUser()) {
-  return shallow(<Profile currentUser={currentUser} />);
+function shallowRender(userOverrides?: Partial<ProfileProps['currentUser']>) {
+  return shallow(
+    <Profile
+      currentUser={{
+        ...mockLoggedInUser({
+          email: 'john@doe.com',
+          groups: ['G1', 'G2'],
+          scmAccounts: ['SCM1', 'SCM2'],
+          ...userOverrides
+        })
+      }}
+    />
+  );
 }

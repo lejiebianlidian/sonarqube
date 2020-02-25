@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,21 +19,54 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockQualityGate } from '../../../../helpers/testMocks';
+import { mockQualityGate } from '../../../../helpers/mocks/quality-gates';
+import { mockMetric } from '../../../../helpers/testMocks';
+import { MetricKey } from '../../../../types/metrics';
 import ConditionModal from '../ConditionModal';
 
 it('should render correctly', () => {
+  expect(shallowRender()).toMatchSnapshot();
+  expect(shallowRender({ metric: mockMetric() })).toMatchSnapshot();
+});
+
+it('should correctly handle a metric selection', () => {
   const wrapper = shallowRender();
+  const metric = mockMetric();
+
+  expect(wrapper.find('MetricSelect').prop('metric')).toBeUndefined();
+
+  wrapper.instance().handleMetricChange(metric);
+  expect(wrapper.find('MetricSelect').prop('metric')).toEqual(metric);
+});
+
+it('should correctly switch scope', () => {
+  const wrapper = shallowRender({
+    metrics: [
+      mockMetric({ key: MetricKey.new_coverage }),
+      mockMetric({
+        key: MetricKey.new_duplicated_lines
+      }),
+      mockMetric(),
+      mockMetric({ key: MetricKey.duplicated_lines })
+    ]
+  });
   expect(wrapper).toMatchSnapshot();
 
-  wrapper.instance().handleMetricChange({ id: '1', key: 'foo', name: 'Foo', type: 'PERCENT' });
+  wrapper.instance().handleScopeChange('overall');
+  expect(wrapper).toMatchSnapshot();
+
+  wrapper.instance().handleScopeChange('new');
   expect(wrapper).toMatchSnapshot();
 });
 
 function shallowRender(props: Partial<ConditionModal['props']> = {}) {
   return shallow<ConditionModal>(
     <ConditionModal
-      header="a"
+      header="header"
+      metrics={[
+        mockMetric({ key: MetricKey.new_coverage }),
+        mockMetric({ key: MetricKey.new_duplicated_lines })
+      ]}
       onAddCondition={jest.fn()}
       onClose={jest.fn()}
       qualityGate={mockQualityGate()}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,8 +59,8 @@ public interface Component {
   }
 
   /**
-   * On a long-living branch, CHANGED and ADDED are relative to the previous analysis.
-   * On a short-living branch and pull request, these are relative to the base branch.
+   * On a branch, CHANGED and ADDED are relative to the previous analysis.
+   * On a pull request, these are relative to the base branch.
    */
   enum Status {
     UNAVAILABLE, SAME, CHANGED, ADDED

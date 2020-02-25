@@ -5,7 +5,7 @@ exports[`should render correctly for a regular file 1`] = `
   className="source-viewer-header display-flex-center"
 >
   <div
-    className="source-viewer-header-component flex-1"
+    className="flex-1 little-spacer-top"
   >
     <div
       className="component-name"
@@ -40,6 +40,14 @@ exports[`should render correctly for a regular file 1`] = `
           className="component-name-file"
         >
           bar.ts
+        </span>
+        <span
+          className="nudged-up spacer-left"
+        >
+          <ClipboardIconButton
+            className="button-link link-no-underline"
+            copyValue="foo/bar.ts"
+          />
         </span>
       </div>
     </div>
@@ -117,7 +125,7 @@ exports[`should render correctly for a unit test 1`] = `
   className="source-viewer-header display-flex-center"
 >
   <div
-    className="source-viewer-header-component flex-1"
+    className="flex-1 little-spacer-top"
   >
     <div
       className="component-name"
@@ -152,6 +160,14 @@ exports[`should render correctly for a unit test 1`] = `
           className="component-name-file"
         >
           bar.ts
+        </span>
+        <span
+          className="nudged-up spacer-left"
+        >
+          <ClipboardIconButton
+            className="button-link link-no-underline"
+            copyValue="foo/bar.ts"
+          />
         </span>
       </div>
     </div>
@@ -247,7 +263,7 @@ exports[`should render correctly if issue details are passed 1`] = `
   className="source-viewer-header display-flex-center"
 >
   <div
-    className="source-viewer-header-component flex-1"
+    className="flex-1 little-spacer-top"
   >
     <div
       className="component-name"
@@ -282,6 +298,14 @@ exports[`should render correctly if issue details are passed 1`] = `
           className="component-name-file"
         >
           bar.ts
+        </span>
+        <span
+          className="nudged-up spacer-left"
+        >
+          <ClipboardIconButton
+            className="button-link link-no-underline"
+            copyValue="foo/bar.ts"
+          />
         </span>
       </div>
     </div>

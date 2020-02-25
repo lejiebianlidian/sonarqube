@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,11 +21,12 @@ import { uniq } from 'lodash';
 import * as React from 'react';
 import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import SourceViewer from '../../../components/SourceViewer/SourceViewer';
+import { BranchLike } from '../../../types/branch-like';
 import CrossComponentSourceViewer from '../crossComponentSourceViewer/CrossComponentSourceViewer';
 import { getLocations, getSelectedLocation } from '../utils';
 
 interface Props {
-  branchLike: T.BranchLike | undefined;
+  branchLike: BranchLike | undefined;
   issues: T.Issue[];
   loadIssues: (component: string, from: number, to: number) => Promise<T.Issue[]>;
   locationsNavigator: boolean;
@@ -58,13 +59,12 @@ export default class IssuesSourceViewer extends React.PureComponent<Props> {
     if (this.node) {
       const element = this.node.querySelector(`[data-issue="${this.props.openIssue.key}"]`);
       if (element) {
-        this.handleScroll(element, smooth);
+        this.handleScroll(element, undefined, smooth);
       }
     }
   };
 
-  handleScroll = (element: Element, smooth = true) => {
-    const offset = window.innerHeight / 2;
+  handleScroll = (element: Element, offset = window.innerHeight / 2, smooth = true) => {
     scrollToElement(element, { topOffset: offset - 100, bottomOffset: offset, smooth });
   };
 
@@ -134,6 +134,8 @@ export default class IssuesSourceViewer extends React.PureComponent<Props> {
             branchLike={this.props.branchLike}
             component={component}
             displayAllIssues={true}
+            displayIssueLocationsCount={true}
+            displayIssueLocationsLink={false}
             displayLocationMarkers={!allMessagesEmpty}
             highlightedLocationMessage={highlightedLocationMessage}
             highlightedLocations={highlightedLocations}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.component.ComponentTesting;
+import org.sonar.db.project.ProjectDto;
 
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -236,7 +236,7 @@ public class ProjectAlmBindingDaoTest {
     underTest.insertOrUpdate(dbSession, BITBUCKETCLOUD, ANOTHER_REPO, "foo", null, "http://foo");
 
     assertThat(underTest.selectByRepoIds(dbSession, GITHUB, Arrays.asList(A_REPO, ANOTHER_REPO, "foo")))
-      .extracting(ProjectAlmBindingDto::getUuid, t -> t.getAlm(), ProjectAlmBindingDto::getRepoId, ProjectAlmBindingDto::getProjectUuid,
+      .extracting(ProjectAlmBindingDto::getUuid, ProjectAlmBindingDto::getAlm, ProjectAlmBindingDto::getRepoId, ProjectAlmBindingDto::getProjectUuid,
         ProjectAlmBindingDto::getUrl, ProjectAlmBindingDto::getGithubSlug)
       .containsExactlyInAnyOrder(
         tuple("uuid1", GITHUB, A_REPO, A_UUID, A_URL, A_GITHUB_SLUG),
@@ -272,9 +272,9 @@ public class ProjectAlmBindingDaoTest {
   @Test
   public void findProjectKey_returns_projectKey_when_entry_exists() {
     String projectKey = randomAlphabetic(10);
-    ComponentDto project = createProject(projectKey);
+    ProjectDto project = createProject(projectKey);
     when(uuidFactory.create()).thenReturn("uuid1");
-    underTest.insertOrUpdate(dbSession, GITHUB, A_REPO, project.projectUuid(), A_GITHUB_SLUG, A_URL);
+    underTest.insertOrUpdate(dbSession, GITHUB, A_REPO, project.getUuid(), A_GITHUB_SLUG, A_URL);
 
     assertThat(underTest.findProjectKey(dbSession, GITHUB, A_REPO)).contains(projectKey);
   }
@@ -400,10 +400,7 @@ public class ProjectAlmBindingDaoTest {
     }
   }
 
-  private ComponentDto createProject(String projectKey) {
-    ComponentDto project = ComponentTesting.newPrivateProjectDto(dbTester.organizations().insert()).setDbKey(projectKey);
-    dbClient.componentDao().insert(dbSession, project);
-    dbSession.commit();
-    return project;
+  private ProjectDto createProject(String projectKey) {
+    return dbTester.components().insertPrivateProjectDto(c -> c.setDbKey(projectKey));
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -96,10 +96,6 @@ public class EmailSettings {
 
   public String getServerBaseURL() {
     return server.getPublicRootUrl();
-  }
-
-  public String getInstanceName() {
-    return config.getBoolean("sonar.sonarcloud.enabled").orElse(false) ? "SonarCloud" : "SonarQube";
   }
 
   private String get(String key, String defaultValue) {

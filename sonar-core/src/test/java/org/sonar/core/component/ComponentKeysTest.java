@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,18 +48,6 @@ public class ComponentKeysTest {
     assertThat(ComponentKeys.isValidProjectKey("ab 12")).isFalse();
     assertThat(ComponentKeys.isValidProjectKey(" ab")).isFalse();
     assertThat(ComponentKeys.isValidProjectKey("ab ")).isFalse();
-  }
-
-  @Test
-  public void isValidBranchKey() {
-    assertThat(ComponentKeys.isValidLegacyBranch("")).isTrue();
-    assertThat(ComponentKeys.isValidLegacyBranch("abc")).isTrue();
-    assertThat(ComponentKeys.isValidLegacyBranch("0123")).isTrue();
-    assertThat(ComponentKeys.isValidLegacyBranch("ab 12")).isFalse();
-    assertThat(ComponentKeys.isValidLegacyBranch("ab_12")).isTrue();
-    assertThat(ComponentKeys.isValidLegacyBranch("ab/12")).isTrue();
-    assertThat(ComponentKeys.isValidLegacyBranch("ab\\12")).isFalse();
-    assertThat(ComponentKeys.isValidLegacyBranch("ab\n")).isFalse();
   }
 
   @Test

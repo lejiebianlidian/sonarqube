@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,10 @@ jest.mock(
   'Docs/EmbedDocsSuggestions.json',
   () => ({
     default: {
-      pageA: [{ link: '/foo', text: 'Foo' }, { link: '/bar', text: 'Bar', scope: 'sonarcloud' }],
+      pageA: [
+        { link: '/foo', text: 'Foo' },
+        { link: '/bar', text: 'Bar', scope: 'sonarcloud' }
+      ],
       pageB: [{ link: '/qux', text: 'Qux' }]
     }
   }),

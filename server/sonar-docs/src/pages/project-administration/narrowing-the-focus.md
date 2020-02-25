@@ -12,7 +12,24 @@ If {instance}'s results aren't relevant, no one will want to use it. That's why 
 * exclude files/directories from Duplications detection but analyze all other aspects
 * exclude files/directories from Coverage calculations but analyze all other aspects
 
-You can make these changes globally or at a project level. At both levels, the navigation path is the same: **Administration > General Settings > Analysis Scope**.
+You can make these changes globally or at a project level. At the global level, the navigation path is  **Administration > General Settings > Analysis Scope**. At the project level, the navigation path is **Project Settings > General Settings > Analysis Scope**
+
+## Patterns
+
+Paths are relative to the project base directory. The following wildcards can be used:
+
+* `*`	- Match zero or more characters  
+* `**` - Match zero or more directories  
+* `?` - Match a single character  
+
+Relative paths are based on the fully qualified name of the component.
+
+Example|Matches|Does not match
+----|----|----
+`**/*Bean.java`|org/sonar.api/MyBean.java <br/> org/sonar/util/MyOtherBean.java|org/sonar/util/MyDTO.java
+`**/*Bean?.java`|org/sonar/util/MyOtherBean1.java|org/sonar/util/MyOtherBean.java <br/> org/sonar.api/MyBean.java <br/> org/sonar/util/MyDTO.java
+`org/sonar/*`|org/sonar/MyClass.java <br/> org/sonar/MyOtherClass.java|org/sonar/util/MyClassUtil.java
+`org/sonar/**/*`|org/sonar/MyClass.java <br/> org/sonar/MyOtherClass.java <br/> org/sonar/util/MyClassUtil.java|
 
 ## Ignore Files
 We recommend that you exclude generated code, source code from libraries, etc. There are four different ways to narrow your analysis to the source code that will be relevant to the development team. You can combine them all together to tune your analysis scope. Additionally, we automatically exclude from analysis the files described in your projects' `.gitignore` files. This behavior can be disabled. See `sonar.scm.exclusions.disabled` in the [Analysis Parameters](/analysis/analysis-parameters/) page for details.
@@ -74,7 +91,7 @@ Notes:
 You can ignore issues on certain components and for certain coding rules. To list a specific rule, use the fully qualified rule ID.
 
 [[info]]
-| ![](/images/info.svg) You can find the fully qualified rule ID on the Rule definition.
+| You can find the fully qualified rule ID on the Rule definition.
 
 Examples:
 
@@ -110,41 +127,10 @@ PATH #2 = `bank/bankcard/**/*`
 
 You can prevent some files from being checked for duplications.
 
-To do so, go to **Administration > General Settings > Analysis Scope > Duplications** and set the *Duplication Exclusions* property. See the Patterns section for more details on the syntax.
+To do so, go to [Administration > General Settings > Analysis Scope > Duplications](/#sonarqube-admin#/admin/settings) and set the *Duplication Exclusions* property. See the Patterns section for more details on the syntax.
 
 ## Ignore Code Coverage
 
 You can prevent some files from being taken into account for code coverage by unit tests.
 
 To do so, go to **Administration > General Settings > Analysis Scope > Code Coverage** and set the *Coverage Exclusions* property. See the Patterns section for more details on the syntax.
-
-## Patterns
-
-Paths are relative to the project base directory.
-
-The following wildcards can be used:
-
-* `*`	- zero or more characters  
-* `**` - zero or more directories  
-* `?` - a single character  
-
-Relative paths are based on the fully qualified name of the component.
-
-Examples:
-
-`# Exclude all classes ending by "Bean"`  
-`# Matches org/sonar.api/MyBean.java, org/sonar/util/MyOtherBean.java, org/sonar/util/MyDTO.java, etc.`  
-`sonar.exclusions=**/*Bean.java,**/*DTO.java`
-
-`# Exclude all classes in the "src/main/java/org/sonar" directory`  
-`# Matches src/main/java/org/sonar/MyClass.java, src/main/java/org/sonar/MyOtherClass.java`  
-`# But does not match src/main/java/org/sonar/util/MyClassUtil.java`  
-`sonar.exclusions=src/main/java/org/sonar/*`  
-
-`# Exclude all COBOL programs in the "bank" directory and its sub-directories`  
-`# Matches bank/ZTR00021.cbl, bank/data/CBR00354.cbl, bank/data/REM012345.cob`  
-`sonar.exclusions=bank/**/*`  
-
-`# Exclude all COBOL programs in the "bank" directory and its sub-directories whose extension is .cbl`  
-`# Matches bank/ZTR00021.cbl, bank/data/CBR00354.cbl`  
-`sonar.exclusions=bank/**/*.cbl`

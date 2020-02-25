@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,9 +26,11 @@ import { getComponentTree } from '../../../api/components';
 import { getMeasures } from '../../../api/measures';
 import A11ySkipTarget from '../../../app/components/a11y/A11ySkipTarget';
 import SourceViewer from '../../../components/SourceViewer/SourceViewer';
-import { getBranchLikeQuery, isSameBranchLike } from '../../../helpers/branches';
+import { getBranchLikeQuery, isSameBranchLike } from '../../../helpers/branch-like';
 import { getPeriodValue, isDiffMetric } from '../../../helpers/measures';
 import { getProjectUrl } from '../../../helpers/urls';
+import { BranchLike } from '../../../types/branch-like';
+import { MetricKey } from '../../../types/metrics';
 import { complementary } from '../config/complementary';
 import FilesView from '../drilldown/FilesView';
 import TreeMapView from '../drilldown/TreeMapView';
@@ -39,7 +41,7 @@ import MeasureHeader from './MeasureHeader';
 import MeasureViewSelect from './MeasureViewSelect';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   leakPeriod?: T.Period;
   requestedMetric: Pick<T.Metric, 'key' | 'direction'>;
   metrics: T.Dict<T.Metric>;
@@ -99,7 +101,7 @@ export default class MeasureContent extends React.PureComponent<Props, State> {
     );
     const componentKey = this.props.selected || this.props.rootComponent.key;
     const baseComponentMetrics = [this.props.requestedMetric.key];
-    if (this.props.requestedMetric.key === 'ncloc') {
+    if (this.props.requestedMetric.key === MetricKey.ncloc) {
       baseComponentMetrics.push('ncloc_language_distribution');
     }
     Promise.all([

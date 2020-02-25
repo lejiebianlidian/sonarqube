@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@ import org.sonar.server.qualitygate.EvaluatedCondition;
 import org.sonar.server.qualitygate.EvaluatedQualityGate;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonar.core.config.CorePropertyDefinitions.SONAR_ANALYSIS;
 
 @ServerSide
@@ -123,7 +124,7 @@ public class WebhookPayloadFactoryImpl implements WebhookPayloadFactory {
 
   private String branchUrlOf(Project project, Branch branch) {
     Branch.Type branchType = branch.getType();
-    if (branchType == Branch.Type.LONG || branchType == Branch.Type.SHORT) {
+    if (branchType == Branch.Type.BRANCH) {
       if (branch.isMain()) {
         return projectUrlOf(project);
       }
@@ -164,7 +165,7 @@ public class WebhookPayloadFactoryImpl implements WebhookPayloadFactory {
 
   private static String encode(String toEncode) {
     try {
-      return URLEncoder.encode(toEncode, "UTF-8");
+      return URLEncoder.encode(toEncode, UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException("Encoding not supported", e);
     }

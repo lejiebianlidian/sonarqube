@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -161,11 +161,15 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
 
   handleAssigneeSearch = (query: string) => {
     return searchAssignees(query, this.state.organization).then(({ results }) =>
-      results.map(r => ({
-        avatar: r.avatar,
-        label: isUserActive(r) ? r.name : translateWithParameters('user.x_deleted', r.login),
-        value: r.login
-      }))
+      results.map(r => {
+        const userInfo = r.name || r.login;
+
+        return {
+          avatar: r.avatar,
+          label: isUserActive(r) ? userInfo : translateWithParameters('user.x_deleted', userInfo),
+          value: r.login
+        };
+      })
     );
   };
 
@@ -340,10 +344,10 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
     const options = types.map(type => ({ label: translate('issue.type', type), value: type }));
 
     const optionRenderer = (option: { label: string; value: string }) => (
-      <span>
-        <IssueTypeIcon className="little-spacer-right" query={option.value} />
-        {option.label}
-      </span>
+      <>
+        <IssueTypeIcon query={option.value} />
+        <span className="little-spacer-left">{option.label}</span>
+      </>
     );
 
     const input = (

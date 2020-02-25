@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ import { getAppState, Store } from '../../store/rootReducer';
 import { getWrappedDisplayName } from './utils';
 
 export function withAppState<P>(
-  WrappedComponent: React.ComponentClass<P & { appState: Partial<T.AppState> }>
+  WrappedComponent: React.ComponentType<P & { appState: Partial<T.AppState> }>
 ) {
   class Wrapper extends React.Component<P & { appState: T.AppState }> {
     static displayName = getWrappedDisplayName(WrappedComponent, 'withAppState');

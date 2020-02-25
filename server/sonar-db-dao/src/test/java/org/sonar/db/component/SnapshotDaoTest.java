@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,9 +23,13 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,10 +48,10 @@ import org.sonar.db.organization.OrganizationTesting;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
 import static org.sonar.db.ce.CeActivityDto.Status.CANCELED;
 import static org.sonar.db.ce.CeActivityDto.Status.SUCCESS;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
@@ -114,20 +118,33 @@ public class SnapshotDaoTest {
 
   @Test
   public void selectLastSnapshotByRootComponentUuid_returns_snapshot_flagged_as_last() {
-    db.prepareDbUnit(getClass(), "snapshots.xml");
+    ComponentDto project1 = db.components().insertPrivateProject();
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+    SnapshotDto lastSnapshot1 = db.components().insertSnapshot(project1, t -> t.setLast(true));
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+    ComponentDto project2 = db.components().insertPrivateProject();
+    db.components().insertSnapshot(project2, t -> t.setLast(false));
+    SnapshotDto lastSnapshot2 = db.components().insertSnapshot(project2, t -> t.setLast(true));
+    db.components().insertSnapshot(project2, t -> t.setLast(false));
+    db.components().insertSnapshot(project2, t -> t.setLast(false));
 
-    Optional<SnapshotDto> snapshot = underTest.selectLastAnalysisByRootComponentUuid(db.getSession(), "uuid_2");
-
-    assertThat(snapshot.get().getId()).isEqualTo(4L);
+    assertThat(underTest.selectLastAnalysisByRootComponentUuid(db.getSession(), project1.uuid()).get().getUuid())
+      .isEqualTo(lastSnapshot1.getUuid());
+    assertThat(underTest.selectLastAnalysisByRootComponentUuid(db.getSession(), project2.uuid()).get().getUuid())
+      .isEqualTo(lastSnapshot2.getUuid());
+    assertThat(underTest.selectLastAnalysisByRootComponentUuid(db.getSession(), "does not exist"))
+      .isEmpty();
   }
 
   @Test
   public void selectLastSnapshotByRootComponentUuid_returns_absent_if_only_unprocessed_snapshots() {
-    db.prepareDbUnit(getClass(), "snapshots.xml");
+    ComponentDto project1 = db.components().insertPrivateProject();
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
 
-    Optional<SnapshotDto> snapshot = underTest.selectLastAnalysisByRootComponentUuid(db.getSession(), "uuid_5");
-
-    assertThat(snapshot).isNotPresent();
+    assertThat(underTest.selectLastAnalysisByRootComponentUuid(db.getSession(), project1.uuid()))
+      .isNotPresent();
   }
 
   @Test
@@ -152,47 +169,93 @@ public class SnapshotDaoTest {
   }
 
   @Test
-  public void select_snapshots_by_query() {
-    db.prepareDbUnit(getClass(), "select_snapshots_by_query.xml");
+  public void selectAnalysesByQuery_all() {
+    Random random = new Random();
+    List<SnapshotDto> snapshots = IntStream.range(0, 1 + random.nextInt(5))
+      .mapToObj(i -> {
+        ComponentDto project = db.components().insertPrivateProject();
+        return IntStream.range(0, 1 + random.nextInt(20))
+          .mapToObj(j -> db.components().insertSnapshot(project));
+      })
+      .flatMap(t -> t)
+      .collect(toList());
 
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery())).hasSize(6);
-
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("ABCD").setSort(BY_DATE, ASC)))
-      .extracting(SnapshotDto::getId, SnapshotDto::getProjectVersion, SnapshotDto::getBuildString)
-      .containsOnly(
-        tuple(1L, "2.0-SNAPSHOT", "2.0.0.2363"),
-        tuple(2L, "2.1-SNAPSHOT", "2.1.0.11"),
-        tuple(3L, "2.2-SNAPSHOT", "2.2.0.8869")
-      );
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("ABCD").setSort(BY_DATE, DESC)))
-      .extracting(SnapshotDto::getId, SnapshotDto::getProjectVersion, SnapshotDto::getBuildString)
-      .containsOnly(
-        tuple(3L, "2.2-SNAPSHOT", "2.2.0.8869"),
-        tuple(2L, "2.1-SNAPSHOT", "2.1.0.11"),
-        tuple(1L, "2.0-SNAPSHOT", "2.0.0.2363")
-      );
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("ABCD"))).hasSize(3);
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("UNKOWN"))).isEmpty();
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("GHIJ"))).isEmpty();
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery()))
+      .extracting(SnapshotDto::getUuid)
+      .containsOnly(snapshots.stream().map(SnapshotDto::getUuid).toArray(String[]::new));
   }
 
   @Test
-  public void select_snapshot_by_query() {
-    db.prepareDbUnit(getClass(), "select_snapshots_by_query.xml");
+  public void selectAnalysesByQuery_by_component_uuid() {
+    Random random = new Random();
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+    List<SnapshotDto> snapshots1 = IntStream.range(0, 1 + random.nextInt(20))
+      .mapToObj(j -> db.components().insertSnapshot(project1))
+      .collect(toList());
+    List<SnapshotDto> snapshots2 = IntStream.range(0, 1 + random.nextInt(20))
+      .mapToObj(j -> db.components().insertSnapshot(project2))
+      .collect(toList());
 
-    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("ABCD").setIsLast(true))).isNotNull();
-    assertThat(underTest.selectAnalysisByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("UNKOWN"))).isNull();
-    assertThat(underTest.selectAnalysisByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("GHIJ"))).isNull();
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid(project1.uuid())))
+      .extracting(SnapshotDto::getUuid)
+      .containsOnly(snapshots1.stream().map(SnapshotDto::getUuid).toArray(String[]::new));
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid(project2.uuid())))
+      .extracting(SnapshotDto::getUuid)
+      .containsOnly(snapshots2.stream().map(SnapshotDto::getUuid).toArray(String[]::new));
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("does not exist")))
+      .isEmpty();
   }
 
   @Test
-  public void fail_with_ISE_to_select_snapshot_by_query_when_more_than_one_result() {
-    db.prepareDbUnit(getClass(), "select_snapshots_by_query.xml");
+  public void selectAnalysesByQuery_sort_by_date() {
+    Random random = new Random();
+    ComponentDto project = db.components().insertPrivateProject();
+    List<SnapshotDto> snapshots = IntStream.range(0, 1 + random.nextInt(20))
+      .mapToObj(j -> SnapshotTesting.newAnalysis(project).setCreatedAt(1_000L + j))
+      .collect(toList());
+    Collections.shuffle(snapshots);
+    snapshots.forEach(db.components()::insertSnapshot);
 
-    expectedException.expect(IllegalStateException.class);
-    expectedException.expectMessage("Expected one analysis to be returned, got 6");
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid(project.uuid()).setSort(BY_DATE, ASC)))
+      .extracting(SnapshotDto::getUuid)
+      .containsExactly(snapshots.stream()
+        .sorted(Comparator.comparingLong(SnapshotDto::getCreatedAt))
+        .map(SnapshotDto::getUuid)
+        .toArray(String[]::new));
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid(project.uuid()).setSort(BY_DATE, DESC)))
+      .extracting(SnapshotDto::getUuid)
+      .containsExactly(snapshots.stream()
+        .sorted(Comparator.comparingLong(SnapshotDto::getCreatedAt).reversed())
+        .map(SnapshotDto::getUuid)
+        .toArray(String[]::new));
+  }
 
-    underTest.selectAnalysisByQuery(db.getSession(), new SnapshotQuery());
+  @Test
+  public void selectAnalysesByQuery_get_last() {
+    ComponentDto project1 = db.components().insertPrivateProject();
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+    SnapshotDto lastSnapshot = db.components().insertSnapshot(project1, t -> t.setLast(true));
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid(project1.uuid()).setIsLast(true)))
+      .extracting(SnapshotDto::getUuid)
+      .containsOnly(lastSnapshot.getUuid());
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid("unknown").setIsLast(true)))
+      .isEmpty();
+  }
+
+  @Test
+  public void selectAnalysesByQuery_get_last_supports_multiple_last_snapshots() {
+    ComponentDto project1 = db.components().insertPrivateProject();
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+    SnapshotDto lastSnapshot1 = db.components().insertSnapshot(project1, t -> t.setLast(true));
+    SnapshotDto lastSnapshot2 = db.components().insertSnapshot(project1, t -> t.setLast(true));
+    db.components().insertSnapshot(project1, t -> t.setLast(false));
+
+    assertThat(underTest.selectAnalysesByQuery(db.getSession(), new SnapshotQuery().setComponentUuid(project1.uuid()).setIsLast(true)))
+      .extracting(SnapshotDto::getUuid)
+      .containsOnly(lastSnapshot1.getUuid(), lastSnapshot2.getUuid());
   }
 
   @Test
@@ -217,9 +280,9 @@ public class SnapshotDaoTest {
   public void selectFinishedByComponentUuidsAndFromDates() {
     long from = 1_500_000_000_000L;
     long otherFrom = 1_200_000_000_000L;
-    ComponentDto firstProject = db.components().insertMainBranch();
-    ComponentDto secondProject = db.components().insertMainBranch();
-    ComponentDto thirdProject = db.components().insertMainBranch();
+    ComponentDto firstProject = db.components().insertPublicProject();
+    ComponentDto secondProject = db.components().insertPublicProject();
+    ComponentDto thirdProject = db.components().insertPublicProject();
     SnapshotDto finishedAnalysis = db.components().insertSnapshot(firstProject, s -> s.setStatus(STATUS_PROCESSED).setCreatedAt(from));
     insertActivity(firstProject.uuid(), finishedAnalysis, SUCCESS);
     SnapshotDto otherFinishedAnalysis = db.components().insertSnapshot(firstProject, s -> s.setStatus(STATUS_PROCESSED).setCreatedAt(from + 1_000_000L));
@@ -242,7 +305,7 @@ public class SnapshotDaoTest {
   @Test
   public void selectFinishedByComponentUuidsAndFromDates_returns_processed_analysis_even_if_analysis_failed() {
     long from = 1_500_000_000_000L;
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     SnapshotDto unprocessedAnalysis = db.components().insertSnapshot(project, s -> s.setStatus(STATUS_UNPROCESSED).setCreatedAt(from + 1_000_000L));
     insertActivity(project.uuid(), unprocessedAnalysis, CANCELED);
     SnapshotDto finishedAnalysis = db.components().insertSnapshot(project, s -> s.setStatus(STATUS_PROCESSED).setCreatedAt(from));
@@ -259,7 +322,7 @@ public class SnapshotDaoTest {
   @Test
   public void selectFinishedByComponentUuidsAndFromDates_return_branches_analysis() {
     long from = 1_500_000_000_000L;
-    ComponentDto project = db.components().insertMainBranch();
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto firstBranch = db.components().insertProjectBranch(project);
     ComponentDto secondBranch = db.components().insertProjectBranch(project);
     SnapshotDto finishedAnalysis = db.components().insertSnapshot(firstBranch, s -> s.setStatus(STATUS_PROCESSED).setCreatedAt(from));

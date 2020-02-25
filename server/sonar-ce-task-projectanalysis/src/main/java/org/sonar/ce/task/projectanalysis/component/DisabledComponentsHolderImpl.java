@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class DisabledComponentsHolderImpl implements MutableDisabledComponentsHolder {
 
-  private Set<String> uuids;
+  private Set<String> uuids = null;
 
   @Override
   public Set<String> getUuids() {

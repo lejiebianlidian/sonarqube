@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ export default class AlmRepositoryItem extends React.PureComponent<Props> {
               />
               <span className="spacer-left">{this.props.repository.label}</span>
               {repository.private && (
-                <div className="outline-badge spacer-left">{translate('visibility.private')}</div>
+                <div className="badge spacer-left">{translate('visibility.private')}</div>
               )}
             </div>
 

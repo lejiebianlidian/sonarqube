@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ public class DataUtilsTest {
     assertThat(DataUtils.binarySearch(sortable), is(2));
   }
 
-  class SimpleSortable implements DataUtils.Sortable {
+  static class SimpleSortable implements DataUtils.Sortable {
     private final int[] a;
     private final int size;
 

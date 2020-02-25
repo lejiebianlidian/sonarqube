@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ import static org.sonar.api.utils.Preconditions.checkState;
 
 public class RulesDefinitionContext extends RulesDefinition.Context {
   private final Map<String, RulesDefinition.Repository> repositoriesByKey = new HashMap<>();
-  private String currentPluginKey;
+  private String currentPluginKey = null;
 
   @Override
   public RulesDefinition.NewRepository createRepository(String key, String language) {

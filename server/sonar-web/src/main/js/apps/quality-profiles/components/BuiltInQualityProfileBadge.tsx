@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ interface Props {
 
 export default function BuiltInQualityProfileBadge({ className, tooltip = true }: Props) {
   const badge = (
-    <div className={classNames('outline-badge', className)}>
+    <div className={classNames('badge badge-info', className)}>
       {translate('quality_profiles.built_in')}
     </div>
   );
@@ -37,7 +37,9 @@ export default function BuiltInQualityProfileBadge({ className, tooltip = true }
   if (tooltip) {
     return (
       <DocTooltip
-        doc={import(/* webpackMode: "eager" */ 'Docs/tooltips/quality-profiles/built-in-quality-profile.md')}>
+        doc={import(
+          /* webpackMode: "eager" */ 'Docs/tooltips/quality-profiles/built-in-quality-profile.md'
+        )}>
         {badge}
       </DocTooltip>
     );

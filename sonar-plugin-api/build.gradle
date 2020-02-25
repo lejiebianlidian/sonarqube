@@ -25,6 +25,8 @@ dependencies {
   compileOnly 'com.google.code.findbugs:jsr305'
   compileOnly 'javax.servlet:javax.servlet-api'
   compileOnly 'junit:junit'
+  // Used by LogTesterJUnit5
+  compileOnly 'org.junit.jupiter:junit-jupiter-api'
   compileOnly 'org.slf4j:slf4j-api'
 
   testCompile 'com.google.guava:guava'
@@ -49,7 +51,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 processResources {
   filter ReplaceTokens, tokens: [
     // The build version is composed of 4 fields, including the semantic version and the build number provided by Travis.
-    'project.buildVersion': project.version.endsWith('SNAPSHOT') ? project.version : on3Digits(project.version) + '.' + System.getProperty("buildNumber"),
+    'project.buildVersion': project.version.endsWith('SNAPSHOT') ? project.version : on3Digits(project.version) + '.' + (System.getProperty("buildNumber") ?: '0'),
     'project.version.3digits': project.version.endsWith('SNAPSHOT') ? project.version : on3Digits(project.version)
   ]
 }

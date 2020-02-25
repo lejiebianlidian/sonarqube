@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ public class CpdExecutorTest {
 
   @Test
   public void dont_fail_if_nothing_to_save() {
-    executor.saveDuplications(batchComponent1, Collections.<CloneGroup>emptyList());
+    executor.saveDuplications(batchComponent1, Collections.emptyList());
     assertThat(reader.readComponentDuplications(batchComponent1.scannerId())).isExhausted();
   }
 

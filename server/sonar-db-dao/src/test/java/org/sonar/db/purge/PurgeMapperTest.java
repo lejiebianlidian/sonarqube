@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ public class PurgeMapperTest {
   private PurgeMapper purgeMapper;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     dbSession = db.getDbClient().openSession(false);
     purgeMapper = dbSession.getMapper(PurgeMapper.class);
   }
@@ -94,7 +94,7 @@ public class PurgeMapperTest {
 
   @Test
   public void selectRootAndModulesOrSubviewsByProjectUuid_returns_application_with_specified_uuid() {
-    ComponentDto view = db.components().insertApplication(db.getDefaultOrganization());
+    ComponentDto view = db.components().insertPublicApplication(db.getDefaultOrganization());
 
     assertThat(purgeMapper.selectRootAndModulesOrSubviewsByProjectUuid(view.uuid()))
       .extracting(IdUuidPair::getUuid)

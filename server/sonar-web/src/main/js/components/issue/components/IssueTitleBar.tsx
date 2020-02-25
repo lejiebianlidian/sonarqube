@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,18 +19,24 @@
  */
 import * as React from 'react';
 import { Link } from 'react-router';
+import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import LinkIcon from 'sonar-ui-common/components/icons/LinkIcon';
-import { translate } from 'sonar-ui-common/helpers/l10n';
-import { getBranchLikeQuery } from '../../../helpers/branches';
+import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
+import { formatMeasure } from 'sonar-ui-common/helpers/measures';
+import { getBranchLikeQuery } from '../../../helpers/branch-like';
 import { getComponentIssuesUrl } from '../../../helpers/urls';
+import { BranchLike } from '../../../types/branch-like';
+import LocationIndex from '../../common/LocationIndex';
 import { WorkspaceContext } from '../../workspace/context';
 import IssueChangelog from './IssueChangelog';
 import IssueMessage from './IssueMessage';
 import SimilarIssuesFilter from './SimilarIssuesFilter';
 
 interface Props {
-  branchLike?: T.BranchLike;
+  branchLike?: BranchLike;
   currentPopup?: string;
+  displayLocationsCount?: boolean;
+  displayLocationsLink?: boolean;
   issue: T.Issue;
   onFilter?: (property: string, issue: T.Issue) => void;
   togglePopup: (popup: string, show?: boolean) => void;
@@ -39,6 +45,22 @@ interface Props {
 export default function IssueTitleBar(props: Props) {
   const { issue } = props;
   const hasSimilarIssuesFilter = props.onFilter != null;
+
+  const locationsCount =
+    issue.secondaryLocations.length +
+    issue.flows.reduce((sum, locations) => sum + locations.length, 0);
+
+  const locationsBadge = (
+    <Tooltip
+      overlay={translateWithParameters(
+        'issue.this_issue_involves_x_code_locations',
+        formatMeasure(locationsCount, 'INT')
+      )}>
+      <LocationIndex>{locationsCount}</LocationIndex>
+    </Tooltip>
+  );
+
+  const displayLocations = props.displayLocationsCount && locationsCount > 0;
 
   const issueUrl = getComponentIssuesUrl(issue.project, {
     ...getBranchLikeQuery(props.branchLike),
@@ -55,9 +77,9 @@ export default function IssueTitleBar(props: Props) {
             engine={issue.externalRuleEngine}
             manualVulnerability={issue.fromHotspot && issue.type === 'VULNERABILITY'}
             message={issue.message}
-            openRule={openRule}
+            onOpenRule={openRule}
             organization={issue.organization}
-            rule={issue.rule}
+            ruleKey={issue.rule}
           />
         )}
       </WorkspaceContext.Consumer>
@@ -77,6 +99,17 @@ export default function IssueTitleBar(props: Props) {
               <span className="issue-meta-label" title={translate('line_number')}>
                 L{issue.textRange.endLine}
               </span>
+            </li>
+          )}
+          {displayLocations && (
+            <li className="issue-meta">
+              {props.displayLocationsLink ? (
+                <Link target="_blank" to={issueUrl}>
+                  {locationsBadge}
+                </Link>
+              ) : (
+                locationsBadge
+              )}
             </li>
           )}
           <li className="issue-meta">

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ public class NewLinesRepository {
   }
 
   public boolean newLinesAvailable() {
-    return analysisMetadataHolder.isSLBorPR() || periodHolder.hasPeriod();
+    return analysisMetadataHolder.isPullRequest() || periodHolder.hasPeriod();
   }
 
   public Optional<Set<Integer>> getNewLines(Component file) {
@@ -61,12 +61,12 @@ public class NewLinesRepository {
   }
 
   /**
-   * If the changed lines are not in the report or if we are not analyzing a short lived branch (or P/R) we fall back to this method.
+   * If the changed lines are not in the report or if we are not analyzing a P/R we fall back to this method.
    * If there is a period and SCM information, we compare the change dates of each line with the start of the period to figure out
    * if a line is new or not.
    */
   private Optional<Set<Integer>> computeNewLinesFromScm(Component component) {
-    if (!periodHolder.hasPeriod() && !analysisMetadataHolder.isSLBorPR()) {
+    if (!periodHolder.hasPeriod() && !analysisMetadataHolder.isPullRequest()) {
       return Optional.empty();
     }
 
@@ -76,16 +76,17 @@ public class NewLinesRepository {
     }
 
     ScmInfo scmInfo = scmInfoOpt.get();
-    Map<Integer, Changeset> allChangesets = scmInfo.getAllChangesets();
+    Changeset[] allChangesets = scmInfo.getAllChangesets();
     Set<Integer> lines = new HashSet<>();
 
-    // in SLB/PRs, we consider changes introduced in this analysis as new, hence subtracting 1.
-    long referenceDate = analysisMetadataHolder.isSLBorPR() ? analysisMetadataHolder.getAnalysisDate() - 1 : periodHolder.getPeriod().getSnapshotDate();
-    for (Map.Entry<Integer, Changeset> e : allChangesets.entrySet()) {
-      if (isLineInPeriod(e.getValue().getDate(), referenceDate)) {
-        lines.add(e.getKey());
+    // in PRs, we consider changes introduced in this analysis as new, hence subtracting 1.
+    long referenceDate = analysisMetadataHolder.isPullRequest() ? analysisMetadataHolder.getAnalysisDate() - 1 : periodHolder.getPeriod().getSnapshotDate();
+    for (int i=0; i<allChangesets.length; i++) {
+      if (isLineInPeriod(allChangesets[i].getDate(), referenceDate)) {
+        lines.add(i+1);
       }
     }
+
     return Optional.of(lines);
   }
 
@@ -97,7 +98,7 @@ public class NewLinesRepository {
   }
 
   private Optional<Set<Integer>> getChangedLinesFromReport(Component file) {
-    if (analysisMetadataHolder.isSLBorPR()) {
+    if (analysisMetadataHolder.isPullRequest()) {
       return reportChangedLinesCache.computeIfAbsent(file, this::readFromReport);
     }
 

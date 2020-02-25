@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ package org.sonar.db.purge;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +36,7 @@ class PurgeCommands {
 
   private static final int MAX_SNAPSHOTS_PER_QUERY = 1000;
   private static final int MAX_RESOURCES_PER_QUERY = 1000;
+  private static final String[] UNPROCESSED_STATUS = new String[] {"U"};
 
   private final DbSession session;
   private final PurgeMapper purgeMapper;
@@ -84,23 +84,22 @@ class PurgeCommands {
     session.commit();
     profiler.stop();
 
-    profiler.start("deleteAnalyses (snapshots)");
-    analysisUuidsPartitions.forEach(purgeMapper::deleteAnalyses);
-    session.commit();
-    profiler.stop();
-
     profiler.start("deleteAnalyses (analysis_properties)");
     analysisUuidsPartitions.forEach(purgeMapper::deleteAnalysisProperties);
     session.commit();
     profiler.stop();
+
+    profiler.start("deleteAnalyses (snapshots)");
+    analysisUuidsPartitions.forEach(purgeMapper::deleteAnalyses);
+    session.commit();
+    profiler.stop();
   }
 
-  void deleteAnalyses(PurgeSnapshotQuery... queries) {
-    List<IdUuidPair> snapshotIds = Arrays.stream(queries)
-      .flatMap(q -> purgeMapper.selectAnalysisIdsAndUuids(q).stream())
-      .collect(Collectors.toList());
-
-    deleteAnalyses(snapshotIds);
+  void deleteAbortedAnalyses(String rootUuid) {
+    PurgeSnapshotQuery query = new PurgeSnapshotQuery(rootUuid)
+      .setIslast(false)
+      .setStatus(UNPROCESSED_STATUS);
+    deleteAnalyses(purgeMapper.selectAnalysisIdsAndUuids(query));
   }
 
   @VisibleForTesting
@@ -124,13 +123,13 @@ class PurgeCommands {
     session.commit();
     profiler.stop();
 
-    profiler.start("deleteAnalyses (snapshots)");
-    analysisUuidsPartitions.forEach(purgeMapper::deleteAnalyses);
+    profiler.start("deleteAnalyses (analysis_properties)");
+    analysisUuidsPartitions.forEach(purgeMapper::deleteAnalysisProperties);
     session.commit();
     profiler.stop();
 
-    profiler.start("deleteAnalyses (analysis_properties)");
-    analysisUuidsPartitions.forEach(purgeMapper::deleteAnalysisProperties);
+    profiler.start("deleteAnalyses (snapshots)");
+    analysisUuidsPartitions.forEach(purgeMapper::deleteAnalyses);
     session.commit();
     profiler.stop();
   }
@@ -280,6 +279,13 @@ class PurgeCommands {
   void deleteComponents(String rootUuid) {
     profiler.start("deleteComponents (projects)");
     purgeMapper.deleteComponentsByProjectUuid(rootUuid);
+    session.commit();
+    profiler.stop();
+  }
+
+  void deleteProject(String projectUuid) {
+    profiler.start("deleteProject (projects)");
+    purgeMapper.deleteProjectsByProjectUuid(projectUuid);
     session.commit();
     profiler.stop();
   }
@@ -445,6 +451,13 @@ class PurgeCommands {
   void deleteLiveMeasures(String rootUuid) {
     profiler.start("deleteLiveMeasures (live_measures)");
     purgeMapper.deleteLiveMeasuresByProjectUuid(rootUuid);
+    session.commit();
+    profiler.stop();
+  }
+
+  void deleteNewCodePeriods(String rootUuid) {
+    profiler.start("deleteNewCodePeriods (new_code_periods)");
+    purgeMapper.deleteNewCodePeriodsByRootUuid(rootUuid);
     session.commit();
     profiler.stop();
   }

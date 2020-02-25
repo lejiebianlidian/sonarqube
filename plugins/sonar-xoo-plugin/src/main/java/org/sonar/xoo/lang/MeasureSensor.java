@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ public class MeasureSensor implements Sensor {
   private void saveMeasure(SensorContext context, InputComponent component, String metricKey, String value) {
     org.sonar.api.batch.measure.Metric<Serializable> metric = metricFinder.findByKey(metricKey);
     if (metric == null) {
-      throw new IllegalStateException("Unknow metric with key: " + metricKey);
+      throw new IllegalStateException("Unknown metric with key: " + metricKey);
     }
     NewMeasure<Serializable> newMeasure = context.newMeasure()
       .forMetric(metric)

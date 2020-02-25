@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ public class EsClientProvider extends ProviderAdapter {
 
   private static void addHostToClient(HostAndPort host, TransportClient client) {
     try {
-      client.addTransportAddress(new TransportAddress(InetAddress.getByName(host.getHostText()), host.getPortOrDefault(9001)));
+      client.addTransportAddress(new TransportAddress(InetAddress.getByName(host.getHost()), host.getPortOrDefault(9001)));
     } catch (UnknownHostException e) {
       throw new IllegalStateException("Can not resolve host [" + host + "]", e);
     }

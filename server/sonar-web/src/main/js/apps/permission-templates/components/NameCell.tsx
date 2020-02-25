@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ export default function NameCell({ template, organization }: Props) {
     : '/permission_templates';
 
   return (
-    <td>
+    <td className="little-padded-left little-padded-right">
       <Link to={{ pathname, query: { id: template.id } }}>
         <strong className="js-name">{template.name}</strong>
       </Link>

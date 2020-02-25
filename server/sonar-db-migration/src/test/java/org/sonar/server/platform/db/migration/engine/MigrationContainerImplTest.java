@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MigrationContainerImplTest {
   private ComponentContainer parent = new ComponentContainer();
-  private MigrationContainerPopulator populator = new MigrationContainerPopulator() {
-    @Override
-    public void populateContainer(MigrationContainer container) {
-      container.add(StartCallCounter.class);
-    }
-  };
+  private MigrationContainerPopulator populator = container -> container.add(StartCallCounter.class);
 
   private MigrationContainerImpl underTest = new MigrationContainerImpl(parent, populator);
 

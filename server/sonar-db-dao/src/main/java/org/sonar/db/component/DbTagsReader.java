@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Strings.nullToEmpty;
-import static org.sonar.db.component.ComponentDto.TAGS_SEPARATOR;
 
 public class DbTagsReader {
+  private static final char TAGS_SEPARATOR = ',';
   private static final Splitter TAGS_SPLITTER = Splitter.on(TAGS_SEPARATOR).trimResults().omitEmptyStrings();
 
   private DbTagsReader() {

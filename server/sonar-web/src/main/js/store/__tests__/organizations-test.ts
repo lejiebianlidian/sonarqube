@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,10 @@ describe('Reducer', () => {
   it('should receive organizations', () => {
     const state1 = reducer(
       state0,
-      receiveOrganizations([{ key: 'foo', name: 'Foo' }, { key: 'bar', name: 'Bar' }])
+      receiveOrganizations([
+        { key: 'foo', name: 'Foo' },
+        { key: 'bar', name: 'Bar' }
+      ])
     );
     expect(state1).toMatchSnapshot();
 
@@ -52,7 +55,10 @@ describe('Reducer', () => {
   it('should receive my organizations', () => {
     const state1 = reducer(
       state0,
-      receiveMyOrganizations([{ key: 'foo', name: 'Foo' }, { key: 'bar', name: 'Bar' }])
+      receiveMyOrganizations([
+        { key: 'foo', name: 'Foo' },
+        { key: 'bar', name: 'Bar' }
+      ])
     );
     expect(state1).toMatchSnapshot();
   });

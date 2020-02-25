@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 import { without } from 'lodash';
 import * as React from 'react';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import * as api from '../../../../api/permissions';
 import Suggestions from '../../../../app/components/embed-docs-modal/Suggestions';
@@ -273,7 +273,7 @@ export default class App extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited">
         <Suggestions suggestions="global_permissions" />
-        <Helmet title={translate('global_permissions.permission')} />
+        <Helmet defer={false} title={translate('global_permissions.permission')} />
         <PageHeader loading={this.state.loading} organization={this.props.organization} />
         <AllHoldersList
           filter={this.state.filter}

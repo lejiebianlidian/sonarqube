@@ -41,7 +41,7 @@ If your plugin meets these requirements, feel free to start a new thread on the 
 * the link to a PR adding a file for your plugin to the sonar-update-center-properties repo, and the elements of a "new release" email listed below.
 
 [[info]]
-| ![](/images/info.svg) We reserve the right to exclude from the Marketplace plugins that we feel would be a dis-service to the community.
+| We reserve the right to exclude from the Marketplace plugins that we feel would be a dis-service to the community.
 
 ## Announcing new releases
 When you've got a new release that should be published in the Marketplace, please:
@@ -107,7 +107,8 @@ Create a new block in the file with this format:
 * `[versionId].sqVersions`=\[compatibility information. See 'Filling in sqVersions compatibility ranges' below]
 * `[versionId].date`=\[release date with format: YYYY-MM-DD]
 * `[versionId].changelogUrl`=
-* `[versionId].downloadUrl`=
+* `[versionId].downloadUrl`=  
+
 Add `[versionId]` to the `publicVersions` list. Move to `archivedVersions` any versions with identical compatibility. See also 'Filling in sqVersions, publicVersions, and archivedVersions' below
 
 

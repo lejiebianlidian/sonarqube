@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 import { parseDate } from 'sonar-ui-common/helpers/dates';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
+import { ApplicationPeriod } from '../types/application';
 
 function getPeriod<T extends T.Period | T.PeriodMeasure>(periods: T[] | undefined, index: number) {
   if (!Array.isArray(periods)) {
@@ -39,24 +40,41 @@ export function getPeriodLabel(
     return undefined;
   }
 
-  let parameter = period.modeParam || period.parameter;
-  if (period.mode === 'previous_version' && !parameter) {
-    return translate('overview.period.previous_version_only_date');
-  }
+  let parameter = period.modeParam || period.parameter || '';
 
-  if (period.mode === 'date' && parameter) {
-    parameter = dateFormatter(parameter);
-  } else if (period.mode === 'manual_baseline') {
-    if (!parameter) {
+  switch (period.mode) {
+    case 'SPECIFIC_ANALYSIS':
       parameter = dateFormatter(period.date);
-    } else {
-      return translateWithParameters('overview.period.previous_version', parameter);
-    }
+      break;
+    case 'PREVIOUS_VERSION':
+      parameter = parameter || dateFormatter(period.date);
+      break;
+    /*
+     * Handle legacy period modes, that predate MMF-1579
+     */
+    case 'previous_version':
+      if (!parameter) {
+        return translate('overview.period.previous_version_only_date');
+      }
+      break;
+    case 'date':
+      parameter = parameter && dateFormatter(parameter);
+      break;
+    case 'manual_baseline':
+      parameter = parameter || dateFormatter(period.date);
+      break;
+    default: // No change in the parameter
   }
 
-  return translateWithParameters(`overview.period.${period.mode}`, parameter || '');
+  return translateWithParameters(`overview.period.${period.mode.toLowerCase()}`, parameter);
 }
 
 export function getPeriodDate(period?: { date?: string }): Date | undefined {
   return period && period.date ? parseDate(period.date) : undefined;
+}
+
+export function isApplicationPeriod(
+  period: T.Period | ApplicationPeriod
+): period is ApplicationPeriod {
+  return (period as ApplicationPeriod).project !== undefined;
 }

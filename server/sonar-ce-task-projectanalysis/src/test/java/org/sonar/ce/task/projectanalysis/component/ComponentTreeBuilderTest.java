@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,9 +46,7 @@ import static org.mockito.Mockito.when;
 import static org.sonar.ce.task.projectanalysis.component.ComponentVisitor.Order.PRE_ORDER;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
 import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
-import static org.sonar.scanner.protocol.output.ScannerReport.Component.ComponentType.DIRECTORY;
 import static org.sonar.scanner.protocol.output.ScannerReport.Component.ComponentType.FILE;
-import static org.sonar.scanner.protocol.output.ScannerReport.Component.ComponentType.MODULE;
 import static org.sonar.scanner.protocol.output.ScannerReport.Component.ComponentType.PROJECT;
 import static org.sonar.scanner.protocol.output.ScannerReport.Component.ComponentType.UNRECOGNIZED;
 import static org.sonar.scanner.protocol.output.ScannerReport.Component.newBuilder;

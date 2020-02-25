@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +20,7 @@
 package org.sonar.db.component;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,12 +35,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.resources.Qualifiers;
+import org.sonar.api.resources.Scopes;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonar.core.component.ComponentKeys.checkProjectKey;
-import static org.sonar.core.component.ComponentKeys.isValidProjectKey;
 
 /**
  * Class used to rename the key of a project and its resources.
@@ -50,25 +47,21 @@ import static org.sonar.core.component.ComponentKeys.isValidProjectKey;
  * @since 3.2
  */
 public class ComponentKeyUpdaterDao implements Dao {
-
-  private static final Set<String> PROJECT_OR_MODULE_QUALIFIERS = ImmutableSet.of(Qualifiers.PROJECT, Qualifiers.MODULE);
-
-  public void updateKey(DbSession dbSession, String projectOrModuleUuid, String newKey) {
+  public void updateKey(DbSession dbSession, String projectUuid, String newKey) {
     ComponentKeyUpdaterMapper mapper = dbSession.getMapper(ComponentKeyUpdaterMapper.class);
     if (mapper.countResourceByKey(newKey) > 0) {
       throw new IllegalArgumentException("Impossible to update key: a component with key \"" + newKey + "\" already exists.");
     }
 
     // must SELECT first everything
-    ResourceDto project = mapper.selectProjectByUuid(projectOrModuleUuid);
+    ResourceDto project = mapper.selectProjectByUuid(projectUuid);
     String projectOldKey = project.getKey();
-    List<ResourceDto> resources = mapper.selectProjectResources(projectOrModuleUuid);
+    List<ResourceDto> resources = mapper.selectProjectResources(projectUuid);
     resources.add(project);
 
     // add branch components
-    dbSession.getMapper(BranchMapper.class).selectByProjectUuid(projectOrModuleUuid)
-      .stream()
-      .filter(branch -> !projectOrModuleUuid.equals(branch.getUuid()))
+    dbSession.getMapper(BranchMapper.class).selectByProjectUuid(projectUuid).stream()
+      .filter(branch -> !projectUuid.equals(branch.getUuid()))
       .forEach(branch -> {
         resources.addAll(mapper.selectProjectResources(branch.getUuid()));
         resources.add(mapper.selectProjectByUuid(branch.getUuid()));
@@ -77,10 +70,6 @@ public class ComponentKeyUpdaterDao implements Dao {
     // and then proceed with the batch UPDATE at once
     runBatchUpdateForAllResources(resources, projectOldKey, newKey, mapper, (resource, oldKey) -> {
     });
-  }
-
-  public static void checkIsProjectOrModule(ComponentDto component) {
-    checkArgument(PROJECT_OR_MODULE_QUALIFIERS.contains(component.qualifier()), "Component updated must be a module or a key");
   }
 
   /**
@@ -120,8 +109,7 @@ public class ComponentKeyUpdaterDao implements Dao {
 
     // add branches (no check should be done as branch keys cannot be changed by the user)
     Map<String, String> branchBaseKeys = new HashMap<>();
-    session.getMapper(BranchMapper.class).selectByProjectUuid(projectUuid)
-      .stream()
+    session.getMapper(BranchMapper.class).selectByProjectUuid(projectUuid).stream()
       .filter(branch -> !projectUuid.equals(branch.getUuid()))
       .forEach(branch -> {
         Set<ResourceDto> branchModules = collectAllModules(branch.getUuid(), stringToReplace, mapper, true);
@@ -129,7 +117,7 @@ public class ComponentKeyUpdaterDao implements Dao {
         branchModules.forEach(module -> branchBaseKeys.put(module.getKey(), branchBaseKey(module.getKey())));
       });
 
-    Map<ResourceDto, List<ResourceDto>> allResourcesByModuleMap = Maps.newHashMap();
+    Map<ResourceDto, List<ResourceDto>> allResourcesByModuleMap = new HashMap<>();
     for (ResourceDto module : modules) {
       allResourcesByModuleMap.put(module, mapper.selectProjectResources(module.getUuid()));
     }
@@ -169,14 +157,18 @@ public class ComponentKeyUpdaterDao implements Dao {
     @Nullable BiConsumer<ResourceDto, String> consumer) {
     for (ResourceDto resource : resources) {
       String oldResourceKey = resource.getKey();
-      String newResourceKey = newKey + oldResourceKey.substring(oldKey.length(), oldResourceKey.length());
+      String newResourceKey = newKey + oldResourceKey.substring(oldKey.length());
       resource.setKey(newResourceKey);
       String oldResourceDeprecatedKey = resource.getDeprecatedKey();
       if (StringUtils.isNotBlank(oldResourceDeprecatedKey)) {
-        String newResourceDeprecatedKey = newKey + oldResourceDeprecatedKey.substring(oldKey.length(), oldResourceDeprecatedKey.length());
+        String newResourceDeprecatedKey = newKey + oldResourceDeprecatedKey.substring(oldKey.length());
         resource.setDeprecatedKey(newResourceDeprecatedKey);
       }
-      mapper.update(resource);
+      mapper.updateComponent(resource);
+      if (resource.getScope().equals(Scopes.PROJECT) && (resource.getQualifier().equals(Qualifiers.PROJECT) || resource.getQualifier().equals(Qualifiers.APP))) {
+        mapper.updateProject(oldResourceKey, newResourceKey);
+      }
+
       if (consumer != null) {
         consumer.accept(resource, oldResourceKey);
       }

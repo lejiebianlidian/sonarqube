@@ -4,11 +4,11 @@ url: /analysis/scan/sonarscanner-for-msbuild/
 ---
 
 [[info]]
-| **Download SonarScanner for MSBuild 4.6.2.2108** - Compatible with SonarQube 6.7+ (LTS)  
+| **Download SonarScanner for MSBuild 4.7.1.2311** - Compatible with SonarQube 6.7+ (LTS)  
 | By [SonarSource](https://www.sonarsource.com/) – GNU LGPL 3 – [Issue Tracker](https://github.com/SonarSource/sonar-scanner-msbuild/issues) – [Source](https://github.com/SonarSource/sonar-scanner-msbuild)
 |
-| [.NET Framework 4.6+](https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/4.6.2.2108/sonar-scanner-msbuild-4.6.2.2108-net46.zip) |
-| [.NET Core 2.0+](https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/4.6.2.2108/sonar-scanner-msbuild-4.6.2.2108-netcoreapp2.0.zip) |
+| [.NET Framework 4.6+](https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/4.7.1.2311/sonar-scanner-msbuild-4.7.1.2311-net46.zip) |
+| [.NET Core 2.0+](https://github.com/SonarSource/sonar-scanner-msbuild/releases/download/4.7.1.2311/sonar-scanner-msbuild-4.7.1.2311-netcoreapp2.0.zip) |
 | [.NET Core Global Tool](https://www.nuget.org/packages/dotnet-sonarscanner)
 
 
@@ -45,17 +45,21 @@ Consider setting file system permissions to restrict access to this file.:
 
 ### Installation of the SonarScanner for MSBuild .NET Core Global Tool
 ```
-dotnet tool install --global dotnet-sonarscanner --version 4.3.1
+dotnet tool install --global dotnet-sonarscanner --version 4.7.1
 ```
 The _--version_ argument is optional. If it is omitted the latest version will be installed.
 
 ### On Linux/OSX, if your SonarQube server is secured:
 
 1. Copy the server's CA certs to `/usr/local/share/ca-certificates`
-1. Run `sudo update-ca-certificates`
+2. Run `sudo update-ca-certificates`
 
 ## Use
 There are two versions of the SonarScanner for MSBuild.
+
+[[info]]
+| Since version 4.7.0 of the Scanner, you can invoke it using arguments with both dash (-) or forward-slash (/) separators.
+| Example : SonarScanner.MSBuild.exe begin /k:"project-key" or SonarScanner.MSBuild.exe begin -k:"project-key" will work.
 
 The first version is based on the “classic” .NET Framework. To use it, execute the following commands from the root folder of your project:
 ```
@@ -80,7 +84,7 @@ dotnet build <path to solution.sln>
 dotnet sonarscanner end <!-- sonarcloud -->/d:sonar.login="<token>" <!-- /sonarcloud -->
 ```
 
-Same as above, if you are targetting a SonarCloud project, will have to add both the organization and a login for authentication.
+Same as above, if you are targeting a SonarCloud project, will have to add both the organization and a login for authentication.
 
 Notes:
 
@@ -98,7 +102,6 @@ Parameter|Description
 `/k:<project-key>`|[required] Specifies the key of the analyzed project in SonarQube
 `/n:<project name>`|[optional] Specifies the name of the analyzed project in SonarQube. Adding this argument will overwrite the project name in SonarQube if it already exists.
 `/v:<version>`|[recommended] Specifies the version of your project.
-<!-- sonarcloud --> `/d:sonar.organization=<organization>`|[required] Specifies the name of the target organization in SonarCloud <!-- /sonarcloud -->
 `/d:sonar.login=<username> or <token>`| [optional] Specifies the username or access token to authenticate with to SonarQube. If this argument is added to the begin step, it must also be added on the end step.
 `/d:sonar.password=<password>`|[optional] Specifies the password for the SonarQube username in the `sonar.login` argument. This argument is not needed if you use authentication token. If this argument is added to the begin step, it must also be added on the end step.
 `/d:sonar.verbose=true`|[optional] Sets the logging verbosity to detailed. Add this argument before sending logs for troubleshooting.
@@ -107,7 +110,7 @@ Parameter|Description
 For detailed information about all available parameters, see [Analysis Parameters](/analysis/analysis-parameters/).
 
 [[warning]]
-| ![](/images/exclamation.svg) The "begin" step will modify your build like this:
+| The "begin" step will modify your build like this:
 | * the active `CodeAnalysisRuleSet` will be updated to match the SonarQube quality profile
 | * `WarningsAsErrors` will be turned off
 |
@@ -204,4 +207,3 @@ To instruct the Java VM to use specific proxy settings or when there is no syste
 SONAR_SCANNER_OPTS = "-Dhttp.proxyHost=yourProxyHost -Dhttp.proxyPort=yourProxyPort"
 ```
 Where _yourProxyHost_ and _yourProxyPort_ are the hostname and the port of your proxy server. There are additional proxy settings for https, authentication and exclusions that could be passed to the Java VM. For more information see the following article: https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html
-

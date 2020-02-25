@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ export default function ListItem(props: Props) {
 
       {permissions}
 
-      <td className="nowrap thin text-right">
+      <td className="nowrap thin text-right text-top little-padded-left little-padded-right">
         <ActionsCell
           organization={props.organization}
           permissionTemplate={props.template}

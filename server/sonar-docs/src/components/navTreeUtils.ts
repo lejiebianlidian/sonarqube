@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -85,10 +85,11 @@ export function isDocsNavigationExternalLink(
 }
 
 export function testPathAgainstUrl(path: string, url: string) {
+  return trimSlashes(url).replace(/^(latest|\d+\.\d+)\//, '') === trimSlashes(path);
+}
+
+function trimSlashes(string: string) {
   const leadingRegEx = /^\//;
   const trailingRegEx = /\/$/;
-  return (
-    path.replace(leadingRegEx, '').replace(trailingRegEx, '') ===
-    url.replace(leadingRegEx, '').replace(trailingRegEx, '')
-  );
+  return string.replace(leadingRegEx, '').replace(trailingRegEx, '');
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ public class FileSourceDao implements Dao {
   @CheckForNull
   public LineHashVersion selectLineHashesVersion(DbSession dbSession, String fileUuid) {
     Integer version = mapper(dbSession).selectLineHashesVersion(fileUuid);
-    return version == null ? LineHashVersion.WITHOUT_SIGNIFICANT_CODE : LineHashVersion.valueOf(version);
+    return version == null ? null : LineHashVersion.valueOf(version);
   }
 
   @CheckForNull
@@ -82,8 +82,8 @@ public class FileSourceDao implements Dao {
    * uuids in no specific order with 'SOURCE' source and a non null path.
    */
   public void scrollLineHashes(DbSession dbSession, Collection<String> fileUUids, ResultHandler<LineHashesWithUuidDto> rowHandler) {
-    for (List<String> partition : toUniqueAndSortedPartitions(fileUUids)) {
-      mapper(dbSession).scrollLineHashes(partition, rowHandler);
+    for (List<String> fileUuidsPartition : toUniqueAndSortedPartitions(fileUUids)) {
+      mapper(dbSession).scrollLineHashes(fileUuidsPartition, rowHandler);
     }
   }
 

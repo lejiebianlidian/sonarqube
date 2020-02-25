@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,18 +19,11 @@
  */
 package org.sonar.ce.task.projectanalysis.measure;
 
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
+import gnu.trove.map.hash.THashMap;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.sonar.ce.task.projectanalysis.component.Component;
 import org.sonar.ce.task.projectanalysis.metric.Metric;
 
@@ -44,7 +37,7 @@ import static java.util.Objects.requireNonNull;
  */
 public final class MapBasedRawMeasureRepository<T> implements MeasureRepository {
   private final Function<Component, T> componentToKey;
-  private final Map<T, Map<MeasureKey, Measure>> measures = new HashMap<>();
+  private final Map<T, Map<String, Measure>> measures = new THashMap<>();
 
   public MapBasedRawMeasureRepository(Function<Component, T> componentToKey) {
     this.componentToKey = requireNonNull(componentToKey);
@@ -107,42 +100,18 @@ public final class MapBasedRawMeasureRepository<T> implements MeasureRepository 
   }
 
   @Override
-  public Set<Measure> getRawMeasures(Component component, Metric metric) {
-    requireNonNull(metric);
-    requireNonNull(component);
+  public Map<String, Measure> getRawMeasures(Component component) {
     T componentKey = componentToKey.apply(component);
-    Map<MeasureKey, Measure> rawMeasures = measures.get(componentKey);
-    if (rawMeasures == null) {
-      return Collections.emptySet();
-    }
-    return rawMeasures.entrySet().stream()
-      .filter(new MatchMetric(metric))
-      .map(ToMeasure.INSTANCE)
-      .collect(Collectors.toSet());
-  }
-
-  @Override
-  public SetMultimap<String, Measure> getRawMeasures(Component component) {
-    T componentKey = componentToKey.apply(component);
-    Map<MeasureKey, Measure> rawMeasures = measures.get(componentKey);
-    if (rawMeasures == null) {
-      return ImmutableSetMultimap.of();
-    }
-
-    ImmutableSetMultimap.Builder<String, Measure> builder = ImmutableSetMultimap.builder();
-    for (Map.Entry<MeasureKey, Measure> entry : rawMeasures.entrySet()) {
-      builder.put(entry.getKey().getMetricKey(), entry.getValue());
-    }
-    return builder.build();
+    return measures.getOrDefault(componentKey, Collections.emptyMap());
   }
 
   private Optional<Measure> find(Component component, Metric metric) {
     T componentKey = componentToKey.apply(component);
-    Map<MeasureKey, Measure> measuresPerMetric = measures.get(componentKey);
+    Map<String, Measure> measuresPerMetric = measures.get(componentKey);
     if (measuresPerMetric == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(measuresPerMetric.get(new MeasureKey(metric.getKey())));
+    return Optional.ofNullable(measuresPerMetric.get(metric.getKey()));
   }
 
   public void add(Component component, Metric metric, Measure measure, OverridePolicy overridePolicy) {
@@ -152,37 +121,13 @@ public final class MapBasedRawMeasureRepository<T> implements MeasureRepository 
     requireNonNull(overridePolicy);
 
     T componentKey = componentToKey.apply(component);
-    Map<MeasureKey, Measure> measuresPerMetric = measures.computeIfAbsent(componentKey, key -> new HashMap<>());
-    MeasureKey key = new MeasureKey(metric.getKey());
-    if (!measuresPerMetric.containsKey(key) || overridePolicy == OverridePolicy.OVERRIDE) {
-      measuresPerMetric.put(key, measure);
+    Map<String, Measure> measuresPerMetric = measures.computeIfAbsent(componentKey, key -> new THashMap<>());
+    if (!measuresPerMetric.containsKey(metric.getKey()) || overridePolicy == OverridePolicy.OVERRIDE) {
+      measuresPerMetric.put(metric.getKey(), measure);
     }
   }
 
   public enum OverridePolicy {
     OVERRIDE, DO_NOT_OVERRIDE
-  }
-
-  private static class MatchMetric implements Predicate<Map.Entry<MeasureKey, Measure>> {
-    private final Metric metric;
-
-    public MatchMetric(Metric metric) {
-      this.metric = metric;
-    }
-
-    @Override
-    public boolean test(@Nonnull Map.Entry<MeasureKey, Measure> input) {
-      return input.getKey().getMetricKey().equals(metric.getKey());
-    }
-  }
-
-  private enum ToMeasure implements Function<Map.Entry<MeasureKey, Measure>, Measure> {
-    INSTANCE;
-
-    @Nullable
-    @Override
-    public Measure apply(@Nonnull Map.Entry<MeasureKey, Measure> input) {
-      return input.getValue();
-    }
   }
 }

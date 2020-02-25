@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.server.platform.db.migration.step;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 import org.junit.Rule;
@@ -109,7 +108,7 @@ public class MigrationStepRegistryImplTest {
 
   private static abstract class NoopMigrationStep implements MigrationStep {
     @Override
-    public void execute() throws SQLException {
+    public void execute() {
       throw new IllegalStateException("execute is not implemented");
     }
   }

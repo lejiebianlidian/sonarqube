@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2019 SonarSource SA
+ * Copyright (C) 2009-2020 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,80 +19,44 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import {
-  mockComponent,
-  mockLoggedInUser,
-  mockMainBranch,
-  mockPullRequest
-} from '../../../../helpers/testMocks';
-import { EmptyOverview, WarningMessage } from '../EmptyOverview';
-
-const branch = mockMainBranch();
-const component = mockComponent({ version: '0.0.1' });
-const LoggedInUser = mockLoggedInUser();
+import { mockBranch, mockMainBranch, mockPullRequest } from '../../../../helpers/mocks/branch-like';
+import { mockComponent, mockCurrentUser, mockLoggedInUser } from '../../../../helpers/testMocks';
+import { ComponentQualifier } from '../../../../types/component';
+import { EmptyOverview } from '../EmptyOverview';
 
 it('renders correctly', () => {
-  expect(
-    shallow(
-      <EmptyOverview
-        branchLike={branch}
-        branchLikes={[branch]}
-        component={component}
-        currentUser={LoggedInUser}
-        onComponentChange={jest.fn()}
-      />
-    )
-  ).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot();
+  expect(shallowRender({ hasAnalyses: true })).toMatchSnapshot();
+  expect(shallowRender({ currentUser: mockCurrentUser() })).toMatchSnapshot();
 });
 
 it('should render another message when there are branches', () => {
+  expect(shallowRender({ branchLikes: [mockMainBranch(), mockBranch()] })).toMatchSnapshot();
   expect(
-    shallow(
-      <EmptyOverview
-        branchLike={branch}
-        branchLikes={[branch, branch]}
-        component={component}
-        currentUser={LoggedInUser}
-        onComponentChange={jest.fn()}
-      />
-    )
-  ).toMatchSnapshot();
-  expect(
-    shallow(
-      <EmptyOverview
-        branchLike={branch}
-        branchLikes={[branch, branch, branch]}
-        component={component}
-        currentUser={LoggedInUser}
-        onComponentChange={jest.fn()}
-      />
-    )
+    shallowRender({
+      branchLikes: [mockMainBranch(), mockBranch(), mockBranch({ name: 'branch-7.8' })]
+    })
   ).toMatchSnapshot();
 });
 
-it('should not render the tutorial', () => {
+it('should not render warning message for pull requests', () => {
+  expect(shallowRender({ branchLike: mockPullRequest() }).type()).toBeNull();
+});
+
+it('should not render the tutorial for applications', () => {
   expect(
-    shallow(
-      <EmptyOverview
-        branchLike={branch}
-        branchLikes={[branch]}
-        component={component}
-        currentUser={LoggedInUser}
-        hasAnalyses={true}
-        onComponentChange={jest.fn()}
-      />
-    )
+    shallowRender({ component: mockComponent({ qualifier: ComponentQualifier.Application }) })
   ).toMatchSnapshot();
 });
 
-it('should render warning message', () => {
-  expect(shallow(<WarningMessage branchLike={branch} message="foo" />)).toMatchSnapshot();
-});
-
-it('should not render warning message', () => {
-  expect(
-    shallow(<WarningMessage branchLike={mockPullRequest()} message="foo" />)
-      .find('FormattedMessage')
-      .exists()
-  ).toBeFalsy();
-});
+function shallowRender(props = {}) {
+  return shallow(
+    <EmptyOverview
+      branchLike={mockMainBranch()}
+      branchLikes={[mockMainBranch()]}
+      component={mockComponent({ version: '0.0.1' })}
+      currentUser={mockLoggedInUser()}
+      {...props}
+    />
+  );
+}
