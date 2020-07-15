@@ -75,7 +75,6 @@ public class ModuleSensorContextTest {
   public void shouldProvideComponents() {
     assertThat(adaptor.activeRules()).isEqualTo(activeRules);
     assertThat(adaptor.fileSystem()).isEqualTo(fs);
-    assertThat(adaptor.settings()).isEqualTo(settings);
     assertThat(adaptor.getSonarQubeVersion()).isEqualTo(Version.parse("5.5"));
     assertThat(adaptor.runtime()).isEqualTo(runtime);
 

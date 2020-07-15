@@ -19,7 +19,7 @@
  */
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { lazyLoad } from 'sonar-ui-common/components/lazyLoad';
+import { lazyLoadComponent } from 'sonar-ui-common/components/lazyLoadComponent';
 import NavBar from 'sonar-ui-common/components/ui/NavBar';
 import { parseDate } from 'sonar-ui-common/helpers/dates';
 import {
@@ -39,7 +39,6 @@ import {
 import { setCurrentUserSetting } from '../../../../store/users';
 import { rawSizes } from '../../../theme';
 import EmbedDocsPopupHelper from '../../embed-docs-modal/EmbedDocsPopupHelper';
-import { OnboardingContext } from '../../OnboardingContext';
 import Search from '../../search/Search';
 import './GlobalNav.css';
 import GlobalNavBranding, { SonarCloudNavBranding } from './GlobalNavBranding';
@@ -47,12 +46,12 @@ import GlobalNavExplore from './GlobalNavExplore';
 import GlobalNavMenu from './GlobalNavMenu';
 import GlobalNavUserContainer from './GlobalNavUserContainer';
 
-const GlobalNavPlus = lazyLoad(() => import('./GlobalNavPlus'), 'GlobalNavPlus');
-const NotificationsSidebar = lazyLoad(
+const GlobalNavPlus = lazyLoadComponent(() => import('./GlobalNavPlus'), 'GlobalNavPlus');
+const NotificationsSidebar = lazyLoadComponent(
   () => import('../../notifications/NotificationsSidebar'),
   'NotificationsSidebar'
 );
-const NavLatestNotification = lazyLoad(
+const NavLatestNotification = lazyLoadComponent(
   () => import('../../notifications/NavLatestNotification'),
   'NavLatestNotification'
 );
@@ -193,15 +192,7 @@ export class GlobalNav extends React.PureComponent<Props, State> {
           <EmbedDocsPopupHelper />
           <Search appState={appState} currentUser={currentUser} />
           {isLoggedIn(currentUser) && (
-            <OnboardingContext.Consumer data-test="global-nav-plus">
-              {openProjectOnboarding => (
-                <GlobalNavPlus
-                  appState={appState}
-                  currentUser={currentUser}
-                  openProjectOnboarding={openProjectOnboarding}
-                />
-              )}
-            </OnboardingContext.Consumer>
+            <GlobalNavPlus appState={appState} currentUser={currentUser} />
           )}
           <GlobalNavUserContainer appState={appState} currentUser={currentUser} />
         </ul>

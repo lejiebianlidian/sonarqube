@@ -47,8 +47,8 @@ public class PermissionIndexerDao {
   private static final String SQL_TEMPLATE = "SELECT " +
     "  project_authorization.kind as kind, " +
     "  project_authorization.project as project, " +
-    "  project_authorization.user_id as user_id, " +
-    "  project_authorization.group_id as group_id, " +
+    "  project_authorization.user_uuid as user_uuid, " +
+    "  project_authorization.group_uuid as group_uuid, " +
     "  project_authorization.qualifier as qualifier " +
     "FROM ( " +
 
@@ -57,10 +57,10 @@ public class PermissionIndexerDao {
     "      SELECT '" + RowKind.USER + "' as kind," +
     "      c.uuid AS project, " +
     "      c.qualifier AS qualifier, " +
-    "      user_roles.user_id  AS user_id, " +
-    "      NULL  AS group_id " +
+    "      user_roles.user_uuid  AS user_uuid, " +
+    "      NULL  AS group_uuid " +
     "      FROM components c " +
-    "      INNER JOIN user_roles ON user_roles.resource_id = c.id AND user_roles.role = 'user' " +
+    "      INNER JOIN user_roles ON user_roles.component_uuid = c.uuid AND user_roles.role = 'user' " +
     "      WHERE " +
     "        (c.qualifier = 'TRK' " +
     "         or  c.qualifier = 'VW' " +
@@ -74,18 +74,18 @@ public class PermissionIndexerDao {
     "      SELECT '" + RowKind.GROUP + "' as kind," +
     "      c.uuid AS project, " +
     "      c.qualifier AS qualifier, " +
-    "      NULL  AS user_id, " +
-    "      groups.id  AS group_id " +
+    "      NULL  AS user_uuid, " +
+    "      groups.uuid  AS group_uuid " +
     "      FROM components c " +
-    "      INNER JOIN group_roles ON group_roles.resource_id = c.id AND group_roles.role = 'user' " +
-    "      INNER JOIN groups ON groups.id = group_roles.group_id " +
+    "      INNER JOIN group_roles ON group_roles.component_uuid = c.uuid AND group_roles.role = 'user' " +
+    "      INNER JOIN groups ON groups.uuid = group_roles.group_uuid " +
     "      WHERE " +
     "        (c.qualifier = 'TRK' " +
     "         or  c.qualifier = 'VW' " +
     "         or  c.qualifier = 'APP') " +
     "        AND c.copy_component_uuid is NULL " +
     "        {projectsCondition} " +
-    "        AND group_id IS NOT NULL " +
+    "        AND group_uuid IS NOT NULL " +
     "      UNION " +
 
     // public projects are accessible to any one
@@ -93,8 +93,8 @@ public class PermissionIndexerDao {
     "      SELECT '" + RowKind.ANYONE + "' as kind," +
     "      c.uuid AS project, " +
     "      c.qualifier AS qualifier, " +
-    "      NULL         AS user_id, " +
-    "      NULL     AS group_id " +
+    "      NULL         AS user_uuid, " +
+    "      NULL     AS group_uuid " +
     "      FROM components c " +
     "      WHERE " +
     "        (c.qualifier = 'TRK' " +
@@ -109,8 +109,8 @@ public class PermissionIndexerDao {
     "      SELECT '" + RowKind.NONE + "' as kind," +
     "      c.uuid AS project, " +
     "      c.qualifier AS qualifier, " +
-    "      NULL AS user_id, " +
-    "      NULL  AS group_id " +
+    "      NULL AS user_uuid, " +
+    "      NULL  AS group_uuid " +
     "      FROM components c " +
     "      WHERE " +
     "        (c.qualifier = 'TRK' " +
@@ -197,10 +197,10 @@ public class PermissionIndexerDao {
       case NONE:
         break;
       case USER:
-        dto.addUserId(rs.getInt(3));
+        dto.addUserUuid(rs.getString(3));
         break;
       case GROUP:
-        dto.addGroupId(rs.getInt(4));
+        dto.addGroupUuid(rs.getString(4));
         break;
       case ANYONE:
         dto.allowAnyone();

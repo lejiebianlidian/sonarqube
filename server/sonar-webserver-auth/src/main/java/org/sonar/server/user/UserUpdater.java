@@ -391,7 +391,7 @@ public class UserUpdater {
         List<UserDto> matchingUsers = dbClient.userDao().selectByScmAccountOrLoginOrEmail(dbSession, scmAccount);
         List<String> matchingUsersWithoutExistingUser = newArrayList();
         for (UserDto matchingUser : matchingUsers) {
-          if (existingUser != null && matchingUser.getId().equals(existingUser.getId())) {
+          if (existingUser != null && matchingUser.getUuid().equals(existingUser.getUuid())) {
             continue;
           }
           matchingUsersWithoutExistingUser.add(getNameOrLogin(matchingUser) + " (" + matchingUser.getLogin() + ")");
@@ -453,7 +453,7 @@ public class UserUpdater {
   }
 
   private static boolean isUserAlreadyMemberOfDefaultGroup(GroupDto defaultGroup, List<GroupDto> userGroups) {
-    return userGroups.stream().anyMatch(group -> defaultGroup.getId().equals(group.getId()));
+    return userGroups.stream().anyMatch(group -> defaultGroup.getUuid().equals(group.getUuid()));
   }
 
   private void addUserToDefaultOrganizationAndDefaultGroup(DbSession dbSession, UserDto userDto) {
@@ -463,7 +463,7 @@ public class UserUpdater {
 
   private void addUserToDefaultOrganization(DbSession dbSession, UserDto userDto) {
     String defOrgUuid = defaultOrganizationProvider.get().getUuid();
-    dbClient.organizationMemberDao().insert(dbSession, new OrganizationMemberDto().setOrganizationUuid(defOrgUuid).setUserId(userDto.getId()));
+    dbClient.organizationMemberDao().insert(dbSession, new OrganizationMemberDto().setOrganizationUuid(defOrgUuid).setUserUuid(userDto.getUuid()));
   }
 
   private void addDefaultGroup(DbSession dbSession, UserDto userDto) {
@@ -473,7 +473,7 @@ public class UserUpdater {
     if (isUserAlreadyMemberOfDefaultGroup(defaultGroup, userGroups)) {
       return;
     }
-    dbClient.userGroupDao().insert(dbSession, new UserGroupDto().setUserId(userDto.getId()).setGroupId(defaultGroup.getId()));
+    dbClient.userGroupDao().insert(dbSession, new UserGroupDto().setUserUuid(userDto.getUuid()).setGroupUuid(defaultGroup.getUuid()));
   }
 
   private void setNotificationsReadDate(DbSession dbSession, UserDto user) {

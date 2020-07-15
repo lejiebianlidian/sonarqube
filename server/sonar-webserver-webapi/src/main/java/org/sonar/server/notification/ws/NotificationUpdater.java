@@ -47,13 +47,13 @@ public class NotificationUpdater {
    */
   public void add(DbSession dbSession, String channel, String dispatcher, UserDto user, @Nullable ComponentDto project) {
     String key = String.join(".", PROP_NOTIFICATION_PREFIX, dispatcher, channel);
-    Long projectId = project == null ? null : project.getId();
+    String projectUuid = project == null ? null : project.uuid();
 
     List<PropertyDto> existingNotification = dbClient.propertiesDao().selectByQuery(
       PropertyQuery.builder()
         .setKey(key)
-        .setComponentId(projectId)
-        .setUserId(user.getId())
+        .setComponentUuid(projectUuid)
+        .setUserUuid(user.getUuid())
         .build(),
       dbSession).stream()
       .filter(notificationScope(project))
@@ -63,9 +63,9 @@ public class NotificationUpdater {
 
     dbClient.propertiesDao().saveProperty(dbSession, new PropertyDto()
       .setKey(key)
-      .setUserId(user.getId())
+      .setUserUuid(user.getUuid())
       .setValue(PROP_NOTIFICATION_VALUE)
-      .setResourceId(projectId));
+      .setComponentUuid(projectUuid));
   }
 
   /**
@@ -73,13 +73,13 @@ public class NotificationUpdater {
    */
   public void remove(DbSession dbSession, String channel, String dispatcher, UserDto user, @Nullable ComponentDto project) {
     String key = String.join(".", PROP_NOTIFICATION_PREFIX, dispatcher, channel);
-    Long projectId = project == null ? null : project.getId();
+    String projectUuid = project == null ? null : project.uuid();
 
     List<PropertyDto> existingNotification = dbClient.propertiesDao().selectByQuery(
       PropertyQuery.builder()
         .setKey(key)
-        .setComponentId(projectId)
-        .setUserId(user.getId())
+        .setComponentUuid(projectUuid)
+        .setUserUuid(user.getUuid())
         .build(),
       dbSession).stream()
       .filter(notificationScope(project))
@@ -88,12 +88,12 @@ public class NotificationUpdater {
 
     dbClient.propertiesDao().delete(dbSession, new PropertyDto()
       .setKey(key)
-      .setUserId(user.getId())
+      .setUserUuid(user.getUuid())
       .setValue(PROP_NOTIFICATION_VALUE)
-      .setResourceId(projectId));
+      .setComponentUuid(projectUuid));
   }
 
   private static Predicate<PropertyDto> notificationScope(@Nullable ComponentDto project) {
-    return prop -> project == null ? (prop.getResourceId() == null) : (prop.getResourceId() != null);
+    return prop -> project == null ? (prop.getComponentUuid() == null) : (prop.getComponentUuid() != null);
   }
 }

@@ -25,6 +25,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.ResourceTypes;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.core.permission.GlobalPermissions;
 import org.sonar.db.component.ResourceTypesRule;
 import org.sonar.db.permission.PermissionQuery;
@@ -41,6 +43,7 @@ import org.sonar.server.permission.ws.WsParameters;
 import org.sonar.server.ws.TestRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.security.DefaultGroups.ANYONE;
 import static org.sonar.api.web.UserRole.CODEVIEWER;
 import static org.sonar.db.permission.OrganizationPermission.SCAN;
@@ -71,7 +74,18 @@ public class RemoveGroupFromTemplateActionTest extends BasePermissionWsTest<Remo
 
     group = db.users().insertGroup(db.getDefaultOrganization(), "group-name");
     template = db.permissionTemplates().insertTemplate(db.getDefaultOrganization());
-    addGroupToTemplate(template, group.getId(), PERMISSION);
+    addGroupToTemplate(template, group.getUuid(), PERMISSION);
+  }
+
+  @Test
+  public void verify_definition() {
+    Action wsDef = wsTester.getDef();
+
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Parameter 'groupId' is deprecated. Format changes from integer to string. Use 'groupName' instead."));
   }
 
   @Test
@@ -97,7 +111,7 @@ public class RemoveGroupFromTemplateActionTest extends BasePermissionWsTest<Remo
     newRequest()
       .setParam(PARAM_TEMPLATE_ID, template.getUuid())
       .setParam(PARAM_PERMISSION, PERMISSION)
-      .setParam(PARAM_GROUP_ID, String.valueOf(group.getId()))
+      .setParam(PARAM_GROUP_ID, String.valueOf(group.getUuid()))
       .execute();
 
     assertThat(getGroupNamesInTemplateAndPermission(template, PERMISSION)).isEmpty();
@@ -196,14 +210,14 @@ public class RemoveGroupFromTemplateActionTest extends BasePermissionWsTest<Remo
     request.execute();
   }
 
-  private void addGroupToTemplate(PermissionTemplateDto template, @Nullable Integer groupId, String permission) {
-    db.getDbClient().permissionTemplateDao().insertGroupPermission(db.getSession(), template.getId(), groupId, permission);
+  private void addGroupToTemplate(PermissionTemplateDto template, @Nullable String groupUuid, String permission) {
+    db.getDbClient().permissionTemplateDao().insertGroupPermission(db.getSession(), template.getUuid(), groupUuid, permission);
     db.commit();
   }
 
   private List<String> getGroupNamesInTemplateAndPermission(PermissionTemplateDto template, String permission) {
     PermissionQuery permissionQuery = PermissionQuery.builder().setOrganizationUuid(template.getOrganizationUuid()).setPermission(permission).build();
     return db.getDbClient().permissionTemplateDao()
-      .selectGroupNamesByQueryAndTemplate(db.getSession(), permissionQuery, template.getId());
+      .selectGroupNamesByQueryAndTemplate(db.getSession(), permissionQuery, template.getUuid());
   }
 }

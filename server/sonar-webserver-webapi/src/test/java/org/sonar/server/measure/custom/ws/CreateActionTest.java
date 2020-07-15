@@ -23,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.measures.Metric;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
@@ -70,6 +72,18 @@ public class CreateActionTest {
       new CustomMeasureJsonWriter(new UserJsonWriter(userSession)), TestComponentFinder.from(db)));
 
   @Test
+  public void verify_definition() {
+    Action wsDef = ws.getDef();
+
+    assertThat(wsDef.deprecatedSince()).isEqualTo("7.4");
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Param 'metricId' data type changes from integer to string."));
+  }
+
+  @Test
   public void create_boolean_custom_measure_in_db() {
     MetricDto metric = db.measures().insertMetric(m -> m.setUserManaged(true).setValueType(BOOL.name()));
     ComponentDto project = db.components().insertPrivateProject();
@@ -78,12 +92,12 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, Integer.toString(metric.getId()))
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "true")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple("custom-measure-description", null, 1d, project.uuid()));
   }
@@ -97,11 +111,11 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "42")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, null, 42d, project.uuid()));
   }
@@ -115,11 +129,11 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "custom-measure-free-text")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, "custom-measure-free-text", 0d, project.uuid()));
   }
@@ -137,7 +151,7 @@ public class CreateActionTest {
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, "whatever-value", 0d, project.uuid()));
   }
@@ -151,11 +165,11 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_KEY, project.getKey())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, "whatever-value", 0d, project.uuid()));
   }
@@ -169,11 +183,11 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "4.2")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, null, 4.2d, project.uuid()));
   }
@@ -187,11 +201,11 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "253")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, null, 253d, project.uuid()));
   }
@@ -205,11 +219,11 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, Metric.Level.ERROR.name())
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple(null, Metric.Level.ERROR.name(), 0d, project.uuid()));
   }
@@ -223,19 +237,19 @@ public class CreateActionTest {
 
     String response = ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "custom-measure-free-text")
       .execute()
       .getInput();
 
-    CustomMeasureDto customMeasure = db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()).get(0);
+    CustomMeasureDto customMeasure = db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()).get(0);
     assertJson(response).isSimilarTo("{\n" +
-      "  \"id\": \"" + customMeasure.getId() + "\",\n" +
+      "  \"id\": \"" + customMeasure.getUuid() + "\",\n" +
       "  \"value\": \"custom-measure-free-text\",\n" +
       "  \"description\": \"custom-measure-description\",\n" +
       "  \"metric\": {\n" +
-      "    \"id\": \"" + metric.getId() + "\",\n" +
+      "    \"id\": \"" + metric.getUuid() + "\",\n" +
       "    \"key\": \"" + metric.getKey() + "\",\n" +
       "    \"type\": \"" + metric.getValueType() + "\",\n" +
       "    \"name\": \"" + metric.getShortName() + "\",\n" +
@@ -257,12 +271,12 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, module.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, Integer.toString(metric.getId()))
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "true")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple("custom-measure-description", null, 1d, module.uuid()));
   }
@@ -277,12 +291,12 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, view.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "true")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple("custom-measure-description", null, 1d, view.uuid()));
   }
@@ -298,12 +312,12 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, subView.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "true")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getComponentUuid)
       .containsExactlyInAnyOrder(tuple("custom-measure-description", null, 1d, subView.uuid()));
   }
@@ -320,7 +334,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_METRIC_ID, "whatever-id")
-      .setParam(CreateAction.PARAM_VALUE, metric.getId().toString())
+      .setParam(CreateAction.PARAM_VALUE, metric.getUuid().toString())
       .execute();
   }
 
@@ -337,7 +351,7 @@ public class CreateActionTest {
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
       .setParam(CreateAction.PARAM_PROJECT_KEY, project.getKey())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -354,7 +368,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_KEY, "another-project-key")
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -371,19 +385,19 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, "another-project-uuid")
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
 
   @Test
-  public void fail_when_metric_id_nor_metric_key_is_provided() {
+  public void fail_when_metric_uuid_nor_metric_key_is_provided() {
     ComponentDto project = db.components().insertPrivateProject();
     UserDto user = db.users().insertUser();
     userSession.logIn(user).addProjectPermission(ADMIN, project);
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Either the metric id or the metric key must be provided");
+    expectedException.expectMessage("Either the metric uuid or the metric key must be provided");
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
@@ -392,18 +406,18 @@ public class CreateActionTest {
   }
 
   @Test
-  public void fail_when_metric_id_and_metric_key_are_provided() {
+  public void fail_when_metric_uuid_and_metric_key_are_provided() {
     MetricDto metric = db.measures().insertMetric(m -> m.setUserManaged(true).setValueType(STRING.name()));
     ComponentDto project = db.components().insertPrivateProject();
     UserDto user = db.users().insertUser();
     userSession.logIn(user).addProjectPermission(ADMIN, project);
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Either the metric id or the metric key must be provided");
+    expectedException.expectMessage("Either the metric uuid or the metric key must be provided");
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_METRIC_KEY, metric.getKey())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
@@ -426,13 +440,13 @@ public class CreateActionTest {
   }
 
   @Test
-  public void fail_when_metric_id_is_not_found_in_db() {
+  public void fail_when_metric_uuid_is_not_found_in_db() {
     ComponentDto project = db.components().insertPrivateProject();
     UserDto user = db.users().insertUser();
     userSession.logIn(user).addProjectPermission(ADMIN, project);
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Metric with id '42' does not exist");
+    expectedException.expectMessage("Metric with uuid '42' does not exist");
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
@@ -455,7 +469,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -472,7 +486,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "non-correct-boolean-value")
       .execute();
   }
@@ -488,7 +502,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -506,7 +520,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, directory.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getId().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }

@@ -37,31 +37,6 @@ export interface DocsNavigationExternalLink {
   url: string;
 }
 
-export type PluginMetaDataInfo = {
-  category?: string;
-  isSonarSourceCommercial: boolean;
-  issueTrackerURL?: string;
-  key?: string;
-  license?: string;
-  name: string;
-  organization?: {
-    name: string;
-    url?: string;
-  };
-  sourcesURL?: string;
-  versions?: PluginVersionInfo[];
-};
-
-export type PluginVersionInfo = {
-  archived?: boolean;
-  changeLogUrl?: string;
-  compatibility?: string;
-  date?: string;
-  description?: string;
-  downloadURL?: string;
-  version: string;
-};
-
 export interface SearchResult {
   exactMatch?: boolean;
   highlights: { [field: string]: [number, number][] };

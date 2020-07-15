@@ -38,6 +38,7 @@ import org.sonar.db.DbClient;
 import org.sonar.db.dialect.H2;
 import org.sonar.db.dialect.PostgreSql;
 import org.sonar.server.almsettings.MultipleAlmFeatureProvider;
+import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.organization.DefaultOrganizationProvider;
 import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.organization.TestOrganizationFlags;
@@ -50,6 +51,7 @@ import org.sonar.updatecenter.common.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,6 +67,7 @@ public class GlobalActionTest {
   private Server server = mock(Server.class);
   private WebServer webServer = mock(WebServer.class);
   private DbClient dbClient = mock(DbClient.class, RETURNS_DEEP_STUBS);
+  private IssueIndexSyncProgressChecker indexSyncProgressChecker = mock(IssueIndexSyncProgressChecker.class);
   private TestOrganizationFlags organizationFlags = TestOrganizationFlags.standalone();
   private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.fromUuid("foo");
   private BranchFeatureRule branchFeature = new BranchFeatureRule();
@@ -253,6 +256,16 @@ public class GlobalActionTest {
   }
 
   @Test
+  public void return_need_issue_sync() {
+    init();
+    when(indexSyncProgressChecker.isIssueSyncInProgress(any())).thenReturn(true);
+    assertJson(call()).isSimilarTo("{\"needIssueSync\": true}");
+
+    when(indexSyncProgressChecker.isIssueSyncInProgress(any())).thenReturn(false);
+    assertJson(call()).isSimilarTo("{\"needIssueSync\": false}");
+  }
+
+  @Test
   public void can_admin_on_global_level() {
     init();
     userSession.logIn().setRoot();
@@ -363,7 +376,8 @@ public class GlobalActionTest {
     }});
     pageRepository.start();
     GlobalAction wsAction = new GlobalAction(pageRepository, settings.asConfig(), new ResourceTypes(resourceTypeTrees), server,
-      webServer, dbClient, organizationFlags, defaultOrganizationProvider, branchFeature, userSession, editionProvider, multipleAlmFeatureProvider, webAnalyticsLoader);
+      webServer, dbClient, organizationFlags, defaultOrganizationProvider, branchFeature, userSession, editionProvider, multipleAlmFeatureProvider, webAnalyticsLoader,
+      indexSyncProgressChecker);
     ws = new WsActionTester(wsAction);
     wsAction.start();
   }

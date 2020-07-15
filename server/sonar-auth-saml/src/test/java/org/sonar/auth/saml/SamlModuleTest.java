@@ -31,6 +31,6 @@ public class SamlModuleTest {
   public void verify_count_of_added_components() {
     ComponentContainer container = new ComponentContainer();
     new SamlModule().configure(container);
-    assertThat(container.size()).isEqualTo(COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER + 12);
+    assertThat(container.size()).isGreaterThan(COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER);
   }
 }

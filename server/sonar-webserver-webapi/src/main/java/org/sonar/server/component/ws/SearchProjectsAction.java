@@ -20,8 +20,11 @@
 package org.sonar.server.component.ws;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -43,6 +47,8 @@ import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.server.ws.WebService.Param;
+import org.sonar.core.platform.EditionProvider.Edition;
+import org.sonar.core.platform.PlatformEditionProvider;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
@@ -53,9 +59,11 @@ import org.sonar.db.project.ProjectDto;
 import org.sonar.db.property.PropertyDto;
 import org.sonar.db.property.PropertyQuery;
 import org.sonar.server.component.ws.FilterParser.Criterion;
+import org.sonar.server.component.ws.SearchProjectsAction.SearchResults.SearchResultsBuilder;
 import org.sonar.server.es.Facets;
 import org.sonar.server.es.SearchIdResult;
 import org.sonar.server.es.SearchOptions;
+import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.measure.index.ProjectMeasuresIndex;
 import org.sonar.server.measure.index.ProjectMeasuresQuery;
 import org.sonar.server.project.Visibility;
@@ -76,6 +84,7 @@ import static org.sonar.api.measures.CoreMetrics.ALERT_STATUS_KEY;
 import static org.sonar.api.server.ws.WebService.Param.FACETS;
 import static org.sonar.api.server.ws.WebService.Param.FIELDS;
 import static org.sonar.api.utils.DateUtils.formatDateTime;
+import static org.sonar.core.util.stream.MoreCollectors.toList;
 import static org.sonar.core.util.stream.MoreCollectors.toSet;
 import static org.sonar.db.measure.ProjectMeasuresIndexerIterator.METRIC_KEYS;
 import static org.sonar.server.component.ws.ProjectMeasuresQueryFactory.IS_FAVORITE_CRITERION;
@@ -83,7 +92,6 @@ import static org.sonar.server.component.ws.ProjectMeasuresQueryFactory.newProje
 import static org.sonar.server.component.ws.ProjectMeasuresQueryValidator.NON_METRIC_SORT_KEYS;
 import static org.sonar.server.exceptions.NotFoundException.checkFound;
 import static org.sonar.server.exceptions.NotFoundException.checkFoundWithOptional;
-import static org.sonar.server.measure.index.ProjectMeasuresIndex.SUPPORTED_FACETS;
 import static org.sonar.server.measure.index.ProjectMeasuresQuery.SORT_BY_LAST_ANALYSIS_DATE;
 import static org.sonar.server.measure.index.ProjectMeasuresQuery.SORT_BY_NAME;
 import static org.sonar.server.ws.WsUtils.writeProtobuf;
@@ -101,18 +109,29 @@ public class SearchProjectsAction implements ComponentsWsAction {
   private static final String ORGANIZATIONS = "organizations";
   private static final String ANALYSIS_DATE = "analysisDate";
   private static final String LEAK_PERIOD_DATE = "leakPeriodDate";
+  private static final String METRIC_LEAK_PROJECTS_KEY = "leak_projects";
+  private static final String HTML_POSSIBLE_VALUES_TEXT = "The possible values are:";
+  private static final String HTML_UL_START_TAG = "<ul>";
+  private static final String HTML_UL_END_TAG = "</ul>";
   private static final Set<String> POSSIBLE_FIELDS = newHashSet(ALL, ORGANIZATIONS, ANALYSIS_DATE, LEAK_PERIOD_DATE);
 
   private final DbClient dbClient;
   private final ProjectMeasuresIndex index;
   private final UserSession userSession;
   private final ProjectsInWarning projectsInWarning;
+  private final PlatformEditionProvider editionProvider;
+  private final IssueIndexSyncProgressChecker issueIndexSyncProgressChecker;
 
-  public SearchProjectsAction(DbClient dbClient, ProjectMeasuresIndex index, UserSession userSession, ProjectsInWarning projectsInWarning) {
+  public SearchProjectsAction(DbClient dbClient, ProjectMeasuresIndex index, UserSession userSession,
+    ProjectsInWarning projectsInWarning,
+    PlatformEditionProvider editionProvider,
+    IssueIndexSyncProgressChecker issueIndexSyncProgressChecker) {
     this.dbClient = dbClient;
     this.index = index;
     this.userSession = userSession;
     this.projectsInWarning = projectsInWarning;
+    this.editionProvider = editionProvider;
+    this.issueIndexSyncProgressChecker = issueIndexSyncProgressChecker;
   }
 
   @Override
@@ -123,8 +142,8 @@ public class SearchProjectsAction implements ComponentsWsAction {
       .addPagingParams(DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
       .setInternal(true)
       .setChangelog(
-        new Change("8.0", "Field 'id' from response has been removed")
-      )
+        new Change("8.3", "Add 'qualifier' filter and facet"),
+        new Change("8.0", "Field 'id' from response has been removed"))
       .setResponseExample(getClass().getResource("search_projects-example.json"))
       .setHandler(this);
 
@@ -138,62 +157,71 @@ public class SearchProjectsAction implements ComponentsWsAction {
       .setSince("6.3");
     action.createParam(FACETS)
       .setDescription("Comma-separated list of the facets to be computed. No facet is computed by default.")
-      .setPossibleValues(SUPPORTED_FACETS.stream().sorted().collect(MoreCollectors.toList(SUPPORTED_FACETS.size())));
+      .setPossibleValues(Arrays.stream(ProjectMeasuresIndex.Facet.values())
+        .map(ProjectMeasuresIndex.Facet::getName)
+        .sorted()
+        .collect(toList(ProjectMeasuresIndex.Facet.values().length)));
     action
       .createParam(PARAM_FILTER)
       .setMinimumLength(2)
       .setDescription("Filter of projects on name, key, measure value, quality gate, language, tag or whether a project is a favorite or not.<br>" +
         "The filter must be encoded to form a valid URL (for example '=' must be replaced by '%3D').<br>" +
         "Examples of use:" +
-        "<ul>" +
+        HTML_UL_START_TAG +
         " <li>to filter my favorite projects with a failed quality gate and a coverage greater than or equals to 60% and a coverage strictly lower than 80%:<br>" +
         "   <code>filter=\"alert_status = ERROR and isFavorite and coverage >= 60 and coverage < 80\"</code></li>" +
         " <li>to filter projects with a reliability, security and maintainability rating equals or worse than B:<br>" +
         "   <code>filter=\"reliability_rating>=2 and security_rating>=2 and sqale_rating>=2\"</code></li>" +
         " <li>to filter projects without duplication data:<br>" +
         "   <code>filter=\"duplicated_lines_density = NO_DATA\"</code></li>" +
-        "</ul>" +
+        HTML_UL_END_TAG +
         "To filter on project name or key, use the 'query' keyword, for instance : <code>filter='query = \"Sonar\"'</code>.<br>" +
         "<br>" +
         "To filter on a numeric metric, provide the metric key.<br>" +
         "These are the supported metric keys:<br>" +
-        "<ul>" +
+        HTML_UL_START_TAG +
         METRIC_KEYS.stream().sorted().map(key -> "<li>" + key + "</li>").collect(Collectors.joining()) +
-        "</ul>" +
+        HTML_UL_END_TAG +
         "<br>" +
         "To filter on a rating, provide the corresponding metric key (ex: reliability_rating for reliability rating).<br>" +
-        "The possible values are:" +
-        "<ul>" +
+        HTML_POSSIBLE_VALUES_TEXT +
+        HTML_UL_START_TAG +
         " <li>'1' for rating A</li>" +
         " <li>'2' for rating B</li>" +
         " <li>'3' for rating C</li>" +
         " <li>'4' for rating D</li>" +
         " <li>'5' for rating E</li>" +
-        "</ul>" +
+        HTML_UL_END_TAG +
         "To filter on a Quality Gate status use the metric key 'alert_status'. Only the '=' operator can be used.<br>" +
-        "The possible values are:" +
-        "<ul>" +
+        HTML_POSSIBLE_VALUES_TEXT +
+        HTML_UL_START_TAG +
         " <li>'OK' for Passed</li>" +
         " <li>'WARN' for Warning</li>" +
         " <li>'ERROR' for Failed</li>" +
-        "</ul>" +
+        HTML_UL_END_TAG +
         "To filter on language keys use the language key: " +
-        "<ul>" +
+        HTML_UL_START_TAG +
         " <li>to filter on a single language you can use 'language = java'</li>" +
         " <li>to filter on several languages you must use 'language IN (java, js)'</li>" +
-        "</ul>" +
+        HTML_UL_END_TAG +
         "Use the WS api/languages/list to find the key of a language.<br> " +
         "To filter on tags use the 'tag' keyword:" +
-        "<ul> " +
+        HTML_UL_START_TAG +
         " <li>to filter on one tag you can use <code>tag = finance</code></li>" +
         " <li>to filter on several tags you must use <code>tag in (offshore, java)</code></li>" +
-        "</ul>");
+        HTML_UL_END_TAG +
+        "To filter on a qualifier use key 'qualifier'. Only the '=' operator can be used.<br>" +
+        HTML_POSSIBLE_VALUES_TEXT +
+        HTML_UL_START_TAG +
+        " <li>TRK - for projects</li>" +
+        " <li>APP - for applications</li>" +
+        HTML_UL_END_TAG);
     action.createParam(Param.SORT)
       .setDescription("Sort projects by numeric metric key, quality gate status (using '%s'), last analysis date (using '%s'), or by project name.",
         ALERT_STATUS_KEY, SORT_BY_LAST_ANALYSIS_DATE, PARAM_FILTER)
       .setDefaultValue(SORT_BY_NAME)
       .setPossibleValues(
-        Stream.concat(METRIC_KEYS.stream(), NON_METRIC_SORT_KEYS.stream()).sorted().collect(MoreCollectors.toList(METRIC_KEYS.size() + NON_METRIC_SORT_KEYS.size())))
+        Stream.concat(METRIC_KEYS.stream(), NON_METRIC_SORT_KEYS.stream()).sorted().collect(toList(METRIC_KEYS.size() + NON_METRIC_SORT_KEYS.size())))
       .setSince("6.4");
     action.createParam(Param.ASCENDING)
       .setDescription("Ascending sort")
@@ -228,12 +256,14 @@ public class SearchProjectsAction implements ComponentsWsAction {
     Map<String, OrganizationDto> organizationsByUuid = dbClient.organizationDao().selectByUuids(dbSession, organizationUuids)
       .stream()
       .collect(MoreCollectors.uniqueIndex(OrganizationDto::getUuid));
-    return buildResponse(request, searchResults, organizationsByUuid);
+    boolean needIssueSync = dbClient.branchDao().hasAnyBranchWhereNeedIssueSync(dbSession, true);
+    return buildResponse(request, searchResults, organizationsByUuid, needIssueSync);
   }
 
   private SearchProjectsWsResponse handleForOrganization(DbSession dbSession, SearchProjectsRequest request, OrganizationDto organization) {
     SearchResults searchResults = searchData(dbSession, request, organization);
-    return buildResponse(request, searchResults, ImmutableMap.of(organization.getUuid(), organization));
+    boolean needIssueSync = dbClient.branchDao().hasAnyBranchWhereNeedIssueSync(dbSession, true);
+    return buildResponse(request, searchResults, ImmutableMap.of(organization.getUuid(), organization), needIssueSync);
   }
 
   private SearchResults searchData(DbSession dbSession, SearchProjectsRequest request, @Nullable OrganizationDto organization) {
@@ -247,17 +277,67 @@ public class SearchProjectsAction implements ComponentsWsAction {
       .map(OrganizationDto::getUuid)
       .ifPresent(query::setOrganizationUuid);
 
+    Set<String> qualifiersBasedOnEdition = getQualifiersBasedOnEdition(query);
+    query.setQualifiers(qualifiersBasedOnEdition);
+
     ProjectMeasuresQueryValidator.validate(query);
 
     SearchIdResult<String> esResults = index.search(query, new SearchOptions()
       .addFacets(request.getFacets())
       .setPage(request.getPage(), request.getPageSize()));
 
-    List<String> projectUuids = esResults.getIds();
+    List<String> projectUuids = esResults.getUuids();
     Ordering<ProjectDto> ordering = Ordering.explicit(projectUuids).onResultOf(ProjectDto::getUuid);
     List<ProjectDto> projects = ordering.immutableSortedCopy(dbClient.projectDao().selectByUuids(dbSession, new HashSet<>(projectUuids)));
     Map<String, SnapshotDto> analysisByProjectUuid = getSnapshots(dbSession, request, projectUuids);
-    return new SearchResults(projects, favoriteProjectUuids, esResults, analysisByProjectUuid, query);
+
+    Map<String, Long> applicationsLeakPeriod = getApplicationsLeakPeriod(dbSession, request, qualifiersBasedOnEdition, projectUuids);
+
+    List<String> projectsInsync = getProjectUuidsWithBranchesNeedIssueSync(dbSession, Sets.newHashSet(projectUuids));
+
+    return SearchResultsBuilder.builder()
+      .projects(projects)
+      .favoriteProjectUuids(favoriteProjectUuids)
+      .searchResults(esResults)
+      .analysisByProjectUuid(analysisByProjectUuid)
+      .applicationsLeakPeriods(applicationsLeakPeriod)
+      .projectsWithIssuesInSync(projectsInsync)
+      .query(query)
+      .build();
+  }
+
+  private List<String> getProjectUuidsWithBranchesNeedIssueSync(DbSession dbSession, Set<String> projectUuids) {
+    return issueIndexSyncProgressChecker.findProjectUuidsWithIssuesSyncNeed(dbSession, projectUuids);
+  }
+
+  private Set<String> getQualifiersBasedOnEdition(ProjectMeasuresQuery query) {
+    Set<String> availableQualifiers = getQualifiersFromEdition();
+    Set<String> requestQualifiers = query.getQualifiers().orElse(availableQualifiers);
+
+    Set<String> resolvedQualifiers = requestQualifiers.stream()
+      .filter(availableQualifiers::contains)
+      .collect(Collectors.toSet());
+    if (!resolvedQualifiers.isEmpty()) {
+      return resolvedQualifiers;
+    } else {
+      throw new IllegalArgumentException("Invalid qualifier, available are: " + String.join(",", availableQualifiers));
+    }
+  }
+
+  private Set<String> getQualifiersFromEdition() {
+    Optional<Edition> edition = editionProvider.get();
+
+    if (!edition.isPresent()) {
+      return Sets.newHashSet(Qualifiers.PROJECT);
+    }
+
+    switch (edition.get()) {
+      case ENTERPRISE:
+      case DATACENTER:
+        return Sets.newHashSet(Qualifiers.PROJECT, Qualifiers.APP);
+      default:
+        return Sets.newHashSet(Qualifiers.PROJECT);
+    }
   }
 
   private static boolean hasFavoriteFilter(List<Criterion> criteria) {
@@ -273,18 +353,18 @@ public class SearchProjectsAction implements ComponentsWsAction {
 
     List<PropertyDto> props = dbClient.propertiesDao().selectByQuery(
       PropertyQuery.builder()
-        .setUserId(userSession.getUserId())
+        .setUserUuid(userSession.getUuid())
         .setKey("favourite")
         .build(),
       dbSession);
 
-    List<Long> favoriteDbIds = props.stream()
-      .map(PropertyDto::getResourceId)
+    List<String> favoriteDbUuids = props.stream()
+      .map(PropertyDto::getComponentUuid)
       .collect(MoreCollectors.toList(props.size()));
 
-    return dbClient.componentDao().selectByIds(dbSession, favoriteDbIds).stream()
+    return dbClient.componentDao().selectByUuids(dbSession, favoriteDbUuids).stream()
       .filter(ComponentDto::isEnabled)
-      .filter(f -> f.qualifier().equals(Qualifiers.PROJECT))
+      .filter(f -> f.qualifier().equals(Qualifiers.PROJECT) || f.qualifier().equals(Qualifiers.APP))
       .map(ComponentDto::uuid)
       .collect(MoreCollectors.toSet());
   }
@@ -295,6 +375,19 @@ public class SearchProjectsAction implements ComponentsWsAction {
         .stream()
         .collect(MoreCollectors.uniqueIndex(SnapshotDto::getComponentUuid));
     }
+    return emptyMap();
+  }
+
+  private Map<String, Long> getApplicationsLeakPeriod(DbSession dbSession, SearchProjectsRequest request, Set<String> qualifiers, List<String> projectUuids) {
+    if (qualifiers.contains(Qualifiers.APP) && request.getAdditionalFields().contains(LEAK_PERIOD_DATE)) {
+      return dbClient.liveMeasureDao().selectByComponentUuidsAndMetricKeys(dbSession, projectUuids, Collections.singleton(METRIC_LEAK_PROJECTS_KEY))
+        .stream()
+        .filter(lm -> !Objects.isNull(lm.getDataAsString()))
+        .map(lm -> Maps.immutableEntry(lm.getComponentUuid(), ApplicationLeakProjects.parse(lm.getDataAsString()).getOldestLeak()))
+        .filter(entry -> entry.getValue().isPresent())
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().get().getLeak()));
+    }
+
     return emptyMap();
   }
 
@@ -320,9 +413,9 @@ public class SearchProjectsAction implements ComponentsWsAction {
     return request.build();
   }
 
-  private SearchProjectsWsResponse buildResponse(SearchProjectsRequest request, SearchResults searchResults, Map<String, OrganizationDto> organizationsByUuid) {
-    Function<ProjectDto, Component> dbToWsComponent = new DbToWsComponent(request, organizationsByUuid, searchResults.favoriteProjectUuids, searchResults.analysisByProjectUuid,
-      userSession.isLoggedIn());
+  private SearchProjectsWsResponse buildResponse(SearchProjectsRequest request, SearchResults searchResults, Map<String, OrganizationDto> organizationsByUuid,
+    boolean needIssueSync) {
+    Function<ProjectDto, Component> dbToWsComponent = new DbToWsComponent(request, organizationsByUuid, searchResults, userSession.isLoggedIn(), needIssueSync);
 
     Map<String, OrganizationDto> organizationsByUuidForAdditionalInfo = new HashMap<>();
     if (request.additionalFields.contains(ORGANIZATIONS)) {
@@ -433,17 +526,23 @@ public class SearchProjectsAction implements ComponentsWsAction {
     private final Component.Builder wsComponent;
     private final Map<String, OrganizationDto> organizationsByUuid;
     private final Set<String> favoriteProjectUuids;
+    private final List<String> projectsWithIssuesInSync;
     private final boolean isUserLoggedIn;
     private final Map<String, SnapshotDto> analysisByProjectUuid;
+    private final Map<String, Long> applicationsLeakPeriod;
+    private final boolean needIssueSync;
 
-    private DbToWsComponent(SearchProjectsRequest request, Map<String, OrganizationDto> organizationsByUuid, Set<String> favoriteProjectUuids,
-      Map<String, SnapshotDto> analysisByProjectUuid, boolean isUserLoggedIn) {
+    private DbToWsComponent(SearchProjectsRequest request, Map<String, OrganizationDto> organizationsByUuid, SearchResults searchResults, boolean isUserLoggedIn,
+      boolean needIssueSync) {
       this.request = request;
-      this.analysisByProjectUuid = analysisByProjectUuid;
+      this.analysisByProjectUuid = searchResults.analysisByProjectUuid;
+      this.applicationsLeakPeriod = searchResults.applicationsLeakPeriods;
       this.wsComponent = Component.newBuilder();
       this.organizationsByUuid = organizationsByUuid;
-      this.favoriteProjectUuids = favoriteProjectUuids;
+      this.favoriteProjectUuids = searchResults.favoriteProjectUuids;
+      this.projectsWithIssuesInSync = searchResults.projectsWithIssuesInSync;
       this.isUserLoggedIn = isUserLoggedIn;
+      this.needIssueSync = needIssueSync;
     }
 
     @Override
@@ -456,6 +555,7 @@ public class SearchProjectsAction implements ComponentsWsAction {
         .setOrganization(organizationDto.getKey())
         .setKey(dbProject.getKey())
         .setName(dbProject.getName())
+        .setQualifier(dbProject.getQualifier())
         .setVisibility(Visibility.getLabel(dbProject.isPrivate()));
       wsComponent.getTagsBuilder().addAllTags(dbProject.getTags());
 
@@ -465,7 +565,11 @@ public class SearchProjectsAction implements ComponentsWsAction {
           wsComponent.setAnalysisDate(formatDateTime(snapshotDto.getCreatedAt()));
         }
         if (request.getAdditionalFields().contains(LEAK_PERIOD_DATE)) {
-          ofNullable(snapshotDto.getPeriodDate()).ifPresent(leakPeriodDate -> wsComponent.setLeakPeriodDate(formatDateTime(leakPeriodDate)));
+          if (Qualifiers.APP.equals(dbProject.getQualifier())) {
+            ofNullable(applicationsLeakPeriod.get(dbProject.getUuid())).ifPresent(leakPeriodDate -> wsComponent.setLeakPeriodDate(formatDateTime(leakPeriodDate)));
+          } else {
+            ofNullable(snapshotDto.getPeriodDate()).ifPresent(leakPeriodDate -> wsComponent.setLeakPeriodDate(formatDateTime(leakPeriodDate)));
+          }
         }
       }
 
@@ -473,26 +577,93 @@ public class SearchProjectsAction implements ComponentsWsAction {
         wsComponent.setIsFavorite(favoriteProjectUuids.contains(dbProject.getUuid()));
       }
 
+      if (Qualifiers.APP.equals(dbProject.getQualifier())) {
+        wsComponent.setNeedIssueSync(needIssueSync);
+      } else {
+        wsComponent.setNeedIssueSync(projectsWithIssuesInSync.contains(dbProject.getUuid()));
+      }
       return wsComponent.build();
     }
   }
 
-  private static class SearchResults {
+  public static class SearchResults {
     private final List<ProjectDto> projects;
     private final Set<String> favoriteProjectUuids;
+    private final List<String> projectsWithIssuesInSync;
     private final Facets facets;
     private final Map<String, SnapshotDto> analysisByProjectUuid;
+    private final Map<String, Long> applicationsLeakPeriods;
     private final ProjectMeasuresQuery query;
     private final int total;
 
     private SearchResults(List<ProjectDto> projects, Set<String> favoriteProjectUuids, SearchIdResult<String> searchResults, Map<String, SnapshotDto> analysisByProjectUuid,
-      ProjectMeasuresQuery query) {
+      Map<String, Long> applicationsLeakPeriods, List<String> projectsWithIssuesInSync, ProjectMeasuresQuery query) {
       this.projects = projects;
       this.favoriteProjectUuids = favoriteProjectUuids;
+      this.projectsWithIssuesInSync = projectsWithIssuesInSync;
       this.total = (int) searchResults.getTotal();
       this.facets = searchResults.getFacets();
       this.analysisByProjectUuid = analysisByProjectUuid;
+      this.applicationsLeakPeriods = applicationsLeakPeriods;
       this.query = query;
+    }
+
+    public static final class SearchResultsBuilder {
+
+      private List<ProjectDto> projects;
+      private Set<String> favoriteProjectUuids;
+      private List<String> projectsWithIssuesInSync;
+      private Map<String, SnapshotDto> analysisByProjectUuid;
+      private Map<String, Long> applicationsLeakPeriods;
+      private ProjectMeasuresQuery query;
+      private SearchIdResult<String> searchResults;
+
+      private SearchResultsBuilder() {
+      }
+
+      public static SearchResultsBuilder builder() {
+        return new SearchResultsBuilder();
+      }
+
+      public SearchResultsBuilder projects(List<ProjectDto> projects) {
+        this.projects = projects;
+        return this;
+      }
+
+      public SearchResultsBuilder favoriteProjectUuids(Set<String> favoriteProjectUuids) {
+        this.favoriteProjectUuids = favoriteProjectUuids;
+        return this;
+      }
+
+      public SearchResultsBuilder projectsWithIssuesInSync(List<String> projectsWithIssuesInSync) {
+        this.projectsWithIssuesInSync = projectsWithIssuesInSync;
+        return this;
+      }
+
+      public SearchResultsBuilder analysisByProjectUuid(Map<String, SnapshotDto> analysisByProjectUuid) {
+        this.analysisByProjectUuid = analysisByProjectUuid;
+        return this;
+      }
+
+      public SearchResultsBuilder applicationsLeakPeriods(Map<String, Long> applicationsLeakPeriods) {
+        this.applicationsLeakPeriods = applicationsLeakPeriods;
+        return this;
+      }
+
+      public SearchResultsBuilder query(ProjectMeasuresQuery query) {
+        this.query = query;
+        return this;
+      }
+
+      public SearchResultsBuilder searchResults(SearchIdResult<String> searchResults) {
+        this.searchResults = searchResults;
+        return this;
+      }
+
+      public SearchResults build() {
+        return new SearchResults(projects, favoriteProjectUuids, searchResults, analysisByProjectUuid, applicationsLeakPeriods,
+          projectsWithIssuesInSync, query);
+      }
     }
   }
 

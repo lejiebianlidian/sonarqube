@@ -35,7 +35,7 @@ C#|`sonar.cs.dotcover.reportsPaths`|Path to dotCover coverage report. See _Notes
 C#|`sonar.cs.opencover.reportsPaths`|Path to OpenCover coverage report. See _Notes on importing .NET reports_ below.
 Flex|`sonar.flex.cobertura.reportPaths`|Path to the Cobertura XML reports. Multiple paths may be comma-delimited. May be absolute or relative to the project base directory.
 Go|`sonar.go.coverage.reportPaths`|Comma-delimited list of paths to coverage report files. Path wildcards are supported (see above) since SonarGo 1.1.
-Java / Kotlin / Scala / JVM|`sonar.coverage.jacoco.xmlReportPaths`|Path to JaCoCo XML coverage reports.
+Java / Kotlin / Scala / JVM|`sonar.coverage.jacoco.xmlReportPaths`|Path to JaCoCo XML coverage reports. Path wildcards are supported (see above).
 Java|`sonar.jacoco.reportPaths`![](/images/cross.svg)|**Deprecated. Use `sonar.coverage.jacoco.xmlReportPaths`.** Path to JaCoCo reports in binary format. **Supported only for Java**. 
 JavaScript / TypeScript|`sonar.javascript.lcov.reportPaths`|Comma-delimited list of paths to LCOV coverage report files. Paths may be absolute or relative to project root.
 PHP|`sonar.php.coverage.reportPaths`|Comma-delimited list of paths to Clover XML-format coverage report files. Paths may be absolute or relative to project root.
@@ -73,5 +73,5 @@ VB.NET|`sonar.vbnet.xunit.reportsPaths`|Paths to xUnit execution reports. Multip
 
 1. Run the SonarScanner.MSBuild.exe `begin` command, specifying the absolute path where the reports _will be_ available using the `/d:propertyKey="path"` syntax ("propertyKey" depends on the tool)
 1. Build your project using MSBuild
-1. Run your test tool, instructing it to produce a report at the same location specified earlier to the MSBuild SonarQube Runner
+1. Run your test tool, instructing it to produce a report at the same location specified earlier to the MSBuild SonarQube Runner ([How to generate reports with different tools](https://community.sonarsource.com/t/coverage-test-data-generate-reports-for-c-vb-net/9871)) 
 1. Run the SonarScanner.MSBuild.exe `end` command

@@ -123,24 +123,24 @@ public class AuthorizationDocTest {
   @Test
   public void fromDto_defines_userIds_and_groupIds_if_allowAnyone_is_false() {
     IndexPermissions underTest = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(underTest::addUserId);
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(underTest::addGroupId);
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(String::valueOf).forEach(underTest::addUserUuid);
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(Integer::toString).forEach(underTest::addGroupUuid);
 
     AuthorizationDoc doc = AuthorizationDoc.fromDto(IndexType.main(Index.simple("foo"), "bar"), underTest);
 
     boolean auth_allowAnyone = doc.getField("auth_allowAnyone");
     assertThat(auth_allowAnyone).isFalse();
-    List<Integer> userIds = doc.getField("auth_userIds");
-    assertThat(userIds).isEqualTo(underTest.getUserIds());
-    List<Integer> groupIds = doc.getField("auth_groupIds");
-    assertThat(groupIds).isEqualTo(underTest.getGroupIds());
+    List<String> userUuids = doc.getField("auth_userIds");
+    assertThat(userUuids).isEqualTo(underTest.getUserUuids());
+    List<String> groupUuids = doc.getField("auth_groupIds");
+    assertThat(groupUuids).isEqualTo(underTest.getGroupUuids());
   }
 
   @Test
-  public void fromDto_ignores_userIds_and_groupIds_if_allowAnyone_is_true() {
+  public void fromDto_ignores_userIds_and_groupUuids_if_allowAnyone_is_true() {
     IndexPermissions underTest = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(underTest::addUserId);
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(underTest::addGroupId);
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(String::valueOf).forEach(underTest::addUserUuid);
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(Integer::toString).forEach(underTest::addGroupUuid);
     underTest.allowAnyone();
 
     AuthorizationDoc doc = AuthorizationDoc.fromDto(IndexType.main(Index.simple("foo"), "bar"), underTest);
@@ -154,10 +154,10 @@ public class AuthorizationDocTest {
       assertThat(e).hasMessage("Field auth_userIds not specified in query options");
     }
     try {
-      doc.getField("auth_groupIds");
+      doc.getField("auth_groupUuids");
       fail("should have thrown IllegalStateException");
     } catch (IllegalStateException e) {
-      assertThat(e).hasMessage("Field auth_groupIds not specified in query options");
+      assertThat(e).hasMessage("Field auth_groupUuids not specified in query options");
     }
   }
 
@@ -166,17 +166,17 @@ public class AuthorizationDocTest {
     IndexPermissions allowAnyone = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
     allowAnyone.allowAnyone();
     IndexPermissions someUserIds = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(someUserIds::addUserId);
-    IndexPermissions someGroupIds = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(someGroupIds::addGroupId);
-    IndexPermissions someGroupIdAndUserIs = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(someGroupIdAndUserIs::addUserId);
-    IntStream.range(0, 1 + new Random().nextInt(5)).forEach(someGroupIdAndUserIs::addGroupId);
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(String::valueOf).forEach(someUserIds::addUserUuid);
+    IndexPermissions someGroupUuids = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(Integer::toString).forEach(someGroupUuids::addGroupUuid);
+    IndexPermissions someGroupUuidAndUserIs = new IndexPermissions(randomAlphabetic(3), randomAlphabetic(4));
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(String::valueOf).forEach(someGroupUuidAndUserIs::addUserUuid);
+    IntStream.range(0, 1 + new Random().nextInt(5)).mapToObj(Integer::toString).forEach(someGroupUuidAndUserIs::addGroupUuid);
     return new Object[][] {
       {allowAnyone},
       {someUserIds},
-      {someGroupIds},
-      {someGroupIdAndUserIs}
+      {someGroupUuids},
+      {someGroupUuidAndUserIs}
     };
   }
 }

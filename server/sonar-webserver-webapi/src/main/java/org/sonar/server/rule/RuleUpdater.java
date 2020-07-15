@@ -81,7 +81,7 @@ public class RuleUpdater {
     apply(update, rule, userSession);
     update(dbSession, rule);
     updateParameters(dbSession, organization, update, rule);
-    ruleIndexer.commitAndIndex(dbSession, rule.getId(), organization);
+    ruleIndexer.commitAndIndex(dbSession, rule.getUuid(), organization);
 
     return true;
   }
@@ -212,12 +212,12 @@ public class RuleUpdater {
   private void updateParameters(DbSession dbSession, OrganizationDto organization, RuleUpdate update, RuleDto rule) {
     if (update.isChangeParameters() && update.isCustomRule()) {
       RuleDto customRule = rule;
-      Integer templateId = customRule.getTemplateId();
-      checkNotNull(templateId, "Rule '%s' has no persisted template!", customRule);
-      Optional<RuleDefinitionDto> templateRule = dbClient.ruleDao().selectDefinitionById(templateId, dbSession);
+      String templateUuid = customRule.getTemplateUuid();
+      checkNotNull(templateUuid, "Rule '%s' has no persisted template!", customRule);
+      Optional<RuleDefinitionDto> templateRule = dbClient.ruleDao().selectDefinitionByUuid(templateUuid, dbSession);
       if (!templateRule.isPresent()) {
         throw new IllegalStateException(String.format("Template %s of rule %s does not exist",
-          customRule.getTemplateId(), customRule.getKey()));
+          customRule.getTemplateUuid(), customRule.getKey()));
       }
       List<String> paramKeys = newArrayList();
 
@@ -229,12 +229,12 @@ public class RuleUpdater {
   }
 
   private Multimap<ActiveRuleDto, ActiveRuleParamDto> getActiveRuleParamsByActiveRule(DbSession dbSession, OrganizationDto organization, RuleDto customRule) {
-    List<OrgActiveRuleDto> activeRuleDtos = dbClient.activeRuleDao().selectByRuleId(dbSession, organization, customRule.getId());
-    Map<Integer, OrgActiveRuleDto> activeRuleById = from(activeRuleDtos).uniqueIndex(ActiveRuleDto::getId);
-    List<Integer> activeRuleIds = Lists.transform(activeRuleDtos, ActiveRuleDto::getId);
-    List<ActiveRuleParamDto> activeRuleParamDtos = dbClient.activeRuleDao().selectParamsByActiveRuleIds(dbSession, activeRuleIds);
+    List<OrgActiveRuleDto> activeRuleDtos = dbClient.activeRuleDao().selectByRuleUuid(dbSession, organization, customRule.getUuid());
+    Map<String, OrgActiveRuleDto> activeRuleByUuid = from(activeRuleDtos).uniqueIndex(ActiveRuleDto::getUuid);
+    List<String> activeRuleUuids = Lists.transform(activeRuleDtos, ActiveRuleDto::getUuid);
+    List<ActiveRuleParamDto> activeRuleParamDtos = dbClient.activeRuleDao().selectParamsByActiveRuleUuids(dbSession, activeRuleUuids);
     return from(activeRuleParamDtos)
-      .index(new ActiveRuleParamToActiveRule(activeRuleById));
+      .index(new ActiveRuleParamToActiveRule(activeRuleByUuid));
   }
 
   private void deleteOrUpdateParameters(DbSession dbSession, RuleUpdate update, RuleDto customRule, List<String> paramKeys,
@@ -269,15 +269,15 @@ public class RuleUpdater {
   }
 
   private static class ActiveRuleParamToActiveRule implements Function<ActiveRuleParamDto, ActiveRuleDto> {
-    private final Map<Integer, OrgActiveRuleDto> activeRuleById;
+    private final Map<String, OrgActiveRuleDto> activeRuleByUuid;
 
-    private ActiveRuleParamToActiveRule(Map<Integer, OrgActiveRuleDto> activeRuleById) {
-      this.activeRuleById = activeRuleById;
+    private ActiveRuleParamToActiveRule(Map<String, OrgActiveRuleDto> activeRuleByUuid) {
+      this.activeRuleByUuid = activeRuleByUuid;
     }
 
     @Override
     public OrgActiveRuleDto apply(@Nonnull ActiveRuleParamDto input) {
-      return activeRuleById.get(input.getActiveRuleId());
+      return activeRuleByUuid.get(input.getActiveRuleUuid());
     }
   }
 
@@ -321,7 +321,7 @@ public class RuleUpdater {
     @Override
     public void accept(@Nonnull ActiveRuleParamDto activeRuleParamDto) {
       if (activeRuleParamDto.getKey().equals(key)) {
-        dbClient.activeRuleDao().deleteParamById(dbSession, activeRuleParamDto.getId());
+        dbClient.activeRuleDao().deleteParamByUuid(dbSession, activeRuleParamDto.getUuid());
       }
     }
   }

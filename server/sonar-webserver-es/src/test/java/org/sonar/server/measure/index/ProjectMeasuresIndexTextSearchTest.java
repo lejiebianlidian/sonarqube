@@ -296,7 +296,8 @@ public class ProjectMeasuresIndexTextSearchTest {
       .setOrganizationUuid(project.getOrganizationUuid())
       .setId(project.uuid())
       .setKey(project.getDbKey())
-      .setName(project.name());
+      .setName(project.name())
+      .setQualifier(project.qualifier());
   }
 
   private static ProjectMeasuresDoc newDoc(ComponentDto project, String metric1, Object value1) {
@@ -308,7 +309,7 @@ public class ProjectMeasuresIndexTextSearchTest {
   }
 
   private void assertResults(ProjectMeasuresQuery query, String... expectedProjectUuids) {
-    List<String> result = underTest.search(query, new SearchOptions()).getIds();
+    List<String> result = underTest.search(query, new SearchOptions()).getUuids();
     assertThat(result).containsExactly(expectedProjectUuids);
   }
 

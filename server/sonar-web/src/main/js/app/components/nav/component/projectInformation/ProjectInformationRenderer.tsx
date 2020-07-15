@@ -53,47 +53,42 @@ export function ProjectInformationRenderer(props: ProjectInformationRendererProp
       </div>
 
       <div className="overflow-y-auto">
-        {(component.description || !isApp) && (
-          <div className="big-padded bordered-bottom">
-            <div className="display-flex-center">
-              <h3 className="spacer-right">{translate('project.info.description')}</h3>
-              {component.visibility && (
-                <PrivacyBadgeContainer
-                  organization={undefined}
-                  qualifier={component.qualifier}
-                  tooltipProps={{ projectKey: component.key }}
-                  visibility={component.visibility}
-                />
-              )}
-            </div>
-
-            {component.description && <p className="spacer-bottom">{component.description}</p>}
-
-            {!isApp && (
-              <MetaTags component={component} onComponentChange={props.onComponentChange} />
+        <div className="big-padded bordered-bottom">
+          <div className="display-flex-center">
+            <h3 className="spacer-right">{translate('project.info.description')}</h3>
+            {component.visibility && (
+              <PrivacyBadgeContainer
+                qualifier={component.qualifier}
+                visibility={component.visibility}
+              />
             )}
           </div>
-        )}
+
+          {component.description && <p>{component.description}</p>}
+
+          <MetaTags component={component} onComponentChange={props.onComponentChange} />
+        </div>
 
         <div className="big-padded bordered-bottom it__project-loc-value">
           <MetaSize component={component} measures={measures} />
         </div>
 
-        {(component.qualityGate ||
-          (component.qualityProfiles && component.qualityProfiles.length > 0)) && (
-          <>
-            <div className="big-padded bordered-bottom">
-              {component.qualityGate && <MetaQualityGate qualityGate={component.qualityGate} />}
+        {!isApp &&
+          (component.qualityGate ||
+            (component.qualityProfiles && component.qualityProfiles.length > 0)) && (
+            <>
+              <div className="big-padded bordered-bottom">
+                {component.qualityGate && <MetaQualityGate qualityGate={component.qualityGate} />}
 
-              {component.qualityProfiles && component.qualityProfiles.length > 0 && (
-                <MetaQualityProfiles
-                  headerClassName={component.qualityGate ? 'big-spacer-top' : undefined}
-                  profiles={component.qualityProfiles}
-                />
-              )}
-            </div>
-          </>
-        )}
+                {component.qualityProfiles && component.qualityProfiles.length > 0 && (
+                  <MetaQualityProfiles
+                    headerClassName={component.qualityGate ? 'big-spacer-top' : undefined}
+                    profiles={component.qualityProfiles}
+                  />
+                )}
+              </div>
+            </>
+          )}
 
         {!isApp && <MetaLinks component={component} />}
 

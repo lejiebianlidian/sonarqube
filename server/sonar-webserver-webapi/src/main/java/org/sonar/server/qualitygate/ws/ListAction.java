@@ -57,6 +57,7 @@ public class ListAction implements QualityGatesWsAction {
       .setSince("4.3")
       .setResponseExample(Resources.getResource(this.getClass(), "list-example.json"))
       .setChangelog(
+        new Change("8.4", "Field 'id' in the response is deprecated. Format changes from integer to string."),
         new Change("7.0", "'isDefault' field is added on quality gate"),
         new Change("7.0", "'default' field on root level is deprecated"),
         new Change("7.0", "'isBuiltIn' field is added in the response"),
@@ -76,19 +77,19 @@ public class ListAction implements QualityGatesWsAction {
   }
 
   private ListWsResponse buildResponse(OrganizationDto organization, Collection<QualityGateDto> qualityGates, @Nullable QualityGateDto defaultQualityGate) {
-    Long defaultId = defaultQualityGate == null ? null : defaultQualityGate.getId();
+    String defaultUuid = defaultQualityGate == null ? null : defaultQualityGate.getUuid();
     ListWsResponse.Builder builder = ListWsResponse.newBuilder()
       .setActions(ListWsResponse.RootActions.newBuilder().setCreate(wsSupport.isQualityGateAdmin(organization)))
       .addAllQualitygates(qualityGates.stream()
         .map(qualityGate -> QualityGate.newBuilder()
-          .setId(qualityGate.getId())
+          .setId(qualityGate.getUuid())
           .setName(qualityGate.getName())
-          .setIsDefault(qualityGate.getId().equals(defaultId))
+          .setIsDefault(qualityGate.getUuid().equals(defaultUuid))
           .setIsBuiltIn(qualityGate.isBuiltIn())
           .setActions(wsSupport.getActions(organization, qualityGate, defaultQualityGate))
           .build())
         .collect(toList()));
-    ofNullable(defaultId).ifPresent(builder::setDefault);
+    ofNullable(defaultUuid).ifPresent(builder::setDefault);
     return builder.build();
   }
 

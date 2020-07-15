@@ -24,7 +24,7 @@ import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getSources } from '../../../../api/components';
 import { mockBranch } from '../../../../helpers/mocks/branch-like';
 import { mockHotspot } from '../../../../helpers/mocks/security-hotspots';
-import { mockSourceLine } from '../../../../helpers/testMocks';
+import { mockComponent, mockSourceLine } from '../../../../helpers/testMocks';
 import HotspotSnippetContainer from '../HotspotSnippetContainer';
 import HotspotSnippetContainerRenderer from '../HotspotSnippetContainerRenderer';
 
@@ -155,32 +155,6 @@ describe('Expansion', () => {
   });
 });
 
-it('should handle line popups', async () => {
-  (getSources as jest.Mock).mockResolvedValueOnce(
-    range(5, 18).map(line => mockSourceLine({ line }))
-  );
-
-  const wrapper = shallowRender();
-  await waitAndUpdate(wrapper);
-
-  const params = wrapper.state().sourceLines[0];
-
-  wrapper
-    .find(HotspotSnippetContainerRenderer)
-    .props()
-    .onLinePopupToggle(params);
-
-  expect(wrapper.state().linePopup).toEqual(params);
-
-  // Close it
-  wrapper
-    .find(HotspotSnippetContainerRenderer)
-    .props()
-    .onLinePopupToggle(params);
-
-  expect(wrapper.state().linePopup).toBeUndefined();
-});
-
 it('should handle symbol click', () => {
   const wrapper = shallowRender();
   const symbols = ['symbol'];
@@ -193,6 +167,11 @@ it('should handle symbol click', () => {
 
 function shallowRender(props?: Partial<HotspotSnippetContainer['props']>) {
   return shallow<HotspotSnippetContainer>(
-    <HotspotSnippetContainer branchLike={branch} hotspot={mockHotspot()} {...props} />
+    <HotspotSnippetContainer
+      branchLike={branch}
+      component={mockComponent()}
+      hotspot={mockHotspot()}
+      {...props}
+    />
   );
 }

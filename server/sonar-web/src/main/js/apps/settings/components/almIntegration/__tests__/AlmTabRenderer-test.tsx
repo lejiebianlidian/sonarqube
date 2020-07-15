@@ -19,14 +19,16 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockGithubDefinition } from '../../../../../helpers/mocks/alm-settings';
+import { mockGithubBindingDefinition } from '../../../../../helpers/mocks/alm-settings';
 import { AlmKeys, GithubBindingDefinition } from '../../../../../types/alm-settings';
 import AlmTabRenderer, { AlmTabRendererProps } from '../AlmTabRenderer';
 
 it('should render correctly for multi-ALM binding', () => {
-  expect(shallowRender({ loading: true })).toMatchSnapshot('loading');
+  expect(shallowRender({ loadingAlmDefinitions: true })).toMatchSnapshot('loading ALM definitions');
+  expect(shallowRender({ loadingProjectCount: true })).toMatchSnapshot('loading project count');
+  expect(shallowRender({ submitting: true })).toMatchSnapshot('submitting');
   expect(shallowRender()).toMatchSnapshot('loaded');
-  expect(shallowRender({ editedDefinition: mockGithubDefinition() })).toMatchSnapshot(
+  expect(shallowRender({ editedDefinition: mockGithubBindingDefinition() })).toMatchSnapshot(
     'editing a definition'
   );
   expect(
@@ -48,10 +50,12 @@ it('should render correctly for multi-ALM binding', () => {
 });
 
 it('should render correctly for single-ALM binding', () => {
-  expect(shallowRender({ loading: true, multipleAlmEnabled: false })).toMatchSnapshot();
+  expect(
+    shallowRender({ loadingAlmDefinitions: true, multipleAlmEnabled: false })
+  ).toMatchSnapshot();
   expect(shallowRender({ multipleAlmEnabled: false })).toMatchSnapshot();
   expect(
-    shallowRender({ definitions: [mockGithubDefinition()], multipleAlmEnabled: false })
+    shallowRender({ definitions: [mockGithubBindingDefinition()], multipleAlmEnabled: false })
   ).toMatchSnapshot();
 });
 
@@ -61,16 +65,18 @@ function shallowRender(props: Partial<AlmTabRendererProps<GithubBindingDefinitio
       additionalColumnsHeaders={['url', 'app_id']}
       additionalColumnsKeys={['url', 'appId']}
       alm={AlmKeys.GitHub}
-      defaultBinding={mockGithubDefinition()}
-      definitions={[mockGithubDefinition()]}
+      defaultBinding={mockGithubBindingDefinition()}
+      definitions={[mockGithubBindingDefinition()]}
       form={jest.fn()}
-      loading={false}
+      loadingAlmDefinitions={false}
+      loadingProjectCount={false}
       multipleAlmEnabled={true}
       onCancel={jest.fn()}
       onCreate={jest.fn()}
       onDelete={jest.fn()}
       onEdit={jest.fn()}
       onSubmit={jest.fn()}
+      submitting={true}
       success={false}
       {...props}
     />

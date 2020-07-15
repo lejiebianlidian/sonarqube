@@ -213,15 +213,13 @@ public class ComponentTreeAction implements MeasuresWsAction {
       .setDeprecatedKey(DEPRECATED_PARAM_BASE_COMPONENT_KEY, "6.6");
 
     action.createParam(PARAM_BRANCH)
-      .setDescription("Branch key")
+      .setDescription("Branch key. Not available in the community edition.")
       .setExampleValue(KEY_BRANCH_EXAMPLE_001)
-      .setInternal(true)
       .setSince("6.6");
 
     action.createParam(PARAM_PULL_REQUEST)
-      .setDescription("Pull request id")
+      .setDescription("Pull request id. Not available in the community edition.")
       .setExampleValue(KEY_PULL_REQUEST_EXAMPLE_001)
-      .setInternal(true)
       .setSince("7.1");
 
     action.createParam(PARAM_METRIC_SORT)
@@ -505,12 +503,12 @@ public class ComponentTreeAction implements MeasuresWsAction {
   private Table<String, MetricDto, ComponentTreeData.Measure> searchMeasuresByComponentUuidAndMetric(DbSession dbSession, ComponentDto baseComponent,
     ComponentTreeQuery componentTreeQuery, List<ComponentDto> components, List<MetricDto> metrics) {
 
-    Map<Integer, MetricDto> metricsById = Maps.uniqueIndex(metrics, MetricDto::getId);
+    Map<String, MetricDto> metricsByUuid = Maps.uniqueIndex(metrics, MetricDto::getUuid);
     MeasureTreeQuery measureQuery = MeasureTreeQuery.builder()
       .setStrategy(MeasureTreeQuery.Strategy.valueOf(componentTreeQuery.getStrategy().name()))
       .setNameOrKeyQuery(componentTreeQuery.getNameOrKeyQuery())
       .setQualifiers(componentTreeQuery.getQualifiers())
-      .setMetricIds(new ArrayList<>(metricsById.keySet()))
+      .setMetricUuids(new ArrayList<>(metricsByUuid.keySet()))
       .build();
 
     Table<String, MetricDto, ComponentTreeData.Measure> measuresByComponentUuidAndMetric = HashBasedTable.create(components.size(), metrics.size());
@@ -518,7 +516,7 @@ public class ComponentTreeAction implements MeasuresWsAction {
       LiveMeasureDto measureDto = result.getResultObject();
       measuresByComponentUuidAndMetric.put(
         measureDto.getComponentUuid(),
-        metricsById.get(measureDto.getMetricId()),
+        metricsByUuid.get(measureDto.getMetricUuid()),
         ComponentTreeData.Measure.createFromMeasureDto(measureDto));
     });
 

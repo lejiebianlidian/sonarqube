@@ -19,6 +19,7 @@
  */
 package org.sonar.server.usergroups.ws;
 
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
@@ -56,7 +57,9 @@ public class DeleteAction implements UserGroupsWsAction {
         PARAM_GROUP_ID, PARAM_GROUP_NAME))
       .setHandler(this)
       .setSince("5.2")
-      .setPost(true);
+      .setPost(true)
+      .setChangelog(
+        new Change("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."));
 
     defineGroupWsParameters(action);
   }
@@ -73,7 +76,7 @@ public class DeleteAction implements UserGroupsWsAction {
       removeFromPermissionTemplates(dbSession, group);
       removeGroupMembers(dbSession, group);
       dbClient.qProfileEditGroupsDao().deleteByGroup(dbSession, group);
-      dbClient.groupDao().deleteById(dbSession, group.getId());
+      dbClient.groupDao().deleteByUuid(dbSession, group.getUuid());
 
       dbSession.commit();
       response.noContent();
@@ -82,20 +85,20 @@ public class DeleteAction implements UserGroupsWsAction {
 
   private void checkNotTryingToDeleteLastAdminGroup(DbSession dbSession, GroupDto group) {
     int remaining = dbClient.authorizationDao().countUsersWithGlobalPermissionExcludingGroup(dbSession,
-      group.getOrganizationUuid(), OrganizationPermission.ADMINISTER.getKey(), group.getId());
+      group.getOrganizationUuid(), OrganizationPermission.ADMINISTER.getKey(), group.getUuid());
 
     checkArgument(remaining > 0, "The last system admin group cannot be deleted");
   }
 
-  private void removeGroupPermissions(DbSession dbSession, GroupDto groupId) {
-    dbClient.roleDao().deleteGroupRolesByGroupId(dbSession, groupId.getId());
+  private void removeGroupPermissions(DbSession dbSession, GroupDto group) {
+    dbClient.roleDao().deleteGroupRolesByGroupUuid(dbSession, group.getUuid());
   }
 
-  private void removeFromPermissionTemplates(DbSession dbSession, GroupDto groupId) {
-    dbClient.permissionTemplateDao().deleteByGroup(dbSession, groupId.getId());
+  private void removeFromPermissionTemplates(DbSession dbSession, GroupDto group) {
+    dbClient.permissionTemplateDao().deleteByGroup(dbSession, group.getUuid());
   }
 
-  private void removeGroupMembers(DbSession dbSession, GroupDto groupId) {
-    dbClient.userGroupDao().deleteByGroupId(dbSession, groupId.getId());
+  private void removeGroupMembers(DbSession dbSession, GroupDto group) {
+    dbClient.userGroupDao().deleteByGroupUuid(dbSession, group.getUuid());
   }
 }

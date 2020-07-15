@@ -99,8 +99,8 @@ public class ActiveRuleCompleter {
       }
     } else {
       // Load details of all active rules
-      List<Integer> ruleIds = Lists.transform(rules, RuleDto::getId);
-      List<OrgActiveRuleDto> activeRules = dbClient.activeRuleDao().selectByRuleIds(dbSession, query.getOrganization(), ruleIds);
+      List<String> ruleUuids = Lists.transform(rules, RuleDto::getUuid);
+      List<OrgActiveRuleDto> activeRules = dbClient.activeRuleDao().selectByRuleUuids(dbSession, query.getOrganization(), ruleUuids);
       Multimap<RuleKey, OrgActiveRuleDto> activeRulesByRuleKey = activeRules.stream()
         .collect(MoreCollectors.index(OrgActiveRuleDto::getRuleKey));
       ListMultimap<ActiveRuleKey, ActiveRuleParamDto> activeRuleParamsByActiveRuleKey = loadParams(dbSession, activeRules);
@@ -117,7 +117,7 @@ public class ActiveRuleCompleter {
     Rules.ActiveList.Builder activeRulesListResponse = Rules.ActiveList.newBuilder();
     for (OrgActiveRuleDto activeRule : activeRules) {
       activeRulesListResponse.addActiveList(buildActiveRuleResponse(activeRule, activeRuleParamsByActiveRuleKey.get(activeRule.getKey())));
-      profileUuids.add(activeRule.getProfileUuid());
+      profileUuids.add(activeRule.getOrgProfileUuid());
     }
     activesBuilder
       .getMutableActives()
@@ -126,14 +126,14 @@ public class ActiveRuleCompleter {
   }
 
   private ListMultimap<ActiveRuleKey, ActiveRuleParamDto> loadParams(DbSession dbSession, List<OrgActiveRuleDto> activeRules) {
-    Map<Integer, ActiveRuleKey> activeRuleIdsByKey = new HashMap<>();
+    Map<String, ActiveRuleKey> activeRuleUuidsByKey = new HashMap<>();
     for (OrgActiveRuleDto activeRule : activeRules) {
-      activeRuleIdsByKey.put(activeRule.getId(), activeRule.getKey());
+      activeRuleUuidsByKey.put(activeRule.getUuid(), activeRule.getKey());
     }
-    List<ActiveRuleParamDto> activeRuleParams = dbClient.activeRuleDao().selectParamsByActiveRuleIds(dbSession, Lists.transform(activeRules, ActiveRuleDto::getId));
+    List<ActiveRuleParamDto> activeRuleParams = dbClient.activeRuleDao().selectParamsByActiveRuleUuids(dbSession, Lists.transform(activeRules, ActiveRuleDto::getUuid));
     ListMultimap<ActiveRuleKey, ActiveRuleParamDto> activeRuleParamsByActiveRuleKey = ArrayListMultimap.create(activeRules.size(), 10);
     for (ActiveRuleParamDto activeRuleParam : activeRuleParams) {
-      ActiveRuleKey activeRuleKey = activeRuleIdsByKey.get(activeRuleParam.getActiveRuleId());
+      ActiveRuleKey activeRuleKey = activeRuleUuidsByKey.get(activeRuleParam.getActiveRuleUuid());
       activeRuleParamsByActiveRuleKey.put(activeRuleKey, activeRuleParam);
     }
 
@@ -141,17 +141,17 @@ public class ActiveRuleCompleter {
   }
 
   List<Rules.Active> completeShow(DbSession dbSession, OrganizationDto organization, RuleDefinitionDto rule) {
-    List<OrgActiveRuleDto> activeRules = dbClient.activeRuleDao().selectByRuleId(dbSession, organization, rule.getId());
-    Map<Integer, ActiveRuleKey> activeRuleIdsByKey = new HashMap<>();
+    List<OrgActiveRuleDto> activeRules = dbClient.activeRuleDao().selectByRuleUuid(dbSession, organization, rule.getUuid());
+    Map<String, ActiveRuleKey> activeRuleUuidsByKey = new HashMap<>();
     for (OrgActiveRuleDto activeRuleDto : activeRules) {
-      activeRuleIdsByKey.put(activeRuleDto.getId(), activeRuleDto.getKey());
+      activeRuleUuidsByKey.put(activeRuleDto.getUuid(), activeRuleDto.getKey());
     }
 
-    List<Integer> activeRuleIds = activeRules.stream().map(ActiveRuleDto::getId).collect(Collectors.toList());
-    List<ActiveRuleParamDto> activeRuleParams = dbClient.activeRuleDao().selectParamsByActiveRuleIds(dbSession, activeRuleIds);
+    List<String> activeRuleUuids = activeRules.stream().map(ActiveRuleDto::getUuid).collect(Collectors.toList());
+    List<ActiveRuleParamDto> activeRuleParams = dbClient.activeRuleDao().selectParamsByActiveRuleUuids(dbSession, activeRuleUuids);
     ListMultimap<ActiveRuleKey, ActiveRuleParamDto> activeRuleParamsByActiveRuleKey = ArrayListMultimap.create(activeRules.size(), 10);
     for (ActiveRuleParamDto activeRuleParamDto : activeRuleParams) {
-      ActiveRuleKey activeRuleKey = activeRuleIdsByKey.get(activeRuleParamDto.getActiveRuleId());
+      ActiveRuleKey activeRuleKey = activeRuleUuidsByKey.get(activeRuleParamDto.getActiveRuleUuid());
       activeRuleParamsByActiveRuleKey.put(activeRuleKey, activeRuleParamDto);
     }
 
@@ -162,7 +162,7 @@ public class ActiveRuleCompleter {
 
   private static Rules.Active buildActiveRuleResponse(OrgActiveRuleDto activeRule, List<ActiveRuleParamDto> parameters) {
     Rules.Active.Builder builder = Rules.Active.newBuilder();
-    builder.setQProfile(activeRule.getProfileUuid());
+    builder.setQProfile(activeRule.getOrgProfileUuid());
     String inheritance = activeRule.getInheritance();
     builder.setInherit(inheritance != null ? inheritance : ActiveRuleInheritance.NONE.name());
     builder.setSeverity(activeRule.getSeverityString());

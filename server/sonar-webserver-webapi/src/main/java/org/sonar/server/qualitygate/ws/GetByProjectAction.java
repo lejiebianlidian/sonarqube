@@ -75,6 +75,7 @@ public class GetByProjectAction implements QualityGatesWsAction {
       .setResponseExample(getClass().getResource("get_by_project-example.json"))
       .setHandler(this)
       .setChangelog(
+        new Change("8.4", "Field 'id' in the response is deprecated. Format changes from integer to string."),
         new Change("6.6", "The parameter 'projectId' has been removed"),
         new Change("6.6", "The parameter 'projectKey' has been renamed to 'project'"),
         new Change("6.6", "This webservice is now part of the public API"));
@@ -112,7 +113,7 @@ public class GetByProjectAction implements QualityGatesWsAction {
     GetByProjectResponse.Builder response = GetByProjectResponse.newBuilder();
 
     response.getQualityGateBuilder()
-      .setId(qualityGate.getId())
+      .setId(qualityGate.getUuid())
       .setName(qualityGate.getName())
       .setDefault(data.isDefault());
 

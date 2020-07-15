@@ -3,9 +3,9 @@
 
 <mapper namespace="org.sonar.db.purge.PurgeMapper">
 
-  <select id="selectAnalysisIdsAndUuids" parameterType="map" resultType="IdUuidPair">
+  <select id="selectAnalysisUuids" parameterType="map" resultType="String">
     select
-      s.id as id, s.uuid as uuid
+      s.uuid as uuid
     from
       snapshots s
     where
@@ -24,7 +24,6 @@
 
   <select id="selectPurgeableAnalyses" parameterType="String" resultType="PurgeableAnalysis">
     select
-      s.id as "analysisId",
       s.uuid as "analysisUuid",
       s.created_at as "date",
       case when ve.analysis_uuid is not null then ${_true} else ${_false} end as "hasEvents",
@@ -58,13 +57,9 @@
         and pb.updated_at &lt; #{toDate}
   </select>
 
-  <select id="selectMetricIdsWithoutHistoricalData" resultType="long">
-    select id from metrics where delete_historical_data=${_true}
-  </select>
-
-  <select id="selectRootAndModulesOrSubviewsByProjectUuid" resultType="IdUuidPair" parameterType="String">
+  <select id="selectRootAndModulesOrSubviewsByProjectUuid" resultType="String" parameterType="String">
     select
-      p.id, p.uuid
+       p.uuid
     from
       components p
     where
@@ -128,19 +123,6 @@
       </foreach>
   </delete>
 
-  <delete id="deleteComponentMeasures" parameterType="map">
-    delete from project_measures
-    where
-      analysis_uuid in
-      <foreach collection="analysisUuids" open="(" close=")" item="analysisUuid" separator=",">
-        #{analysisUuid,jdbcType=VARCHAR}
-      </foreach>
-      and component_uuid in
-      <foreach collection="componentUuids" open="(" close=")" item="componentUuid" separator=",">
-        #{componentUuid,jdbcType=VARCHAR}
-      </foreach>
-  </delete>
-
   <delete id="deleteAnalysisDuplications" parameterType="map">
     delete from duplications_index
     where
@@ -186,20 +168,6 @@
       </foreach>
   </delete>
 
-  <delete id="deleteAnalysisWastedMeasures" parameterType="map">
-    delete from project_measures
-    <where>
-      analysis_uuid in
-      <foreach collection="analysisUuids" open="(" close=")" item="analysisUuid" separator=",">
-        #{analysisUuid}
-      </foreach>
-      and metric_id in
-      <foreach collection="metricIds" open="(" item="metricId" separator="," close=")">
-        #{metricId,jdbcType=INTEGER}
-      </foreach>
-    </where>
-  </delete>
-
   <update id="updatePurgeStatusToOne" parameterType="map">
     update
       snapshots
@@ -235,12 +203,12 @@
       project_uuid = #{rootUuid,jdbcType=VARCHAR}
   </delete>
 
-  <delete id="deletePropertiesByComponentIds" parameterType="map">
+  <delete id="deletePropertiesByComponentUuids" parameterType="map">
     delete from properties
     where
-      resource_id in
-      <foreach collection="componentIds" open="(" close=")" item="componentId" separator=",">
-        #{componentId}
+      component_uuid in
+      <foreach collection="componentUuids" open="(" close=")" item="componentUuid" separator=",">
+        #{componentUuid}
       </foreach>
   </delete>
 
@@ -265,16 +233,16 @@
         </foreach>
   </delete>
 
-  <delete id="deleteGroupRolesByComponentId" parameterType="map">
+  <delete id="deleteGroupRolesByComponentUuid" parameterType="map">
     delete from group_roles
     where
-      resource_id = #{rootId,jdbcType=INTEGER}
+      component_uuid = #{rootUuid,jdbcType=INTEGER}
   </delete>
 
-  <delete id="deleteUserRolesByComponentId" parameterType="map">
+  <delete id="deleteUserRolesByComponentUuid" parameterType="map">
     delete from user_roles
     where
-      resource_id = #{rootId,jdbcType=INTEGER}
+      component_uuid = #{rootUuid,jdbcType=INTEGER}
   </delete>
 
   <delete id="deleteManualMeasuresByComponentUuids" parameterType="map">
@@ -342,9 +310,9 @@
     </choose>
   </select>
 
-  <select id="selectDisabledComponentsWithoutIssues" resultType="IdUuidPair" parameterType="String">
+  <select id="selectDisabledComponentsWithoutIssues" resultType="String" parameterType="String">
     SELECT
-      p.id, p.uuid
+      p.uuid
     FROM
       components p
     WHERE

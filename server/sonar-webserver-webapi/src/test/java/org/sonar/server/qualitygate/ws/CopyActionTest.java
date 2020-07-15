@@ -90,7 +90,8 @@ public class CopyActionTest {
     assertThat(action.params())
       .extracting(WebService.Param::key, WebService.Param::isRequired)
       .containsExactlyInAnyOrder(
-        tuple("id", true),
+        tuple("id", false),
+        tuple("sourceName", false),
         tuple("organization", false),
         tuple("name", true));
   }
@@ -106,7 +107,7 @@ public class CopyActionTest {
     QualityGateConditionDto condition = db.qualityGates().addCondition(qualityGate, metric);
 
     ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_NAME, "new-name")
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .execute();
@@ -114,12 +115,12 @@ public class CopyActionTest {
     QGateWithOrgDto actual = db.getDbClient().qualityGateDao().selectByOrganizationAndName(dbSession, organization, "new-name");
     assertThat(actual).isNotNull();
     assertThat(actual.isBuiltIn()).isFalse();
-    assertThat(actual.getId()).isNotEqualTo(qualityGate.getId());
+    assertThat(actual.getUuid()).isNotEqualTo(qualityGate.getUuid());
     assertThat(actual.getUuid()).isNotEqualTo(qualityGate.getUuid());
 
-    assertThat(db.getDbClient().gateConditionDao().selectForQualityGate(dbSession, qualityGate.getId()))
-      .extracting(c-> (int) c.getMetricId(), QualityGateConditionDto::getErrorThreshold)
-      .containsExactlyInAnyOrder(tuple(metric.getId(), condition.getErrorThreshold()));
+    assertThat(db.getDbClient().gateConditionDao().selectForQualityGate(dbSession, qualityGate.getUuid()))
+      .extracting(QualityGateConditionDto::getMetricUuid, QualityGateConditionDto::getErrorThreshold)
+      .containsExactlyInAnyOrder(tuple(metric.getUuid(), condition.getErrorThreshold()));
   }
 
   @Test
@@ -129,7 +130,7 @@ public class CopyActionTest {
     QGateWithOrgDto qualityGate = db.qualityGates().insertQualityGate(defaultOrganization);
 
     ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_NAME, "new-name")
       .execute();
 
@@ -145,7 +146,7 @@ public class CopyActionTest {
     QGateWithOrgDto qualityGate = db.qualityGates().insertQualityGate(organization, qualityGateDto -> qualityGateDto.setBuiltIn(true));
 
     ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_NAME, "new-name")
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .execute();
@@ -161,12 +162,12 @@ public class CopyActionTest {
     QualityGateDto qualityGate = db.qualityGates().insertQualityGate(db.getDefaultOrganization());
 
     QualityGate response = ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_NAME, "new-name")
       .executeProtobuf(QualityGate.class);
 
     assertThat(response).isNotNull();
-    assertThat(response.getId()).isNotEqualTo(qualityGate.getId());
+    assertThat(response.getId()).isNotEqualTo(qualityGate.getUuid());
     assertThat(response.getName()).isEqualTo("new-name");
   }
 
@@ -184,7 +185,7 @@ public class CopyActionTest {
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization2.getKey())
-      .setParam(PARAM_ID, qualityGate2.getId().toString())
+      .setParam(PARAM_ID, qualityGate2.getUuid())
       .setParam(PARAM_NAME, qualityGate1.getName())
       .execute();
 
@@ -201,11 +202,11 @@ public class CopyActionTest {
     userSession.addPermission(ADMINISTER_QUALITY_GATES, organization2);
 
     expectedException.expect(NotFoundException.class);
-    expectedException.expectMessage(format("No quality gate has been found for id %s in organization %s", qualityGate1.getId(), organization2.getName()));
+    expectedException.expectMessage(format("No quality gate has been found for id %s in organization %s", qualityGate1.getUuid(), organization2.getName()));
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization2.getKey())
-      .setParam(PARAM_ID, qualityGate1.getId().toString())
+      .setParam(PARAM_ID, qualityGate1.getUuid())
       .setParam(PARAM_NAME, "new-name")
       .execute();
   }
@@ -220,7 +221,7 @@ public class CopyActionTest {
     expectedException.expect(ForbiddenException.class);
 
     ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_NAME, "new-name")
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .execute();
@@ -232,7 +233,7 @@ public class CopyActionTest {
     userSession.addPermission(ADMINISTER_QUALITY_GATES, organization);
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("The 'id' parameter is missing");
+    expectedException.expectMessage("Either 'id' or 'sourceName' must be provided, and not both");
 
     ws.newRequest()
       .setParam(PARAM_NAME, "new-name")
@@ -265,7 +266,7 @@ public class CopyActionTest {
 
 
     TestRequest request = ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_ORGANIZATION, organization.getKey());
     ofNullable(nameParameter).ifPresent(t -> request.setParam(PARAM_NAME, t));
 
@@ -295,7 +296,7 @@ public class CopyActionTest {
     expectedException.expectMessage("Name has already been taken");
 
     ws.newRequest()
-      .setParam(PARAM_ID, qualityGate.getId().toString())
+      .setParam(PARAM_ID, qualityGate.getUuid())
       .setParam(PARAM_NAME, existingQualityGate.getName())
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .execute();

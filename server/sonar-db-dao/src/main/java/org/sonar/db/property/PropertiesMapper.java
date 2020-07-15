@@ -40,35 +40,35 @@ public interface PropertiesMapper {
 
   List<PropertyDto> selectByKeys(@Param("keys") List<String> keys);
 
-  List<PropertyDto> selectByKeysAndComponentIds(@Param("keys") List<String> keys, @Param("componentIds") List<Long> componentIds);
+  List<PropertyDto> selectByKeysAndComponentUuids(@Param("keys") List<String> keys, @Param("componentUuids") List<String> componentUuids);
 
-  List<PropertyDto> selectByKeyAndUserIdAndComponentQualifier(@Param("key") String key, @Param("userId") int userId, @Param("qualifier") String qualifier);
+  List<PropertyDto> selectByKeyAndUserUuidAndComponentQualifier(@Param("key") String key, @Param("userUuid") String userUuid, @Param("qualifier") String qualifier);
 
-  List<PropertyDto> selectByComponentIds(@Param("componentIds") List<Long> componentIds);
+  List<PropertyDto> selectByComponentUuids(@Param("componentUuids") List<String> componentUuids);
 
   List<PropertyDto> selectByQuery(@Param("query") PropertyQuery query);
 
   List<PropertyDto> selectByKeyAndMatchingValue(@Param("key") String key, @Param("value") String value);
 
-  List<Long> selectIdsByOrganizationAndUser(@Param("organizationUuid") String organizationUuid, @Param("userId") int userId);
+  List<String> selectUuidsByOrganizationAndUser(@Param("organizationUuid") String organizationUuid, @Param("userUuid") String userUuid);
 
-  List<Long> selectIdsByOrganizationAndMatchingLogin(@Param("organizationUuid") String organizationUuid, @Param("login") String login,
+  List<String> selectIdsByOrganizationAndMatchingLogin(@Param("organizationUuid") String organizationUuid, @Param("login") String login,
     @Param("propertyKeys") List<String> propertyKeys);
 
-  void insertAsEmpty(@Param("key") String key, @Nullable @Param("userId") Integer userId, @Nullable @Param("componentId") Long componentId,
+  void insertAsEmpty(@Param("uuid") String uuid, @Param("key") String key, @Nullable @Param("userUuid") String userUuid, @Nullable @Param("componentUuid") String componentUuid,
     @Param("now") long now);
 
-  void insertAsText(@Param("key") String key, @Nullable @Param("userId") Integer userId, @Nullable @Param("componentId") Long componentId,
+  void insertAsText(@Param("uuid") String uuid, @Param("key") String key, @Nullable @Param("userUuid") String userUuid, @Nullable @Param("componentUuid") String componentUuid,
     @Param("value") String value, @Param("now") long now);
 
-  void insertAsClob(@Param("key") String key, @Nullable @Param("userId") Integer userId, @Nullable @Param("componentId") Long componentId,
+  void insertAsClob(@Param("uuid") String uuid, @Param("key") String key, @Nullable @Param("userUuid") String userUuid, @Nullable @Param("componentUuid") String componentUuid,
     @Param("value") String value, @Param("now") long now);
 
-  int delete(@Param("key") String key, @Nullable @Param("userId") Integer userId, @Nullable @Param("componentId") Long componentId);
+  int delete(@Param("key") String key, @Nullable @Param("userUuid") String userUuid, @Nullable @Param("componentUuid") String componentUuid);
 
   int deleteById(long id);
 
-  int deleteProjectProperty(@Param("key") String key, @Param("rId") Long componentId);
+  int deleteProjectProperty(@Param("key") String key, @Param("componentUuid") String componentUuid);
 
   int deleteProjectProperties(@Param("key") String key, @Param("value") String value);
 
@@ -76,7 +76,7 @@ public interface PropertiesMapper {
 
   int deleteByQuery(@Param("query") PropertyQuery query);
 
-  void deleteByIds(@Param("ids") List<Long> ids);
+  void deleteByUuids(@Param("uuids") List<String> uuids);
 
   void deleteByKeyAndValue(@Param("key") String key, @Param("value") String value);
 

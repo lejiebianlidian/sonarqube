@@ -31,11 +31,11 @@ public class QualityGateConditionDto {
   public static final String OPERATOR_GREATER_THAN = "GT";
   public static final String OPERATOR_LESS_THAN = "LT";
 
-  private long id;
+  private String uuid;
 
-  private long qualityGateId;
+  private String qualityGateUuid;
 
-  private long metricId;
+  private String metricUuid;
 
   private String metricKey;
 
@@ -47,30 +47,30 @@ public class QualityGateConditionDto {
 
   private Date updatedAt;
 
-  public long getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
-  public QualityGateConditionDto setId(long id) {
-    this.id = id;
+  public QualityGateConditionDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 
-  public long getQualityGateId() {
-    return qualityGateId;
+  public String getQualityGateUuid() {
+    return qualityGateUuid;
   }
 
-  public QualityGateConditionDto setQualityGateId(long qualityGateId) {
-    this.qualityGateId = qualityGateId;
+  public QualityGateConditionDto setQualityGateUuid(String qualityGateUuid) {
+    this.qualityGateUuid = qualityGateUuid;
     return this;
   }
 
-  public long getMetricId() {
-    return metricId;
+  public String getMetricUuid() {
+    return metricUuid;
   }
 
-  public QualityGateConditionDto setMetricId(long metricId) {
-    this.metricId = metricId;
+  public QualityGateConditionDto setMetricUuid(String metricUuid) {
+    this.metricUuid = metricUuid;
     return this;
   }
 

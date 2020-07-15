@@ -82,7 +82,7 @@ public class IssueIndexFacetsTest {
   @Rule
   public DbTester db = DbTester.create(system2);
 
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()));
+  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
   private PermissionIndexerTester authorizationIndexer = new PermissionIndexerTester(es, issueIndexer);
 
   private IssueIndex underTest = new IssueIndex(es.client(), system2, userSessionRule, new WebAuthorizationTypeSupport(userSessionRule));
@@ -262,7 +262,7 @@ public class IssueIndexFacetsTest {
     RuleDefinitionDto ruleDefinitionDto = newRule();
     db.rules().insert(ruleDefinitionDto);
 
-    indexIssues(newDoc("I1", file).setRuleId(ruleDefinitionDto.getId()).setLanguage("xoo"));
+    indexIssues(newDoc("I1", file).setRuleUuid(ruleDefinitionDto.getUuid()).setLanguage("xoo"));
 
     assertThatFacetHasOnly(IssueQuery.builder(), "languages", entry("xoo", 1L));
   }

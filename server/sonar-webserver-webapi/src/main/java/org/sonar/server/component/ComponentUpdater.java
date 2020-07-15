@@ -42,8 +42,8 @@ import org.sonar.server.favorite.FavoriteUpdater;
 import org.sonar.server.permission.PermissionTemplateService;
 
 import static java.util.Collections.singletonList;
-import static org.sonar.api.resources.Qualifiers.APP;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
+import static org.sonar.core.component.ComponentKeys.ALLOWED_CHARACTERS_MESSAGE;
 import static org.sonar.core.component.ComponentKeys.isValidProjectKey;
 import static org.sonar.server.exceptions.BadRequestException.checkRequest;
 
@@ -75,8 +75,8 @@ public class ComponentUpdater {
    * - Add component to favorite if the component has the 'Project Creators' permission
    * - Index component in es indexes
    */
-  public ComponentDto create(DbSession dbSession, NewComponent newComponent, @Nullable Integer userId) {
-    ComponentDto componentDto = createWithoutCommit(dbSession, newComponent, userId, c -> {
+  public ComponentDto create(DbSession dbSession, NewComponent newComponent, @Nullable String userUuid) {
+    ComponentDto componentDto = createWithoutCommit(dbSession, newComponent, userUuid, c -> {
     });
     commitAndIndex(dbSession, componentDto);
     return componentDto;
@@ -86,13 +86,13 @@ public class ComponentUpdater {
    * Create component without committing.
    * Don't forget to call commitAndIndex(...) when ready to commit.
    */
-  public ComponentDto createWithoutCommit(DbSession dbSession, NewComponent newComponent, @Nullable Integer userId, Consumer<ComponentDto> componentModifier) {
+  public ComponentDto createWithoutCommit(DbSession dbSession, NewComponent newComponent, @Nullable String userUuid, Consumer<ComponentDto> componentModifier) {
     checkKeyFormat(newComponent.qualifier(), newComponent.key());
     ComponentDto componentDto = createRootComponent(dbSession, newComponent, componentModifier);
     if (isRootProject(componentDto)) {
       createMainBranch(dbSession, componentDto.uuid());
     }
-    handlePermissionTemplate(dbSession, componentDto, userId);
+    handlePermissionTemplate(dbSession, componentDto, userUuid);
     return componentDto;
   }
 
@@ -161,16 +161,16 @@ public class ComponentUpdater {
     dbClient.branchDao().upsert(session, branch);
   }
 
-  private void handlePermissionTemplate(DbSession dbSession, ComponentDto componentDto, @Nullable Integer userId) {
-    permissionTemplateService.applyDefault(dbSession, componentDto, userId);
+  private void handlePermissionTemplate(DbSession dbSession, ComponentDto componentDto, @Nullable String userUuid) {
+    permissionTemplateService.applyDefault(dbSession, componentDto, userUuid);
     if (componentDto.qualifier().equals(PROJECT)
       && permissionTemplateService.hasDefaultTemplateWithPermissionOnProjectCreator(dbSession, componentDto)) {
-      favoriteUpdater.add(dbSession, componentDto, userId, false);
+      favoriteUpdater.add(dbSession, componentDto, userUuid, false);
     }
   }
 
   private void checkKeyFormat(String qualifier, String key) {
-    checkRequest(isValidProjectKey(key), "Malformed key for %s: '%s'. It cannot be empty nor contain whitespaces.", getQualifierToDisplay(qualifier), key);
+    checkRequest(isValidProjectKey(key), "Malformed key for %s: '%s'. %s.", getQualifierToDisplay(qualifier), key, ALLOWED_CHARACTERS_MESSAGE);
   }
 
   private String getQualifierToDisplay(String qualifier) {

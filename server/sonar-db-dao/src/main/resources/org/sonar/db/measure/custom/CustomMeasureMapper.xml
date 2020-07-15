@@ -3,8 +3,8 @@
 
 <mapper namespace="org.sonar.db.measure.custom.CustomMeasureMapper">
   <sql id="selectColumns">
-    m.id,
-    m.metric_id as metricId,
+    m.uuid,
+    m.metric_uuid as metricUuid,
     m.component_uuid as componentUuid,
     m.value,
     m.text_value as textValue,
@@ -14,18 +14,18 @@
     m.updated_at as updatedAt
   </sql>
 
-  <select id="selectById" resultType="CustomMeasure">
+  <select id="selectByUuid" resultType="CustomMeasure">
     select
     <include refid="selectColumns"/>
     from manual_measures m
-    where m.id=#{id}
+    where m.uuid=#{uuid}
   </select>
 
-  <select id="selectByMetricId" resultType="CustomMeasure">
+  <select id="selectByMetricUuid" resultType="CustomMeasure">
     select
     <include refid="selectColumns"/>
     from manual_measures m
-    where m.metric_id=#{metricId}
+    where m.metric_uuid=#{metricUuid}
   </select>
 
   <select id="selectByComponentUuid" resultType="CustomMeasure">
@@ -39,20 +39,26 @@
     SELECT
     <include refid="selectColumns"/>
     FROM manual_measures m
-    INNER JOIN metrics metric ON metric.id=m.metric_id AND metric.name=#{metricKey}
+    INNER JOIN metrics metric ON metric.uuid=m.metric_uuid AND metric.name=#{metricKey}
     <where>
       m.text_value=#{textValue}
     </where>
   </select>
 
-  <insert id="insert" parameterType="CustomMeasure" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+  <insert id="insert" parameterType="CustomMeasure" useGeneratedKeys="false">
     INSERT INTO manual_measures (
-    metric_id, component_uuid, value, text_value, user_uuid, description, created_at, updated_at
+    uuid, metric_uuid, component_uuid, value, text_value, user_uuid, description, created_at, updated_at
     )
     VALUES (
-    #{metricId, jdbcType=INTEGER}, #{componentUuid, jdbcType=VARCHAR},
-    #{value, jdbcType=DOUBLE}, #{textValue, jdbcType=VARCHAR}, #{userUuid, jdbcType=VARCHAR},
-    #{description, jdbcType=VARCHAR}, #{createdAt, jdbcType=BIGINT}, #{updatedAt, jdbcType=BIGINT}
+    #{uuid, jdbcType=VARCHAR},
+    #{metricUuid, jdbcType=VARCHAR},
+    #{componentUuid, jdbcType=VARCHAR},
+    #{value, jdbcType=DOUBLE},
+    #{textValue, jdbcType=VARCHAR},
+    #{userUuid, jdbcType=VARCHAR},
+    #{description, jdbcType=VARCHAR},
+    #{createdAt, jdbcType=BIGINT},
+    #{updatedAt, jdbcType=BIGINT}
     )
   </insert>
 
@@ -63,20 +69,20 @@
     description = #{description, jdbcType=VARCHAR},
     user_uuid = #{userUuid, jdbcType=VARCHAR},
     updated_at = #{updatedAt, jdbcType=BIGINT}
-    where id = #{id}
+    where uuid = #{uuid}
   </update>
 
-  <delete id="deleteByMetricIds">
+  <delete id="deleteByMetricUuids">
     delete from manual_measures
-    where metric_id in
-    <foreach collection="metricIds" item="metricId" open="(" close=")" separator=",">
-      #{metricId}
+    where metric_uuid in
+    <foreach collection="metricUuids" item="metricUuid" open="(" close=")" separator=",">
+      #{metricUuid}
     </foreach>
   </delete>
 
   <delete id="delete">
     delete from manual_measures
-    where id=#{id}
+    where uuid=#{uuid}
   </delete>
 
   <select id="countByComponentUuid" resultType="Integer">
@@ -85,9 +91,9 @@
     where m.component_uuid=#{componentUuid}
   </select>
 
-  <select id="countByComponentIdAndMetricId" resultType="Integer">
+  <select id="countByComponentIdAndMetricUuid" resultType="Integer">
     select count(1)
     from manual_measures m
-    where m.metric_id=#{metricId} and m.component_uuid=#{componentUuid}
+    where m.metric_uuid=#{metricUuid} and m.component_uuid=#{componentUuid}
   </select>
 </mapper>

@@ -23,8 +23,10 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.System2;
+import org.sonar.core.util.SequenceUuidFactory;
 import org.sonar.db.DbTester;
 import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.GroupDto;
@@ -37,6 +39,7 @@ import org.sonar.server.usergroups.DefaultGroupFinder;
 import org.sonar.server.ws.WsActionTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
 
 public class CreateActionTest {
@@ -49,7 +52,7 @@ public class CreateActionTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-  private CreateAction underTest = new CreateAction(db.getDbClient(), userSession, newGroupWsSupport());
+  private CreateAction underTest = new CreateAction(db.getDbClient(), userSession, newGroupWsSupport(), new SequenceUuidFactory());
   private WsActionTester tester = new WsActionTester(underTest);
 
   @Test
@@ -60,6 +63,8 @@ public class CreateActionTest {
     assertThat(action.isPost()).isTrue();
     assertThat(action.responseExampleAsString()).isNotEmpty();
     assertThat(action.params()).hasSize(3);
+    assertThat(action.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Field 'id' format in the response changes from integer to string."));
   }
 
   @Test
@@ -102,7 +107,7 @@ public class CreateActionTest {
         "}");
 
     GroupDto createdGroup = db.users().selectGroup(org, "some-product-bu").get();
-    assertThat(createdGroup.getId()).isNotNull();
+    assertThat(createdGroup.getUuid()).isNotNull();
     assertThat(createdGroup.getOrganizationUuid()).isEqualTo(org.getUuid());
   }
 

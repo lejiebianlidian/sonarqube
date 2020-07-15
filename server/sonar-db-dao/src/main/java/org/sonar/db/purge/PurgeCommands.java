@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbSession;
@@ -56,11 +55,7 @@ class PurgeCommands {
   }
 
   List<String> selectSnapshotUuids(PurgeSnapshotQuery query) {
-    return purgeMapper.selectAnalysisIdsAndUuids(query).stream().map(IdUuidPair::getUuid).collect(Collectors.toList());
-  }
-
-  List<IdUuidPair> selectSnapshotIdUuids(PurgeSnapshotQuery query) {
-    return purgeMapper.selectAnalysisIdsAndUuids(query);
+    return purgeMapper.selectAnalysisUuids(query);
   }
 
   void deleteAnalyses(String rootComponentUuid) {
@@ -74,8 +69,7 @@ class PurgeCommands {
     session.commit();
     profiler.stop();
 
-    List<List<String>> analysisUuidsPartitions = Lists.partition(IdUuidPairs.uuids(
-      purgeMapper.selectAnalysisIdsAndUuids(new PurgeSnapshotQuery(rootComponentUuid))), MAX_SNAPSHOTS_PER_QUERY);
+    List<List<String>> analysisUuidsPartitions = Lists.partition(purgeMapper.selectAnalysisUuids(new PurgeSnapshotQuery(rootComponentUuid)), MAX_SNAPSHOTS_PER_QUERY);
 
     deleteAnalysisDuplications(analysisUuidsPartitions);
 
@@ -99,12 +93,12 @@ class PurgeCommands {
     PurgeSnapshotQuery query = new PurgeSnapshotQuery(rootUuid)
       .setIslast(false)
       .setStatus(UNPROCESSED_STATUS);
-    deleteAnalyses(purgeMapper.selectAnalysisIdsAndUuids(query));
+    deleteAnalyses(purgeMapper.selectAnalysisUuids(query));
   }
 
   @VisibleForTesting
-  void deleteAnalyses(List<IdUuidPair> analysisIdUuids) {
-    List<List<String>> analysisUuidsPartitions = Lists.partition(IdUuidPairs.uuids(analysisIdUuids), MAX_SNAPSHOTS_PER_QUERY);
+  void deleteAnalyses(List<String> analysisIdUuids) {
+    List<List<String>> analysisUuidsPartitions = Lists.partition(analysisIdUuids, MAX_SNAPSHOTS_PER_QUERY);
 
     deleteAnalysisDuplications(analysisUuidsPartitions);
 
@@ -134,19 +128,10 @@ class PurgeCommands {
     profiler.stop();
   }
 
-  void purgeAnalyses(List<IdUuidPair> analysisUuids) {
-    List<List<String>> analysisUuidsPartitions = Lists.partition(IdUuidPairs.uuids(analysisUuids), MAX_SNAPSHOTS_PER_QUERY);
+  void purgeAnalyses(List<String> analysisUuids) {
+    List<List<String>> analysisUuidsPartitions = Lists.partition(analysisUuids, MAX_SNAPSHOTS_PER_QUERY);
 
     deleteAnalysisDuplications(analysisUuidsPartitions);
-
-    profiler.start("deleteSnapshotWastedMeasures (project_measures)");
-    List<Long> metricIdsWithoutHistoricalData = purgeMapper.selectMetricIdsWithoutHistoricalData();
-    if (!metricIdsWithoutHistoricalData.isEmpty()) {
-      analysisUuidsPartitions
-        .forEach(analysisUuidsPartition -> purgeMapper.deleteAnalysisWastedMeasures(analysisUuidsPartition, metricIdsWithoutHistoricalData));
-      session.commit();
-    }
-    profiler.stop();
 
     profiler.start("updatePurgeStatusToOne (snapshots)");
     analysisUuidsPartitions.forEach(purgeMapper::updatePurgeStatusToOne);
@@ -204,14 +189,14 @@ class PurgeCommands {
     profiler.stop();
   }
 
-  void deletePermissions(long rootId) {
+  void deletePermissions(String rootUuid) {
     profiler.start("deletePermissions (group_roles)");
-    purgeMapper.deleteGroupRolesByComponentId(rootId);
+    purgeMapper.deleteGroupRolesByComponentUuid(rootUuid);
     session.commit();
     profiler.stop();
 
     profiler.start("deletePermissions (user_roles)");
-    purgeMapper.deleteUserRolesByComponentId(rootId);
+    purgeMapper.deleteUserRolesByComponentUuid(rootUuid);
     session.commit();
     profiler.stop();
   }
@@ -235,15 +220,14 @@ class PurgeCommands {
     profiler.stop();
   }
 
-  void deleteByRootAndModulesOrSubviews(List<IdUuidPair> rootAndModulesOrSubviewsIds) {
-    if (rootAndModulesOrSubviewsIds.isEmpty()) {
+  void deleteByRootAndModulesOrSubviews(List<String> rootAndModulesOrSubviewsUuids) {
+    if (rootAndModulesOrSubviewsUuids.isEmpty()) {
       return;
     }
-    List<List<Long>> idPartitions = Lists.partition(IdUuidPairs.ids(rootAndModulesOrSubviewsIds), MAX_RESOURCES_PER_QUERY);
-    List<List<String>> uuidsPartitions = Lists.partition(IdUuidPairs.uuids(rootAndModulesOrSubviewsIds), MAX_RESOURCES_PER_QUERY);
+    List<List<String>> uuidsPartitions = Lists.partition(rootAndModulesOrSubviewsUuids, MAX_RESOURCES_PER_QUERY);
 
     profiler.start("deleteByRootAndModulesOrSubviews (properties)");
-    idPartitions.forEach(purgeMapper::deletePropertiesByComponentIds);
+    uuidsPartitions.forEach(purgeMapper::deletePropertiesByComponentUuids);
     session.commit();
     profiler.stop();
 
@@ -253,15 +237,14 @@ class PurgeCommands {
     profiler.stop();
   }
 
-  void deleteDisabledComponentsWithoutIssues(List<IdUuidPair> disabledComponentsWithoutIssue) {
+  void deleteDisabledComponentsWithoutIssues(List<String> disabledComponentsWithoutIssue) {
     if (disabledComponentsWithoutIssue.isEmpty()) {
       return;
     }
-    List<List<Long>> idPartitions = Lists.partition(IdUuidPairs.ids(disabledComponentsWithoutIssue), MAX_RESOURCES_PER_QUERY);
-    List<List<String>> uuidsPartitions = Lists.partition(IdUuidPairs.uuids(disabledComponentsWithoutIssue), MAX_RESOURCES_PER_QUERY);
+    List<List<String>> uuidsPartitions = Lists.partition(disabledComponentsWithoutIssue, MAX_RESOURCES_PER_QUERY);
 
     profiler.start("deleteDisabledComponentsWithoutIssues (properties)");
-    idPartitions.forEach(purgeMapper::deletePropertiesByComponentIds);
+    uuidsPartitions.forEach(purgeMapper::deletePropertiesByComponentUuids);
     session.commit();
     profiler.stop();
 
@@ -308,24 +291,6 @@ class PurgeCommands {
 
     profiler.start("deleteComponentMeasures (project_measures)");
     Lists.partition(componentUuids, MAX_RESOURCES_PER_QUERY).forEach(purgeMapper::fullDeleteComponentMeasures);
-    session.commit();
-    profiler.stop();
-  }
-
-  void deleteComponentMeasures(List<String> analysisUuids, List<String> componentUuids) {
-    if (analysisUuids.isEmpty() || componentUuids.isEmpty()) {
-      return;
-    }
-
-    List<List<String>> analysisUuidsPartitions = Lists.partition(analysisUuids, MAX_SNAPSHOTS_PER_QUERY);
-    List<List<String>> componentUuidsPartitions = Lists.partition(componentUuids, MAX_RESOURCES_PER_QUERY);
-
-    profiler.start("deleteComponentMeasures");
-    for (List<String> analysisUuidsPartition : analysisUuidsPartitions) {
-      for (List<String> componentUuidsPartition : componentUuidsPartitions) {
-        purgeMapper.deleteComponentMeasures(analysisUuidsPartition, componentUuidsPartition);
-      }
-    }
     session.commit();
     profiler.stop();
   }

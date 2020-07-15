@@ -37,6 +37,7 @@ import org.sonar.ce.task.projectanalysis.component.Component;
 import org.sonar.ce.task.projectanalysis.component.ReferenceBranchComponentUuids;
 import org.sonar.ce.task.projectanalysis.filemove.MutableMovedFilesRepositoryRule;
 import org.sonar.core.hash.SourceHashComputer;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.BranchType;
 import org.sonar.db.protobuf.DbFileSources;
@@ -52,10 +53,8 @@ public class ScmInfoDbLoaderTest {
   static final int FILE_REF = 1;
   static final Component FILE = builder(Component.Type.FILE, FILE_REF).setKey("FILE_KEY").setUuid("FILE_UUID").build();
   static final long DATE_1 = 123456789L;
-  static final long DATE_2 = 1234567810L;
 
   static Analysis baseProjectAnalysis = new Analysis.Builder()
-    .setId(1)
     .setUuid("uuid_1")
     .setCreatedAt(123456789L)
     .build();
@@ -184,6 +183,7 @@ public class ScmInfoDbLoaderTest {
       builder.setScmRevision(revision);
     }
     dbTester.getDbClient().fileSourceDao().insert(dbTester.getSession(), new FileSourceDto()
+      .setUuid(Uuids.createFast())
       .setLineHashes(Collections.singletonList("lineHash"))
       .setFileUuid(fileUuid)
       .setProjectUuid("PROJECT_UUID")

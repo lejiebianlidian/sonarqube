@@ -32,7 +32,6 @@ import org.sonar.ce.task.projectanalysis.batch.BatchReportReaderImpl;
 import org.sonar.ce.task.projectanalysis.component.BranchLoader;
 import org.sonar.ce.task.projectanalysis.component.BranchPersisterImpl;
 import org.sonar.ce.task.projectanalysis.component.ConfigurationRepositoryImpl;
-import org.sonar.ce.task.projectanalysis.component.DbIdsRepositoryImpl;
 import org.sonar.ce.task.projectanalysis.component.DisabledComponentsHolderImpl;
 import org.sonar.ce.task.projectanalysis.component.ProjectPersister;
 import org.sonar.ce.task.projectanalysis.component.ReferenceBranchComponentUuids;
@@ -62,7 +61,7 @@ import org.sonar.ce.task.projectanalysis.issue.DefaultAssignee;
 import org.sonar.ce.task.projectanalysis.issue.EffortAggregator;
 import org.sonar.ce.task.projectanalysis.issue.IntegrateIssuesVisitor;
 import org.sonar.ce.task.projectanalysis.issue.IssueAssigner;
-import org.sonar.ce.task.projectanalysis.issue.IssueCache;
+import org.sonar.ce.task.projectanalysis.issue.ProtoIssueCache;
 import org.sonar.ce.task.projectanalysis.issue.IssueCounter;
 import org.sonar.ce.task.projectanalysis.issue.IssueCreationDateCalculator;
 import org.sonar.ce.task.projectanalysis.issue.IssueLifecycle;
@@ -208,7 +207,6 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
       MeasureRepositoryImpl.class,
       EventRepositoryImpl.class,
       ConfigurationRepositoryImpl.class,
-      DbIdsRepositoryImpl.class,
       DisabledComponentsHolderImpl.class,
       QualityGateServiceImpl.class,
       EvaluationResultTextConverterImpl.class,
@@ -231,7 +229,7 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
       RuleRepositoryImpl.class,
       ScmAccountToUserLoader.class,
       ScmAccountToUser.class,
-      IssueCache.class,
+      ProtoIssueCache.class,
       DefaultAssignee.class,
       IssueVisitors.class,
       IssueLifecycle.class,

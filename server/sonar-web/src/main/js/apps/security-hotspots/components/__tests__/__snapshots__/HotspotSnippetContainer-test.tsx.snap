@@ -10,6 +10,7 @@ exports[`should render correctly 1`] = `
       "name": "branch-6.7",
     }
   }
+  displayProjectName={false}
   highlightedSymbols={Array []}
   hotspot={
     Object {
@@ -123,7 +124,6 @@ exports[`should render correctly 1`] = `
     }
   }
   onExpandBlock={[Function]}
-  onLinePopupToggle={[Function]}
   onSymbolClick={[Function]}
   sourceLines={Array []}
   sourceViewerFile={

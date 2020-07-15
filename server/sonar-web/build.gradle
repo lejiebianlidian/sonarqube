@@ -10,7 +10,7 @@ sonarqube {
   }
 }
 
-apply plugin: 'com.moowork.node'
+apply plugin: 'com.github.node-gradle.node'
 
 def webappDir = "${buildDir}/webapp"
 
@@ -39,6 +39,15 @@ build.dependsOn(yarn_run)
   outputs.dir('coverage')
   outputs.cacheIf { true }
 
+  dependsOn(yarn)
+}
+
+// Check for known vulnerabilities
+yarn_audit {
+  inputs.file('package.json')
+  outputs.cacheIf { false }
+  args = ['--groups', 'dependencies', '--level', 'high']
+  ignoreExitValue = true
   dependsOn(yarn)
 }
 

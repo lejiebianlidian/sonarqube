@@ -87,7 +87,7 @@ message GroupsWsResponse {
   repeated Group groups = 2;
 
   message Group {
-    optional int64 id = 1;
+    optional string id = 1;
     optional string name = 2;
     optional string description = 3;
     optional bool selected = 4;
@@ -118,21 +118,17 @@ message CurrentWsResponse {
 
   enum HomepageType {
     PROJECT = 1;
-    ORGANIZATION = 2;
-    MY_PROJECTS = 3;
-    MY_ISSUES = 4;
-    PROJECTS = 5;
-    ISSUES = 6;
-    PORTFOLIO = 7;
-    PORTFOLIOS = 8;
-    APPLICATION = 9;
+    PROJECTS = 2;
+    ISSUES = 3;
+    PORTFOLIO = 4;
+    PORTFOLIOS = 5;
+    APPLICATION = 6;
   }
 
   message Homepage {
     optional HomepageType type = 1;
     optional string component = 2;
-    optional string organization = 3;
-    optional string branch = 4;
+    optional string branch = 3;
   }
 
   message Setting {

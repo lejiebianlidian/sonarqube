@@ -19,17 +19,18 @@
  */
 package org.sonar.server.permission.ws.template;
 
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.permission.template.PermissionTemplateDto;
+import org.sonar.server.permission.GroupUuidOrAnyone;
 import org.sonar.server.permission.ws.PermissionWsSupport;
 import org.sonar.server.permission.ws.PermissionsWsAction;
 import org.sonar.server.permission.ws.WsParameters;
 import org.sonar.server.user.UserSession;
-import org.sonar.server.permission.GroupIdOrAnyone;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonar.server.permission.PermissionPrivilegeChecker.checkGlobalAdmin;
@@ -60,6 +61,8 @@ public class RemoveGroupFromTemplateAction implements PermissionsWsAction {
       .setDescription("Remove a group from a permission template.<br /> " +
         "The group id or group name must be provided. <br />" +
         "Requires the following permission: 'Administer System'.")
+      .setChangelog(
+        new Change("8.4", "Parameter 'groupId' is deprecated. Format changes from integer to string. Use 'groupName' instead."))
       .setHandler(this);
 
     createTemplateParameters(action);
@@ -74,10 +77,10 @@ public class RemoveGroupFromTemplateAction implements PermissionsWsAction {
       String permission = request.mandatoryParam(PARAM_PERMISSION);
       PermissionTemplateDto template = wsSupport.findTemplate(dbSession, WsTemplateRef.fromRequest(request));
       checkGlobalAdmin(userSession, template.getOrganizationUuid());
-      GroupIdOrAnyone groupId = wsSupport.findGroup(dbSession, request);
-      checkArgument(groupId.getOrganizationUuid().equals(template.getOrganizationUuid()), "Group and template are on different organizations");
+      GroupUuidOrAnyone group = wsSupport.findGroup(dbSession, request);
+      checkArgument(group.getOrganizationUuid().equals(template.getOrganizationUuid()), "Group and template are on different organizations");
 
-      dbClient.permissionTemplateDao().deleteGroupPermission(dbSession, template.getId(), groupId.getId(), permission);
+      dbClient.permissionTemplateDao().deleteGroupPermission(dbSession, template.getUuid(), group.getUuid(), permission);
       dbSession.commit();
     }
     response.noContent();

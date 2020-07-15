@@ -22,6 +22,9 @@ import { max } from 'lodash';
 import * as React from 'react';
 import { InjectedIntlProps, injectIntl } from 'react-intl';
 import BarChart from 'sonar-ui-common/components/charts/BarChart';
+import { longFormatterOption } from 'sonar-ui-common/components/intl/DateFormatter';
+import DateFromNow from 'sonar-ui-common/components/intl/DateFromNow';
+import DateTimeFormatter from 'sonar-ui-common/components/intl/DateTimeFormatter';
 import { parseDate } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
@@ -29,9 +32,6 @@ import DateRangeInput from '../../../components/controls/DateRangeInput';
 import FacetBox from '../../../components/facet/FacetBox';
 import FacetHeader from '../../../components/facet/FacetHeader';
 import FacetItem from '../../../components/facet/FacetItem';
-import { longFormatterOption } from '../../../components/intl/DateFormatter';
-import DateFromNow from '../../../components/intl/DateFromNow';
-import DateTimeFormatter from '../../../components/intl/DateTimeFormatter';
 import { Query } from '../utils';
 
 interface Props {
@@ -153,6 +153,7 @@ class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
 
       const tooltipEndDate = endDate || new Date();
       const tooltip = (
+        // eslint-disable-next-line react/jsx-fragments
         <React.Fragment>
           {formatMeasure(stats[start], 'SHORT_INT')}
           <br />

@@ -88,7 +88,7 @@ public class UpdateConditionActionTest {
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -105,7 +105,7 @@ public class UpdateConditionActionTest {
     QualityGateConditionDto condition = db.qualityGates().addCondition(qualityGate, metric);
 
     ws.newRequest()
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "10")
@@ -125,13 +125,13 @@ public class UpdateConditionActionTest {
 
     CreateConditionResponse response = ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "45")
       .executeProtobuf(CreateConditionResponse.class);
 
-    assertThat(response.getId()).isEqualTo(condition.getId());
+    assertThat(response.getId()).isEqualTo(condition.getUuid());
     assertThat(response.getMetric()).isEqualTo(metric.getKey());
     assertThat(response.getOp()).isEqualTo("LT");
     assertThat(response.getError()).isEqualTo("45");
@@ -150,7 +150,7 @@ public class UpdateConditionActionTest {
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "10")
@@ -166,7 +166,7 @@ public class UpdateConditionActionTest {
     db.qualityGates().addCondition(qualityGate, metric);
 
     expectedException.expect(NotFoundException.class);
-    expectedException.expectMessage("No quality gate condition with id '123'");
+    expectedException.expectMessage("No quality gate condition with uuid '123'");
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
@@ -182,16 +182,18 @@ public class UpdateConditionActionTest {
     OrganizationDto organization = db.organizations().insert();
     userSession.addPermission(ADMINISTER_QUALITY_GATES, organization);
     MetricDto metric = insertMetric();
-    QualityGateConditionDto condition = new QualityGateConditionDto().setQualityGateId(123L);
+    QualityGateConditionDto condition = new QualityGateConditionDto().setUuid("uuid")
+      .setMetricUuid("metric")
+      .setQualityGateUuid("123");
     db.getDbClient().gateConditionDao().insert(condition, dbSession);
     db.commit();
 
     expectedException.expect(IllegalStateException.class);
-    expectedException.expectMessage(format("Condition '%s' is linked to an unknown quality gate '%s'", condition.getId(), 123L));
+    expectedException.expectMessage(format("Condition '%s' is linked to an unknown quality gate '%s'", condition.getUuid(), 123L));
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID,condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -212,7 +214,7 @@ public class UpdateConditionActionTest {
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "ABC")
       .setParam(PARAM_ERROR, "90")
@@ -234,7 +236,7 @@ public class UpdateConditionActionTest {
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, updateOperator)
       .setParam(PARAM_ERROR, "90")
@@ -254,7 +256,7 @@ public class UpdateConditionActionTest {
 
     ws.newRequest()
       .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_ID, Long.toString(condition.getId()))
+      .setParam(PARAM_ID, condition.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -287,10 +289,10 @@ public class UpdateConditionActionTest {
   }
 
   private void assertCondition(QualityGateDto qualityGate, MetricDto metric, String operator, String error) {
-    assertThat(dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getId()))
-      .extracting(QualityGateConditionDto::getQualityGateId, QualityGateConditionDto::getMetricId, QualityGateConditionDto::getOperator,
+    assertThat(dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getUuid()))
+      .extracting(QualityGateConditionDto::getQualityGateUuid, QualityGateConditionDto::getMetricUuid, QualityGateConditionDto::getOperator,
         QualityGateConditionDto::getErrorThreshold)
-      .containsExactlyInAnyOrder(tuple(qualityGate.getId(), metric.getId().longValue(), operator, error));
+      .containsExactlyInAnyOrder(tuple(qualityGate.getUuid(), metric.getUuid(), operator, error));
   }
 
   private MetricDto insertMetric() {

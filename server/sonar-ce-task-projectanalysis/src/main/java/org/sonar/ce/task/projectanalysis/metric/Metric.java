@@ -24,9 +24,9 @@ import org.sonar.ce.task.projectanalysis.measure.Measure;
 
 public interface Metric {
   /**
-   * The metric's id (ie. its database identifier)
+   * The metric's uuid (ie. its database identifier)
    */
-  int getId();
+  String getUuid();
 
   /**
    * The Metric's key is its domain identifier.
@@ -54,6 +54,8 @@ public interface Metric {
    * @throws IllegalStateException if the value type is not decimal (see {@link org.sonar.ce.task.projectanalysis.measure.Measure.ValueType}
    */
   int getDecimalScale();
+
+  boolean isDeleteHistoricalData();
 
   enum MetricType {
     INT(Measure.ValueType.INT),

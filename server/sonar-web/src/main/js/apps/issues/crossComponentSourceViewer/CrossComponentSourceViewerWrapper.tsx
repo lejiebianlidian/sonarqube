@@ -18,9 +18,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
+import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getDuplications } from '../../../api/components';
 import { getIssueFlowSnippets } from '../../../api/issues';
+import throwGlobalError from '../../../app/utils/throwGlobalError';
 import DuplicationPopup from '../../../components/SourceViewer/components/DuplicationPopup';
 import {
   filterDuplicationBlocksByLine,
@@ -28,14 +31,14 @@ import {
   isDuplicationBlockInRemovedComponent
 } from '../../../components/SourceViewer/helpers/duplications';
 import {
-  duplicationsByLine,
+  duplicationsByLine as getDuplicationsByLine,
   issuesByComponentAndLine
 } from '../../../components/SourceViewer/helpers/indexing';
 import { SourceViewerContext } from '../../../components/SourceViewer/SourceViewerContext';
 import { WorkspaceContext } from '../../../components/workspace/context';
 import { getBranchLikeQuery } from '../../../helpers/branch-like';
 import { BranchLike } from '../../../types/branch-like';
-import ComponentSourceSnippetViewer from './ComponentSourceSnippetViewer';
+import ComponentSourceSnippetGroupViewer from './ComponentSourceSnippetGroupViewer';
 import { groupLocationsByComponent } from './utils';
 
 interface Props {
@@ -57,8 +60,8 @@ interface State {
   duplications?: T.Duplication[];
   duplicationsByLine: { [line: number]: number[] };
   issuePopup?: { issue: string; name: string };
-  linePopup?: T.LinePopup & { component: string };
   loading: boolean;
+  notAccessible: boolean;
 }
 
 export default class CrossComponentSourceViewerWrapper extends React.PureComponent<Props, State> {
@@ -66,7 +69,8 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
   state: State = {
     components: {},
     duplicationsByLine: {},
-    loading: true
+    loading: true,
+    notAccessible: false
   };
 
   componentDidMount() {
@@ -84,22 +88,18 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
     this.mounted = false;
   }
 
-  fetchDuplications = (component: string, line: T.SourceLine) => {
+  fetchDuplications = (component: string) => {
     getDuplications({
       key: component,
       ...getBranchLikeQuery(this.props.branchLike)
     }).then(
       r => {
         if (this.mounted) {
-          this.setState(state => ({
+          this.setState({
             duplicatedFiles: r.files,
             duplications: r.duplications,
-            duplicationsByLine: duplicationsByLine(r.duplications),
-            linePopup:
-              r.duplications.length === 1
-                ? { component, index: 0, line: line.line, name: 'duplications' }
-                : state.linePopup
-          }));
+            duplicationsByLine: getDuplicationsByLine(r.duplications)
+          });
         }
       },
       () => {}
@@ -114,7 +114,6 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
           this.setState({
             components,
             issuePopup: undefined,
-            linePopup: undefined,
             loading: false
           });
           if (this.props.onLoaded) {
@@ -122,9 +121,12 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
           }
         }
       },
-      () => {
+      (response: Response) => {
+        if (response.status !== 403) {
+          throwGlobalError(response);
+        }
         if (this.mounted) {
-          this.setState({ loading: false });
+          this.setState({ loading: false, notAccessible: response.status === 403 });
         }
       }
     );
@@ -141,33 +143,6 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
       }
       return null;
     });
-  };
-
-  handleLinePopupToggle = ({
-    component,
-    index,
-    line,
-    name,
-    open
-  }: T.LinePopup & { component: string }) => {
-    this.setState((state: State) => {
-      const samePopup =
-        state.linePopup !== undefined &&
-        state.linePopup.line === line &&
-        state.linePopup.name === name &&
-        state.linePopup.component === component &&
-        state.linePopup.index === index;
-      if (open !== false && !samePopup) {
-        return { linePopup: { component, index, line, name } };
-      } else if (open !== true && samePopup) {
-        return { linePopup: undefined };
-      }
-      return null;
-    });
-  };
-
-  handleCloseLinePopup = () => {
-    this.setState({ linePopup: undefined });
   };
 
   renderDuplicationPopup = (component: T.SourceViewerFile, index: number, line: number) => {
@@ -187,7 +162,6 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
             branchLike={this.props.branchLike}
             duplicatedFiles={duplicatedFiles}
             inRemovedComponent={isDuplicationBlockInRemovedComponent(blocks)}
-            onClose={this.handleCloseLinePopup}
             openComponent={openComponent}
             sourceViewerFile={component}
           />
@@ -197,7 +171,7 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
   };
 
   render() {
-    const { loading } = this.state;
+    const { loading, notAccessible } = this.state;
 
     if (loading) {
       return (
@@ -207,42 +181,44 @@ export default class CrossComponentSourceViewerWrapper extends React.PureCompone
       );
     }
 
-    const { components, duplications, duplicationsByLine, linePopup } = this.state;
+    if (notAccessible) {
+      return (
+        <Alert className="spacer-top" variant="warning">
+          {translate('code_viewer.no_source_code_displayed_due_to_security')}
+        </Alert>
+      );
+    }
+
+    const { issue, locations } = this.props;
+    const { components, duplications, duplicationsByLine } = this.state;
     const issuesByComponent = issuesByComponentAndLine(this.props.issues);
-    const locationsByComponent = groupLocationsByComponent(this.props.locations, components);
+    const locationsByComponent = groupLocationsByComponent(issue, locations, components);
 
     return (
       <div>
         {locationsByComponent.map((snippetGroup, i) => {
-          let componentProps = {};
-          if (linePopup && snippetGroup.component.key === linePopup.component) {
-            componentProps = {
-              duplications,
-              duplicationsByLine,
-              linePopup: { index: linePopup.index, line: linePopup.line, name: linePopup.name }
-            };
-          }
           return (
             <SourceViewerContext.Provider
-              key={`${this.props.issue.key}-${this.props.selectedFlowIndex || 0}-${i}`}
+              // eslint-disable-next-line react/no-array-index-key
+              key={`${issue.key}-${this.props.selectedFlowIndex || 0}-${i}`}
               value={{ branchLike: this.props.branchLike, file: snippetGroup.component }}>
-              <ComponentSourceSnippetViewer
+              <ComponentSourceSnippetGroupViewer
                 branchLike={this.props.branchLike}
+                duplications={duplications}
+                duplicationsByLine={duplicationsByLine}
                 highlightedLocationMessage={this.props.highlightedLocationMessage}
-                issue={this.props.issue}
+                issue={issue}
                 issuePopup={this.state.issuePopup}
                 issuesByLine={issuesByComponent[snippetGroup.component.key] || {}}
-                last={i === locationsByComponent.length - 1}
+                lastSnippetGroup={i === locationsByComponent.length - 1}
                 loadDuplications={this.fetchDuplications}
                 locations={snippetGroup.locations || []}
                 onIssueChange={this.props.onIssueChange}
                 onIssuePopupToggle={this.handleIssuePopupToggle}
-                onLinePopupToggle={this.handleLinePopupToggle}
                 onLocationSelect={this.props.onLocationSelect}
                 renderDuplicationPopup={this.renderDuplicationPopup}
                 scroll={this.props.scroll}
                 snippetGroup={snippetGroup}
-                {...componentProps}
               />
             </SourceViewerContext.Provider>
           );

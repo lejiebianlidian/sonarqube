@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.sonar.api.config.Configuration;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
@@ -45,7 +44,6 @@ import org.sonar.server.user.index.UserIndexer;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.sonar.api.CoreProperties.DEFAULT_ISSUE_ASSIGNEE;
-import static org.sonar.process.ProcessProperties.Property.SONARCLOUD_ENABLED;
 import static org.sonar.server.exceptions.BadRequestException.checkRequest;
 import static org.sonar.server.exceptions.NotFoundException.checkFound;
 
@@ -99,28 +97,23 @@ public class DeactivateAction implements UsersWsAction {
 
       ensureNotLastAdministrator(dbSession, user);
 
-      Integer userId = user.getId();
+      String userUuid = user.getUuid();
       dbClient.userTokenDao().deleteByUser(dbSession, user);
       dbClient.propertiesDao().deleteByKeyAndValue(dbSession, DEFAULT_ISSUE_ASSIGNEE, user.getLogin());
-      dbClient.propertiesDao().deleteByQuery(dbSession, PropertyQuery.builder().setUserId(userId).build());
-      dbClient.userGroupDao().deleteByUserId(dbSession, userId);
-      dbClient.userPermissionDao().deleteByUserId(dbSession, userId);
-      dbClient.permissionTemplateDao().deleteUserPermissionsByUserId(dbSession, userId);
+      dbClient.propertiesDao().deleteByQuery(dbSession, PropertyQuery.builder().setUserUuid(userUuid).build());
+      dbClient.userGroupDao().deleteByUserUuid(dbSession, userUuid);
+      dbClient.userPermissionDao().deleteByUserUuid(dbSession, userUuid);
+      dbClient.permissionTemplateDao().deleteUserPermissionsByUserUuid(dbSession, userUuid);
       dbClient.qProfileEditUsersDao().deleteByUser(dbSession, user);
-      dbClient.organizationMemberDao().deleteByUserId(dbSession, userId);
+      dbClient.organizationMemberDao().deleteByUserUuid(dbSession, userUuid);
       dbClient.userPropertiesDao().deleteByUser(dbSession, user);
       dbClient.almPatDao().deleteByUser(dbSession, user);
-      deactivateUser(dbSession, user);
+      dbClient.sessionTokensDao().deleteByUser(dbSession, user);
+      dbClient.userDao().deactivateUser(dbSession, user);
       userIndexer.commitAndIndex(dbSession, user);
-
-      LOGGER.debug("Deactivate user: {}; by admin: {}", login, userSession.isSystemAdministrator());
     }
 
     writeResponse(response, login);
-  }
-
-  private void deactivateUser(DbSession dbSession, UserDto user) {
-    dbClient.userDao().deactivateUser(dbSession, user);
   }
 
   private void writeResponse(Response response, String login) {
@@ -141,7 +134,7 @@ public class DeactivateAction implements UsersWsAction {
   }
 
   private void ensureNotLastAdministrator(DbSession dbSession, UserDto user) {
-    List<OrganizationDto> problematicOrgs = new OrganizationHelper(dbClient).selectOrganizationsWithLastAdmin(dbSession, user.getId());
+    List<OrganizationDto> problematicOrgs = new OrganizationHelper(dbClient).selectOrganizationsWithLastAdmin(dbSession, user.getUuid());
     if (problematicOrgs.isEmpty()) {
       return;
     }

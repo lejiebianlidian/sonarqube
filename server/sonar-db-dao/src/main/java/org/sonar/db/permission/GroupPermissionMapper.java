@@ -33,37 +33,37 @@ public interface GroupPermissionMapper {
 
   int countGroupsByQuery(@Param("query") PermissionQuery query);
 
-  List<GroupPermissionDto> selectByGroupIds(@Param("organizationUuid") String organizationUuid,
-    @Param("groupIds") List<Integer> groupIds, @Nullable @Param("projectId") Long projectId);
+  List<GroupPermissionDto> selectByGroupUuids(@Param("organizationUuid") String organizationUuid,
+    @Param("groupUuids") List<String> groupUuids, @Nullable @Param("projectUuid") String projectUuid);
 
-  void groupsCountByProjectIdAndPermission(Map<String, Object> parameters, ResultHandler resultHandler);
+  void groupsCountByProjectUuidAndPermission(Map<String, Object> parameters, ResultHandler resultHandler);
 
   void insert(GroupPermissionDto dto);
 
   void delete(@Param("permission") String permission, @Param("organizationUuid") String organizationUuid,
-    @Nullable @Param("groupId") Integer groupId, @Nullable @Param("rootComponentId") Long rootComponentId);
+    @Nullable @Param("groupUuid") String groupUuid, @Nullable @Param("rootComponentUuid") String rootComponentUuid);
 
   List<String> selectGlobalPermissionsOfGroup(@Param("organizationUuid") String organizationUuid,
-    @Nullable @Param("groupId") Integer groupId);
+    @Nullable @Param("groupUuid") String groupUuid);
 
   List<String> selectProjectPermissionsOfGroup(@Param("organizationUuid") String organizationUuid,
-    @Nullable @Param("groupId") Integer groupId, @Param("projectId") long projectId);
+    @Nullable @Param("groupUuid") String groupUuid, @Param("projectUuid") String projectUuid);
 
-  void selectAllPermissionsByGroupId(@Param("organizationUuid") String organizationUuid,
-    @Param("groupId") Integer groupId, ResultHandler resultHandler);
+  void selectAllPermissionsByGroupUuid(@Param("organizationUuid") String organizationUuid,
+    @Param("groupUuid") String groupUuid, ResultHandler resultHandler);
 
   /**
-   * Lists id of groups with at least one permission on the specified root component but which do not have the specified
+   * Lists uuid of groups with at least one permission on the specified root component but which do not have the specified
    * permission, <strong>excluding group "AnyOne"</strong> (which implies the returned {@code Set} can't contain
    * {@code null}).
    */
-  Set<Integer> selectGroupIdsWithPermissionOnProjectBut(@Param("projectId") long projectId, @Param("role") String permission);
+  Set<String> selectGroupUuidsWithPermissionOnProjectBut(@Param("projectUuid") String projectUuid, @Param("role") String permission);
 
   void deleteByOrganization(@Param("organizationUuid") String organizationUuid);
 
-  void deleteByRootComponentId(@Param("rootComponentId") long componentId);
+  void deleteByRootComponentUuid(@Param("rootComponentUuid") String rootComponentUuid);
 
-  int deleteByRootComponentIdAndGroupId(@Param("rootComponentId") long rootComponentId, @Nullable @Param("groupId") Integer groupId);
+  int deleteByRootComponentUuidAndGroupUuid(@Param("rootComponentUuid") String rootComponentUuid, @Nullable @Param("groupUuid") String groupUuid);
 
-  int deleteByRootComponentIdAndPermission(@Param("rootComponentId") long rootComponentId, @Param("permission") String permission);
+  int deleteByRootComponentUuidAndPermission(@Param("rootComponentUuid") String rootComponentUuid, @Param("permission") String permission);
 }

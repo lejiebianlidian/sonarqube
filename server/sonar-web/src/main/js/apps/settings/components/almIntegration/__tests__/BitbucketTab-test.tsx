@@ -19,7 +19,7 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockBitbucketDefinition } from '../../../../../helpers/mocks/alm-settings';
+import { mockBitbucketBindingDefinition } from '../../../../../helpers/mocks/alm-settings';
 import BitbucketTab, { BitbucketTabProps } from '../BitbucketTab';
 
 it('should render correctly', () => {
@@ -29,8 +29,9 @@ it('should render correctly', () => {
 function shallowRender(props: Partial<BitbucketTabProps> = {}) {
   return shallow(
     <BitbucketTab
-      definitions={[mockBitbucketDefinition()]}
-      loading={false}
+      definitions={[mockBitbucketBindingDefinition()]}
+      loadingAlmDefinitions={false}
+      loadingProjectCount={false}
       multipleAlmEnabled={true}
       onDelete={jest.fn()}
       onUpdateDefinitions={jest.fn()}

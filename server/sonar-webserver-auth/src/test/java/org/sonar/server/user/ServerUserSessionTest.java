@@ -85,7 +85,7 @@ public class ServerUserSessionTest {
     db.users().insertMember(group1, user);
     db.users().insertMember(group2, user);
 
-    assertThat(newUserSession(user).getGroups()).extracting(GroupDto::getId).containsOnly(group1.getId(), group2.getId());
+    assertThat(newUserSession(user).getGroups()).extracting(GroupDto::getUuid).containsOnly(group1.getUuid(), group2.getUuid());
   }
 
   @Test
@@ -96,11 +96,11 @@ public class ServerUserSessionTest {
     db.users().insertMember(group1, user);
 
     ServerUserSession session = newUserSession(user);
-    assertThat(session.getGroups()).extracting(GroupDto::getId).containsOnly(group1.getId());
+    assertThat(session.getGroups()).extracting(GroupDto::getUuid).containsOnly(group1.getUuid());
 
     // membership updated but not cache
     db.users().insertMember(group2, user);
-    assertThat(session.getGroups()).extracting(GroupDto::getId).containsOnly(group1.getId());
+    assertThat(session.getGroups()).extracting(GroupDto::getUuid).containsOnly(group1.getUuid());
   }
 
   @Test
@@ -661,7 +661,7 @@ public class ServerUserSessionTest {
     assertThat(session.hasMembership(organization)).isTrue();
 
     // membership updated but not cache
-    db.getDbClient().organizationMemberDao().delete(db.getSession(), organization.getUuid(), user.getId());
+    db.getDbClient().organizationMemberDao().delete(db.getSession(), organization.getUuid(), user.getUuid());
     db.commit();
     assertThat(session.hasMembership(organization)).isTrue();
   }

@@ -10,7 +10,6 @@ dependencies {
   compile 'ch.qos.logback:logback-classic'
   compile 'ch.qos.logback:logback-core'
   compile 'com.google.guava:guava'
-  compile 'commons-dbutils:commons-dbutils'
   compile 'commons-io:commons-io'
   compile 'commons-lang:commons-lang'
   compile 'org.apache.commons:commons-dbcp2'
@@ -26,7 +25,7 @@ dependencies {
   testCompile 'com.google.code.findbugs:jsr305'
   testCompile 'com.h2database:h2'
   testCompile 'com.microsoft.sqlserver:mssql-jdbc'
-  testCompile 'com.oracle.jdbc:ojdbc8'
+  testCompile 'com.oracle.database.jdbc:ojdbc8'
   testCompile 'com.tngtech.java:junit-dataprovider'
   testCompile 'org.mockito:mockito-core'
   testCompile 'org.postgresql:postgresql'
@@ -34,9 +33,10 @@ dependencies {
 
   testRuntime 'com.h2database:h2'
   testRuntime 'com.microsoft.sqlserver:mssql-jdbc'
-  testRuntime 'com.oracle.jdbc:ojdbc8'
+  testRuntime 'com.oracle.database.jdbc:ojdbc8'
   testRuntime 'org.postgresql:postgresql'
 
+  testFixturesApi 'commons-dbutils:commons-dbutils'
   testFixturesApi 'junit:junit'
   testFixturesApi 'org.assertj:assertj-core'
 

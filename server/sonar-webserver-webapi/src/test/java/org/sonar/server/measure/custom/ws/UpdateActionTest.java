@@ -22,8 +22,10 @@ package org.sonar.server.measure.custom.ws;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.sonar.api.utils.System2;
 import org.sonar.api.impl.utils.TestSystem2;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
+import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.measure.custom.CustomMeasureDto;
@@ -67,6 +69,18 @@ public class UpdateActionTest {
     new CustomMeasureJsonWriter(new UserJsonWriter(userSession))));
 
   @Test
+  public void verify_definition() {
+    Action wsDef = ws.getDef();
+
+    assertThat(wsDef.deprecatedSince()).isEqualTo("7.4");
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Param 'id' data type changes from integer to string."));
+  }
+
+  @Test
   public void update_text_value_and_description_in_db() {
     ComponentDto project = db.components().insertPrivateProject();
     UserDto userAuthenticated = db.users().insertUser();
@@ -76,12 +90,12 @@ public class UpdateActionTest {
     CustomMeasureDto customMeasure = db.measures().insertCustomMeasure(userMeasureCreator, project, metric, m -> m.setValue(0d));
 
     ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_DESCRIPTION, "new-custom-measure-description")
       .setParam(PARAM_VALUE, "new-text-measure-value")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getUserUuid, CustomMeasureDto::getComponentUuid,
         CustomMeasureDto::getCreatedAt, CustomMeasureDto::getUpdatedAt)
       .containsExactlyInAnyOrder(
@@ -98,12 +112,12 @@ public class UpdateActionTest {
     CustomMeasureDto customMeasure = db.measures().insertCustomMeasure(userMeasureCreator, project, metric, m -> m.setValue(42d).setTextValue(null));
 
     ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_DESCRIPTION, "new-custom-measure-description")
       .setParam(PARAM_VALUE, "1984")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue, CustomMeasureDto::getUserUuid, CustomMeasureDto::getComponentUuid,
         CustomMeasureDto::getCreatedAt, CustomMeasureDto::getUpdatedAt)
       .containsExactlyInAnyOrder(
@@ -120,18 +134,18 @@ public class UpdateActionTest {
     CustomMeasureDto customMeasure = db.measures().insertCustomMeasure(userMeasureCreator, project, metric, m -> m.setValue(0d).setCreatedAt(100_000_000L));
 
     String response = ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_DESCRIPTION, "new-custom-measure-description")
       .setParam(PARAM_VALUE, "new-text-measure-value")
       .execute()
       .getInput();
 
     assertJson(response).isSimilarTo("{\n" +
-      "  \"id\": \"" + customMeasure.getId() + "\",\n" +
+      "  \"id\": \"" + customMeasure.getUuid() + "\",\n" +
       "  \"value\": \"new-text-measure-value\",\n" +
       "  \"description\": \"new-custom-measure-description\",\n" +
       "  \"metric\": {\n" +
-      "    \"id\": \"" + metric.getId() + "\",\n" +
+      "    \"id\": \"" + metric.getUuid() + "\",\n" +
       "    \"key\": \"" + metric.getKey() + "\",\n" +
       "    \"type\": \"" + metric.getValueType() + "\",\n" +
       "    \"name\": \"" + metric.getShortName() + "\",\n" +
@@ -151,11 +165,11 @@ public class UpdateActionTest {
     CustomMeasureDto customMeasure = db.measures().insertCustomMeasure(user, project, metric);
 
     ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_DESCRIPTION, "new-custom-measure-description")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue)
       .containsExactlyInAnyOrder(
         tuple("new-custom-measure-description", customMeasure.getTextValue(), customMeasure.getValue()));
@@ -170,11 +184,11 @@ public class UpdateActionTest {
     CustomMeasureDto customMeasure = db.measures().insertCustomMeasure(user, project, metric);
 
     ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_VALUE, "new-text-measure-value")
       .execute();
 
-    assertThat(db.getDbClient().customMeasureDao().selectByMetricId(db.getSession(), metric.getId()))
+    assertThat(db.getDbClient().customMeasureDao().selectByMetricUuid(db.getSession(), metric.getUuid()))
       .extracting(CustomMeasureDto::getDescription, CustomMeasureDto::getTextValue, CustomMeasureDto::getValue)
       .containsExactlyInAnyOrder(
         tuple(customMeasure.getDescription(), "new-text-measure-value", customMeasure.getValue()));
@@ -209,7 +223,7 @@ public class UpdateActionTest {
     expectedException.expect(ForbiddenException.class);
 
     ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_DESCRIPTION, "new-custom-measure-description")
       .setParam(PARAM_VALUE, "1984")
       .execute();
@@ -226,7 +240,7 @@ public class UpdateActionTest {
     expectedException.expect(UnauthorizedException.class);
 
     ws.newRequest()
-      .setParam(PARAM_ID, String.valueOf(customMeasure.getId()))
+      .setParam(PARAM_ID, String.valueOf(customMeasure.getUuid()))
       .setParam(PARAM_DESCRIPTION, "new-custom-measure-description")
       .setParam(PARAM_VALUE, "1984")
       .execute();

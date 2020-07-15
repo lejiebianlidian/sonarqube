@@ -46,6 +46,7 @@ import static org.sonar.api.measures.CoreMetrics.NEW_COVERAGE_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_DUPLICATED_LINES_DENSITY_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_MAINTAINABILITY_RATING_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_RELIABILITY_RATING_KEY;
+import static org.sonar.api.measures.CoreMetrics.NEW_SECURITY_HOTSPOTS_REVIEWED_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_SECURITY_RATING_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_SECURITY_REMEDIATION_EFFORT_KEY;
 import static org.sonar.api.measures.Metric.ValueType.INT;
@@ -206,14 +207,16 @@ public class RegisterQualityGatesTest {
     underTest.start();
 
     assertThat(qualityGateFinder.getBuiltInQualityGate(dbSession)).isNotNull();
-    assertThat(qualityGateFinder.getBuiltInQualityGate(dbSession).getId()).isEqualTo(builtInQualityGate.getId());
+    assertThat(qualityGateFinder.getBuiltInQualityGate(dbSession).getUuid()).isEqualTo(builtInQualityGate.getUuid());
   }
 
   @Test
-  public void builtin_quality_gate_with_incorrect_metricId_should_not_throw_an_exception() {
+  public void builtin_quality_gate_with_incorrect_metricuuid_should_not_throw_an_exception() {
     insertMetrics();
     QualityGateConditionDto conditionDto = new QualityGateConditionDto()
-      .setMetricId(-1) // This Id does not exist
+      .setUuid(Uuids.createFast())
+      .setQualityGateUuid("qgate_uuid")
+      .setMetricUuid("unknown") // This uuid does not exist
       .setOperator(OPERATOR_GREATER_THAN)
       .setErrorThreshold("1");
     gateConditionDao.insert(conditionDto, dbSession);
@@ -234,6 +237,7 @@ public class RegisterQualityGatesTest {
     dbClient.metricDao().insert(dbSession, newMetricDto().setKey(NEW_MAINTAINABILITY_RATING_KEY).setValueType(PERCENT.name()).setHidden(false).setDirection(0));
     dbClient.metricDao().insert(dbSession, newMetricDto().setKey(NEW_COVERAGE_KEY).setValueType(PERCENT.name()).setHidden(false).setDirection(0));
     dbClient.metricDao().insert(dbSession, newMetricDto().setKey(NEW_DUPLICATED_LINES_DENSITY_KEY).setValueType(PERCENT.name()).setHidden(false).setDirection(0));
+    dbClient.metricDao().insert(dbSession, newMetricDto().setKey(NEW_SECURITY_HOTSPOTS_REVIEWED_KEY).setValueType(PERCENT.name()).setHidden(false).setDirection(0));
     dbSession.commit();
   }
 
@@ -243,20 +247,23 @@ public class RegisterQualityGatesTest {
     MetricDto newMaintainability = metricDao.selectByKey(dbSession, NEW_MAINTAINABILITY_RATING_KEY);
     MetricDto newCoverage = metricDao.selectByKey(dbSession, NEW_COVERAGE_KEY);
     MetricDto newDuplication = metricDao.selectByKey(dbSession, NEW_DUPLICATED_LINES_DENSITY_KEY);
+    MetricDto newSecurityHotspots = metricDao.selectByKey(dbSession, NEW_SECURITY_HOTSPOTS_REVIEWED_KEY);
+
 
     QualityGateDto qualityGateDto = qualityGateDao.selectByName(dbSession, BUILT_IN_NAME);
     assertThat(qualityGateDto).isNotNull();
     assertThat(qualityGateDto.getCreatedAt()).isNotNull();
     assertThat(qualityGateDto.isBuiltIn()).isTrue();
-    assertThat(gateConditionDao.selectForQualityGate(dbSession, qualityGateDto.getId()))
-      .extracting(QualityGateConditionDto::getMetricId, QualityGateConditionDto::getOperator,
+    assertThat(gateConditionDao.selectForQualityGate(dbSession, qualityGateDto.getUuid()))
+      .extracting(QualityGateConditionDto::getMetricUuid, QualityGateConditionDto::getOperator,
         QualityGateConditionDto::getErrorThreshold)
-      .containsOnly(
-        tuple(newReliability.getId().longValue(), OPERATOR_GREATER_THAN, "1"),
-        tuple(newSecurity.getId().longValue(), OPERATOR_GREATER_THAN, "1"),
-        tuple(newMaintainability.getId().longValue(), OPERATOR_GREATER_THAN, "1"),
-        tuple(newCoverage.getId().longValue(), OPERATOR_LESS_THAN, "80"),
-        tuple(newDuplication.getId().longValue(), OPERATOR_GREATER_THAN, "3"));
+      .containsExactlyInAnyOrder(
+        tuple(newReliability.getUuid(), OPERATOR_GREATER_THAN, "1"),
+        tuple(newSecurity.getUuid(), OPERATOR_GREATER_THAN, "1"),
+        tuple(newMaintainability.getUuid(), OPERATOR_GREATER_THAN, "1"),
+        tuple(newCoverage.getUuid(), OPERATOR_LESS_THAN, "80"),
+        tuple(newDuplication.getUuid(), OPERATOR_GREATER_THAN, "3"),
+        tuple(newSecurityHotspots.getUuid(), OPERATOR_LESS_THAN, "100"));
   }
 
   private List<QualityGateConditionDto> createBuiltInConditions(QualityGateDto qg) {
@@ -272,6 +279,8 @@ public class RegisterQualityGatesTest {
       NEW_COVERAGE_KEY, OPERATOR_LESS_THAN, "80"));
     conditions.add(qualityGateConditionsUpdater.createCondition(dbSession, qg,
       NEW_DUPLICATED_LINES_DENSITY_KEY, OPERATOR_GREATER_THAN, "3"));
+    conditions.add(qualityGateConditionsUpdater.createCondition(dbSession, qg,
+      NEW_SECURITY_HOTSPOTS_REVIEWED_KEY, OPERATOR_LESS_THAN, "100"));
 
     return conditions;
   }

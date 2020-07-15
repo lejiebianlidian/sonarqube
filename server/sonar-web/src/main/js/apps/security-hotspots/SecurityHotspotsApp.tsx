@@ -20,7 +20,7 @@
 import { Location } from 'history';
 import { flatMap, range } from 'lodash';
 import * as React from 'react';
-import { addNoFooterPageClass, removeNoFooterPageClass } from 'sonar-ui-common/helpers/pages';
+import { addSideBarClass, removeSideBarClass } from 'sonar-ui-common/helpers/pages';
 import { getMeasures } from '../../api/measures';
 import { getSecurityHotspotList, getSecurityHotspots } from '../../api/security-hotspots';
 import { withCurrentUser } from '../../components/hoc/withCurrentUser';
@@ -55,7 +55,7 @@ interface State {
   hotspots: RawHotspot[];
   hotspotsPageIndex: number;
   hotspotsReviewedMeasure?: string;
-  hotspotsTotal?: number;
+  hotspotsTotal: number;
   loading: boolean;
   loadingMeasure: boolean;
   loadingMore: boolean;
@@ -76,6 +76,7 @@ export class SecurityHotspotsApp extends React.PureComponent<Props, State> {
       loadingMeasure: false,
       loadingMore: false,
       hotspots: [],
+      hotspotsTotal: 0,
       hotspotsPageIndex: 1,
       securityCategories: {},
       selectedHotspot: undefined,
@@ -88,7 +89,7 @@ export class SecurityHotspotsApp extends React.PureComponent<Props, State> {
 
   componentDidMount() {
     this.mounted = true;
-    addNoFooterPageClass();
+    addSideBarClass();
     this.fetchInitialData();
   }
 
@@ -113,7 +114,7 @@ export class SecurityHotspotsApp extends React.PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    removeNoFooterPageClass();
+    removeSideBarClass();
     this.mounted = false;
   }
 
@@ -144,12 +145,22 @@ export class SecurityHotspotsApp extends React.PureComponent<Props, State> {
           return;
         }
 
+        const requestedCategory = this.props.location.query.category;
+
+        let selectedHotspot;
+        if (hotspots.length > 0) {
+          const hotspotForCategory = requestedCategory
+            ? hotspots.find(h => h.securityCategory === requestedCategory)
+            : undefined;
+          selectedHotspot = hotspotForCategory ?? hotspots[0];
+        }
+
         this.setState({
           hotspots,
           hotspotsTotal: paging.total,
           loading: false,
           securityCategories: sonarsourceSecurity,
-          selectedHotspot: hotspots.length > 0 ? hotspots[0] : undefined
+          selectedHotspot
         });
       })
       .catch(this.handleCallFailure);

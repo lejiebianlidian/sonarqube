@@ -100,6 +100,7 @@ declare namespace T {
     edition: 'community' | 'developer' | 'enterprise' | 'datacenter' | undefined;
     globalPages?: Extension[];
     multipleAlmEnabled?: boolean;
+    needIssueSync?: boolean;
     organizationsEnabled?: boolean;
     productionDatabase: boolean;
     qualifiers: string[];
@@ -125,6 +126,7 @@ declare namespace T {
     isFavorite?: boolean;
     leakPeriodDate?: string;
     name: string;
+    needIssueSync?: boolean;
     path?: string;
     refKey?: string;
     qualityProfiles?: ComponentQualityProfile[];
@@ -218,7 +220,10 @@ declare namespace T {
     value: string;
   }
 
-  type CurrentUserSettingNames = 'notifications.optOut' | 'notifications.readDate';
+  type CurrentUserSettingNames =
+    | 'notifications.optOut'
+    | 'notifications.readDate'
+    | 'tutorials.jenkins.skipBitbucketPreReqs';
 
   export interface CustomMeasure {
     createdAt?: string;
@@ -500,7 +505,8 @@ declare namespace T {
   export type NewCodePeriodSettingType =
     | 'PREVIOUS_VERSION'
     | 'NUMBER_OF_DAYS'
-    | 'SPECIFIC_ANALYSIS';
+    | 'SPECIFIC_ANALYSIS'
+    | 'REFERENCE_BRANCH';
 
   export interface Notification {
     channel: string;
@@ -556,7 +562,7 @@ declare namespace T {
 
   export interface Period {
     date: string;
-    index: number;
+    index?: number;
     mode: PeriodMode | NewCodePeriodSettingType;
     modeParam?: string;
     parameter?: string;
@@ -651,7 +657,7 @@ declare namespace T {
       setAsDefault?: boolean;
     };
     conditions?: Condition[];
-    id: number;
+    id: string;
     isBuiltIn?: boolean;
     isDefault?: boolean;
     name: string;
@@ -797,7 +803,6 @@ declare namespace T {
   export type SourceLineCoverageStatus = 'uncovered' | 'partially-covered' | 'covered';
 
   export interface SourceViewerFile {
-    canMarkAsFavorite?: boolean;
     fav?: boolean;
     key: string;
     leakPeriodDate?: string;

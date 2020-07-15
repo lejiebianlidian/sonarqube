@@ -21,6 +21,7 @@ import * as React from 'react';
 import { Helmet } from 'react-helmet-async';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
 import { translate } from 'sonar-ui-common/helpers/l10n';
+import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import A11ySkipTarget from '../../app/components/a11y/A11ySkipTarget';
 import Suggestions from '../../app/components/embed-docs-modal/Suggestions';
 import ScreenPositionHelper from '../../components/common/ScreenPositionHelper';
@@ -39,7 +40,7 @@ export interface SecurityHotspotsAppRendererProps {
   filters: HotspotFilters;
   hotspots: RawHotspot[];
   hotspotsReviewedMeasure?: string;
-  hotspotsTotal?: number;
+  hotspotsTotal: number;
   isStaticListOfHotspots: boolean;
   loading: boolean;
   loadingMeasure: boolean;
@@ -69,8 +70,23 @@ export default function SecurityHotspotsAppRenderer(props: SecurityHotspotsAppRe
     filters
   } = props;
 
+  const scrollableRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const parent = scrollableRef.current;
+    const element =
+      selectedHotspot && document.querySelector(`[data-hotspot-key="${selectedHotspot.key}"]`);
+    if (parent && element) {
+      scrollToElement(element, { parent, smooth: true, topOffset: 150, bottomOffset: 400 });
+    }
+  }, [selectedHotspot]);
+
   return (
     <div id="security_hotspots">
+      <Suggestions suggestions="security_hotspots" />
+      <Helmet title={translate('hotspots.page')} />
+      <A11ySkipTarget anchor="security_hotspots_main" />
+
       <FilterBar
         component={component}
         filters={filters}
@@ -81,58 +97,52 @@ export default function SecurityHotspotsAppRenderer(props: SecurityHotspotsAppRe
         onChangeFilters={props.onChangeFilters}
         onShowAllHotspots={props.onShowAllHotspots}
       />
-      <ScreenPositionHelper>
-        {({ top }) => (
-          <div className="wrapper" style={{ top }}>
-            <Suggestions suggestions="security_hotspots" />
-            <Helmet title={translate('hotspots.page')} />
 
-            <A11ySkipTarget anchor="security_hotspots_main" />
+      {loading && <DeferredSpinner className="huge-spacer-left big-spacer-top" />}
 
-            {loading ? (
-              <DeferredSpinner className="huge-spacer-left big-spacer-top" />
-            ) : (
-              <>
-                {hotspots.length === 0 || !selectedHotspot ? (
-                  <EmptyHotspotsPage
-                    filtered={
-                      filters.assignedToMe ||
-                      (isBranch(branchLike) && filters.sinceLeakPeriod) ||
-                      filters.status !== HotspotStatusFilter.TO_REVIEW
-                    }
-                    isStaticListOfHotspots={isStaticListOfHotspots}
-                  />
-                ) : (
-                  <div className="layout-page">
-                    <div className="sidebar">
-                      <HotspotList
-                        hotspots={hotspots}
-                        hotspotsTotal={hotspotsTotal}
-                        isStaticListOfHotspots={isStaticListOfHotspots}
-                        loadingMore={loadingMore}
-                        onHotspotClick={props.onHotspotClick}
-                        onLoadMore={props.onLoadMore}
-                        securityCategories={securityCategories}
-                        selectedHotspot={selectedHotspot}
-                        statusFilter={filters.status}
-                      />
-                    </div>
-                    <div className="main">
-                      <HotspotViewer
-                        branchLike={branchLike}
-                        component={component}
-                        hotspotKey={selectedHotspot.key}
-                        onUpdateHotspot={props.onUpdateHotspot}
-                        securityCategories={securityCategories}
-                      />
-                    </div>
+      {!loading &&
+        (hotspots.length === 0 || !selectedHotspot ? (
+          <EmptyHotspotsPage
+            filtered={
+              filters.assignedToMe ||
+              (isBranch(branchLike) && filters.sinceLeakPeriod) ||
+              filters.status !== HotspotStatusFilter.TO_REVIEW
+            }
+            isStaticListOfHotspots={isStaticListOfHotspots}
+          />
+        ) : (
+          <div className="layout-page">
+            <ScreenPositionHelper className="layout-page-side-outer">
+              {({ top }) => (
+                <div className="layout-page-side" ref={scrollableRef} style={{ top }}>
+                  <div className="layout-page-side-inner">
+                    <HotspotList
+                      hotspots={hotspots}
+                      hotspotsTotal={hotspotsTotal}
+                      isStaticListOfHotspots={isStaticListOfHotspots}
+                      loadingMore={loadingMore}
+                      onHotspotClick={props.onHotspotClick}
+                      onLoadMore={props.onLoadMore}
+                      securityCategories={securityCategories}
+                      selectedHotspot={selectedHotspot}
+                      statusFilter={filters.status}
+                    />
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              )}
+            </ScreenPositionHelper>
+
+            <div className="layout-page-main">
+              <HotspotViewer
+                branchLike={branchLike}
+                component={component}
+                hotspotKey={selectedHotspot.key}
+                onUpdateHotspot={props.onUpdateHotspot}
+                securityCategories={securityCategories}
+              />
+            </div>
           </div>
-        )}
-      </ScreenPositionHelper>
+        ))}
     </div>
   );
 }

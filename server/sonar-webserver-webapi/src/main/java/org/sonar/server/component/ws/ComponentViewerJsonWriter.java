@@ -99,8 +99,8 @@ public class ComponentViewerJsonWriter {
 
     List<PropertyDto> propertyDtos = dbClient.propertiesDao().selectByQuery(PropertyQuery.builder()
         .setKey("favourite")
-        .setComponentId(component.getId())
-        .setUserId(userSession.getUserId())
+        .setComponentUuid(component.uuid())
+      .setUserUuid(userSession.getUuid())
         .build(),
       session);
     boolean isFavourite = propertyDtos.size() == 1;
@@ -121,10 +121,10 @@ public class ComponentViewerJsonWriter {
 
   private Map<String, LiveMeasureDto> loadMeasuresGroupedByMetricKey(ComponentDto component, DbSession dbSession) {
     List<MetricDto> metrics = dbClient.metricDao().selectByKeys(dbSession, METRIC_KEYS);
-    Map<Integer, MetricDto> metricsById = Maps.uniqueIndex(metrics, MetricDto::getId);
+    Map<String, MetricDto> metricsByUuid = Maps.uniqueIndex(metrics, MetricDto::getUuid);
     List<LiveMeasureDto> measures = dbClient.liveMeasureDao()
-      .selectByComponentUuidsAndMetricIds(dbSession, Collections.singletonList(component.uuid()), metricsById.keySet());
-    return Maps.uniqueIndex(measures, m -> metricsById.get(m.getMetricId()).getKey());
+      .selectByComponentUuidsAndMetricUuids(dbSession, Collections.singletonList(component.uuid()), metricsByUuid.keySet());
+    return Maps.uniqueIndex(measures, m -> metricsByUuid.get(m.getMetricUuid()).getKey());
   }
 
   @CheckForNull

@@ -33,6 +33,7 @@ import org.sonar.auth.gitlab.GitLabModule;
 import org.sonar.auth.ldap.LdapModule;
 import org.sonar.auth.saml.SamlModule;
 import org.sonar.ce.task.projectanalysis.notification.ReportAnalysisFailureNotificationModule;
+import org.sonar.ce.task.projectanalysis.taskprocessor.IssueSyncTaskProcessor;
 import org.sonar.ce.task.projectanalysis.taskprocessor.ReportTaskProcessor;
 import org.sonar.core.component.DefaultResourceTypes;
 import org.sonar.core.extension.CoreExtensionsInstaller;
@@ -83,6 +84,7 @@ import org.sonar.server.issue.RemoveTagsAction;
 import org.sonar.server.issue.SetSeverityAction;
 import org.sonar.server.issue.SetTypeAction;
 import org.sonar.server.issue.TransitionAction;
+import org.sonar.server.issue.index.AsyncIssueIndexingImpl;
 import org.sonar.server.issue.index.IssueIndexDefinition;
 import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
@@ -192,8 +194,6 @@ import org.sonar.server.telemetry.TelemetryDaemon;
 import org.sonar.server.telemetry.TelemetryDataJsonWriter;
 import org.sonar.server.telemetry.TelemetryDataLoaderImpl;
 import org.sonar.server.text.MacroInterpreter;
-import org.sonar.server.ui.DeprecatedViews;
-import org.sonar.server.ui.PageDecorations;
 import org.sonar.server.ui.PageRepository;
 import org.sonar.server.ui.WebAnalyticsLoaderImpl;
 import org.sonar.server.ui.ws.NavigationWsModule;
@@ -250,12 +250,10 @@ public class PlatformLevel4 extends PlatformLevel {
       LogOAuthWarning.class,
       PluginDownloader.class,
       PluginUninstaller.class,
-      DeprecatedViews.class,
       PageRepository.class,
       ResourceTypes.class,
       DefaultResourceTypes.get(),
       SettingsChangeNotifier.class,
-      PageDecorations.class,
       ServerWs.class,
       BackendCleanup.class,
       IndexDefinitions.class,
@@ -408,6 +406,7 @@ public class PlatformLevel4 extends PlatformLevel {
 
       // issues
       IssueIndexDefinition.class,
+      AsyncIssueIndexingImpl.class,
       IssueIndexer.class,
       IssueIteratorFactory.class,
       PermissionIndexer.class,
@@ -507,6 +506,7 @@ public class PlatformLevel4 extends PlatformLevel {
       CeModule.class,
       CeWsModule.class,
       ReportTaskProcessor.class,
+      IssueSyncTaskProcessor.class,
 
       // SonarSource editions
       PlatformEditionProvider.class,

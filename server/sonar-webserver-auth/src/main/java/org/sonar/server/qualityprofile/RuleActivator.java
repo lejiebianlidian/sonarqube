@@ -73,7 +73,7 @@ public class RuleActivator {
   }
 
   public List<ActiveRuleChange> activate(DbSession dbSession, RuleActivation activation, RuleActivationContext context) {
-    context.reset(activation.getRuleId());
+    context.reset(activation.getRuleUuid());
     return doActivate(dbSession, activation, context);
   }
 
@@ -200,10 +200,10 @@ public class RuleActivator {
         String activeRuleValue = activeRule == null ? null : activeRule.getParamValue(paramKey);
         paramValue = context.hasRequestedParamValue(request, paramKey) ?
         // If the request contains the parameter then we're using either value from request, or parent value, or default value
-          firstNonNull(
-            context.getRequestedParamValue(request, paramKey),
-            parentValue,
-            rule.getParamDefaultValue(paramKey))
+        firstNonNull(
+          context.getRequestedParamValue(request, paramKey),
+          parentValue,
+          rule.getParamDefaultValue(paramKey))
           // If the request doesn't contain the parameter, then we're using either value in DB, or parent value, or default value
           : firstNonNull(
             activeRuleValue,
@@ -246,8 +246,8 @@ public class RuleActivator {
     RuleWrapper rule = context.getRule();
 
     ActiveRuleDto activeRule = new ActiveRuleDto();
-    activeRule.setProfileId(context.getRulesProfile().getId());
-    activeRule.setRuleId(rule.get().getId());
+    activeRule.setProfileUuid(context.getRulesProfile().getUuid());
+    activeRule.setRuleUuid(rule.get().getUuid());
     activeRule.setKey(ActiveRuleKey.of(context.getRulesProfile(), rule.get().getKey()));
     String severity = change.getSeverity();
     if (severity != null) {
@@ -308,8 +308,8 @@ public class RuleActivator {
     return activeRule.get();
   }
 
-  public List<ActiveRuleChange> deactivate(DbSession dbSession, RuleActivationContext context, int ruleId, boolean force) {
-    context.reset(ruleId);
+  public List<ActiveRuleChange> deactivate(DbSession dbSession, RuleActivationContext context, String ruleUuid, boolean force) {
+    context.reset(ruleUuid);
     return doDeactivate(dbSession, context, force);
   }
 
@@ -353,14 +353,14 @@ public class RuleActivator {
     return value;
   }
 
-  public RuleActivationContext createContextForBuiltInProfile(DbSession dbSession, RulesProfileDto builtInProfile, Collection<Integer> ruleIds) {
-    checkArgument(builtInProfile.isBuiltIn(), "Rules profile with UUID %s is not built-in", builtInProfile.getKee());
+  public RuleActivationContext createContextForBuiltInProfile(DbSession dbSession, RulesProfileDto builtInProfile, Collection<String> ruleUuids) {
+    checkArgument(builtInProfile.isBuiltIn(), "Rules profile with UUID %s is not built-in", builtInProfile.getUuid());
 
     RuleActivationContext.Builder builder = new RuleActivationContext.Builder();
     builder.setDescendantProfilesSupplier(createDescendantProfilesSupplier(dbSession));
 
     // load rules
-    completeWithRules(dbSession, builder, ruleIds);
+    completeWithRules(dbSession, builder, ruleUuids);
 
     // load org profiles. Their parents are null by nature.
     List<QProfileDto> profiles = db.qualityProfileDao().selectQProfilesByRuleProfile(dbSession, builtInProfile);
@@ -369,19 +369,19 @@ public class RuleActivator {
 
     // load active rules
     Collection<String> ruleProfileUuids = Stream
-      .concat(Stream.of(builtInProfile.getKee()), profiles.stream().map(QProfileDto::getRulesProfileUuid))
+      .concat(Stream.of(builtInProfile.getUuid()), profiles.stream().map(QProfileDto::getRulesProfileUuid))
       .collect(MoreCollectors.toHashSet(profiles.size() + 1));
-    completeWithActiveRules(dbSession, builder, ruleIds, ruleProfileUuids);
+    completeWithActiveRules(dbSession, builder, ruleUuids, ruleProfileUuids);
     return builder.build();
   }
 
-  public RuleActivationContext createContextForUserProfile(DbSession dbSession, QProfileDto profile, Collection<Integer> ruleIds) {
+  public RuleActivationContext createContextForUserProfile(DbSession dbSession, QProfileDto profile, Collection<String> ruleUuids) {
     checkArgument(!profile.isBuiltIn(), "Profile with UUID %s is built-in", profile.getKee());
     RuleActivationContext.Builder builder = new RuleActivationContext.Builder();
     builder.setDescendantProfilesSupplier(createDescendantProfilesSupplier(dbSession));
 
     // load rules
-    completeWithRules(dbSession, builder, ruleIds);
+    completeWithRules(dbSession, builder, ruleUuids);
 
     // load profiles
     List<QProfileDto> profiles = new ArrayList<>();
@@ -396,35 +396,35 @@ public class RuleActivator {
     Collection<String> ruleProfileUuids = profiles.stream()
       .map(QProfileDto::getRulesProfileUuid)
       .collect(MoreCollectors.toHashSet(profiles.size()));
-    completeWithActiveRules(dbSession, builder, ruleIds, ruleProfileUuids);
+    completeWithActiveRules(dbSession, builder, ruleUuids, ruleProfileUuids);
 
     return builder.build();
   }
 
   DescendantProfilesSupplier createDescendantProfilesSupplier(DbSession dbSession) {
-    return (parents, ruleIds) -> {
+    return (parents, ruleUuids) -> {
       Collection<QProfileDto> profiles = db.qualityProfileDao().selectDescendants(dbSession, parents);
       Set<String> ruleProfileUuids = profiles.stream()
         .map(QProfileDto::getRulesProfileUuid)
         .collect(MoreCollectors.toHashSet());
-      Collection<ActiveRuleDto> activeRules = db.activeRuleDao().selectByRulesAndRuleProfileUuids(dbSession, ruleIds, ruleProfileUuids);
-      List<Integer> activeRuleIds = activeRules.stream().map(ActiveRuleDto::getId).collect(MoreCollectors.toArrayList(activeRules.size()));
-      List<ActiveRuleParamDto> activeRuleParams = db.activeRuleDao().selectParamsByActiveRuleIds(dbSession, activeRuleIds);
+      Collection<ActiveRuleDto> activeRules = db.activeRuleDao().selectByRulesAndRuleProfileUuids(dbSession, ruleUuids, ruleProfileUuids);
+      List<String> activeRuleUuids = activeRules.stream().map(ActiveRuleDto::getUuid).collect(MoreCollectors.toArrayList(activeRules.size()));
+      List<ActiveRuleParamDto> activeRuleParams = db.activeRuleDao().selectParamsByActiveRuleUuids(dbSession, activeRuleUuids);
       return new DescendantProfilesSupplier.Result(profiles, activeRules, activeRuleParams);
     };
   }
 
-  private void completeWithRules(DbSession dbSession, RuleActivationContext.Builder builder, Collection<Integer> ruleIds) {
-    List<RuleDefinitionDto> rules = db.ruleDao().selectDefinitionByIds(dbSession, ruleIds);
+  private void completeWithRules(DbSession dbSession, RuleActivationContext.Builder builder, Collection<String> ruleUuids) {
+    List<RuleDefinitionDto> rules = db.ruleDao().selectDefinitionByUuids(dbSession, ruleUuids);
     builder.setRules(rules);
-    builder.setRuleParams(db.ruleDao().selectRuleParamsByRuleIds(dbSession, ruleIds));
+    builder.setRuleParams(db.ruleDao().selectRuleParamsByRuleUuids(dbSession, ruleUuids));
   }
 
-  private void completeWithActiveRules(DbSession dbSession, RuleActivationContext.Builder builder, Collection<Integer> ruleIds, Collection<String> ruleProfileUuids) {
-    Collection<ActiveRuleDto> activeRules = db.activeRuleDao().selectByRulesAndRuleProfileUuids(dbSession, ruleIds, ruleProfileUuids);
+  private void completeWithActiveRules(DbSession dbSession, RuleActivationContext.Builder builder, Collection<String> ruleUuids, Collection<String> ruleProfileUuids) {
+    Collection<ActiveRuleDto> activeRules = db.activeRuleDao().selectByRulesAndRuleProfileUuids(dbSession, ruleUuids, ruleProfileUuids);
     builder.setActiveRules(activeRules);
-    List<Integer> activeRuleIds = activeRules.stream().map(ActiveRuleDto::getId).collect(MoreCollectors.toArrayList(activeRules.size()));
-    builder.setActiveRuleParams(db.activeRuleDao().selectParamsByActiveRuleIds(dbSession, activeRuleIds));
+    List<String> activeRuleUuids = activeRules.stream().map(ActiveRuleDto::getUuid).collect(MoreCollectors.toArrayList(activeRules.size()));
+    builder.setActiveRuleParams(db.activeRuleDao().selectParamsByActiveRuleUuids(dbSession, activeRuleUuids));
   }
 
   private static boolean isSame(ActiveRuleChange change, ActiveRuleWrapper activeRule) {

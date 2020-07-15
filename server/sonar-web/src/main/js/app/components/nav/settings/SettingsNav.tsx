@@ -25,7 +25,8 @@ import DropdownIcon from 'sonar-ui-common/components/icons/DropdownIcon';
 import ContextNavBar from 'sonar-ui-common/components/ui/ContextNavBar';
 import NavBarTabs from 'sonar-ui-common/components/ui/NavBarTabs';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import { PluginPendingResult } from '../../../../api/plugins';
+import { getBaseUrl } from 'sonar-ui-common/helpers/urls';
+import { PendingPluginResult } from '../../../../types/plugins';
 import { rawSizes } from '../../../theme';
 import PendingPluginsActionNotif from './PendingPluginsActionNotif';
 import SystemRestartNotif from './SystemRestartNotif';
@@ -36,7 +37,7 @@ interface Props {
   fetchSystemStatus: () => void;
   location: {};
   organizationsEnabled?: boolean;
-  pendingPlugins: PluginPendingResult;
+  pendingPlugins: PendingPluginResult;
   systemStatus: T.SysStatus;
 }
 
@@ -47,7 +48,7 @@ export default class SettingsNav extends React.PureComponent<Props> {
 
   isSomethingActive(urls: string[]): boolean {
     const path = window.location.pathname;
-    return urls.some((url: string) => path.indexOf((window as any).baseUrl + url) === 0);
+    return urls.some((url: string) => path.indexOf(getBaseUrl() + url) === 0);
   }
 
   isSecurityActive() {

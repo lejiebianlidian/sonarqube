@@ -38,11 +38,15 @@ import org.sonar.db.qualitygate.QGateWithOrgDto;
 import org.sonar.server.user.UserSession;
 import org.sonarqube.ws.Qualitygates;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toList;
 import static org.sonar.api.server.ws.WebService.Param.SELECTED;
 import static org.sonar.api.utils.Paging.forPageIndex;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
 import static org.sonar.db.qualitygate.ProjectQgateAssociationQuery.ANY;
+import static org.sonar.server.qualitygate.ws.CreateAction.NAME_MAXIMUM_LENGTH;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_GATE_ID;
+import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_GATE_NAME;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_PAGE;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_PAGE_SIZE;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_QUERY;
@@ -64,19 +68,29 @@ public class SearchAction implements QualityGatesWsAction {
   public void define(WebService.NewController controller) {
     WebService.NewAction action = controller.createAction("search")
       .setDescription("Search for projects associated (or not) to a quality gate.<br/>" +
-        "Only authorized projects for current user will be returned.")
+        "Only authorized projects for the current user will be returned.")
       .setSince("4.3")
       .setResponseExample(Resources.getResource(this.getClass(), "search-example.json"))
       .setChangelog(
+        new Change("8.4", "Parameter 'gateName' added"),
+        new Change("8.4", "Parameter 'gateId' is deprecated. Format changes from integer to string. Use 'gateName' instead."),
         new Change("7.9", "New field 'paging' in response"),
         new Change("7.9", "New field 'key' returning the project key in 'results' response"),
         new Change("7.9", "Field 'more' is deprecated in the response"))
       .setHandler(this);
 
     action.createParam(PARAM_GATE_ID)
-      .setDescription("Quality Gate ID")
-      .setRequired(true)
-      .setExampleValue("1");
+      .setDescription("Quality Gate ID. This parameter is deprecated. Use 'gateName' instead.")
+      .setRequired(false)
+      .setDeprecatedSince("8.4")
+      .setExampleValue(UUID_EXAMPLE_01);
+
+    action.createParam(PARAM_GATE_NAME)
+      .setDescription("Quality Gate name")
+      .setRequired(false)
+      .setMaximumLength(NAME_MAXIMUM_LENGTH)
+      .setSince("8.4")
+      .setExampleValue("SonarSource Way");
 
     action.createParam(PARAM_QUERY)
       .setDescription("To search for projects containing this string. If this parameter is set, \"selected\" is set to \"all\".")
@@ -101,7 +115,18 @@ public class SearchAction implements QualityGatesWsAction {
     try (DbSession dbSession = dbClient.openSession(false)) {
 
       OrganizationDto organization = wsSupport.getOrganization(dbSession, request);
-      QGateWithOrgDto qualityGate = wsSupport.getByOrganizationAndId(dbSession, organization, request.mandatoryParamAsLong(PARAM_GATE_ID));
+
+      String gateUuid = request.param(PARAM_GATE_ID);
+      String gateName = request.param(PARAM_GATE_NAME);
+
+      checkArgument(gateName != null ^ gateUuid != null, "One of 'gateId' or 'gateName' must be provided, and not both");
+
+      QGateWithOrgDto qualityGate;
+      if (gateUuid != null) {
+        qualityGate = wsSupport.getByOrganizationAndUuid(dbSession, organization, gateUuid);
+      } else {
+        qualityGate = wsSupport.getByOrganizationAndName(dbSession, organization, gateName);
+      }
 
       ProjectQgateAssociationQuery projectQgateAssociationQuery = ProjectQgateAssociationQuery.builder()
         .qualityGate(qualityGate)
@@ -126,10 +151,9 @@ public class SearchAction implements QualityGatesWsAction {
 
       for (ProjectQgateAssociationDto project : paginatedProjects) {
         createResponse.addResultsBuilder()
-          .setId(project.getId())
           .setName(project.getName())
           .setKey(project.getKey())
-          .setSelected(project.getGateId() != null);
+          .setSelected(project.getGateUuid() != null);
       }
 
       writeProtobuf(createResponse.build(), request, response);
@@ -147,8 +171,8 @@ public class SearchAction implements QualityGatesWsAction {
       // Meanwhile root is explicitly handled.
       return projects;
     }
-    List<Long> projectIds = projects.stream().map(ProjectQgateAssociationDto::getId).collect(MoreCollectors.toList());
-    Collection<Long> authorizedProjectIds = dbClient.authorizationDao().keepAuthorizedProjectIds(dbSession, projectIds, userSession.getUserId(), UserRole.USER);
-    return projects.stream().filter(project -> authorizedProjectIds.contains(project.getId())).collect(MoreCollectors.toList());
+    List<String> projectUuids = projects.stream().map(ProjectQgateAssociationDto::getUuid).collect(MoreCollectors.toList());
+    Collection<String> authorizedProjectIds = dbClient.authorizationDao().keepAuthorizedProjectUuids(dbSession, projectUuids, userSession.getUuid(), UserRole.USER);
+    return projects.stream().filter(project -> authorizedProjectIds.contains(project.getUuid())).collect(MoreCollectors.toList());
   }
 }

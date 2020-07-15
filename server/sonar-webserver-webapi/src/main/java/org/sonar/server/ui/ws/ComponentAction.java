@@ -243,9 +243,9 @@ public class ComponentAction implements NavigationWsAction {
 
   private boolean isFavourite(DbSession session, ComponentDto component) {
     PropertyQuery propertyQuery = PropertyQuery.builder()
-      .setUserId(userSession.getUserId())
+      .setUserUuid(userSession.getUuid())
       .setKey("favourite")
-      .setComponentId(component.getId())
+      .setComponentUuid(component.uuid())
       .build();
     List<PropertyDto> componentFavourites = dbClient.propertiesDao().selectByQuery(propertyQuery, session);
     return componentFavourites.size() == 1;
@@ -269,7 +269,7 @@ public class ComponentAction implements NavigationWsAction {
       .orElseThrow(() -> new NotFoundException(format("Quality Gate not found for %s", component.getKey())));
     QualityGateDto qualityGateDto = qualityGateData.getQualityGate();
     json.name("qualityGate").beginObject()
-      .prop("key", qualityGateDto.getId())
+      .prop("key", qualityGateDto.getUuid())
       .prop("name", qualityGateDto.getName())
       .prop("isDefault", qualityGateData.isDefault())
       .endObject();

@@ -22,6 +22,8 @@ package org.sonar.server.usergroups.ws;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.organization.OrganizationDto;
@@ -36,6 +38,8 @@ import org.sonar.server.usergroups.DefaultGroupFinder;
 import org.sonar.server.ws.TestRequest;
 import org.sonar.server.ws.WsActionTester;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
 import static org.sonar.test.JsonAssert.assertJson;
 
@@ -53,6 +57,18 @@ public class UpdateActionTest {
     new UpdateAction(db.getDbClient(), userSession, new GroupWsSupport(db.getDbClient(), defaultOrganizationProvider, new DefaultGroupFinder(db.getDbClient()))));
 
   @Test
+  public void verify_definition() {
+    Action wsDef = ws.getDef();
+
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Parameter 'id' format changes from integer to string"),
+      tuple("6.4", "The default group is no longer editable"));
+  }
+
+  @Test
   public void update_both_name_and_description() {
     insertDefaultGroupOnDefaultOrganization();
     GroupDto group = db.users().insertGroup();
@@ -62,7 +78,7 @@ public class UpdateActionTest {
     loginAsAdminOnDefaultOrganization();
 
     String result = newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "new-name")
       .setParam("description", "New Description")
       .execute().getInput();
@@ -83,7 +99,7 @@ public class UpdateActionTest {
     loginAsAdminOnDefaultOrganization();
 
     String result = newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "new-name")
       .execute().getInput();
 
@@ -103,7 +119,7 @@ public class UpdateActionTest {
     loginAsAdminOnDefaultOrganization();
 
     String result = newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("description", "New Description")
       .execute().getInput();
 
@@ -123,7 +139,7 @@ public class UpdateActionTest {
     loginAsAdminOnDefaultOrganization();
 
     String result = newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "new-name")
       .execute().getInput();
 
@@ -146,7 +162,7 @@ public class UpdateActionTest {
     expectedException.expect(ForbiddenException.class);
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "some-product-bu")
       .setParam("description", "Business Unit for Some Awesome Product")
       .execute();
@@ -164,7 +180,7 @@ public class UpdateActionTest {
     expectedException.expect(ForbiddenException.class);
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "some-product-bu")
       .setParam("description", "Business Unit for Some Awesome Product")
       .execute();
@@ -180,7 +196,7 @@ public class UpdateActionTest {
     expectedException.expectMessage("Group name cannot be empty");
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "")
       .execute();
   }
@@ -195,7 +211,7 @@ public class UpdateActionTest {
     expectedException.expectMessage("Anyone group cannot be used");
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "AnYoNe")
       .execute();
   }
@@ -213,7 +229,7 @@ public class UpdateActionTest {
     expectedException.expectMessage("Group 'new-name' already exists");
 
     newRequest()
-      .setParam("id", groupToBeRenamed.getId().toString())
+      .setParam("id", groupToBeRenamed.getUuid().toString())
       .setParam("name", newName)
       .execute();
   }
@@ -239,7 +255,7 @@ public class UpdateActionTest {
     expectedException.expectMessage("Default group 'default' cannot be used to perform this action");
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("name", "new name")
       .execute();
   }
@@ -253,7 +269,7 @@ public class UpdateActionTest {
     expectedException.expectMessage("Default group 'default' cannot be used to perform this action");
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid().toString())
       .setParam("description", "new description")
       .execute();
   }

@@ -19,13 +19,22 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import GraphsLegendStatic from '../GraphsLegendStatic';
+import GraphsLegendStatic, { GraphsLegendStaticProps } from '../GraphsLegendStatic';
 
-const SERIES = [
-  { name: 'bugs', translatedName: 'Bugs', data: [] },
-  { name: 'code_smells', translatedName: 'Code Smells', data: [] }
-];
-
-it('should render correctly the list of series', () => {
-  expect(shallow(<GraphsLegendStatic series={SERIES} />)).toMatchSnapshot();
+it('should render correctly', () => {
+  expect(shallowRender()).toMatchSnapshot('default');
+  expect(shallowRender({ showLeakLegend: true })).toMatchSnapshot('with leak legend');
 });
+
+function shallowRender(props: Partial<GraphsLegendStaticProps> = {}) {
+  return shallow<GraphsLegendStaticProps>(
+    <GraphsLegendStatic
+      series={[
+        { name: 'bugs', translatedName: 'Bugs' },
+        { name: 'code_smells', translatedName: 'Code Smells' }
+      ]}
+      showLeakLegend={false}
+      {...props}
+    />
+  );
+}

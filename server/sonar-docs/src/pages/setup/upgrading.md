@@ -3,15 +3,35 @@ title: Upgrade the Server
 url: /setup/upgrading/
 ---
 
-<!-- sonarqube -->
-Upgrading across multiple, non-LTS versions is handled automatically. However, if you have an LTS version in your migration path, you must first migrate to this LTS and then migrate to your target version.
+## SonarQube Version Number Format
+Before upgrading, it helps to understand how SonarQube version numbers work. Version numbers have up to three digits with each digit representing part of the release cycle:
 
-Example 1 : 5.1 -> 7.0, migration path is 5.1 -> 5.6.7 LTS -> 6.7.x LTS -> 7.0
-Example 2 : 6.2 -> 6.7, migration path is 6.2 -> 6.7.x LTS (where x is the latest patch available for 6.7 - you don't need to install all the intermediary patches, just take the latest)
+![SonarQube version number format](/images/version.png)
+
+**Major version number**  
+The major version number represents a series of releases with high-level objectives for the release cycle. It's incremented with the release following an LTS version (for example, the release following 7.9 LTS was 8.0).
+
+**Minor version number**  
+The minor version number corresponds to incremental functional changes within a major release cycle. At the time of an LTS release, the release cycle is closed and the minor version number is frozen.
+
+**Patch release number**  
+Only on LTS versions, the patch release number represents patches to an LTS that fixed blocker or critical problems. The patch release number isn't considered in your upgrade migration path, and your migration path is the same no matter which patch number you are on.
+
+## Migration Path
+Upgrading across multiple non-LTS versions is handled automatically. However, if there's one or multiple LTS versions in your migration path, you must first migrate to each intermediate LTS and then to your target version, as shown in **Example 3** below.
+
+[[info]]
+|If you're migrating from an earlier patch version of an LTS, you can upgrade directly to the next LTS. You don't need to install any intermediate patch versions.
+
+**Migration Path Examples**:
+
+**Example 1** – From 6.1 > 8.1, the migration path is 6.1 > the latest 6.7 LTS patch > the latest 7.9 LTS patch > 8.1  
+**Example 2** – From 7.2 > 7.9 LTS, the migration path is 7.2 > the latest 7.9 LTS patch.  
+**Example 3** – From 5.6.3 LTS > 7.9 LTS, the migration path is 5.6.3 LTS > 6.7.7 LTS > the latest 7.9 LTS patch.
 
 ## Upgrade Guide
 
-This is a generic upgrade guide. Carefully read the [Release Upgrade Notes](/setup/upgrade-notes/) of your target version and of any intermediate version(s).
+This is a generic guide for upgrading across versions of SonarQube. Carefully read the [Release Upgrade Notes](/setup/upgrade-notes/) of your target version and of any intermediate version(s).
 
 [[warning]]
 | Before you start, back up your SonarQube Database. Upgrade problems are rare, but you'll want the backup if anything does happen.
@@ -33,20 +53,31 @@ If you are using the Oracle DB, copy its JDBC driver into `$NEW_SONARQUBE_HOME/e
 
 To upgrade to SonarQube 8.2+:
 
-1. Create a **new** `sonarqube_extensions_8_x` volume. 
+1. Create a **new** `sonarqube_extensions_8_x` volume.
 
-2. If you're using Oracle, copy the JDBC driver into the new `sonarqube_extensions_8_x` volume.
-
-3. Non-default plugins need to be either re-added through the marketplace after start-up or manually added to the `sonarqube_extensions_8_x` volume. 
-
-4. Stop and remove the SonarQube container (a restart from the UI is not enough as the environment variables are only evaluated during the first run, not during a restart):
-
+2. Stop and remove the existing SonarQube container (a restart from the UI is not enough as the environment variables are only evaluated during the first run, not during a restart):
+    
 	```console
-	$ docker stop <image_name>
-	$ docker rm <image_name>
+	$ docker stop <container_id>
+    $ docker rm <container_id>
 	```
 
-5. Run docker:
+3. If you're using non-default plugins, they need to be manually added to the new `sonarqube_extensions_8_x` volume after the first start-up only. If you're using an Oracle database, the same applies to the JDBC driver. To do this:
+
+	a. Start the SonarQube container with the embedded H2 database:
+   
+    ```
+	$ docker run --rm \
+		-p 9000:9000 \
+		-v sonarqube_extensions_8_x:/opt/sonarqube/extensions \
+		<image_name>
+	```
+	
+	b. Exit once SonarQube has started properly. 
+   
+	c. Copy non-default plugins into `sonarqube_extensions_8_x/plugins` and, if needed, the Oracle driver into `sonarqube_extensions_8_x/jdbc-driver/oracle`.
+
+4. Run docker:
 
 	```bash
 	$> docker run -d --name sonarqube \
@@ -60,14 +91,17 @@ To upgrade to SonarQube 8.2+:
 		<image_name>
 	```
 
-6. Browse to `http://yourSonarQubeServerURL/setup` and follow the setup instructions.
+5. Browse to `http://yourSonarQubeServerURL/setup` and follow the setup instructions.
 
-7. Reanalyze your projects to get fresh data.
+6. Reanalyze your projects to get fresh data.
 
 ### From 7.9.x LTS to another 7.9.x LTS version
 
 No specific Docker operations are needed, just use the new tag.
 
+
+## Edition Upgrade
+If you're moving to a different edition within the same version (upgrade or downgrade) the steps are exactly the same as above, without the need to browse to `http://yourSonarQubeServerURL/setup` or reanalyze your projects.
 
 ## Additional Information
 
@@ -95,8 +129,9 @@ If you use external configuration, such as a script or Windows Service to contro
 
 In case you used the InstallNTService.bat to install SonarQube as a Windows Service, run the $OLD_SONARQUBE_HOME/bin/.../UninstallNTService.bat before running the InstallNTService.bat of the $NEW_SONARQUBE_HOME.
 
+### Rebuilding Indexes
+If your upgrade requires the rebuild of Elasticsearch indexes, your projects and Applications will become available as they are reindexed. Portfolios won't be available until all projects are indexed.
+
 ## Release Upgrade Notes
 
 Usually SonarQube releases come with some specific recommendations for upgrading from the previous version. You should read the upgrade notes for each version between your current version and the target version.
-
-<!-- /sonarqube -->

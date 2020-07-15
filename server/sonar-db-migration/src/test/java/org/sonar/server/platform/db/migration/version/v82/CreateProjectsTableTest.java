@@ -24,7 +24,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.db.CoreDbTester;
-import org.sonar.server.platform.db.migration.version.v82.CreateProjectsTable;
 
 import static java.sql.Types.BIGINT;
 import static java.sql.Types.BOOLEAN;
@@ -59,8 +58,5 @@ public class CreateProjectsTableTest {
     dbTester.assertColumnDefinition(TABLE_NAME, "tags", VARCHAR, 500, true);
     dbTester.assertColumnDefinition(TABLE_NAME, "created_at", BIGINT, null, true);
     dbTester.assertColumnDefinition(TABLE_NAME, "updated_at", BIGINT, null, false);
-
-    // script should not fail if executed twice
-    underTest.execute();
   }
 }

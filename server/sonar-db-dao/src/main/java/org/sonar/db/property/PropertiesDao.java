@@ -33,6 +33,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.System2;
 import org.sonar.api.web.UserRole;
+import org.sonar.core.util.UuidFactory;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 import org.sonar.db.EmailSubscriberDto;
@@ -51,10 +52,12 @@ public class PropertiesDao implements Dao {
 
   private final MyBatis mybatis;
   private final System2 system2;
+  private UuidFactory uuidFactory;
 
-  public PropertiesDao(MyBatis mybatis, System2 system2) {
+  public PropertiesDao(MyBatis mybatis, System2 system2, UuidFactory uuidFactory) {
     this.mybatis = mybatis;
     this.system2 = system2;
+    this.uuidFactory = uuidFactory;
   }
 
   /**
@@ -109,8 +112,8 @@ public class PropertiesDao implements Dao {
 
   private static PreparedStatement createStatement(String projectUuid, Collection<String> dispatcherKeys, Connection connection) throws SQLException {
     String sql = "SELECT count(1) FROM properties pp " +
-      "left outer join components pj on pp.resource_id = pj.id " +
-      "where pp.user_id is not null and (pp.resource_id is null or pj.uuid=?) " +
+      "left outer join components pj on pp.component_uuid = pj.uuid " +
+      "where pp.user_uuid is not null and (pp.component_uuid is null or pj.uuid=?) " +
       "and (" + repeat("pp.prop_key like ?", " or ", dispatcherKeys.size()) + ")";
     PreparedStatement res = connection.prepareStatement(sql);
     res.setString(1, projectUuid);
@@ -155,40 +158,40 @@ public class PropertiesDao implements Dao {
   }
 
   @CheckForNull
-  public PropertyDto selectProjectProperty(long componentId, String propertyKey) {
+  public PropertyDto selectProjectProperty(String projectUuid, String propertyKey) {
     try (DbSession session = mybatis.openSession(false)) {
-      return selectProjectProperty(session, componentId, propertyKey);
+      return selectProjectProperty(session, projectUuid, propertyKey);
     }
   }
 
   @CheckForNull
-  public PropertyDto selectProjectProperty(DbSession dbSession, long componentId, String propertyKey) {
-    return getMapper(dbSession).selectByKey(new PropertyDto().setKey(propertyKey).setResourceId(componentId));
+  public PropertyDto selectProjectProperty(DbSession dbSession, String projectUuid, String propertyKey) {
+    return getMapper(dbSession).selectByKey(new PropertyDto().setKey(propertyKey).setComponentUuid(projectUuid));
   }
 
   public List<PropertyDto> selectByQuery(PropertyQuery query, DbSession session) {
     return getMapper(session).selectByQuery(query);
   }
 
-  public List<PropertyDto> selectGlobalPropertiesByKeys(DbSession session, Set<String> keys) {
+  public List<PropertyDto> selectGlobalPropertiesByKeys(DbSession session, Collection<String> keys) {
     return executeLargeInputs(keys, partitionKeys -> getMapper(session).selectByKeys(partitionKeys));
   }
 
-  public List<PropertyDto> selectPropertiesByKeysAndComponentIds(DbSession session, Set<String> keys, Set<Long> componentIds) {
-    return executeLargeInputs(keys, partitionKeys -> executeLargeInputs(componentIds,
-      partitionComponentIds -> getMapper(session).selectByKeysAndComponentIds(partitionKeys, partitionComponentIds)));
+  public List<PropertyDto> selectPropertiesByKeysAndComponentUuids(DbSession session, Collection<String> keys, Collection<String> componentUuids) {
+    return executeLargeInputs(keys, partitionKeys -> executeLargeInputs(componentUuids,
+      partitionComponentUuids -> getMapper(session).selectByKeysAndComponentUuids(partitionKeys, partitionComponentUuids)));
   }
 
-  public List<PropertyDto> selectPropertiesByComponentIds(DbSession session, Set<Long> componentIds) {
-    return executeLargeInputs(componentIds, getMapper(session)::selectByComponentIds);
+  public List<PropertyDto> selectPropertiesByComponentUuids(DbSession session, Collection<String> componentUuids) {
+    return executeLargeInputs(componentUuids, getMapper(session)::selectByComponentUuids);
   }
 
   public List<PropertyDto> selectByKeyAndMatchingValue(DbSession session, String key, String value) {
     return getMapper(session).selectByKeyAndMatchingValue(key, value);
   }
 
-  public List<PropertyDto> selectByKeyAndUserIdAndComponentQualifier(DbSession session, String key, int userId, String qualifier) {
-    return getMapper(session).selectByKeyAndUserIdAndComponentQualifier(key, userId, qualifier);
+  public List<PropertyDto> selectByKeyAndUserUuidAndComponentQualifier(DbSession session, String key, String userUuid, String qualifier) {
+    return getMapper(session).selectByKeyAndUserUuidAndComponentQualifier(key, userUuid, qualifier);
   }
 
   /**
@@ -200,22 +203,22 @@ public class PropertiesDao implements Dao {
    * @throws IllegalArgumentException if {@link PropertyDto#getKey()} is {@code null} or empty
    */
   public void saveProperty(DbSession session, PropertyDto property) {
-    save(getMapper(session), property.getKey(), property.getUserId(), property.getResourceId(), property.getValue());
+    save(getMapper(session), property.getKey(), property.getUserUuid(), property.getComponentUuid(), property.getValue());
   }
 
-  private void save(PropertiesMapper mapper,
-    String key, @Nullable Integer userId, @Nullable Long componentId,
-    @Nullable String value) {
+  private void save(PropertiesMapper mapper, String key,
+                    @Nullable String userUuid, @Nullable String componentUuid, @Nullable String value) {
     checkKey(key);
 
     long now = system2.now();
-    mapper.delete(key, userId, componentId);
+    mapper.delete(key, userUuid, componentUuid);
+    String uuid = uuidFactory.create();
     if (isEmpty(value)) {
-      mapper.insertAsEmpty(key, userId, componentId, now);
+      mapper.insertAsEmpty(uuid, key, userUuid, componentUuid, now);
     } else if (mustBeStoredInClob(value)) {
-      mapper.insertAsClob(key, userId, componentId, value, now);
+      mapper.insertAsClob(uuid, key, userUuid, componentUuid, value, now);
     } else {
-      mapper.insertAsText(key, userId, componentId, value, now);
+      mapper.insertAsText(uuid, key, userUuid, componentUuid, value, now);
     }
   }
 
@@ -250,18 +253,18 @@ public class PropertiesDao implements Dao {
   }
 
   public int delete(DbSession dbSession, PropertyDto dto) {
-    return getMapper(dbSession).delete(dto.getKey(), dto.getUserId(), dto.getResourceId());
+    return getMapper(dbSession).delete(dto.getKey(), dto.getUserUuid(), dto.getComponentUuid());
   }
 
-  public void deleteProjectProperty(String key, Long projectId) {
+  public void deleteProjectProperty(String key, String projectUuid) {
     try (DbSession session = mybatis.openSession(false)) {
-      deleteProjectProperty(key, projectId, session);
+      deleteProjectProperty(key, projectUuid, session);
       session.commit();
     }
   }
 
-  public void deleteProjectProperty(String key, Long projectId, DbSession session) {
-    getMapper(session).deleteProjectProperty(key, projectId);
+  public void deleteProjectProperty(String key, String projectUuid, DbSession session) {
+    getMapper(session).deleteProjectProperty(key, projectUuid);
   }
 
   public void deleteProjectProperties(String key, String value, DbSession session) {
@@ -286,14 +289,14 @@ public class PropertiesDao implements Dao {
     }
   }
 
-  public void deleteByOrganizationAndUser(DbSession dbSession, String organizationUuid, int userId) {
-    List<Long> ids = getMapper(dbSession).selectIdsByOrganizationAndUser(organizationUuid, userId);
-    executeLargeInputsWithoutOutput(ids, subList -> getMapper(dbSession).deleteByIds(subList));
+  public void deleteByOrganizationAndUser(DbSession dbSession, String organizationUuid, String userUuid) {
+    List<String> uuids = getMapper(dbSession).selectUuidsByOrganizationAndUser(organizationUuid, userUuid);
+    executeLargeInputsWithoutOutput(uuids, subList -> getMapper(dbSession).deleteByUuids(subList));
   }
 
   public void deleteByOrganizationAndMatchingLogin(DbSession dbSession, String organizationUuid, String login, List<String> propertyKeys) {
-    List<Long> ids = getMapper(dbSession).selectIdsByOrganizationAndMatchingLogin(organizationUuid, login, propertyKeys);
-    executeLargeInputsWithoutOutput(ids, list -> getMapper(dbSession).deleteByIds(list));
+    List<String> uuids = getMapper(dbSession).selectIdsByOrganizationAndMatchingLogin(organizationUuid, login, propertyKeys);
+    executeLargeInputsWithoutOutput(uuids, list -> getMapper(dbSession).deleteByUuids(list));
   }
 
   public void deleteByKeyAndValue(DbSession dbSession, String key, String value) {

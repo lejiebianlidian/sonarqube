@@ -24,17 +24,17 @@ import org.apache.ibatis.annotations.Param;
 
 public interface PermissionTemplateCharacteristicMapper {
 
-  PermissionTemplateCharacteristicDto selectById(@Param("id") long id);
+  PermissionTemplateCharacteristicDto selectByUuid(@Param("uuid") String uuid);
 
-  List<PermissionTemplateCharacteristicDto> selectByTemplateIds(@Param("templateIds") List<Long> templateId);
+  List<PermissionTemplateCharacteristicDto> selectByTemplateUuids(@Param("templateUuids") List<String> templateUuids);
 
-  PermissionTemplateCharacteristicDto selectByPermissionAndTemplateId(@Param("permission") String permission, @Param("templateId") long templateId);
+  PermissionTemplateCharacteristicDto selectByPermissionAndTemplateUuid(@Param("permission") String permission, @Param("templateUuid") String templateUuid);
 
   void insert(PermissionTemplateCharacteristicDto templatePermissionDto);
 
   void update(PermissionTemplateCharacteristicDto templatePermissionDto);
 
-  void deleteByTemplateId(long id);
+  void deleteByTemplateUuid(String uuid);
 
-  void deleteByTemplateIds(@Param("templateIds") List<Long> subList);
+  void deleteByTemplateUuids(@Param("templateUuids") List<String> subList);
 }

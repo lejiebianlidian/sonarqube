@@ -17,76 +17,70 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { sortBy } from 'lodash';
 import * as React from 'react';
-import { Plugin, PluginPending } from '../../api/plugins';
+import { isAvailablePlugin, isInstalledPlugin, PendingPlugin, Plugin } from '../../types/plugins';
 import PluginAvailable from './components/PluginAvailable';
 import PluginInstalled from './components/PluginInstalled';
-import { isPluginAvailable, isPluginInstalled } from './utils';
 
-interface Props {
+export interface PluginsListProps {
   plugins: Plugin[];
   pending: {
-    installing: PluginPending[];
-    updating: PluginPending[];
-    removing: PluginPending[];
+    installing: PendingPlugin[];
+    updating: PendingPlugin[];
+    removing: PendingPlugin[];
   };
   readOnly: boolean;
   refreshPending: () => void;
 }
 
-export default class PluginsList extends React.PureComponent<Props> {
-  getPluginStatus = (plugin: Plugin): string | undefined => {
-    const { installing, updating, removing } = this.props.pending;
-    if (installing.find(p => p.key === plugin.key)) {
-      return 'installing';
-    }
-    if (updating.find(p => p.key === plugin.key)) {
-      return 'updating';
-    }
-    if (removing.find(p => p.key === plugin.key)) {
-      return 'removing';
-    }
-    return undefined;
-  };
-
-  renderPlugin = (plugin: Plugin) => {
-    const status = this.getPluginStatus(plugin);
-    if (isPluginInstalled(plugin)) {
-      return (
-        <PluginInstalled
-          plugin={plugin}
-          readOnly={this.props.readOnly}
-          refreshPending={this.props.refreshPending}
-          status={status}
-        />
-      );
-    }
-    if (isPluginAvailable(plugin)) {
-      return (
-        <PluginAvailable
-          plugin={plugin}
-          readOnly={this.props.readOnly}
-          refreshPending={this.props.refreshPending}
-          status={status}
-        />
-      );
-    }
-    return null;
-  };
-
-  render() {
-    return (
-      <div className="boxed-group boxed-group-inner" id="marketplace-plugins">
-        <ul>
-          {this.props.plugins.map(plugin => (
-            <li className="panel panel-vertical" key={plugin.key}>
-              <table className="marketplace-plugin-table">
-                <tbody>{this.renderPlugin(plugin)}</tbody>
-              </table>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+function getPluginStatus(plugin: Plugin, pending: PluginsListProps['pending']): string | undefined {
+  const { installing, updating, removing } = pending;
+  if (installing.find(p => p.key === plugin.key)) {
+    return 'installing';
   }
+  if (updating.find(p => p.key === plugin.key)) {
+    return 'updating';
+  }
+  if (removing.find(p => p.key === plugin.key)) {
+    return 'removing';
+  }
+  return undefined;
+}
+
+export default function PluginsList(props: PluginsListProps) {
+  const { pending, plugins, readOnly } = props;
+  const installedPlugins = plugins.filter(isInstalledPlugin);
+  return (
+    <div className="boxed-group boxed-group-inner" id="marketplace-plugins">
+      <ul>
+        {sortBy(plugins, ({ name }) => name).map(plugin => (
+          <li className="panel panel-vertical" key={plugin.key}>
+            <table className="marketplace-plugin-table">
+              <tbody>
+                {isInstalledPlugin(plugin) && (
+                  <PluginInstalled
+                    plugin={plugin}
+                    readOnly={readOnly}
+                    refreshPending={props.refreshPending}
+                    status={getPluginStatus(plugin, pending)}
+                  />
+                )}
+
+                {isAvailablePlugin(plugin) && (
+                  <PluginAvailable
+                    installedPlugins={installedPlugins}
+                    plugin={plugin}
+                    readOnly={readOnly}
+                    refreshPending={props.refreshPending}
+                    status={getPluginStatus(plugin, pending)}
+                  />
+                )}
+              </tbody>
+            </table>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

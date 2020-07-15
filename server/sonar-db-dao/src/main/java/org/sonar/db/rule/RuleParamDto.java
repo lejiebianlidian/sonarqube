@@ -28,28 +28,32 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class RuleParamDto {
 
-  private Integer id;
-  private Integer ruleId;
+  private String uuid;
+  private String ruleUuid;
   private String name;
   private String type;
   private String defaultValue;
   private String description;
 
-  public Integer getId() {
-    return id;
+  public RuleParamDto() {
+    // nothing to do here
   }
 
-  public RuleParamDto setId(Integer id) {
-    this.id = id;
+  public String getUuid() {
+    return uuid;
+  }
+
+  public RuleParamDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 
-  public Integer getRuleId() {
-    return ruleId;
+  public String getRuleUuid() {
+    return ruleUuid;
   }
 
-  public RuleParamDto setRuleId(Integer ruleId) {
-    this.ruleId = ruleId;
+  public RuleParamDto setRuleUuid(String ruleUuid) {
+    this.ruleUuid = ruleUuid;
     return this;
   }
 
@@ -100,7 +104,7 @@ public class RuleParamDto {
 
   public static RuleParamDto createFor(RuleDefinitionDto rule) {
     // Should eventually switch to RuleKey (RuleKey is available before insert)
-    return new RuleParamDto().setRuleId(rule.getId());
+    return new RuleParamDto().setRuleUuid(rule.getUuid());
   }
 
 }

@@ -161,10 +161,10 @@ public class ReportSubmitter {
   private ComponentDto createProject(DbSession dbSession, OrganizationDto organization, BranchSupport.ComponentKey componentKey,
     @Nullable String projectName) {
     userSession.checkPermission(OrganizationPermission.PROVISION_PROJECTS, organization);
-    Integer userId = userSession.getUserId();
+    String userUuid = userSession.getUuid();
 
     boolean wouldCurrentUserHaveScanPermission = permissionTemplateService.wouldUserHaveScanPermissionWithDefaultTemplate(
-      dbSession, organization.getUuid(), userId, componentKey.getDbKey());
+      dbSession, organization.getUuid(), userUuid, componentKey.getDbKey());
     if (!wouldCurrentUserHaveScanPermission) {
       throw insufficientPrivilegesException();
     }
@@ -178,7 +178,7 @@ public class ReportSubmitter {
       .setQualifier(Qualifiers.PROJECT)
       .setPrivate(newProjectPrivate)
       .build();
-    return componentUpdater.createWithoutCommit(dbSession, newProject, userId, c -> {
+    return componentUpdater.createWithoutCommit(dbSession, newProject, userUuid, c -> {
     });
   }
 

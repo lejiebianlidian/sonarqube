@@ -5,12 +5,9 @@ url: /requirements/requirements/
 ## Prerequisite
 The only prerequisite for running SonarQube is to have Java (Oracle JRE 11 or OpenJDK 11) installed on your machine.
 
-[[warning]]
-| **Note:** _On Mac OS X it is highly recommended to install Oracle JDK 11 instead of the corresponding Oracle JRE since the JRE installation does not fully set up your Java environment properly. See [this post](http://stackoverflow.com/questions/15624667/mac-osx-java-terminal-version-incorrect) for more information._
-
 ## Hardware Requirements
 1. A small-scale (individual or small team) instance of the SonarQube server requires at least 2GB of RAM to run efficiently and 1GB of free RAM for the OS. If you are installing an instance for a large teams or Enterprise, please consider the additional recommendations below.
-2. The amount of disk space you need will depend on how much code you analyze with SonarQube. As an example, [SonarCloud](https://sonarcloud.io) the public instance of SonarQube, has more than 350 million lines of code under analysis with 5 years of history. SonarCloud is currently running on clustered [Amazon EC2 m5.large](http://aws.amazon.com/ec2/instance-types/) instances with allocations of 50 Gb of drive space per node. It handles 19,000+ projects with roughly 14M open issues. SonarCloud runs on PostgreSQL 9.5 and it is using about 250Gb of disk space for the database.
+2. The amount of disk space you need will depend on how much code you analyze with SonarQube.
 3. SonarQube must be installed on hard drives that have excellent read & write performance. Most importantly, the "data" folder houses the Elasticsearch indices on which a huge amount of I/O will be done when the server is up and running. Great read & write hard drive performance will therefore have a great impact on the overall SonarQube server performance.
 4. SonarQube does not support 32-bit systems on the server side. SonarQube does, however, support 32-bit systems on the scanner side.
 
@@ -47,7 +44,7 @@ We recommend using the Critical Patch Update (CPU) releases.
 |                                                             | ![](/images/check.svg) 2016 (MSSQL Server 13.0) with bundled Microsoft JDBC driver. Express Edition is supported.                                                                                                                                                 |
 |                                                             | ![](/images/check.svg) 2014 (MSSQL Server 12.0) with bundled Microsoft JDBC driver. Express Edition is supported.                                                                                                                                                 |
 |                                                             | ![](/images/exclamation.svg) Collation must be case-sensitive (CS) and accent-sensitive (AS) (example: Latin1_General_CS_AS)                                                                                                                                      |
-|                                                             | ![](/images/exclamation.svg) READ_COMMITTED_SNAPSHOT must be set on the SonarQube database to avoid potential deadlocks under heavy load                                                                                                                          |
+|                                                             | ![](/images/exclamation.svg) `READ_COMMITTED_SNAPSHOT` must be set on the SonarQube database to avoid potential deadlocks under heavy load                                                                                                                          |
 |                                                             | ![](/images/info.svg) Both Windows authentication (“Integrated Security”) and SQL Server authentication are supported. See the Microsoft SQL Server section in Installing/installation/installing-the-server page for instructions on configuring authentication. |
 | [Oracle](http://www.oracle.com/database/)                   | ![](/images/check.svg) 19C                                                                                                                                                                                                                                        |
 |                                                             | ![](/images/check.svg) 18C                                                                                                                                                                                                                                        |
@@ -71,22 +68,32 @@ To get the full experience SonarQube has to offer, you must enable JavaScript in
 | Opera                       | ![](/images/exclamation.svg) Not tested |
 | Safari                      | ![](/images/check.svg) Latest           |
 
-<!-- sonarqube -->
-## GitHub Enterprise Integration
+## ALM Integrations
+
+### Azure Devops Server
+The [SonarScanner for Azure Devops](/analysis/scan/sonarscanner-for-azure-devops/) is compatible with TFS 2017 Update 2 and greater
+
+### Bitbucket Server
+To add Pull Request analysis to Code Insights in Bitbucket Server, you must be running Bitbucket Server version 5.15+.
+
+### GitHub Enterprise and GitHub.com
 To add Pull Request analysis to Checks in GitHub Enterprise, you must be running GitHub Enterprise version 2.14+.
 
-## Bitbucket Server Integration
-To add Pull Request analysis to Code Insights in Bitbucket Server, you must be running Bitbucket Server version 5.15+.
-<!-- /sonarqube -->
+GitHub.com is also supported.
+
+### GitLab Self-Managed and GitLab.com
+To add Merge Request Decoration to your Merge Requests in GitLab Self-Managed, you must be running Gitlab Self-Manged 11.7+.
+
+GitLab.com is also supported.
 
 ## Platform notes
 ### Linux
 If you're running on Linux, you must ensure that:
 
-* `vm.max_map_count` is greater or equals to 262144
-* `fs.file-max` is greater or equals to 65536
-* the user running SonarQube can open at least 65536 file descriptors
-* the user running SonarQube can open at least 4096 threads
+* `vm.max_map_count` is greater than or equal to 524288
+* `fs.file-max` is greater than or equal to 131072
+* the user running SonarQube can open at least 131072 file descriptors
+* the user running SonarQube can open at least 8192 threads
 
 You can see the values with the following commands:
 ```
@@ -98,28 +105,26 @@ ulimit -u
 
 You can set them dynamically for the current session by running  the following commands as `root`:
 ```
-sysctl -w vm.max_map_count=262144
-sysctl -w fs.file-max=65536
-ulimit -n 65536
-ulimit -u 4096
+sysctl -w vm.max_map_count=524288
+sysctl -w fs.file-max=131072
+ulimit -n 131072
+ulimit -u 8192
 ```
 
 To set these values more permanently, you must update either _/etc/sysctl.d/99-sonarqube.conf_ (or _/etc/sysctl.conf_ as you wish) to reflect these values.
 
-If the user running SonarQube (`sonarqube` in this example) does not have the permission to have at least 65536 open descriptors, you must insert this line in _/etc/security/limits.d/99-sonarqube.conf_ (or _/etc/security/limits.conf_ as you wish):
+If the user running SonarQube (`sonarqube` in this example) does not have the permission to have at least 131072 open descriptors, you must insert this line in _/etc/security/limits.d/99-sonarqube.conf_ (or _/etc/security/limits.conf_ as you wish):
 ```
-sonarqube   -   nofile   65536
-sonarqube   -   nproc    4096
+sonarqube   -   nofile   131072
+sonarqube   -   nproc    8192
 ```
-
-You can get more detail in the [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/system-config.html).
 
 If you are using `systemd` to start SonarQube, you must specify those limits inside your unit file in the section \[service\] :
 ```
 [Service]
 ...
-LimitNOFILE=65536
-LimitNPROC=4096
+LimitNOFILE=131072
+LimitNPROC=8192
 ...
 ```
 
@@ -141,3 +146,11 @@ CONFIG_SECCOMP_FILTER=y
 CONFIG_SECCOMP=y
 ```
 For more detail, see the [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/breaking-changes-5.6.html).
+
+### Fonts
+Generating [Executive Reports](/project-administration/portfolio-pdf-configuration/) requires that fonts be installed on the server hosting SonarQube. On Windows servers, this is a given. However, this is not always the case for Linux servers.
+
+The following should be ensured:
+
+* [Fontconfig](https://en.wikipedia.org/wiki/Fontconfig) is installed on the server hosting SonarQube
+* A package of [FreeType](https://www.freetype.org/) fonts is installed on the SonarQube server. The exact packages available will vary by distribution, but a commonly used package is `libfreetype6`

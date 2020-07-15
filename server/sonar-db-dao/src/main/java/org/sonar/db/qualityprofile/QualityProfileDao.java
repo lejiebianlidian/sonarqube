@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.System2;
+import org.sonar.core.util.UuidFactory;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.Dao;
 import org.sonar.db.DatabaseUtils;
@@ -38,7 +39,6 @@ import org.sonar.db.RowNotFoundException;
 import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.emptyList;
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 import static org.sonar.db.DatabaseUtils.executeLargeUpdates;
@@ -46,8 +46,10 @@ import static org.sonar.db.DatabaseUtils.executeLargeUpdates;
 public class QualityProfileDao implements Dao {
 
   private final System2 system;
+  private final UuidFactory uuidFactory;
 
-  public QualityProfileDao(System2 system) {
+  public QualityProfileDao(UuidFactory uuidFactory, System2 system) {
+    this.uuidFactory = uuidFactory;
     this.system = system;
   }
 
@@ -104,12 +106,10 @@ public class QualityProfileDao implements Dao {
   }
 
   private void doInsert(QualityProfileMapper mapper, QProfileDto profile) {
-    checkArgument(profile.getId() == null, "Quality profile is already persisted (got id %d)", profile.getId());
     long now = system.now();
     RulesProfileDto rulesProfile = RulesProfileDto.from(profile);
     mapper.insertRuleProfile(rulesProfile, new Date(now));
     mapper.insertOrgQProfile(OrgQProfileDto.from(profile), now);
-    profile.setId(rulesProfile.getId());
   }
 
   public void update(DbSession dbSession, QProfileDto profile, QProfileDto... otherProfiles) {
@@ -206,7 +206,7 @@ public class QualityProfileDao implements Dao {
   }
 
   public void insertProjectProfileAssociation(DbSession dbSession, ProjectDto project, QProfileDto profile) {
-    mapper(dbSession).insertProjectProfileAssociation(project.getUuid(), profile.getKee());
+    mapper(dbSession).insertProjectProfileAssociation(uuidFactory.create(), project.getUuid(), profile.getKee());
   }
 
   public void deleteProjectProfileAssociation(DbSession dbSession, ProjectDto project, QProfileDto profile) {
@@ -261,7 +261,7 @@ public class QualityProfileDao implements Dao {
   }
 
   public List<QProfileDto> selectQProfilesByRuleProfile(DbSession dbSession, RulesProfileDto rulesProfile) {
-    return mapper(dbSession).selectQProfilesByRuleProfileUuid(rulesProfile.getKee());
+    return mapper(dbSession).selectQProfilesByRuleProfileUuid(rulesProfile.getUuid());
   }
 
   private static String sqlQueryString(@Nullable String query) {

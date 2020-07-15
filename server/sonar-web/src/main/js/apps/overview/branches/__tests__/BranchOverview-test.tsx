@@ -22,16 +22,16 @@ import { shallow } from 'enzyme';
 import * as React from 'react';
 import { isDiffMetric } from 'sonar-ui-common/helpers/measures';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
-import { getApplicationLeak } from '../../../../api/application';
-import { getMeasuresAndMeta } from '../../../../api/measures';
+import { getApplicationDetails, getApplicationLeak } from '../../../../api/application';
+import { getMeasuresWithPeriodAndMetrics } from '../../../../api/measures';
 import { getProjectActivity } from '../../../../api/projectActivity';
 import {
   getApplicationQualityGate,
   getQualityGateProjectStatus
 } from '../../../../api/quality-gates';
-import { getTimeMachineData } from '../../../../api/time-machine';
+import { getAllTimeMachineData } from '../../../../api/time-machine';
 import { getActivityGraph, saveActivityGraph } from '../../../../components/activity-graph/utils';
-import { mockMainBranch } from '../../../../helpers/mocks/branch-like';
+import { mockBranch, mockMainBranch } from '../../../../helpers/mocks/branch-like';
 import { mockComponent } from '../../../../helpers/testMocks';
 import { ComponentQualifier } from '../../../../types/component';
 import { MetricKey } from '../../../../types/metrics';
@@ -47,7 +47,7 @@ jest.mock('sonar-ui-common/helpers/dates', () => ({
 jest.mock('../../../../api/measures', () => {
   const { mockMeasure, mockMetric } = require.requireActual('../../../../helpers/testMocks');
   return {
-    getMeasuresAndMeta: jest.fn((_, metricKeys: string[]) => {
+    getMeasuresWithPeriodAndMetrics: jest.fn((_, metricKeys: string[]) => {
       const metrics: T.Metric[] = [];
       const measures: T.Measure[] = [];
       metricKeys.forEach(key => {
@@ -126,7 +126,7 @@ jest.mock('../../../../api/quality-gates', () => {
 jest.mock('../../../../api/time-machine', () => {
   const { MetricKey } = require.requireActual('../../../../types/metrics');
   return {
-    getTimeMachineData: jest.fn().mockResolvedValue({
+    getAllTimeMachineData: jest.fn().mockResolvedValue({
       measures: [
         { metric: MetricKey.bugs, history: [{ date: '2019-01-05', value: '2.0' }] },
         { metric: MetricKey.vulnerabilities, history: [{ date: '2019-01-05', value: '0' }] },
@@ -152,6 +152,19 @@ jest.mock('../../../../api/projectActivity', () => {
 });
 
 jest.mock('../../../../api/application', () => ({
+  getApplicationDetails: jest.fn().mockResolvedValue({
+    branches: [],
+    key: 'key-1',
+    name: 'app',
+    projects: [
+      {
+        branch: 'foo',
+        key: 'KEY-P1',
+        name: 'P1'
+      }
+    ],
+    visibility: 'Private'
+  }),
   getApplicationLeak: jest.fn().mockResolvedValue([
     {
       date: '2017-01-05',
@@ -184,7 +197,7 @@ describe('project overview', () => {
     const wrapper = shallowRender();
     await waitAndUpdate(wrapper);
     expect(getQualityGateProjectStatus).toBeCalled();
-    expect(getMeasuresAndMeta).toBeCalled();
+    expect(getMeasuresWithPeriodAndMetrics).toBeCalled();
 
     // Check the conditions got correctly enhanced with measure meta data.
     const { qgStatuses } = wrapper.state();
@@ -220,7 +233,7 @@ describe('project overview', () => {
   });
 
   it('should correctly flag a project as empty', async () => {
-    (getMeasuresAndMeta as jest.Mock).mockResolvedValueOnce({ component: {} });
+    (getMeasuresWithPeriodAndMetrics as jest.Mock).mockResolvedValueOnce({ component: {} });
 
     const wrapper = shallowRender();
     await waitAndUpdate(wrapper);
@@ -240,12 +253,19 @@ describe('application overview', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
+  it('should fetch correctly other branch', async () => {
+    const wrapper = shallowRender({ branchLike: mockBranch(), component });
+    await waitAndUpdate(wrapper);
+    expect(getApplicationDetails).toHaveBeenCalled();
+    expect(wrapper).toMatchSnapshot();
+  });
+
   it("should correctly load an application's status", async () => {
     const wrapper = shallowRender({ component });
     await waitAndUpdate(wrapper);
     expect(getApplicationQualityGate).toBeCalled();
     expect(getApplicationLeak).toBeCalled();
-    expect(getMeasuresAndMeta).toBeCalled();
+    expect(getMeasuresWithPeriodAndMetrics).toBeCalled();
 
     // Check the conditions got correctly enhanced with measure meta data.
     const { qgStatuses } = wrapper.state();
@@ -300,7 +320,7 @@ describe('application overview', () => {
   });
 
   it('should correctly flag an application as empty', async () => {
-    (getMeasuresAndMeta as jest.Mock).mockResolvedValueOnce({ component: {} });
+    (getMeasuresWithPeriodAndMetrics as jest.Mock).mockResolvedValueOnce({ component: {} });
 
     const wrapper = shallowRender({ component });
     await waitAndUpdate(wrapper);
@@ -313,7 +333,7 @@ it("should correctly load a component's history", async () => {
   const wrapper = shallowRender();
   await waitAndUpdate(wrapper);
   expect(getProjectActivity).toBeCalled();
-  expect(getTimeMachineData).toBeCalled();
+  expect(getAllTimeMachineData).toBeCalled();
 
   const { measuresHistory } = wrapper.state();
   expect(measuresHistory).toHaveLength(6);

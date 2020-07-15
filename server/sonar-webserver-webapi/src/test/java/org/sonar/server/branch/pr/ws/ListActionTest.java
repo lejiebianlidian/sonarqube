@@ -24,6 +24,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.resources.ResourceTypes;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.DateUtils;
 import org.sonar.api.utils.System2;
@@ -89,7 +90,7 @@ public class ListActionTest {
   private MetricDto qualityGateStatus;
 
   private ResourceTypes resourceTypes = new ResourceTypesRule().setRootQualifiers(PROJECT);
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()));
+  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
   private IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSession, new WebAuthorizationTypeSupport(userSession));
   private PermissionIndexerTester permissionIndexerTester = new PermissionIndexerTester(es, issueIndexer);
 
@@ -108,6 +109,10 @@ public class ListActionTest {
     assertThat(definition.isInternal()).isFalse();
     assertThat(definition.params()).extracting(WebService.Param::key).containsExactlyInAnyOrder("project");
     assertThat(definition.since()).isEqualTo("7.1");
+
+    assertThat(definition.changelog())
+      .extracting(Change::getVersion, Change::getDescription)
+      .contains(tuple("8.4", "Response fields: 'bugs', 'vulnerabilities', 'codeSmells' are deprecated."));
   }
 
   @Test
@@ -259,7 +264,7 @@ public class ListActionTest {
     db.issues().insert(rule, pullRequest, pullRequest, i -> i.setType(CODE_SMELL).setResolution(null));
     db.issues().insert(rule, pullRequest, pullRequest, i -> i.setType(CODE_SMELL).setResolution(null));
     db.issues().insert(rule, pullRequest, pullRequest, i -> i.setType(CODE_SMELL).setResolution(RESOLUTION_FALSE_POSITIVE));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     permissionIndexerTester.allowOnlyAnyone(project);
 
     ListWsResponse response = ws.newRequest()
@@ -282,7 +287,7 @@ public class ListActionTest {
         .setBranchType(PULL_REQUEST)
         .setMergeBranchUuid(nonMainBranch.uuid())
         .setPullRequestData(DbProjectBranches.PullRequestData.newBuilder().setBranch("feature/bar").build()));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     permissionIndexerTester.allowOnlyAnyone(project);
 
     ListWsResponse response = ws.newRequest()
@@ -324,7 +329,7 @@ public class ListActionTest {
     db.getDbClient().snapshotDao().insert(db.getSession(),
       newAnalysis(pullRequest2).setCreatedAt(lastAnalysisPullRequest));
     db.commit();
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     permissionIndexerTester.allowOnlyAnyone(project);
 
     ListWsResponse response = ws.newRequest()
@@ -336,6 +341,10 @@ public class ListActionTest {
       .containsExactlyInAnyOrder(
         tuple(false, null),
         tuple(true, lastAnalysisPullRequest));
+  }
+
+  private void indexIssues() {
+    issueIndexer.indexAllIssues();
   }
 
   @Test

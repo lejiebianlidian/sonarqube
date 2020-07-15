@@ -26,6 +26,7 @@ import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.ResourceTypes;
 import org.sonar.api.utils.System2;
 import org.sonar.api.web.UserRole;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.component.ResourceTypesRule;
 import org.sonar.db.permission.template.PermissionTemplateCharacteristicDto;
 import org.sonar.db.permission.template.PermissionTemplateDto;
@@ -33,8 +34,8 @@ import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.permission.PermissionService;
 import org.sonar.server.permission.PermissionServiceImpl;
-import org.sonar.server.permission.ws.BasePermissionWsTest;
 import org.sonar.server.permission.RequestValidator;
+import org.sonar.server.permission.ws.BasePermissionWsTest;
 import org.sonar.server.permission.ws.WsParameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,7 +76,7 @@ public class AddProjectCreatorToTemplateActionTest extends BasePermissionWsTest<
       .setParam(PARAM_TEMPLATE_ID, template.getUuid())
       .execute();
 
-    assertThatProjectCreatorIsPresentFor(UserRole.ADMIN, template.getId());
+    assertThatProjectCreatorIsPresentFor(UserRole.ADMIN, template.getUuid());
   }
 
   @Test
@@ -83,7 +84,8 @@ public class AddProjectCreatorToTemplateActionTest extends BasePermissionWsTest<
     loginAsAdmin(db.getDefaultOrganization());
     PermissionTemplateCharacteristicDto characteristic = db.getDbClient().permissionTemplateCharacteristicDao().insert(db.getSession(),
       new PermissionTemplateCharacteristicDto()
-        .setTemplateId(template.getId())
+        .setUuid(Uuids.createFast())
+        .setTemplateUuid(template.getUuid())
         .setPermission(UserRole.USER)
         .setWithProjectCreator(false)
         .setCreatedAt(1_000_000_000L)
@@ -96,7 +98,7 @@ public class AddProjectCreatorToTemplateActionTest extends BasePermissionWsTest<
       .setParam(PARAM_TEMPLATE_NAME, template.getName())
       .execute();
 
-    assertThatProjectCreatorIsPresentFor(UserRole.USER, template.getId());
+    assertThatProjectCreatorIsPresentFor(UserRole.USER, template.getUuid());
     PermissionTemplateCharacteristicDto reloaded = reload(characteristic);
     assertThat(reloaded.getCreatedAt()).isEqualTo(1_000_000_000L);
     assertThat(reloaded.getUpdatedAt()).isEqualTo(3_000_000_000L);
@@ -138,15 +140,16 @@ public class AddProjectCreatorToTemplateActionTest extends BasePermissionWsTest<
       .execute();
   }
 
-  private void assertThatProjectCreatorIsPresentFor(String permission, long templateId) {
+  private void assertThatProjectCreatorIsPresentFor(String permission, String templateUuid) {
     Optional<PermissionTemplateCharacteristicDto> templatePermission = db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(),
       permission,
-      templateId);
+      templateUuid);
     assertThat(templatePermission).isPresent();
     assertThat(templatePermission.get().getWithProjectCreator()).isTrue();
   }
 
   private PermissionTemplateCharacteristicDto reload(PermissionTemplateCharacteristicDto characteristic) {
-    return db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(), characteristic.getPermission(), characteristic.getTemplateId()).get();
+    return db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(), characteristic.getPermission(), characteristic.getTemplateUuid())
+      .get();
   }
 }

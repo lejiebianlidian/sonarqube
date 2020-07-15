@@ -59,7 +59,7 @@ import static org.sonar.server.rule.index.RuleIndexDefinition.TYPE_ACTIVE_RULE;
 public class ActiveRuleIndexer implements ResilientIndexer {
 
   private static final Logger LOGGER = Loggers.get(ActiveRuleIndexer.class);
-  private static final String ID_TYPE_ACTIVE_RULE_ID = "activeRuleId";
+  private static final String ID_TYPE_ACTIVE_RULE_UUID = "activeRuleUuid";
   private static final String ID_TYPE_RULE_PROFILE_UUID = "ruleProfileUuid";
 
   private final DbClient dbClient;
@@ -88,7 +88,7 @@ public class ActiveRuleIndexer implements ResilientIndexer {
   public void commitAndIndex(DbSession dbSession, Collection<ActiveRuleChange> changes) {
     List<EsQueueDto> items = changes.stream()
       .map(ActiveRuleChange::getActiveRule)
-      .map(ar -> newQueueDto(docIdOf(ar.getId()), ID_TYPE_ACTIVE_RULE_ID, String.valueOf(ar.getRuleId())))
+      .map(ar -> newQueueDto(docIdOf(ar.getUuid()), ID_TYPE_ACTIVE_RULE_UUID, ar.getRuleUuid()))
       .collect(toArrayList());
 
     dbClient.esQueueDao().insert(dbSession, items);
@@ -131,7 +131,7 @@ public class ActiveRuleIndexer implements ResilientIndexer {
     items.forEach(i -> {
       if (ID_TYPE_RULE_PROFILE_UUID.equals(i.getDocIdType())) {
         ruleProfileItems.put(i.getDocId(), i);
-      } else if (ID_TYPE_ACTIVE_RULE_ID.equals(i.getDocIdType())) {
+      } else if (ID_TYPE_ACTIVE_RULE_UUID.equals(i.getDocIdType())) {
         activeRuleItems.put(i.getDocId(), i);
       } else {
         LOGGER.error("Unsupported es_queue.doc_id_type. Removing row from queue: " + i);
@@ -153,9 +153,9 @@ public class ActiveRuleIndexer implements ResilientIndexer {
     BulkIndexer bulkIndexer = createBulkIndexer(Size.REGULAR, listener);
     bulkIndexer.start();
     Map<String, EsQueueDto> remaining = new HashMap<>(activeRuleItems);
-    dbClient.activeRuleDao().scrollByIdsForIndexing(dbSession, toActiveRuleIds(activeRuleItems),
+    dbClient.activeRuleDao().scrollByUuidsForIndexing(dbSession, toActiveRuleUuids(activeRuleItems),
       i -> {
-        remaining.remove(docIdOf(i.getId()));
+        remaining.remove(docIdOf(i.getUuid()));
         bulkIndexer.add(newIndexRequest(i));
       });
 
@@ -166,10 +166,10 @@ public class ActiveRuleIndexer implements ResilientIndexer {
     return bulkIndexer.stop();
   }
 
-  private static Collection<Long> toActiveRuleIds(Map<String, EsQueueDto> activeRuleItems) {
+  private static Collection<String> toActiveRuleUuids(Map<String, EsQueueDto> activeRuleItems) {
     Set<String> docIds = activeRuleItems.keySet();
     return docIds.stream()
-      .map(ActiveRuleDoc::activeRuleIdOf)
+      .map(ActiveRuleDoc::activeRuleUuidOf)
       .collect(toSet(docIds.size()));
   }
 
@@ -214,8 +214,8 @@ public class ActiveRuleIndexer implements ResilientIndexer {
   }
 
   private static IndexRequest newIndexRequest(IndexedActiveRuleDto dto) {
-    ActiveRuleDoc doc = new ActiveRuleDoc(dto.getId())
-      .setRuleId(dto.getRuleId())
+    ActiveRuleDoc doc = new ActiveRuleDoc(dto.getUuid())
+      .setRuleUuid(dto.getRuleUuid())
       .setRuleProfileUuid(dto.getRuleProfileUuid())
       .setSeverity(SeverityUtil.getSeverityFromOrdinal(dto.getSeverity()));
     // all the fields must be present, even if value is null

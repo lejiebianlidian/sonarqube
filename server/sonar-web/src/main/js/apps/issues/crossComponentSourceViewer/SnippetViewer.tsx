@@ -42,7 +42,6 @@ interface Props {
   duplicationsByLine?: { [line: number]: number[] };
   expandBlock: (snippetIndex: number, direction: T.ExpandDirection) => Promise<void>;
   handleCloseIssues: (line: T.SourceLine) => void;
-  handleLinePopupToggle: (line: T.SourceLine) => void;
   handleOpenIssues: (line: T.SourceLine) => void;
   handleSymbolClick: (symbols: string[]) => void;
   highlightedLocationMessage: { index: number; text: string | undefined } | undefined;
@@ -51,9 +50,8 @@ interface Props {
   issue: Pick<T.Issue, 'key' | 'textRange' | 'line'>;
   issuePopup?: { issue: string; name: string };
   issuesByLine: T.IssuesByLine;
-  last: boolean;
-  linePopup?: T.LinePopup;
-  loadDuplications: (line: T.SourceLine) => void;
+  lastSnippetOfLastGroup: boolean;
+  loadDuplications?: (line: T.SourceLine) => void;
   locations: T.FlowLocation[];
   locationsByLine: { [line: number]: T.LinearIssueLocation[] };
   onIssueChange: (issue: T.Issue) => void;
@@ -64,8 +62,6 @@ interface Props {
   scroll?: (element: HTMLElement, offset?: number) => void;
   snippet: T.SourceLine[];
 }
-
-const SCROLL_LEFT_OFFSET = 32;
 
 export default class SnippetViewer extends React.PureComponent<Props> {
   snippetNodeRef: React.RefObject<HTMLDivElement>;
@@ -82,9 +78,11 @@ export default class SnippetViewer extends React.PureComponent<Props> {
     const parent = this.snippetNodeRef.current as Element;
 
     if (parent) {
+      const offset = parent.getBoundingClientRect().width / 2;
+
       scrollHorizontally(element, {
-        leftOffset: SCROLL_LEFT_OFFSET,
-        rightOffset: parent.getBoundingClientRect().width - SCROLL_LEFT_OFFSET,
+        leftOffset: offset,
+        rightOffset: offset,
         parent
       });
     }
@@ -138,6 +136,7 @@ export default class SnippetViewer extends React.PureComponent<Props> {
       (duplicationsCount && duplicationsByLine && duplicationsByLine[line.line]) || [];
 
     const isSinkLine = issuesForLine.some(i => i.key === this.props.issue.key);
+    const noop = () => {};
 
     return (
       <Line
@@ -162,15 +161,13 @@ export default class SnippetViewer extends React.PureComponent<Props> {
         key={line.line}
         last={false}
         line={line}
-        linePopup={this.props.linePopup}
-        loadDuplications={this.props.loadDuplications}
+        loadDuplications={this.props.loadDuplications || noop}
         onIssueChange={this.props.onIssueChange}
         onIssuePopupToggle={this.props.onIssuePopupToggle}
-        onIssueSelect={() => {}}
-        onIssueUnselect={() => {}}
+        onIssueSelect={noop}
+        onIssueUnselect={noop}
         onIssuesClose={this.props.handleCloseIssues}
         onIssuesOpen={this.props.handleOpenIssues}
-        onLinePopupToggle={this.props.handleLinePopupToggle}
         onLocationSelect={this.props.onLocationSelect}
         onSymbolClick={this.props.handleSymbolClick}
         openIssues={this.props.openIssuesByLine[line.line]}
@@ -190,7 +187,7 @@ export default class SnippetViewer extends React.PureComponent<Props> {
       displaySCM,
       issue,
       issuesByLine = {},
-      last,
+      lastSnippetOfLastGroup,
       locationsByLine,
       openIssuesByLine,
       snippet
@@ -207,11 +204,12 @@ export default class SnippetViewer extends React.PureComponent<Props> {
         .map(k => parseInt(k, 10))
         .filter(l => inSnippet(l, snippet) && (l === issueLine || openIssuesByLine[l]))
     );
-    const verticalBuffer = last
+    const verticalBuffer = lastSnippetOfLastGroup
       ? Math.max(0, LINES_BELOW_ISSUE - (bottomLine - lowestVisibleIssue))
       : 0;
 
-    const displayDuplications = snippet.some(s => !!s.duplicated);
+    const displayDuplications =
+      Boolean(this.props.loadDuplications) && snippet.some(s => !!s.duplicated);
 
     return (
       <div className="source-viewer-code snippet" ref={this.snippetNodeRef}>

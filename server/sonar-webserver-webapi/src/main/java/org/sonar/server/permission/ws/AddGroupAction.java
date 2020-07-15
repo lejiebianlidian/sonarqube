@@ -21,18 +21,19 @@ package org.sonar.server.permission.ws;
 
 import com.google.common.collect.ImmutableList;
 import java.util.Optional;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.server.permission.GroupPermissionChange;
+import org.sonar.server.permission.GroupUuidOrAnyone;
 import org.sonar.server.permission.PermissionChange;
 import org.sonar.server.permission.PermissionService;
 import org.sonar.server.permission.PermissionUpdater;
-import org.sonar.server.permission.ProjectId;
+import org.sonar.server.permission.ProjectUuid;
 import org.sonar.server.user.UserSession;
-import org.sonar.server.permission.GroupIdOrAnyone;
 
 import static org.sonar.server.permission.PermissionPrivilegeChecker.checkProjectAdmin;
 import static org.sonar.server.permission.ws.WsParameters.createGroupIdParameter;
@@ -74,6 +75,8 @@ public class AddGroupAction implements PermissionsWsAction {
         "<li>'Administer' rights on the specified project</li>" +
         "</ul>")
       .setSince("5.2")
+      .setChangelog(
+        new Change("8.4", "Parameter 'groupId' is deprecated. Format changes from integer to string. Use 'name' instead."))
       .setPost(true)
       .setHandler(this);
 
@@ -87,15 +90,15 @@ public class AddGroupAction implements PermissionsWsAction {
   @Override
   public void handle(Request request, Response response) throws Exception {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      GroupIdOrAnyone group = wsSupport.findGroup(dbSession, request);
-      Optional<ProjectId> projectId = wsSupport.findProjectId(dbSession, request);
+      GroupUuidOrAnyone group = wsSupport.findGroup(dbSession, request);
+      Optional<ProjectUuid> projectUuid = wsSupport.findProjectUuid(dbSession, request);
 
-      checkProjectAdmin(userSession, group.getOrganizationUuid(), projectId);
+      checkProjectAdmin(userSession, group.getOrganizationUuid(), projectUuid);
 
       PermissionChange change = new GroupPermissionChange(
         PermissionChange.Operation.ADD,
         request.mandatoryParam(PARAM_PERMISSION),
-        projectId.orElse(null),
+        projectUuid.orElse(null),
         group, permissionService);
       permissionUpdater.apply(dbSession, ImmutableList.of(change));
     }

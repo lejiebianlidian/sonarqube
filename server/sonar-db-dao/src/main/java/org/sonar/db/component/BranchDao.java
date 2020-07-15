@@ -21,6 +21,7 @@ package org.sonar.db.component;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -110,6 +111,18 @@ public class BranchDao implements Dao {
     return Optional.ofNullable(mapper(session).selectByUuid(uuid));
   }
 
+  public List<String> selectProjectUuidsWithIssuesNeedSync(DbSession session, Collection<String> uuids) {
+    if (uuids.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return executeLargeInputs(uuids, mapper(session)::selectProjectUuidsWithIssuesNeedSync);
+  }
+
+  public boolean hasAnyBranchWhereNeedIssueSync(DbSession session, boolean needIssueSync) {
+    return mapper(session).hasAnyBranchWhereNeedIssueSync(needIssueSync) > 0;
+  }
+
   public boolean hasNonMainBranches(DbSession dbSession) {
     return mapper(dbSession).countNonMainBranches() > 0L;
   }
@@ -118,7 +131,41 @@ public class BranchDao implements Dao {
     return mapper(dbSession).countByTypeAndCreationDate(branchType.name(), sinceDate);
   }
 
+  public int countByNeedIssueSync(DbSession session, boolean needIssueSync) {
+    return mapper(session).countByNeedIssueSync(needIssueSync);
+  }
+
+  public int countAll(DbSession session) {
+    return mapper(session).countAll();
+  }
+
   private static BranchMapper mapper(DbSession dbSession) {
     return dbSession.getMapper(BranchMapper.class);
+  }
+
+  public List<BranchDto> selectBranchNeedingIssueSync(DbSession dbSession) {
+    return mapper(dbSession).selectBranchNeedingIssueSync();
+  }
+
+  public long updateAllNeedIssueSync(DbSession dbSession) {
+    return mapper(dbSession).updateAllNeedIssueSync(system2.now());
+  }
+
+  public long updateNeedIssueSync(DbSession dbSession, String branchUuid, boolean needIssueSync) {
+    long now = system2.now();
+    return mapper(dbSession).updateNeedIssueSync(branchUuid, needIssueSync, now);
+  }
+
+  public boolean doAnyOfComponentsNeedIssueSync(DbSession session, List<String> components) {
+    if (!components.isEmpty()) {
+      List<Boolean> result = new LinkedList<>();
+      return executeLargeInputs(components, input -> {
+        boolean groupNeedIssueSync = mapper(session).doAnyOfComponentsNeedIssueSync(input) > 0;
+        result.add(groupNeedIssueSync);
+        return result;
+      }).stream()
+        .anyMatch(b -> b);
+    }
+    return false;
   }
 }

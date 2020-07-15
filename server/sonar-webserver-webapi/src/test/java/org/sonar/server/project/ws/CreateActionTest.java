@@ -218,7 +218,7 @@ public class CreateActionTest {
       .executeProtobuf(CreateWsResponse.class);
 
     ComponentDto project = db.getDbClient().componentDao().selectByKey(db.getSession(), DEFAULT_PROJECT_KEY).get();
-    assertThat(db.favorites().hasFavorite(project, user.getId())).isTrue();
+    assertThat(db.favorites().hasFavorite(project, user.getUuid())).isTrue();
   }
 
   @Test
@@ -226,7 +226,7 @@ public class CreateActionTest {
     OrganizationDto organization = db.organizations().insert();
     UserDto user = db.users().insertUser();
     when(permissionTemplateService.hasDefaultTemplateWithPermissionOnProjectCreator(any(DbSession.class), any(ComponentDto.class))).thenReturn(true);
-    rangeClosed(1, 100).forEach(i -> db.favorites().add(db.components().insertPrivateProject(), user.getId()));
+    rangeClosed(1, 100).forEach(i -> db.favorites().add(db.components().insertPrivateProject(), user.getUuid()));
     userSession.logIn(user).addPermission(PROVISION_PROJECTS, organization);
 
     ws.newRequest()
@@ -273,14 +273,14 @@ public class CreateActionTest {
   }
 
   @Test
-  public void properly_fail_when_invalid_project_key() {
+  public void fail_when_invalid_project_key() {
     userSession.addPermission(PROVISION_PROJECTS, db.getDefaultOrganization());
 
     expectedException.expect(BadRequestException.class);
-    expectedException.expectMessage("Malformed key for Project: 'project Key'. It cannot be empty nor contain whitespaces.");
+    expectedException.expectMessage("Malformed key for Project: 'project%Key'. Allowed characters are alphanumeric, '-', '_', '.' and ':', with at least one non-digit.");
 
     call(CreateRequest.builder()
-      .setProjectKey("project Key")
+      .setProjectKey("project%Key")
       .setName(DEFAULT_PROJECT_NAME)
       .build());
   }

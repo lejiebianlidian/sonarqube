@@ -104,7 +104,7 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
     orgUuids.forEach(orgUuid -> {
       OrgQProfileDto dto = new OrgQProfileDto()
         .setOrganizationUuid(orgUuid)
-        .setRulesProfileUuid(rulesProfileDto.getKee())
+        .setRulesProfileUuid(rulesProfileDto.getUuid())
         .setUuid(uuidFactory.create());
 
       if (builtIn.isDefault() && orgUuidsWithoutDefault.contains(orgUuid)) {
@@ -130,7 +130,7 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
 
   private RulesProfileDto insertRulesProfile(DbSession dbSession, BuiltInQProfile builtIn, Date now) {
     RulesProfileDto dto = new RulesProfileDto()
-      .setKee(uuidFactory.create())
+      .setUuid(uuidFactory.create())
       .setName(builtIn.getName())
       .setLanguage(builtIn.getLanguage())
       .setIsBuiltIn(true)
@@ -145,8 +145,8 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
       .orElseThrow(() -> new IllegalStateException("RuleDefinition not found for key " + ruleKey));
 
     ActiveRuleDto dto = new ActiveRuleDto();
-    dto.setProfileId(rulesProfileDto.getId());
-    dto.setRuleId(ruleDefinitionDto.getId());
+    dto.setProfileUuid(rulesProfileDto.getUuid());
+    dto.setRuleUuid(ruleDefinitionDto.getUuid());
     dto.setKey(ActiveRuleKey.of(rulesProfileDto, ruleDefinitionDto.getKey()));
     dto.setSeverity(firstNonNull(activeRule.getSeverity(), ruleDefinitionDto.getSeverityString()));
     dto.setUpdatedAt(now);
@@ -187,7 +187,6 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
     return paramDto;
   }
 
-  @CheckForNull
   private String validateParam(RuleParamDto ruleParam, String value) {
     RuleParamType ruleParamType = RuleParamType.parse(ruleParam.getType());
     if (ruleParamType.multiple()) {
@@ -207,13 +206,13 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
       this.definitions = dbClient.ruleDao().selectAllDefinitions(session)
         .stream()
         .collect(Collectors.toMap(RuleDefinitionDto::getKey, Function.identity()));
-      Map<Integer, RuleKey> ruleIdsByKey = definitions.values()
+      Map<String, RuleKey> ruleUuidsByKey = definitions.values()
         .stream()
-        .collect(MoreCollectors.uniqueIndex(RuleDefinitionDto::getId, RuleDefinitionDto::getKey));
-      this.params = new HashMap<>(ruleIdsByKey.size());
+        .collect(MoreCollectors.uniqueIndex(RuleDefinitionDto::getUuid, RuleDefinitionDto::getKey));
+      this.params = new HashMap<>(ruleUuidsByKey.size());
       dbClient.ruleDao().selectRuleParamsByRuleKeys(session, definitions.keySet())
         .forEach(ruleParam -> params.compute(
-          ruleIdsByKey.get(ruleParam.getRuleId()),
+          ruleUuidsByKey.get(ruleParam.getRuleUuid()),
           (key, value) -> {
             if (value == null) {
               return ImmutableSet.of(ruleParam);

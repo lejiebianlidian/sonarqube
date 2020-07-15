@@ -248,16 +248,16 @@ public class MemberUpdaterTest {
     PermissionTemplateDto template = db.permissionTemplates().insertTemplate(organization);
     PermissionTemplateDto anotherTemplate = db.permissionTemplates().insertTemplate(anotherOrganization);
     String permission = "browse";
-    db.permissionTemplates().addUserToTemplate(template.getId(), user.getId(), permission);
-    db.permissionTemplates().addUserToTemplate(template.getId(), anotherUser.getId(), permission);
-    db.permissionTemplates().addUserToTemplate(anotherTemplate.getId(), user.getId(), permission);
+    db.permissionTemplates().addUserToTemplate(template.getUuid(), user.getUuid(), permission);
+    db.permissionTemplates().addUserToTemplate(template.getUuid(), anotherUser.getUuid(), permission);
+    db.permissionTemplates().addUserToTemplate(anotherTemplate.getUuid(), user.getUuid(), permission);
 
     underTest.removeMember(db.getSession(), organization, user);
 
-    assertThat(dbClient.permissionTemplateDao().selectUserPermissionsByTemplateId(db.getSession(), template.getId())).extracting(PermissionTemplateUserDto::getUserId)
-      .containsOnly(anotherUser.getId());
-    assertThat(dbClient.permissionTemplateDao().selectUserPermissionsByTemplateId(db.getSession(), anotherTemplate.getId())).extracting(PermissionTemplateUserDto::getUserId)
-      .containsOnly(user.getId());
+    assertThat(dbClient.permissionTemplateDao().selectUserPermissionsByTemplateId(db.getSession(), template.getUuid())).extracting(PermissionTemplateUserDto::getUserUuid)
+      .containsOnly(anotherUser.getUuid());
+    assertThat(dbClient.permissionTemplateDao().selectUserPermissionsByTemplateId(db.getSession(), anotherTemplate.getUuid())).extracting(PermissionTemplateUserDto::getUserUuid)
+      .containsOnly(user.getUuid());
   }
 
   @Test
@@ -302,10 +302,10 @@ public class MemberUpdaterTest {
 
     underTest.removeMember(db.getSession(), organization, user);
 
-    assertThat(dbClient.groupMembershipDao().selectGroupIdsByUserId(db.getSession(), user.getId()))
-      .containsOnly(anotherGroup.getId());
-    assertThat(dbClient.groupMembershipDao().selectGroupIdsByUserId(db.getSession(), anotherUser.getId()))
-      .containsOnly(group.getId(), anotherGroup.getId());
+    assertThat(dbClient.groupMembershipDao().selectGroupUuidsByUserUuid(db.getSession(), user.getUuid()))
+      .containsOnly(anotherGroup.getUuid());
+    assertThat(dbClient.groupMembershipDao().selectGroupUuidsByUserUuid(db.getSession(), anotherUser.getUuid()))
+      .containsOnly(group.getUuid(), anotherGroup.getUuid());
   }
 
   @Test
@@ -320,7 +320,7 @@ public class MemberUpdaterTest {
 
     underTest.removeMember(db.getSession(), organization, user);
 
-    assertThat(dbClient.groupMembershipDao().selectGroupIdsByUserId(db.getSession(), user.getId())).isEmpty();
+    assertThat(dbClient.groupMembershipDao().selectGroupUuidsByUserUuid(db.getSession(), user.getUuid())).isEmpty();
   }
 
   @Test
@@ -337,17 +337,18 @@ public class MemberUpdaterTest {
     OrganizationDto anotherOrganization = db.organizations().insert();
     ComponentDto anotherProject = db.components().insertPrivateProject(anotherOrganization);
     UserDto anotherUser = db.users().insertUser();
-    insertProperty("KEY_11", "VALUE", project.getId(), user.getId());
-    insertProperty("KEY_12", "VALUE", project.getId(), user.getId());
-    insertProperty("KEY_11", "VALUE", project.getId(), anotherUser.getId());
-    insertProperty("KEY_11", "VALUE", anotherProject.getId(), user.getId());
+    insertProperty("KEY_11", "VALUE", project.uuid(), user.getUuid());
+    insertProperty("KEY_12", "VALUE", project.uuid(), user.getUuid());
+    insertProperty("KEY_11", "VALUE", project.uuid(), anotherUser.getUuid());
+    insertProperty("KEY_11", "VALUE", anotherProject.uuid(), user.getUuid());
 
     underTest.removeMember(db.getSession(), organization, user);
 
-    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentId(project.getId()).build(), db.getSession()))
-      .hasSize(1).extracting(PropertyDto::getUserId).containsOnly(anotherUser.getId());
-    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentId(anotherProject.getId()).build(), db.getSession())).extracting(PropertyDto::getUserId)
-      .hasSize(1).containsOnly(user.getId());
+    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(project.uuid()).build(), db.getSession()))
+      .hasSize(1).extracting(PropertyDto::getUserUuid).containsOnly(anotherUser.getUuid());
+    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(anotherProject.uuid()).build(), db.getSession()))
+      .extracting(PropertyDto::getUserUuid)
+      .hasSize(1).containsOnly(user.getUuid());
   }
 
   @Test
@@ -364,17 +365,17 @@ public class MemberUpdaterTest {
     OrganizationDto anotherOrganization = db.organizations().insert();
     ComponentDto anotherProject = db.components().insertPrivateProject(anotherOrganization);
     UserDto anotherUser = db.users().insertUser();
-    insertProperty(DEFAULT_ISSUE_ASSIGNEE, user.getLogin(), project.getId(), null);
-    insertProperty("ANOTHER_KEY", user.getLogin(), project.getId(), null);
-    insertProperty(DEFAULT_ISSUE_ASSIGNEE, anotherUser.getLogin(), project.getId(), null);
-    insertProperty(DEFAULT_ISSUE_ASSIGNEE, user.getLogin(), anotherProject.getId(), null);
+    insertProperty(DEFAULT_ISSUE_ASSIGNEE, user.getLogin(), project.uuid(), null);
+    insertProperty("ANOTHER_KEY", user.getLogin(), project.uuid(), null);
+    insertProperty(DEFAULT_ISSUE_ASSIGNEE, anotherUser.getLogin(), project.uuid(), null);
+    insertProperty(DEFAULT_ISSUE_ASSIGNEE, user.getLogin(), anotherProject.uuid(), null);
 
     underTest.removeMember(db.getSession(), organization, user);
 
-    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentId(project.getId()).build(), db.getSession()))
+    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(project.uuid()).build(), db.getSession()))
       .hasSize(2).extracting(PropertyDto::getKey, PropertyDto::getValue)
       .containsOnly(Tuple.tuple("ANOTHER_KEY", user.getLogin()), Tuple.tuple(DEFAULT_ISSUE_ASSIGNEE, anotherUser.getLogin()));
-    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentId(anotherProject.getId()).build(), db.getSession())).extracting(PropertyDto::getValue)
+    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(anotherProject.uuid()).build(), db.getSession())).extracting(PropertyDto::getValue)
       .hasSize(1).containsOnly(user.getLogin());
   }
 
@@ -453,7 +454,7 @@ public class MemberUpdaterTest {
     underTest.synchronizeUserOrganizationMembership(db.getSession(), user, GITHUB, ImmutableSet.of("unknown"));
 
     // User is member of no organization
-    assertThat(db.getDbClient().organizationMemberDao().selectOrganizationUuidsByUser(db.getSession(), user.getId())).isEmpty();
+    assertThat(db.getDbClient().organizationMemberDao().selectOrganizationUuidsByUser(db.getSession(), user.getUuid())).isEmpty();
   }
 
   @Test
@@ -497,19 +498,19 @@ public class MemberUpdaterTest {
   }
 
   private void assertOrgPermissionsOfUser(UserDto user, OrganizationDto organization, OrganizationPermission... permissions) {
-    assertThat(dbClient.userPermissionDao().selectGlobalPermissionsOfUser(db.getSession(), user.getId(), organization.getUuid()).stream()
+    assertThat(dbClient.userPermissionDao().selectGlobalPermissionsOfUser(db.getSession(), user.getUuid(), organization.getUuid()).stream()
       .map(OrganizationPermission::fromKey))
         .containsOnly(permissions);
   }
 
   private void assertProjectPermissionsOfUser(UserDto user, ComponentDto project, String... permissions) {
-    assertThat(dbClient.userPermissionDao().selectProjectPermissionsOfUser(db.getSession(), user.getId(), project.getId())).containsOnly(permissions);
+    assertThat(dbClient.userPermissionDao().selectProjectPermissionsOfUser(db.getSession(), user.getUuid(), project.uuid())).containsOnly(permissions);
   }
 
-  private void insertProperty(String key, @Nullable String value, @Nullable Long resourceId, @Nullable Integer userId) {
+  private void insertProperty(String key, @Nullable String value, @Nullable String componentUuid, @Nullable String userUuid) {
     PropertyDto dto = new PropertyDto().setKey(key)
-      .setResourceId(resourceId)
-      .setUserId(userId)
+      .setComponentUuid(componentUuid)
+      .setUserUuid(userUuid)
       .setValue(value);
     db.properties().insertProperty(dto);
   }

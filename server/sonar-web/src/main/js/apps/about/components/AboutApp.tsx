@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { sanitize } from 'dompurify';
 import { Location } from 'history';
 import { keyBy } from 'lodash';
 import * as React from 'react';
@@ -92,11 +93,15 @@ export class AboutApp extends React.PureComponent<Props, State> {
   }
 
   loadData() {
-    Promise.all([this.loadProjects(), this.loadIssues(), this.loadCustomText()]).then(
+    Promise.all([
+      this.loadProjects(),
+      this.loadIssues().catch(() => undefined),
+      this.loadCustomText()
+    ]).then(
       responses => {
         if (this.mounted) {
-          const [projectsCount, issues] = responses;
-          const issueTypes = keyBy(issues.facet, 'val');
+          const [projectsCount = 0, issues] = responses;
+          const issueTypes = issues && keyBy(issues.facet, 'val');
           this.setState({ projectsCount, issueTypes, loading: false });
         }
       },
@@ -115,12 +120,10 @@ export class AboutApp extends React.PureComponent<Props, State> {
     let bugs;
     let vulnerabilities;
     let codeSmells;
-    let securityHotspots;
     if (!loading && issueTypes) {
       bugs = issueTypes['BUG'] && issueTypes['BUG'].count;
       vulnerabilities = issueTypes['VULNERABILITY'] && issueTypes['VULNERABILITY'].count;
       codeSmells = issueTypes['CODE_SMELL'] && issueTypes['CODE_SMELL'].count;
-      securityHotspots = issueTypes['SECURITY_HOTSPOT'] && issueTypes['SECURITY_HOTSPOT'].count;
     }
 
     return (
@@ -143,21 +146,22 @@ export class AboutApp extends React.PureComponent<Props, State> {
 
             <div className="about-page-instance">
               <AboutProjects count={projectsCount} loading={loading} />
-              <EntryIssueTypes
-                bugs={bugs}
-                codeSmells={codeSmells}
-                loading={loading}
-                securityHotspots={securityHotspots}
-                vulnerabilities={vulnerabilities}
-              />
+              {issueTypes && (
+                <EntryIssueTypes
+                  bugs={bugs}
+                  codeSmells={codeSmells}
+                  loading={loading}
+                  vulnerabilities={vulnerabilities}
+                />
+              )}
             </div>
           </div>
 
           {customText && (
             <div
               className="about-page-section"
-              // Safe: Defined by instance admin
-              dangerouslySetInnerHTML={{ __html: customText }}
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{ __html: sanitize(customText) }}
             />
           )}
 

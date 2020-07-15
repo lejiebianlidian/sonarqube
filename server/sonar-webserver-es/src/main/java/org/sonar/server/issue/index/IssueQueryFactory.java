@@ -95,7 +95,7 @@ public class IssueQueryFactory {
     .map(Enum::name)
     .collect(MoreCollectors.toSet(RuleType.values().length - 1));
   private static final ComponentDto UNKNOWN_COMPONENT = new ComponentDto().setUuid(UNKNOWN).setProjectUuid(UNKNOWN);
-
+  private static final Set<String> QUALIFIERS_WITHOUT_LEAK_PERIOD = new HashSet<>(Arrays.asList(Qualifiers.APP, Qualifiers.VIEW, Qualifiers.SUBVIEW));
   private final DbClient dbClient;
   private final Clock clock;
   private final UserSession userSession;
@@ -145,8 +145,6 @@ public class IssueQueryFactory {
   }
 
   private void setCreatedAfterFromDates(IssueQuery.Builder builder, @Nullable Date createdAfter, @Nullable String createdInLast, boolean createdAfterInclusive) {
-    checkArgument(createdAfter == null || createdInLast == null, format("Parameters %s and %s cannot be set simultaneously", PARAM_CREATED_AFTER, PARAM_CREATED_IN_LAST));
-
     Date actualCreatedAfter = createdAfter;
     if (createdInLast != null) {
       actualCreatedAfter = Date.from(
@@ -171,49 +169,45 @@ public class IssueQueryFactory {
     String createdInLast = request.getCreatedInLast();
 
     if (request.getSinceLeakPeriod() == null || !request.getSinceLeakPeriod()) {
+      checkArgument(createdAfter == null || createdInLast == null, format("Parameters %s and %s cannot be set simultaneously", PARAM_CREATED_AFTER, PARAM_CREATED_IN_LAST));
       setCreatedAfterFromDates(builder, createdAfter, createdInLast, true);
     } else {
       checkArgument(createdAfter == null, "Parameters '%s' and '%s' cannot be set simultaneously", PARAM_CREATED_AFTER, PARAM_SINCE_LEAK_PERIOD);
+      checkArgument(createdInLast == null, format("Parameters %s and %s cannot be set simultaneously", PARAM_CREATED_IN_LAST, PARAM_SINCE_LEAK_PERIOD));
+
       checkArgument(componentUuids.size() == 1, "One and only one component must be provided when searching since leak period");
       ComponentDto component = componentUuids.iterator().next();
-      Date createdAfterFromSnapshot = findCreatedAfterFromComponentUuid(dbSession, component);
-      setCreatedAfterFromDates(builder, createdAfterFromSnapshot, createdInLast, false);
+
+      if (!QUALIFIERS_WITHOUT_LEAK_PERIOD.contains(component.qualifier()) && request.getPullRequest() == null) {
+        Date createdAfterFromSnapshot = findCreatedAfterFromComponentUuid(dbSession, component);
+        setCreatedAfterFromDates(builder, createdAfterFromSnapshot, null, false);
+      }
     }
   }
 
-  @CheckForNull
   private Date findCreatedAfterFromComponentUuid(DbSession dbSession, ComponentDto component) {
     Optional<SnapshotDto> snapshot = dbClient.snapshotDao().selectLastAnalysisByComponentUuid(dbSession, component.uuid());
-    return snapshot.map(s -> longToDate(s.getPeriodDate())).orElse(null);
+    // if last analysis has no period date, then no issue should be considered new.
+    return snapshot.map(s -> longToDate(s.getPeriodDate())).orElseGet(() -> new Date(clock.millis()));
   }
 
   private boolean mergeDeprecatedComponentParameters(DbSession session, SearchRequest request, List<ComponentDto> allComponents) {
     Boolean onComponentOnly = request.getOnComponentOnly();
     Collection<String> components = request.getComponents();
     Collection<String> componentUuids = request.getComponentUuids();
-    Collection<String> componentKeys = request.getComponentKeys();
-    Collection<String> componentRootUuids = request.getComponentRootUuids();
-    Collection<String> componentRoots = request.getComponentRoots();
     String branch = request.getBranch();
     String pullRequest = request.getPullRequest();
 
     boolean effectiveOnComponentOnly = false;
 
-    checkArgument(atMostOneNonNullElement(components, componentUuids, componentKeys, componentRootUuids, componentRoots),
+    checkArgument(atMostOneNonNullElement(components, componentUuids),
       "At most one of the following parameters can be provided: %s and %s", PARAM_COMPONENT_KEYS, PARAM_COMPONENT_UUIDS);
 
-    if (componentRootUuids != null) {
-      allComponents.addAll(getComponentsFromUuids(session, componentRootUuids));
-    } else if (componentRoots != null) {
-      allComponents.addAll(getComponentsFromKeys(session, componentRoots, branch, pullRequest));
-    } else if (components != null) {
+    if (components != null) {
       allComponents.addAll(getComponentsFromKeys(session, components, branch, pullRequest));
-      effectiveOnComponentOnly = true;
+      effectiveOnComponentOnly = BooleanUtils.isTrue(onComponentOnly);
     } else if (componentUuids != null) {
       allComponents.addAll(getComponentsFromUuids(session, componentUuids));
-      effectiveOnComponentOnly = BooleanUtils.isTrue(onComponentOnly);
-    } else if (componentKeys != null) {
-      allComponents.addAll(getComponentsFromKeys(session, componentKeys, branch, pullRequest));
       effectiveOnComponentOnly = BooleanUtils.isTrue(onComponentOnly);
     }
 
@@ -234,7 +228,7 @@ public class IssueQueryFactory {
       return;
     }
 
-    List<String> projectKeys = request.getProjectKeys();
+    List<String> projectKeys = request.getProjects();
     if (projectKeys != null) {
       List<ComponentDto> projects = getComponentsFromKeys(session, projectKeys, request.getBranch(), request.getPullRequest());
       builder.projectUuids(projects.stream().map(IssueQueryFactory::toProjectUuid).collect(toList()));
@@ -289,7 +283,7 @@ public class IssueQueryFactory {
   }
 
   private void addProjectUuidsForApplication(IssueQuery.Builder builder, DbSession session, SearchRequest request) {
-    List<String> projectKeys = request.getProjectKeys();
+    List<String> projectKeys = request.getProjects();
     if (projectKeys != null) {
       // On application, branch should only be applied on the application, not on projects
       List<ComponentDto> projects = getComponentsFromKeys(session, projectKeys, null, null);
@@ -319,7 +313,7 @@ public class IssueQueryFactory {
   }
 
   private void addCreatedAfterByProjects(IssueQuery.Builder builder, DbSession dbSession, SearchRequest request, Set<String> applicationUuids) {
-    if (request.getSinceLeakPeriod() == null || !request.getSinceLeakPeriod()) {
+    if (request.getSinceLeakPeriod() == null || !request.getSinceLeakPeriod() || request.getPullRequest() != null) {
       return;
     }
 
@@ -331,6 +325,7 @@ public class IssueQueryFactory {
       .stream()
       .filter(s -> s.getPeriodDate() != null)
       .collect(uniqueIndex(SnapshotDto::getComponentUuid, s -> new PeriodStart(longToDate(s.getPeriodDate()), false)));
+
     builder.createdAfterByProjectUuids(leakByProjects);
   }
 

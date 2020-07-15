@@ -17,6 +17,8 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { BranchLike } from './branch-like';
+
 export interface QualityGateProjectStatus {
   conditions?: QualityGateProjectStatusCondition[];
   ignoredConditions: boolean;
@@ -44,7 +46,7 @@ export interface QualityGateApplicationStatusCondition {
   metric: string;
   periodIndex?: number;
   onLeak?: boolean;
-  status: string;
+  status: T.Status;
   value: string;
   warningThreshold?: string;
 }
@@ -62,12 +64,13 @@ export interface QualityGateStatus {
   key: string;
   name: string;
   status: T.Status;
+  branchLike?: BranchLike;
 }
 
 export interface QualityGateStatusCondition {
   actual?: string;
   error?: string;
-  level: string;
+  level: T.Status;
   metric: string;
   op: string;
   period?: number;

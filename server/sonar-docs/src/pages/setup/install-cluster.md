@@ -3,8 +3,6 @@ title: Install the Server as a Cluster
 url: /setup/install-cluster/
 ---
 
-<!-- sonarqube -->
-
 _Running SonarQube as a Cluster is only possible with a [Data Center Edition](https://www.sonarsource.com/plans-and-pricing/data-center/)_.
 
 The Data Center Edition allows SonarQube to run in a clustered configuration to make it resilient to failures.
@@ -90,6 +88,7 @@ sonar.cluster.enabled=true
 sonar.cluster.hosts=ip1,ip2
 sonar.cluster.search.hosts=ip3,ip4,ip5
 sonar.cluster.node.type=application
+sonar.cluster.node.host=ip1
 sonar.auth.jwtBase64Hs256Secret=YOURGENERATEDSECRET
 ...
 ```
@@ -101,6 +100,7 @@ sonar.cluster.enabled=true
 sonar.cluster.hosts=ip1,ip2
 sonar.cluster.search.hosts=ip3,ip4,ip5
 sonar.cluster.node.type=application
+sonar.cluster.node.host=ip2
 sonar.auth.jwtBase64Hs256Secret=YOURGENERATEDSECRET
 ...
 ```
@@ -113,6 +113,7 @@ sonar.auth.jwtBase64Hs256Secret=YOURGENERATEDSECRET
 sonar.cluster.enabled=true
 sonar.cluster.search.hosts=ip3,ip4,ip5
 sonar.cluster.node.type=search
+sonar.cluster.node.host=ip3
 sonar.search.host=ip3
 ...
 ```
@@ -123,6 +124,7 @@ sonar.search.host=ip3
 sonar.cluster.enabled=true
 sonar.cluster.search.hosts=ip3,ip4,ip5
 sonar.cluster.node.type=search
+sonar.cluster.node.host=ip4
 sonar.search.host=ip4
 ...
 ```
@@ -133,6 +135,7 @@ sonar.search.host=ip4
 sonar.cluster.enabled=true
 sonar.cluster.search.hosts=ip3,ip4,ip5
 sonar.cluster.node.type=search
+sonar.cluster.node.host=ip5
 sonar.search.host=ip5
 ...
 ```
@@ -170,5 +173,3 @@ The following is an example of the default SonarQube cluster installation proces
 5. Configure the load balancer to proxy with both application nodes.
 
 Congratulations, you have a fully-functional SonarQube cluster.  Once these steps are complete, take a break and a coffee, then you can [Operate your Cluster](/setup/operate-cluster/).
-
-<!-- /sonarqube -->

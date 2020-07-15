@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,10 +71,6 @@ public class ComponentDao implements Dao {
 
   private static ComponentMapper mapper(DbSession session) {
     return session.getMapper(ComponentMapper.class);
-  }
-
-  public Optional<ComponentDto> selectById(DbSession session, long id) {
-    return Optional.ofNullable(mapper(session).selectById(id));
   }
 
   public Optional<ComponentDto> selectByUuid(DbSession session, String uuid) {
@@ -145,10 +142,6 @@ public class ComponentDao implements Dao {
 
   public List<FilePathWithHashDto> selectEnabledFilesFromProject(DbSession session, String rootComponentUuid) {
     return mapper(session).selectEnabledFilesFromProject(rootComponentUuid);
-  }
-
-  public List<ComponentDto> selectByIds(DbSession session, Collection<Long> ids) {
-    return executeLargeInputs(ids, mapper(session)::selectByIds);
   }
 
   public List<ComponentDto> selectByUuids(DbSession session, Collection<String> uuids) {
@@ -303,9 +296,9 @@ public class ComponentDao implements Dao {
   /**
    * Selects all components that are relevant for indexing. The result is not returned (since it is usually too big), but handed over to the <code>handler</code>
    *
-   * @param session     the database session
+   * @param session the database session
    * @param projectUuid the project uuid, which is selected with all of its children
-   * @param handler     the action to be applied to every result
+   * @param handler the action to be applied to every result
    */
   public void scrollForIndexing(DbSession session, @Nullable String projectUuid, ResultHandler<ComponentDto> handler) {
     mapper(session).scrollForIndexing(projectUuid, handler);
@@ -386,12 +379,11 @@ public class ComponentDao implements Dao {
     mapper(session).setPrivateForRootComponentUuid(projectUuid, isPrivate);
   }
 
-  public void delete(DbSession session, long componentId) {
-    mapper(session).delete(componentId);
+  public void delete(DbSession session, String componentUuid) {
+    mapper(session).delete(componentUuid);
   }
 
   private static void checkThatNotTooManyComponents(ComponentQuery query) {
-    checkThatNotTooManyConditions(query.getComponentIds(), "Too many component ids in query");
     checkThatNotTooManyConditions(query.getComponentKeys(), "Too many component keys in query");
     checkThatNotTooManyConditions(query.getComponentUuids(), "Too many component UUIDs in query");
   }
@@ -402,6 +394,18 @@ public class ComponentDao implements Dao {
 
   public Optional<ComponentDto> selectByAlmIdAndAlmRepositoryId(DbSession dbSession, String almId, String almRepositoryId) {
     return Optional.ofNullable(mapper(dbSession).selectByAlmIdAndAlmRepositoryId(almId, almRepositoryId));
+  }
+
+  public boolean existAnyOfComponentsWithQualifiers(DbSession session, Collection<String> componentKeys, Set<String> qualifiers) {
+    if (!componentKeys.isEmpty()) {
+      List<Boolean> result = new LinkedList<>();
+      return executeLargeInputs(componentKeys, input -> {
+        boolean groupNeedIssueSync = mapper(session).checkIfAnyOfComponentsWithQualifiers(input, qualifiers) > 0;
+        result.add(groupNeedIssueSync);
+        return result;
+      }).stream().anyMatch(b -> b);
+    }
+    return false;
   }
 
 }

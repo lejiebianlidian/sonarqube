@@ -37,6 +37,7 @@ import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.exceptions.UnauthorizedException;
 import org.sonar.server.issue.index.IssueIndex;
+import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
 import org.sonar.server.organization.DefaultOrganizationProvider;
@@ -52,6 +53,11 @@ import static java.lang.String.format;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.api.server.ws.WebService.Param.PAGE_SIZE;
 import static org.sonar.api.server.ws.WebService.Param.TEXT_QUERY;
@@ -70,14 +76,15 @@ public class AuthorsActionTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSession, new WebAuthorizationTypeSupport(userSession));
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()));
+  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
   private PermissionIndexerTester permissionIndexer = new PermissionIndexerTester(es, issueIndexer);
   private ViewIndexer viewIndexer = new ViewIndexer(db.getDbClient(), es.client());
+  private IssueIndexSyncProgressChecker issueIndexSyncProgressChecker = mock(IssueIndexSyncProgressChecker.class);
   private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
   private ResourceTypesRule resourceTypes = new ResourceTypesRule().setRootQualifiers(PROJECT);
 
   private WsActionTester ws = new WsActionTester(new AuthorsAction(userSession, db.getDbClient(), issueIndex,
-    new ComponentFinder(db.getDbClient(), resourceTypes), defaultOrganizationProvider));
+    issueIndexSyncProgressChecker, new ComponentFinder(db.getDbClient(), resourceTypes), defaultOrganizationProvider));
 
   @Test
   public void search_authors() {
@@ -88,12 +95,13 @@ public class AuthorsActionTest {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(db.getDefaultOrganization());
 
     AuthorsResponse result = ws.newRequest().executeProtobuf(AuthorsResponse.class);
 
     assertThat(result.getAuthorsList()).containsExactlyInAnyOrder(leia, luke);
+    verify(issueIndexSyncProgressChecker).checkIfIssueSyncInProgress(any());
   }
 
   @Test
@@ -105,7 +113,7 @@ public class AuthorsActionTest {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(db.getDefaultOrganization());
 
     AuthorsResponse result = ws.newRequest()
@@ -129,7 +137,7 @@ public class AuthorsActionTest {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project1, project1, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project2, project2, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(organization1);
 
     assertThat(ws.newRequest()
@@ -159,7 +167,7 @@ public class AuthorsActionTest {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project1, project1, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project2, project2, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(organization);
 
     assertThat(ws.newRequest()
@@ -179,6 +187,8 @@ public class AuthorsActionTest {
       .setParam(TEXT_QUERY, "luke")
       .executeProtobuf(AuthorsResponse.class).getAuthorsList())
         .isEmpty();
+
+    verify(issueIndexSyncProgressChecker, times(3)).checkIfComponentNeedIssueSync(any(), eq(project1.getKey()));
   }
 
   @Test
@@ -191,7 +201,7 @@ public class AuthorsActionTest {
     permissionIndexer.allowOnlyAnyone(project);
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(leia));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     viewIndexer.indexOnStartup(emptySet());
     userSession.logIn().addMembership(organization);
 
@@ -211,14 +221,14 @@ public class AuthorsActionTest {
     permissionIndexer.allowOnlyAnyone(project);
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(leia));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     viewIndexer.indexOnStartup(emptySet());
     userSession.logIn().addMembership(defaultOrganization);
 
     assertThat(ws.newRequest()
       .setParam("project", application.getKey())
       .executeProtobuf(AuthorsResponse.class).getAuthorsList())
-      .containsExactlyInAnyOrder(leia);
+        .containsExactlyInAnyOrder(leia);
   }
 
   @Test
@@ -232,7 +242,7 @@ public class AuthorsActionTest {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project1, project1, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project2, project2, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(db.getDefaultOrganization());
 
     AuthorsResponse result = ws.newRequest().executeProtobuf(AuthorsResponse.class);
@@ -253,7 +263,7 @@ public class AuthorsActionTest {
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(han));
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(db.getDefaultOrganization());
 
     AuthorsResponse result = ws.newRequest()
@@ -274,7 +284,7 @@ public class AuthorsActionTest {
     UserDto user = db.users().insertUser();
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(leia));
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn(user).addMembership(db.getDefaultOrganization());
 
     // User has no permission on project
@@ -292,12 +302,16 @@ public class AuthorsActionTest {
     permissionIndexer.allowOnlyAnyone(project);
     db.issues().insertHotspot(project, project, issue -> issue
       .setAuthorLogin(luke));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(db.getDefaultOrganization());
 
     AuthorsResponse result = ws.newRequest().executeProtobuf(AuthorsResponse.class);
 
     assertThat(result.getAuthorsList()).isEmpty();
+  }
+
+  private void indexIssues() {
+    issueIndexer.indexAllIssues();
   }
 
   @Test
@@ -391,7 +405,7 @@ public class AuthorsActionTest {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin("luke.skywalker"));
     db.issues().insertIssue(rule, project, project, issue -> issue.setAuthorLogin("leia.organa"));
-    issueIndexer.indexOnStartup(emptySet());
+    indexIssues();
     userSession.logIn().addMembership(db.getDefaultOrganization());
 
     String result = ws.newRequest().execute().getInput();

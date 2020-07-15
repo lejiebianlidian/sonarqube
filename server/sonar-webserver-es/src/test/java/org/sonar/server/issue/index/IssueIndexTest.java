@@ -84,7 +84,7 @@ public class IssueIndexTest {
   @Rule
   public DbTester db = DbTester.create(system2);
 
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()));
+  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
   private RuleIndexer ruleIndexer = new RuleIndexer(es.client(), db.getDbClient());
   private PermissionIndexerTester authorizationIndexer = new PermissionIndexerTester(es, issueIndexer);
 
@@ -217,18 +217,18 @@ public class IssueIndexTest {
   public void list_tags() {
     RuleDefinitionDto r1 = db.rules().insert();
     RuleDefinitionDto r2 = db.rules().insert();
-    ruleIndexer.commitAndIndex(db.getSession(), asList(r1.getId(), r2.getId()));
+    ruleIndexer.commitAndIndex(db.getSession(), asList(r1.getUuid(), r2.getUuid()));
 
     OrganizationDto org = db.organizations().insert();
     OrganizationDto anotherOrg = db.organizations().insert();
     ComponentDto project = newPrivateProjectDto(newOrganizationDto());
     ComponentDto file = newFileDto(project, null);
     indexIssues(
-      newDoc("I42", file).setOrganizationUuid(anotherOrg.getUuid()).setRuleId(r1.getId()).setTags(of("another")),
-      newDoc("I1", file).setOrganizationUuid(org.getUuid()).setRuleId(r1.getId()).setTags(of("convention", "java8", "bug")),
-      newDoc("I2", file).setOrganizationUuid(org.getUuid()).setRuleId(r1.getId()).setTags(of("convention", "bug")),
-      newDoc("I3", file).setOrganizationUuid(org.getUuid()).setRuleId(r2.getId()),
-      newDoc("I4", file).setOrganizationUuid(org.getUuid()).setRuleId(r1.getId()).setTags(of("convention")));
+      newDoc("I42", file).setOrganizationUuid(anotherOrg.getUuid()).setRuleUuid(r1.getUuid()).setTags(of("another")),
+      newDoc("I1", file).setOrganizationUuid(org.getUuid()).setRuleUuid(r1.getUuid()).setTags(of("convention", "java8", "bug")),
+      newDoc("I2", file).setOrganizationUuid(org.getUuid()).setRuleUuid(r1.getUuid()).setTags(of("convention", "bug")),
+      newDoc("I3", file).setOrganizationUuid(org.getUuid()).setRuleUuid(r2.getUuid()),
+      newDoc("I4", file).setOrganizationUuid(org.getUuid()).setRuleUuid(r1.getUuid()).setTags(of("convention")));
 
     assertThat(underTest.searchTags(IssueQuery.builder().organizationUuid(org.getUuid()).build(), null, 100)).containsOnly("convention", "java8", "bug");
     assertThat(underTest.searchTags(IssueQuery.builder().organizationUuid(org.getUuid()).build(), null, 2)).containsOnly("bug", "convention");

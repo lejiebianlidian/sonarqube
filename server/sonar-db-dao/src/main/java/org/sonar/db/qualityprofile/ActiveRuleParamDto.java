@@ -29,37 +29,37 @@ import org.sonar.db.rule.RuleParamDto;
 
 public class ActiveRuleParamDto {
 
-  private Integer id;
-  private Integer activeRuleId;
-  private Integer rulesParameterId;
+  private String uuid;
+  private String activeRuleUuid;
+  private String rulesParameterUuid;
   private String kee;
   private String value;
 
-  public Integer getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
-  public ActiveRuleParamDto setId(Integer id) {
-    this.id = id;
+  public ActiveRuleParamDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 
-  public Integer getActiveRuleId() {
-    return activeRuleId;
+  public String getActiveRuleUuid() {
+    return activeRuleUuid;
   }
 
-  public ActiveRuleParamDto setActiveRuleId(Integer activeRuleId) {
-    this.activeRuleId = activeRuleId;
+  public ActiveRuleParamDto setActiveRuleUuid(String activeRuleUuid) {
+    this.activeRuleUuid = activeRuleUuid;
     return this;
   }
 
-  public Integer getRulesParameterId() {
-    return rulesParameterId;
+  public String getRulesParameterUuid() {
+    return rulesParameterUuid;
   }
 
   // TODO set private or drop
-  public ActiveRuleParamDto setRulesParameterId(Integer rulesParameterId) {
-    this.rulesParameterId = rulesParameterId;
+  public ActiveRuleParamDto setRulesParameterUuid(String rulesParameterUuid) {
+    this.rulesParameterUuid = rulesParameterUuid;
     return this;
   }
 
@@ -87,10 +87,10 @@ public class ActiveRuleParamDto {
   }
 
   public static ActiveRuleParamDto createFor(RuleParamDto param) {
-    Preconditions.checkArgument(param.getId() != null, "Parameter is not persisted");
+    Preconditions.checkArgument(param.getUuid() != null, "Parameter is not persisted");
     return new ActiveRuleParamDto()
       .setKey(param.getName())
-      .setRulesParameterId(param.getId());
+      .setRulesParameterUuid(param.getUuid());
   }
 
   public static Map<String, ActiveRuleParamDto> groupByKey(Collection<ActiveRuleParamDto> params) {

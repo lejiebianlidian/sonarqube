@@ -22,13 +22,15 @@ package org.sonar.ce.task.projectanalysis.step;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.sonar.api.utils.System2;
-import org.sonar.ce.task.projectanalysis.issue.IssueCache;
+import org.sonar.ce.task.projectanalysis.issue.ProtoIssueCache;
 import org.sonar.ce.task.projectanalysis.issue.RuleRepository;
 import org.sonar.ce.task.projectanalysis.issue.UpdateConflictResolver;
 import org.sonar.ce.task.step.ComputationStep;
 import org.sonar.core.issue.DefaultIssue;
 import org.sonar.core.util.CloseableIterator;
+import org.sonar.core.util.UuidFactory;
 import org.sonar.db.BatchSession;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
@@ -49,24 +51,28 @@ public class PersistIssuesStep implements ComputationStep {
   private final System2 system2;
   private final UpdateConflictResolver conflictResolver;
   private final RuleRepository ruleRepository;
-  private final IssueCache issueCache;
+  private final ProtoIssueCache protoIssueCache;
   private final IssueStorage issueStorage;
+  private final UuidFactory uuidFactory;
 
   public PersistIssuesStep(DbClient dbClient, System2 system2, UpdateConflictResolver conflictResolver,
-    RuleRepository ruleRepository, IssueCache issueCache, IssueStorage issueStorage) {
+    RuleRepository ruleRepository, ProtoIssueCache protoIssueCache, IssueStorage issueStorage, UuidFactory uuidFactory) {
     this.dbClient = dbClient;
     this.system2 = system2;
     this.conflictResolver = conflictResolver;
     this.ruleRepository = ruleRepository;
-    this.issueCache = issueCache;
+    this.protoIssueCache = protoIssueCache;
     this.issueStorage = issueStorage;
+    this.uuidFactory = uuidFactory;
   }
 
   @Override
   public void execute(ComputationStep.Context context) {
+    context.getStatistics().add("cacheSize", FileUtils.byteCountToDisplaySize(protoIssueCache.fileSize()));
     IssueStatistics statistics = new IssueStatistics();
     try (DbSession dbSession = dbClient.openSession(true);
-      CloseableIterator<DefaultIssue> issues = issueCache.traverse()) {
+
+      CloseableIterator<DefaultIssue> issues = protoIssueCache.traverse()) {
       List<DefaultIssue> addedIssues = new ArrayList<>(ISSUE_BATCHING_SIZE);
       List<DefaultIssue> updatedIssues = new ArrayList<>(ISSUE_BATCHING_SIZE);
 
@@ -86,8 +92,6 @@ public class PersistIssuesStep implements ComputationStep {
             persistUpdatedIssues(statistics, updatedIssues, mapper, changeMapper);
             updatedIssues.clear();
           }
-        } else {
-          statistics.untouched++;
         }
       }
       persistNewIssues(statistics, addedIssues, mapper, changeMapper);
@@ -105,13 +109,13 @@ public class PersistIssuesStep implements ComputationStep {
 
     long now = system2.now();
     addedIssues.forEach(i -> {
-      int ruleId = ruleRepository.getByKey(i.ruleKey()).getId();
-      IssueDto dto = IssueDto.toDtoForComputationInsert(i, ruleId, now);
+      String ruleUuid = ruleRepository.getByKey(i.ruleKey()).getUuid();
+      IssueDto dto = IssueDto.toDtoForComputationInsert(i, ruleUuid, now);
       mapper.insert(dto);
       statistics.inserts++;
     });
 
-    addedIssues.forEach(i -> issueStorage.insertChanges(changeMapper, i));
+    addedIssues.forEach(i -> issueStorage.insertChanges(changeMapper, i, uuidFactory));
   }
 
   private void persistUpdatedIssues(IssueStatistics statistics, List<DefaultIssue> updatedIssues, IssueMapper mapper, IssueChangeMapper changeMapper) {
@@ -139,7 +143,7 @@ public class PersistIssuesStep implements ComputationStep {
         });
     }
 
-    updatedIssues.forEach(i -> issueStorage.insertChanges(changeMapper, i));
+    updatedIssues.forEach(i -> issueStorage.insertChanges(changeMapper, i, uuidFactory));
   }
 
   private static void flushSession(DbSession dbSession) {
@@ -156,14 +160,12 @@ public class PersistIssuesStep implements ComputationStep {
     private int inserts = 0;
     private int updates = 0;
     private int merged = 0;
-    private int untouched = 0;
 
     private void dumpTo(ComputationStep.Context context) {
       context.getStatistics()
         .add("inserts", String.valueOf(inserts))
         .add("updates", String.valueOf(updates))
-        .add("merged", String.valueOf(merged))
-        .add("untouched", String.valueOf(untouched));
+        .add("merged", String.valueOf(merged));
     }
   }
 }

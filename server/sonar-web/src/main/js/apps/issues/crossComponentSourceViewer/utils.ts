@@ -42,7 +42,7 @@ function collision([startA, endA]: number[], [startB, endB]: number[]) {
   return !(startA > endB + MERGE_DISTANCE || endA < startB - MERGE_DISTANCE);
 }
 
-function getPrimaryLocation(issue: T.Issue): T.FlowLocation {
+export function getPrimaryLocation(issue: T.Issue): T.FlowLocation {
   return {
     component: issue.component,
     textRange: issue.textRange || {
@@ -66,14 +66,18 @@ function addLinesBellow(params: { issue: T.Issue; locationEnd: number }) {
 }
 
 export function createSnippets(params: {
-  locations: T.FlowLocation[];
+  component: string;
   issue: T.Issue;
-  addIssueLocation: boolean;
+  locations: T.FlowLocation[];
 }): T.Snippet[] {
-  const { locations, issue, addIssueLocation } = params;
-  // For each location's range (2 above and 2 below), and then compare with other ranges
+  const { component, issue, locations } = params;
+
+  const hasSecondaryLocations = issue.secondaryLocations.length > 0;
+  const addIssueLocation = hasSecondaryLocations && issue.component === component;
+
+  // For each location: compute its range, and then compare with other ranges
   // to merge snippets that collide.
-  return (addIssueLocation ? [getPrimaryLocation(issue), ...locations] : locations).reduce(
+  const ranges = (addIssueLocation ? [getPrimaryLocation(issue), ...locations] : locations).reduce(
     (snippets: T.Snippet[], loc, index) => {
       const startIndex = Math.max(1, loc.textRange.startLine - LINES_ABOVE);
       const endIndex = addLinesBellow({ issue, locationEnd: loc.textRange.endLine });
@@ -111,6 +115,10 @@ export function createSnippets(params: {
     },
     []
   );
+
+  // Sort snippets by line number in the case of secondary locations
+  // Preserve location order for flows!
+  return hasSecondaryLocations ? ranges.sort((a, b) => a.start - b.start) : ranges;
 }
 
 export function linesForSnippets(snippets: T.Snippet[], componentLines: T.LineMap) {
@@ -128,6 +136,7 @@ export function linesForSnippets(snippets: T.Snippet[], componentLines: T.LineMa
 }
 
 export function groupLocationsByComponent(
+  issue: T.Issue,
   locations: T.FlowLocation[],
   components: { [key: string]: T.SnippetsByComponent }
 ) {
@@ -135,14 +144,25 @@ export function groupLocationsByComponent(
   let currentGroup: T.SnippetGroup;
   const groups: T.SnippetGroup[] = [];
 
+  const addGroup = (loc: T.FlowLocation) => {
+    currentGroup = {
+      ...(components[loc.component] || unknownComponent(loc.component)),
+      locations: []
+    };
+    groups.push(currentGroup);
+    currentComponent = loc.component;
+  };
+
+  if (
+    issue.secondaryLocations.length > 0 &&
+    locations.every(loc => loc.component !== issue.component)
+  ) {
+    addGroup(getPrimaryLocation(issue));
+  }
+
   locations.forEach((loc, index) => {
     if (loc.component !== currentComponent) {
-      currentGroup = {
-        ...(components[loc.component] || unknownComponent(loc.component)),
-        locations: []
-      };
-      groups.push(currentGroup);
-      currentComponent = loc.component;
+      addGroup(loc);
     }
     loc.index = index;
     currentGroup.locations.push(loc);

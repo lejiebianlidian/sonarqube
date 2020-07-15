@@ -26,18 +26,19 @@ import { DropdownOverlay } from 'sonar-ui-common/components/controls/Dropdown';
 import OutsideClickHandler from 'sonar-ui-common/components/controls/OutsideClickHandler';
 import SearchBox from 'sonar-ui-common/components/controls/SearchBox';
 import ClockIcon from 'sonar-ui-common/components/icons/ClockIcon';
-import { lazyLoad } from 'sonar-ui-common/components/lazyLoad';
+import { lazyLoadComponent } from 'sonar-ui-common/components/lazyLoadComponent';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import { getSuggestions } from '../../../api/components';
-import { getCodeUrl, getProjectUrl } from '../../../helpers/urls';
+import { getComponentOverviewUrl } from '../../../helpers/urls';
+import { ComponentQualifier } from '../../../types/component';
 import RecentHistory from '../RecentHistory';
 import './Search.css';
 import { ComponentResult, More, Results, sortQualifiers } from './utils';
 
-const SearchResults = lazyLoad(() => import('./SearchResults'));
-const SearchResult = lazyLoad(() => import('./SearchResult'));
+const SearchResults = lazyLoadComponent(() => import('./SearchResults'));
+const SearchResult = lazyLoadComponent(() => import('./SearchResult'));
 
 interface OwnProps {
   appState: Pick<T.AppState, 'organizationsEnabled'>;
@@ -162,23 +163,6 @@ export class Search extends React.PureComponent<Props, State> {
       return next;
     }, []);
 
-  findFile = (key: string) => {
-    const findInResults = (results: ComponentResult[] | undefined) =>
-      results && results.find(r => r.key === key);
-
-    const file = findInResults(this.state.results['FIL']);
-    if (file) {
-      return file;
-    }
-
-    const test = findInResults(this.state.results['UTS']);
-    if (test) {
-      return test;
-    }
-
-    return undefined;
-  };
-
   stopLoading = () => {
     if (this.mounted) {
       this.setState({ loading: false });
@@ -275,20 +259,26 @@ export class Search extends React.PureComponent<Props, State> {
   };
 
   openSelected = () => {
-    const { selected } = this.state;
+    const { results, selected } = this.state;
 
-    if (selected) {
-      if (selected.startsWith('qualifier###')) {
-        this.searchMore(selected.substr(12));
-      } else {
-        const file = this.findFile(selected);
-        if (file) {
-          this.props.router.push(getCodeUrl(file.project!, undefined, file.key));
-        } else {
-          this.props.router.push(getProjectUrl(selected));
-        }
-        this.closeSearch();
+    if (!selected) {
+      return;
+    }
+
+    if (selected.startsWith('qualifier###')) {
+      this.searchMore(selected.substr(12));
+    } else {
+      let qualifier = ComponentQualifier.Project;
+
+      if ((results[ComponentQualifier.Portfolio] ?? []).find(r => r.key === selected)) {
+        qualifier = ComponentQualifier.Portfolio;
+      } else if ((results[ComponentQualifier.SubPortfolio] ?? []).find(r => r.key === selected)) {
+        qualifier = ComponentQualifier.SubPortfolio;
       }
+
+      this.props.router.push(getComponentOverviewUrl(selected, qualifier));
+
+      this.closeSearch();
     }
   };
 

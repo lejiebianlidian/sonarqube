@@ -54,11 +54,11 @@ public class FavoriteFinder {
     try (DbSession dbSession = dbClient.openSession(false)) {
       PropertyQuery dbQuery = PropertyQuery.builder()
         .setKey(PROP_FAVORITE_KEY)
-        .setUserId(userSession.getUserId())
+        .setUserUuid(userSession.getUuid())
         .build();
-      Set<Long> componentIds = dbClient.propertiesDao().selectByQuery(dbQuery, dbSession).stream().map(PropertyDto::getResourceId).collect(Collectors.toSet());
+      Set<String> componentUuids = dbClient.propertiesDao().selectByQuery(dbQuery, dbSession).stream().map(PropertyDto::getComponentUuid).collect(Collectors.toSet());
 
-      return dbClient.componentDao().selectByIds(dbSession, componentIds).stream()
+      return dbClient.componentDao().selectByUuids(dbSession, componentUuids).stream()
         .sorted(Comparator.comparing(ComponentDto::name))
         .collect(toList());
     }

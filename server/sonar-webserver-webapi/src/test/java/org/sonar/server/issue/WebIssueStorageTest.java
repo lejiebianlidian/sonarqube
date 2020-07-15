@@ -32,6 +32,7 @@ import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.core.issue.DefaultIssue;
 import org.sonar.core.issue.DefaultIssueComment;
 import org.sonar.core.issue.IssueChangeContext;
+import org.sonar.core.util.SequenceUuidFactory;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
@@ -62,7 +63,8 @@ public class WebIssueStorageTest {
   private TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
 
   private IssueIndexer issueIndexer = mock(IssueIndexer.class);
-  private WebIssueStorage underTest = new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(db.getDbClient(), defaultOrganizationProvider), issueIndexer);
+  private WebIssueStorage underTest = new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(db.getDbClient(), defaultOrganizationProvider), issueIndexer,
+    new SequenceUuidFactory());
 
   @Test
   public void load_component_id_from_db() {
@@ -70,9 +72,9 @@ public class WebIssueStorageTest {
     ComponentDto project = db.components().insertPrivateProject(organizationDto);
     ComponentDto file = db.components().insertComponent(newFileDto(project));
 
-    long componentId = underTest.component(db.getSession(), new DefaultIssue().setComponentUuid(file.uuid())).getId();
+    String componentUuid = underTest.component(db.getSession(), new DefaultIssue().setComponentUuid(file.uuid())).uuid();
 
-    assertThat(componentId).isEqualTo(file.getId());
+    assertThat(componentUuid).isEqualTo(file.uuid());
   }
 
   @Test
@@ -81,9 +83,9 @@ public class WebIssueStorageTest {
     ComponentDto project = db.components().insertPrivateProject(organizationDto);
     ComponentDto file = db.components().insertComponent(newFileDto(project));
 
-    long projectId = underTest.project(db.getSession(), new DefaultIssue().setProjectUuid(project.uuid())).getId();
+    String projectUuid = underTest.project(db.getSession(), new DefaultIssue().setProjectUuid(project.uuid())).uuid();
 
-    assertThat(projectId).isEqualTo(project.getId());
+    assertThat(projectUuid).isEqualTo(project.uuid());
   }
 
   @Test
@@ -212,7 +214,7 @@ public class WebIssueStorageTest {
       .containsEntry("STATUS", updated.status())
       .containsEntry("SEVERITY", updated.severity());
 
-    List<Map<String, Object>> rows = db.select("select * from issue_changes order by id");
+    List<Map<String, Object>> rows = db.select("select * from issue_changes order by uuid");
     assertThat(rows).hasSize(2);
     assertThat(rows.get(0))
       .extracting("CHANGE_DATA", "CHANGE_TYPE", "USER_LOGIN")
@@ -223,7 +225,7 @@ public class WebIssueStorageTest {
   }
 
   @Test
-  public void rule_id_is_set_on_updated_issue() {
+  public void rule_uuid_is_set_on_updated_issue() {
     RuleDefinitionDto rule = db.rules().insert();
     ComponentDto project = db.components().insertPublicProject();
     ComponentDto module = db.components().insertComponent(newModuleDto(project));
@@ -233,11 +235,11 @@ public class WebIssueStorageTest {
     Collection<IssueDto> results = underTest.save(db.getSession(), singletonList(issue));
 
     assertThat(results).hasSize(1);
-    assertThat(results.iterator().next().getRuleId()).isEqualTo(rule.getId());
+    assertThat(results.iterator().next().getRuleUuid()).isEqualTo(rule.getUuid());
   }
 
   @Test
-  public void rule_id_is_not_set_on_updated_issue_when_rule_is_removed() {
+  public void rule_uuid_is_not_set_on_updated_issue_when_rule_is_removed() {
     RuleDefinitionDto rule = db.rules().insert(r -> r.setStatus(REMOVED));
     ComponentDto project = db.components().insertPublicProject();
     ComponentDto module = db.components().insertComponent(newModuleDto(project));
@@ -247,7 +249,7 @@ public class WebIssueStorageTest {
     Collection<IssueDto> results = underTest.save(db.getSession(), singletonList(issue));
 
     assertThat(results).hasSize(1);
-    assertThat(results.iterator().next().getRuleId()).isNull();
+    assertThat(results.iterator().next().getRuleUuid()).isNull();
   }
 
 }

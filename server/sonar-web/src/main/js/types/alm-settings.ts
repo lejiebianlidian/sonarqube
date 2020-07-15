@@ -39,6 +39,8 @@ export interface BitbucketBindingDefinition extends AlmBindingDefinition {
 
 export interface GithubBindingDefinition extends AlmBindingDefinition {
   appId: string;
+  clientId: string;
+  clientSecret: string;
   privateKey: string;
   url: string;
 }
@@ -48,33 +50,38 @@ export interface GitlabBindingDefinition extends AlmBindingDefinition {
   url?: string;
 }
 
-export interface ProjectAlmBinding {
+export interface ProjectAlmBindingResponse {
+  alm: AlmKeys;
   key: string;
   repository?: string;
   slug?: string;
+  summaryCommentEnabled?: boolean;
 }
 
-export interface AzureProjectAlmBinding {
-  almSetting: string;
-  project: string;
-}
-
-export interface BitbucketProjectAlmBinding {
-  almSetting: string;
-  project: string;
+export interface ProjectBitbucketBindingResponse extends ProjectAlmBindingResponse {
+  alm: AlmKeys.Bitbucket;
   repository: string;
   slug: string;
 }
 
-export interface GithubProjectAlmBinding {
+export interface ProjectAlmBindingParams {
   almSetting: string;
   project: string;
-  repository: string;
 }
 
-export interface GitlabProjectAlmBinding {
-  almSetting: string;
-  project: string;
+export interface AzureProjectAlmBindingParams extends ProjectAlmBindingParams {}
+
+export interface BitbucketProjectAlmBindingParams extends ProjectAlmBindingParams {
+  repository: string;
+  slug: string;
+}
+
+export interface GithubProjectAlmBindingParams extends ProjectAlmBindingParams {
+  repository: string;
+  summaryCommentEnabled: boolean;
+}
+
+export interface GitlabProjectAlmBindingParams extends ProjectAlmBindingParams {
   repository?: string;
 }
 
@@ -85,8 +92,8 @@ export interface AlmSettingsInstance {
 }
 
 export interface AlmSettingsBindingDefinitions {
-  azure: AzureBindingDefinition[];
-  bitbucket: BitbucketBindingDefinition[];
-  github: GithubBindingDefinition[];
-  gitlab: GitlabBindingDefinition[];
+  [AlmKeys.Azure]: AzureBindingDefinition[];
+  [AlmKeys.Bitbucket]: BitbucketBindingDefinition[];
+  [AlmKeys.GitHub]: GithubBindingDefinition[];
+  [AlmKeys.GitLab]: GitlabBindingDefinition[];
 }

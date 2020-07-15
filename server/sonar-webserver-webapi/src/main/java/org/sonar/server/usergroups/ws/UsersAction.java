@@ -20,6 +20,7 @@
 package org.sonar.server.usergroups.ws;
 
 import java.util.List;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService.NewAction;
@@ -33,7 +34,7 @@ import org.sonar.db.DbSession;
 import org.sonar.db.permission.OrganizationPermission;
 import org.sonar.db.user.UserMembershipDto;
 import org.sonar.db.user.UserMembershipQuery;
-import org.sonar.server.permission.GroupId;
+import org.sonar.server.permission.GroupUuid;
 import org.sonar.server.user.UserSession;
 
 import static org.sonar.api.utils.Paging.forPageIndex;
@@ -65,7 +66,9 @@ public class UsersAction implements UserGroupsWsAction {
       .setResponseExample(getClass().getResource("users-example.json"))
       .addSelectionModeParam()
       .addSearchQuery("freddy", "names", "logins")
-      .addPagingParams(25);
+      .addPagingParams(25)
+      .setChangelog(
+        new Change("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."));
 
     defineGroupWsParameters(action);
   }
@@ -78,11 +81,11 @@ public class UsersAction implements UserGroupsWsAction {
     String selected = request.mandatoryParam(Param.SELECTED);
 
     try (DbSession dbSession = dbClient.openSession(false)) {
-      GroupId group = support.findGroup(dbSession, request);
+      GroupUuid group = support.findGroup(dbSession, request);
       userSession.checkPermission(OrganizationPermission.ADMINISTER, group.getOrganizationUuid());
 
       UserMembershipQuery query = UserMembershipQuery.builder()
-        .groupId(group.getId())
+        .groupUuid(group.getUuid())
         .organizationUuid(group.getOrganizationUuid())
         .memberSearch(queryString)
         .membership(getMembership(selected))
@@ -108,7 +111,7 @@ public class UsersAction implements UserGroupsWsAction {
       json.beginObject()
         .prop(FIELD_LOGIN, user.getLogin())
         .prop(FIELD_NAME, user.getName())
-        .prop(FIELD_SELECTED, user.getGroupId() != null)
+        .prop(FIELD_SELECTED, user.getGroupUuid() != null)
         .endObject();
     }
     json.endArray();

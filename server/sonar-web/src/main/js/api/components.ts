@@ -20,6 +20,7 @@
 import { getJSON, post, postJSON, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
 import { BranchParameters } from '../types/branch-like';
+import { ComponentQualifier } from '../types/component';
 
 export interface BaseSearchProjectsParameters {
   analyzedBefore?: string;
@@ -83,6 +84,10 @@ export function createProject(data: {
 
 export function searchProjectTags(data?: { ps?: number; q?: string }): Promise<any> {
   return getJSON('/api/project_tags/search', data).catch(throwGlobalError);
+}
+
+export function setApplicationTags(data: { application: string; tags: string }): Promise<void> {
+  return post('/api/applications/set_tags', data);
 }
 
 export function setProjectTags(data: { project: string; tags: string }): Promise<void> {
@@ -207,9 +212,11 @@ export interface Component {
   name: string;
   isFavorite?: boolean;
   analysisDate?: string;
+  qualifier: ComponentQualifier;
   tags: string[];
   visibility: T.Visibility;
   leakPeriodDate?: string;
+  needIssueSync?: boolean;
 }
 
 export interface Facet {

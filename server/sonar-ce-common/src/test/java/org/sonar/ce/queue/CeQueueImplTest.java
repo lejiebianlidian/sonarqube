@@ -32,9 +32,9 @@ import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.api.utils.System2;
 import org.sonar.ce.queue.CeTaskSubmit.Component;
 import org.sonar.ce.task.CeTask;
+import org.sonar.core.util.SequenceUuidFactory;
 import org.sonar.core.util.UuidFactory;
 import org.sonar.core.util.UuidFactoryFast;
-import org.sonar.core.util.UuidFactoryImpl;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.ce.CeActivityDto;
@@ -71,7 +71,7 @@ public class CeQueueImplTest {
 
   private DbSession session = db.getSession();
 
-  private UuidFactory uuidFactory = UuidFactoryImpl.INSTANCE;
+  private UuidFactory uuidFactory = new SequenceUuidFactory();
   private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
 
   private CeQueue underTest = new CeQueueImpl(system2, db.getDbClient(), uuidFactory, defaultOrganizationProvider);
@@ -396,7 +396,7 @@ public class CeQueueImplTest {
   @Test
   public void fail_to_cancel_if_in_progress() {
     submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(11)));
-    CeQueueDto ceQueueDto = db.getDbClient().ceQueueDao().peek(session, WORKER_UUID).get();
+    CeQueueDto ceQueueDto = db.getDbClient().ceQueueDao().peek(session, WORKER_UUID, false, false).get();
 
     expectedException.expect(IllegalStateException.class);
     expectedException.expectMessage(startsWith("Task is in progress and can't be canceled"));
@@ -407,20 +407,20 @@ public class CeQueueImplTest {
   @Test
   public void cancelAll_pendings_but_not_in_progress() {
     CeTask inProgressTask = submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(12)));
-    CeTask pendingTask1 = submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(13)));
-    CeTask pendingTask2 = submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(14)));
+    CeTask pendingTask1 = submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(12)));
+    CeTask pendingTask2 = submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(12)));
 
-    db.getDbClient().ceQueueDao().peek(session, WORKER_UUID);
+    db.getDbClient().ceQueueDao().peek(session, WORKER_UUID, false, false);
 
     int canceledCount = underTest.cancelAll();
     assertThat(canceledCount).isEqualTo(2);
 
-    Optional<CeActivityDto> history = db.getDbClient().ceActivityDao().selectByUuid(db.getSession(), pendingTask1.getUuid());
-    assertThat(history.get().getStatus()).isEqualTo(CeActivityDto.Status.CANCELED);
-    history = db.getDbClient().ceActivityDao().selectByUuid(db.getSession(), pendingTask2.getUuid());
-    assertThat(history.get().getStatus()).isEqualTo(CeActivityDto.Status.CANCELED);
-    history = db.getDbClient().ceActivityDao().selectByUuid(db.getSession(), inProgressTask.getUuid());
-    assertThat(history.isPresent()).isFalse();
+    Optional<CeActivityDto> ceActivityInProgress = db.getDbClient().ceActivityDao().selectByUuid(db.getSession(), pendingTask1.getUuid());
+    assertThat(ceActivityInProgress.get().getStatus()).isEqualTo(CeActivityDto.Status.CANCELED);
+    Optional<CeActivityDto> ceActivityPending1 = db.getDbClient().ceActivityDao().selectByUuid(db.getSession(), pendingTask2.getUuid());
+    assertThat(ceActivityPending1.get().getStatus()).isEqualTo(CeActivityDto.Status.CANCELED);
+    Optional<CeActivityDto> ceActivityPending2 = db.getDbClient().ceActivityDao().selectByUuid(db.getSession(), inProgressTask.getUuid());
+    assertThat(ceActivityPending2.isPresent()).isFalse();
   }
 
   @Test
@@ -437,7 +437,7 @@ public class CeQueueImplTest {
   @Test
   public void pauseWorkers_marks_workers_as_pausing_if_some_tasks_in_progress() {
     submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(12)));
-    db.getDbClient().ceQueueDao().peek(session, WORKER_UUID);
+    db.getDbClient().ceQueueDao().peek(session, WORKER_UUID, false, false);
     // task is in-progress
 
     assertThat(underTest.getWorkersPauseStatus()).isEqualTo(CeQueue.WorkersPauseStatus.RESUMED);
@@ -458,7 +458,7 @@ public class CeQueueImplTest {
   @Test
   public void resumeWorkers_resumes_pausing_workers() {
     submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(12)));
-    db.getDbClient().ceQueueDao().peek(session, WORKER_UUID);
+    db.getDbClient().ceQueueDao().peek(session, WORKER_UUID, false, false);
     // task is in-progress
 
     underTest.pauseWorkers();
@@ -480,7 +480,7 @@ public class CeQueueImplTest {
   @Test
   public void fail_in_progress_task() {
     CeTask task = submit(CeTaskTypes.REPORT, newComponent(randomAlphabetic(12)));
-    CeQueueDto queueDto = db.getDbClient().ceQueueDao().peek(db.getSession(), WORKER_UUID).get();
+    CeQueueDto queueDto = db.getDbClient().ceQueueDao().peek(db.getSession(), WORKER_UUID, false, false).get();
 
     underTest.fail(db.getSession(), queueDto, "TIMEOUT", "Failed on timeout");
 

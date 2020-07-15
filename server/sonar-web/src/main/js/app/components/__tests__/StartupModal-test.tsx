@@ -25,9 +25,8 @@ import { hasMessage } from 'sonar-ui-common/helpers/l10n';
 import { get, save } from 'sonar-ui-common/helpers/storage';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { showLicense } from '../../../api/marketplace';
-import { mockOrganization, mockRouter } from '../../../helpers/testMocks';
 import { EditionKey } from '../../../types/editions';
-import { ModalKey, StartupModal } from '../StartupModal';
+import { StartupModal } from '../StartupModal';
 
 jest.mock('../../../api/marketplace', () => ({
   showLicense: jest.fn().mockResolvedValue(undefined)
@@ -70,7 +69,7 @@ it('should render only the children', async () => {
   const wrapper = getWrapper({ currentEdition: EditionKey.community });
   await shouldNotHaveModals(wrapper);
   expect(showLicense).toHaveBeenCalledTimes(0);
-  expect(wrapper.find('div').exists()).toBeTruthy();
+  expect(wrapper.find('div').exists()).toBe(true);
 
   await shouldNotHaveModals(getWrapper({ canAdmin: false }));
 
@@ -87,7 +86,7 @@ it('should render only the children', async () => {
   await shouldNotHaveModals(
     getWrapper({
       canAdmin: false,
-      currentUser: { ...LOGGED_IN_USER, showOnboardingTutorial: true },
+      currentUser: { ...LOGGED_IN_USER },
       location: { pathname: '/documentation/' }
     })
   );
@@ -95,7 +94,7 @@ it('should render only the children', async () => {
   await shouldNotHaveModals(
     getWrapper({
       canAdmin: false,
-      currentUser: { ...LOGGED_IN_USER, showOnboardingTutorial: true },
+      currentUser: { ...LOGGED_IN_USER },
       location: { pathname: '/create-organization' }
     })
   );
@@ -113,44 +112,14 @@ it('should render license prompt', async () => {
   await shouldDisplayLicense(getWrapper());
 });
 
-describe('closeOnboarding', () => {
-  it('should set state and skip onboarding', () => {
-    const skipOnboarding = jest.fn();
-    const wrapper = getWrapper({ skipOnboarding });
-
-    wrapper.setState({ modal: ModalKey.onboarding });
-    wrapper.instance().closeOnboarding();
-
-    expect(wrapper.state('modal')).toBe(undefined);
-
-    expect(skipOnboarding).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('openProjectOnboarding', () => {
-  it('should set state and redirect', () => {
-    const push = jest.fn();
-    const wrapper = getWrapper({ router: mockRouter({ push }) });
-
-    wrapper.instance().openProjectOnboarding(mockOrganization());
-
-    expect(wrapper.state('modal')).toBe(undefined);
-
-    expect(push).toHaveBeenCalledWith({
-      pathname: `/projects/create`,
-      state: { organization: 'foo', tab: 'manual' }
-    });
-  });
-});
-
 async function shouldNotHaveModals(wrapper: ShallowWrapper) {
   await waitAndUpdate(wrapper);
-  expect(wrapper.find('LicensePromptModal').exists()).toBeFalsy();
+  expect(wrapper.find('LicensePromptModal').exists()).toBe(false);
 }
 
 async function shouldDisplayLicense(wrapper: ShallowWrapper) {
   await waitAndUpdate(wrapper);
-  expect(wrapper.find('LicensePromptModal').exists()).toBeTruthy();
+  expect(wrapper.find('LicensePromptModal').exists()).toBe(true);
 }
 
 function getWrapper(props: Partial<StartupModal['props']> = {}) {

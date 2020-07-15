@@ -28,6 +28,10 @@ import org.sonar.server.platform.db.migration.version.v00.DbVersion00;
 import org.sonar.server.platform.db.migration.version.v80.DbVersion80;
 import org.sonar.server.platform.db.migration.version.v81.DbVersion81;
 import org.sonar.server.platform.db.migration.version.v82.DbVersion82;
+import org.sonar.server.platform.db.migration.version.v83.DbVersion83;
+import org.sonar.server.platform.db.migration.version.v84.DbVersion84;
+import org.sonar.server.platform.db.migration.version.v84.util.DropPrimaryKeySqlGenerator;
+import org.sonar.server.platform.db.migration.version.v84.util.SqlHelper;
 
 public class MigrationConfigurationModule extends Module {
   @Override
@@ -38,6 +42,8 @@ public class MigrationConfigurationModule extends Module {
       DbVersion80.class,
       DbVersion81.class,
       DbVersion82.class,
+      DbVersion83.class,
+      DbVersion84.class,
 
       // migration steps
       MigrationStepRegistryImpl.class,
@@ -45,6 +51,10 @@ public class MigrationConfigurationModule extends Module {
 
       // history
       MigrationHistoryImpl.class,
-      MigrationHistoryMeddler.class);
+      MigrationHistoryMeddler.class,
+
+      // Only needed for 8.3
+      SqlHelper.class,
+      DropPrimaryKeySqlGenerator.class);
   }
 }

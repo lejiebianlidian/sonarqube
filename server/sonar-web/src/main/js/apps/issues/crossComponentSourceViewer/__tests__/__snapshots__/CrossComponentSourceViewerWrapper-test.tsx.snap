@@ -1,5 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Should handle no access rights 1`] = `
+<Alert
+  className="spacer-top"
+  variant="warning"
+>
+  code_viewer.no_source_code_displayed_due_to_security
+</Alert>
+`;
+
 exports[`should handle duplication popup 1`] = `
 <Context.Consumer>
   [Function]
@@ -38,7 +47,8 @@ exports[`should render correctly 2`] = `
       }
     }
   >
-    <ComponentSourceSnippetViewer
+    <ComponentSourceSnippetGroupViewer
+      duplicationsByLine={Object {}}
       issue={
         Object {
           "actions": Array [],
@@ -142,7 +152,7 @@ exports[`should render correctly 2`] = `
         }
       }
       issuesByLine={Object {}}
-      last={true}
+      lastSnippetGroup={true}
       loadDuplications={[Function]}
       locations={
         Array [
@@ -160,7 +170,6 @@ exports[`should render correctly 2`] = `
       }
       onIssueChange={[MockFunction]}
       onIssuePopupToggle={[Function]}
-      onLinePopupToggle={[Function]}
       onLocationSelect={[MockFunction]}
       renderDuplicationPopup={[Function]}
       scroll={[MockFunction]}

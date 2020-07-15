@@ -29,10 +29,10 @@ import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.permission.template.PermissionTemplateDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.component.ComponentFinder;
-import org.sonar.server.permission.ProjectId;
+import org.sonar.server.permission.GroupUuidOrAnyone;
+import org.sonar.server.permission.ProjectUuid;
 import org.sonar.server.permission.UserId;
 import org.sonar.server.permission.ws.template.WsTemplateRef;
-import org.sonar.server.permission.GroupIdOrAnyone;
 import org.sonar.server.usergroups.ws.GroupWsRef;
 import org.sonar.server.usergroups.ws.GroupWsSupport;
 import org.sonarqube.ws.client.permission.PermissionsWsParameters;
@@ -59,9 +59,9 @@ public class PermissionWsSupport {
     return groupWsSupport.findOrganizationByKey(dbSession, organizationKey);
   }
 
-  public Optional<ProjectId> findProjectId(DbSession dbSession, Request request) {
+  public Optional<ProjectUuid> findProjectUuid(DbSession dbSession, Request request) {
     return findProject(dbSession, request)
-      .map(ProjectId::new);
+      .map(ProjectUuid::new);
   }
 
   public Optional<ComponentDto> findProject(DbSession dbSession, Request request) {
@@ -78,18 +78,18 @@ public class PermissionWsSupport {
     return componentFinder.getRootComponentByUuidOrKey(dbSession, projectRef.uuid(), projectRef.key());
   }
 
-  public GroupIdOrAnyone findGroup(DbSession dbSession, Request request) {
-    Integer groupId = request.paramAsInt(PARAM_GROUP_ID);
+  public GroupUuidOrAnyone findGroup(DbSession dbSession, Request request) {
+    String groupUuid = request.param(PARAM_GROUP_ID);
     String orgKey = request.param(PARAM_ORGANIZATION);
     String groupName = request.param(PARAM_GROUP_NAME);
-    GroupWsRef groupRef = GroupWsRef.create(groupId, orgKey, groupName);
+    GroupWsRef groupRef = GroupWsRef.create(groupUuid, orgKey, groupName);
     return groupWsSupport.findGroupOrAnyone(dbSession, groupRef);
   }
 
   public UserId findUser(DbSession dbSession, String login) {
     UserDto dto = dbClient.userDao().selectActiveUserByLogin(dbSession, login);
     checkFound(dto, "User with login '%s' is not found'", login);
-    return new UserId(dto.getId(), dto.getLogin());
+    return new UserId(dto.getUuid(), dto.getLogin());
   }
 
   public PermissionTemplateDto findTemplate(DbSession dbSession, WsTemplateRef ref) {
@@ -106,7 +106,7 @@ public class PermissionWsSupport {
   }
 
   public void checkMembership(DbSession dbSession, OrganizationDto organization, UserId user) {
-    checkArgument(dbClient.organizationMemberDao().select(dbSession, organization.getUuid(), user.getId()).isPresent(),
+    checkArgument(dbClient.organizationMemberDao().select(dbSession, organization.getUuid(), user.getUuid()).isPresent(),
       "User '%s' is not member of organization '%s'", user.getLogin(), organization.getKey());
   }
 }

@@ -37,6 +37,7 @@ import org.sonar.db.rule.RuleMetadataDto;
 import org.sonar.db.rule.RuleParamDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.markdown.Markdown;
+import org.sonar.server.rule.RuleDescriptionFormatter;
 import org.sonar.server.rule.ws.SearchAction.SearchResult;
 import org.sonar.server.text.MacroInterpreter;
 import org.sonarqube.ws.Common;
@@ -286,8 +287,8 @@ public class RuleMapper {
 
   private static void setParams(Rules.Rule.Builder ruleResponse, RuleDefinitionDto ruleDto, SearchResult searchResult, Set<String> fieldsToReturn) {
     if (shouldReturnField(fieldsToReturn, FIELD_PARAMS)) {
-      List<RuleParamDto> ruleParameters = searchResult.getRuleParamsByRuleId().get(ruleDto.getId());
-      ruleResponse.getParamsBuilder().addAllParams(ruleParameters.stream().map(RuleParamDtoToWsRuleParam.INSTANCE::apply).collect(toList()));
+      List<RuleParamDto> ruleParameters = searchResult.getRuleParamsByRuleUuid().get(ruleDto.getUuid());
+      ruleResponse.getParamsBuilder().addAllParams(ruleParameters.stream().map(RuleParamDtoToWsRuleParam.INSTANCE).collect(toList()));
     }
   }
 
@@ -298,23 +299,14 @@ public class RuleMapper {
   }
 
   private void setDescriptionFields(Rules.Rule.Builder ruleResponse, RuleDefinitionDto ruleDto, Set<String> fieldsToReturn) {
-    String description = ruleDto.getDescription();
     if (shouldReturnField(fieldsToReturn, FIELD_HTML_DESCRIPTION)) {
-      RuleDto.Format descriptionFormat = ruleDto.getDescriptionFormat();
-      if (description != null && descriptionFormat != null) {
-        switch (descriptionFormat) {
-          case MARKDOWN:
-            ruleResponse.setHtmlDesc(macroInterpreter.interpret(Markdown.convertToHtml(description)));
-            break;
-          case HTML:
-            ruleResponse.setHtmlDesc(macroInterpreter.interpret(description));
-            break;
-          default:
-            throw new IllegalStateException(format("Rule description format '%s' is unknown for key '%s'", descriptionFormat, ruleDto.getKey().toString()));
-        }
+      String htmlDescription = RuleDescriptionFormatter.getDescriptionAsHtml(ruleDto);
+      if (htmlDescription != null) {
+        ruleResponse.setHtmlDesc(macroInterpreter.interpret(htmlDescription));
       }
     }
 
+    String description = ruleDto.getDescription();
     if (shouldReturnField(fieldsToReturn, FIELD_MARKDOWN_DESCRIPTION) && description != null) {
       ruleResponse.setMdDesc(description);
     }
@@ -376,7 +368,7 @@ public class RuleMapper {
 
   private static void setTemplateKey(Rules.Rule.Builder ruleResponse, RuleDefinitionDto ruleDto, SearchResult result, Set<String> fieldsToReturn) {
     if (shouldReturnField(fieldsToReturn, FIELD_TEMPLATE_KEY) && ruleDto.isCustomRule()) {
-      RuleDefinitionDto templateRule = result.getTemplateRulesByRuleId().get(ruleDto.getTemplateId());
+      RuleDefinitionDto templateRule = result.getTemplateRulesByRuleUuid().get(ruleDto.getTemplateUuid());
       if (templateRule != null) {
         ruleResponse.setTemplateKey(templateRule.getKey().toString());
       }

@@ -24,13 +24,17 @@ exports[`should not render sonarqube link on sonarcloud 1`] = `
 </Fragment>
 `;
 
+exports[`should render documentation anchor 1`] = `
+<a
+  href="#"
+  onClick={[Function]}
+>
+  link text
+</a>
+`;
+
 exports[`should render documentation link 1`] = `
 <Link
-  appState={
-    Object {
-      "canAdmin": false,
-    }
-  }
   onlyActiveOnIndex={false}
   style={Object {}}
   to="/documentation/foo/bar"
@@ -42,11 +46,6 @@ exports[`should render documentation link 1`] = `
 exports[`should render simple link 1`] = `
 <Fragment>
   <a
-    appState={
-      Object {
-        "canAdmin": false,
-      }
-    }
     href="http://sample.com"
     rel="noopener noreferrer"
     target="_blank"

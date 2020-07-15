@@ -3,78 +3,80 @@ title: Install the Server
 url: /setup/install-server/
 ---
 
-
 ## Installing the Database
 
-Several [database engines](/requirements/requirements/) are supported. Be sure to follow the requirements listed for your database, they are real requirements not recommendations.
+Several [database engines](/requirements/requirements/) are supported. Be sure to follow the requirements listed for your database. They are real requirements not recommendations.
 
 Create an empty schema and a `sonarqube` user. Grant this `sonarqube` user permissions to `create`, `update`, and `delete` objects for this schema.
 
-### Microsoft SQL Server
+[[collapse]]
+| ## Microsoft SQL Server
+|
+|[[warning]]
+|| Collation **MUST** be case-sensitive (CS) and accent-sensitive (AS).  
+|| `READ_COMMITED_SNAPSHOT` **MUST** be set on the SonarQube database.
+|
+|MS SQL database's shared lock strategy may impact SonarQube runtime. Making sure that `is_read_committed_snapshot_on` is set to `true` to prevent SonarQube from facing potential deadlocks under heavy loads. 
+|
+|Example of query to check `is_read_committed_snapshot_on`:
+|```
+|SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name='YourSonarQubeDatabase';
+|```
+|Example of query to update `is_read_committed_snapshot_on`:
+|```
+|ALTER DATABASE YourSonarQubeDatabase SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+|```
+|### Integrated Security
+|
+|To use integrated security: 
+|
+|1. Download the [Microsoft SQL JDBC Driver 7.2.2 package](https://www.microsoft.com/en-us/download/details.aspx?id=57782) and copy the 64-bit version of `sqljdbc_auth.dll` to any folder in your path. 
+|
+|2. **If you're running SonarQube as a Windows service,** make sure the Windows account under which the service is running has permission to connect your SQL server. The account should have `db_owner` database role membership. 
+|
+|	**If you're running the SonarQube server from a command prompt,** the user under which the command prompt is running should have `db_owner` database role membership. 
+|
+|3. Ensure that `sonar.jdbc.username` or `sonar.jdbc.password` properties are commented out or SonarQube will use SQL authentication.
+|
+|```
+|sonar.jdbc.url=jdbc:sqlserver://localhost;databaseName=sonar;integratedSecurity=true
+|```
+|
+|### SQL Authentication
+|
+|To use SQL Authentication, use the following connection string. Also ensure that `sonar.jdbc.username` and `sonar.jdbc.password` are set appropriately:
+|
+|```
+|sonar.jdbc.url=jdbc:sqlserver://localhost;databaseName=sonar
+|sonar.jdbc.username=sonarqube
+|sonar.jdbc.password=mypassword
+|```
 
-[[warning]]
-| Collation **MUST** be case-sensitive (CS) and accent-sensitive (AS).  
-| `READ_COMMITED_SNAPSHOT` **MUST** be set on the SonarQube database.
+[[collapse]]
+| ## Oracle
+|
+|If there are two SonarQube schemas on the same Oracle instance, especially if they are for two different versions, SonarQube gets confused and picks the first it finds. To avoid this issue:
+|
+|- Either privileges associated to the SonarQube Oracle user should be decreased
+|- Or a trigger should be defined on the Oracle side to automatically alter the SonarQube Oracle user session when establishing a new connection:
+|
+|[[warning]]
+|| Oracle JDBC driver versions 12.1.0.1 and 12.1.0.2 have major bugs, and are not recommended for use with the SonarQube ([see more details](https://groups.google.com/forum/#!msg/sonarqube/Ahqt1iarqJg/u0BVRJZnBQAJ)).
 
-MS SQL database's shared lock strategy may impact SonarQube runtime. Making sure that `is_read_committed_snapshot_on` is set to `true` to prevent SonarQube from facing potential deadlocks under heavy loads. 
+[[collapse]]
+| ## PostgreSQL
+|
+|If you want to use a custom schema and not the default "public" one, the PostgreSQL `search_path` property must be set:
+|
+|```
+|ALTER USER mySonarUser SET search_path to mySonarQubeSchema
+|```
 
-Example of query to check `is_read_committed_snapshot_on`:
-```
-SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name='YourSonarQubeDatabase';
-```
-Example of query to update `is_read_committed_snapshot_on`:
-```
-ALTER DATABASE YourSonarQubeDatabase SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
-```
-#### Integrated Security
-
-To use integrated security: 
-
-1. Download the [Microsoft SQL JDBC Driver 7.2.2 package](https://www.microsoft.com/en-us/download/details.aspx?id=57782) and copy the 64-bit version of `sqljdbc_auth.dll` to any folder in your path. 
-
-2. **If you're running SonarQube as a Windows service,** make sure the Windows account under which the service is running has permission to connect your SQL server. The account should have `db_owner` database role membership. 
-
-	**If you're running the SonarQube server from a command prompt,** the user under which the command prompt is running should have `db_owner` database role membership. 
-
-3. Ensure that `sonar.jdbc.username` or `sonar.jdbc.password` properties are commented out or SonarQube will use SQL authentication.
-
-```
-sonar.jdbc.url=jdbc:sqlserver://localhost;databaseName=sonar;integratedSecurity=true
-```
-
-#### SQL Authentication
-
-To use SQL Authentication, use the following connection string. Also ensure that `sonar.jdbc.username` and `sonar.jdbc.password` are set appropriately:
-
-```
-sonar.jdbc.url=jdbc:sqlserver://localhost;databaseName=sonar
-sonar.jdbc.username=sonarqube
-sonar.jdbc.password=mypassword
-```
-
-### Oracle
-
-If there are two SonarQube schemas on the same Oracle instance, especially if they are for two different versions, SonarQube gets confused and picks the first it finds. To avoid this issue:
-
-- Either privileges associated to the SonarQube Oracle user should be decreased
-- Or a trigger should be defined on the Oracle side to automatically alter the SonarQube Oracle user session when establishing a new connection:
-
-[[warning]]
-| Oracle JDBC driver versions 12.1.0.1 and 12.1.0.2 have major bugs, and are not recommended for use with the SonarQube ([see more details](https://groups.google.com/forum/#!msg/sonarqube/Ahqt1iarqJg/u0BVRJZnBQAJ)).
-
-### PostgreSQL
-
-If you want to use a custom schema and not the default "public" one, the PostgreSQL `search_path` property must be set:
-
-```
-ALTER USER mySonarUser SET search_path to mySonarQubeSchema
-```
-
-## Installing the Server from the ZIP file
+## Installing SonarQube from the ZIP file
 
 First, check the [requirements](/requirements/requirements/). Then download and unzip the [distribution](http://www.sonarqube.org/downloads/) (do not unzip into a directory starting with a digit). 
 
-SonarQube cannot be run as `root` on Unix-based systems, so create a dedicated user account to use for SonarQube if necessary.
+SonarQube cannot be run as `root` on Unix-based systems, so create a dedicated user account for SonarQube if necessary.
 
 _$SONARQUBE-HOME_ (below) refers to the path to the directory where the SonarQube distribution has been unzipped.
 
@@ -121,21 +123,15 @@ sonar.web.context=/sonarqube
 Execute the following script to start the server:
 
 - On Linux/Mac OS: bin/<YOUR OS>/sonar.sh start
-- On Windows: bin/windows-x86-XX/StartSonar.bat
+- On Windows: bin/windows-x86-64/StartSonar.bat
 
 You can now browse SonarQube at _http://localhost:9000_ (the default System administrator credentials are `admin`/`admin`).
 
-### Tuning the Web Server
+### Adjusting the Java Installation
 
-By default, SonarQube is configured to run on any computer with a simple Java JRE.
+If there are multiple versions of Java installed on your server, you may need to explicitly define which version of Java is used.
 
-For better performance, the first thing to do when installing a production instance is to use a Java JDK and activate the server mode by uncommenting/setting the following line in _$SONARQUBE-HOME/conf/sonar.properties_:
-
-```
-sonar.web.javaOpts=-server
-```
-
-To change the Java JVM used by SonarQube, simply edit _$SONARQUBE-HOME/conf/wrapper.conf_ and update the following line:
+To change the Java JVM used by SonarQube, edit _$SONARQUBE-HOME/conf/wrapper.conf_ and update the following line:
 
 ```
 wrapper.java.command=/path/to/my/jdk/bin/java
@@ -145,101 +141,104 @@ wrapper.java.command=/path/to/my/jdk/bin/java
 
 - Running SonarQube as a Service on [Windows](/setup/operate-server/) or [Linux](/setup/operate-server/)
 - Running SonarQube [behind a Proxy](/setup/operate-server/)
-- Running SonarQube Community Edition with [Docker](https://hub.docker.com/_/sonarqube/)
+- Monitoring and adjusting [Java Process Memory](/instance-administration/monitoring/)
 
-## Installing the Server from the Docker Image
+## Installing SonarQube from the Docker Image
 
-Click your SonarQube version below for instructions on installing the server from a Docker image.
+See your SonarQube version below for instructions on installing the server from a Docker image.
 
-[[collapse]]
-| ## SonarQube 8.2+
-|
-| Follow these steps for your first installation:
-|
-| 1.	Creating the following volumes helps prevent the loss of information when updating to a new version or upgrading to a higher edition:
-|	- `sonarqube_data` – contains data files, such as the embedded H2 database and Elasticsearch indexes
-|	- `sonarqube_logs` – contains SonarQube logs about access, web process, CE process, and Elasticsearch
-|	- `sonarqube_extensions` – contains plugins, such as language analyzers 
-|	
-|	Create the volumes with the following commands:
-|	```bash
-|	$> docker volume create --name sonarqube_data
-|	$> docker volume create --name sonarqube_extensions
-|	$> docker volume create --name sonarqube_logs
-|	``` 
-|
-| 2. Configure the database with SonarQube properties using environment variables. Define these variables using the -e flag as shown in the following example:
-|
-|	```console
-|		#Example for PostgreSQL
-|		-e SONAR_JDBC_USERNAME=sonar \
-|		-e SONAR_JDBC_PASSWORD=sonar \
-|		-e SONAR.JDBC.URL=jdbc:postgresql://localhost/sonar \
-|	```
-|
-| 	For more configuration environment variables, see the [Docker Environment Variables](/setup/environment-variables/).  
-|
-| [[info]]
-| | Drivers for supported databases (except Oracle) are already provided. Do not replace the provided drivers; they are the only ones supported. For Oracle, you need to copy the JDBC driver into the `sonarqube_extensions` volume.
-|
-| [[warning]]
-| | Use of the environment variables `SONARQUBE_JDBC_USERNAME`, `SONARQUBE_JDBC_PASSWORD`, and `SONARQUBE_JDBC_URL` is deprecated and will stop working in future releases.
-|
-| 3. Run the image:
-|
-|	```bash
-|	$> docker run -d --name sonarqube \
-|		-p 9000:9000 \
-|		-e SONAR_JDBC_URL=... \
-|		-e SONAR_JDBC_USERNAME=... \
-|		-e SONAR_JDBC_PASSWORD=... \
-|		-v sonarqube_data:/opt/sonarqube/data \
-|		-v sonarqube_extensions:/opt/sonarqube/extensions \
-|		-v sonarqube_logs:/opt/sonarqube/logs \
-|		<image_name>
-|	```
+### SonarQube 8.2+
 
-[[collapse]]
-| ## SonarQube 7.9.x LTS
-|
-| Follow these steps for your first installation:
-|
-| 1.	Create volumes `sonarqube_conf`, `sonarqube_data`, `sonarqube_logs`, and `sonarqube_extensions` and start the image with the following command. This will populate all the volumes (copying default plugins, create the Elasticsearch data folder, create the sonar.properties configuration file). Watch the logs, and, once the container is properly started, you can force-exit (ctrl+c) and proceed to the next step.
-|
-|	```console
-|	$ docker run --rm \
-|	    -p 9000:9000 \
-|	    -v sonarqube_conf:/opt/sonarqube/conf \
-|	    -v sonarqube_extensions:/opt/sonarqube/extensions \
-|	    -v sonarqube_logs:/opt/sonarqube/logs \
-|	    -v sonarqube_data:/opt/sonarqube/data \
-|	    <image_name>
-|	```
-|
-|2.	Configure sonar.properties if needed. Please note that due to [SONAR-12501](https://jira.sonarsource.com/browse/SONAR-12501), providing `sonar.jdbc.url`, `sonar.jdbc.username`, `sonar.jdbc.password` and `sonar.web.javaAdditionalOpts` in `sonar.properties` is not working, and you will need to explicitly define theses values in the docker run command with the `-e` flag.
-|
-|	```plain
-|	#Example for PostgreSQL
-|	-e sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube
-|	```
-|
-|[[info]]
-|| Drivers for supported databases (except Oracle) are already provided. Do not replace the provided drivers; they are the only ones supported. For Oracle, you need to copy the JDBC driver into |`$SONARQUBE_HOME/extensions/jdbc-driver/oracle`.
-|
-|3.	Run the image with your JDBC username and password :
-|
-|	```console
-|	$ docker run -d --name sonarqube \
-|	    -p 9000:9000 \
-|		-e sonar.jdbc.url=... \
-|	    -e sonar.jdbc.username=... \
-|	    -e sonar.jdbc.password=... \
-|	    -v sonarqube_conf:/opt/sonarqube/conf \
-|	    -v sonarqube_extensions:/opt/sonarqube/extensions \
-|	    -v sonarqube_logs:/opt/sonarqube/logs \
-|	    -v sonarqube_data:/opt/sonarqube/data \
-|	    <image_name>
-|	```
+Follow these steps for your first installation:
+
+1.	Creating the following volumes helps prevent the loss of information when updating to a new version or upgrading to a higher edition:
+	- `sonarqube_data` – contains data files, such as the embedded H2 database and Elasticsearch indexes
+	- `sonarqube_logs` – contains SonarQube logs about access, web process, CE process, and Elasticsearch
+	- `sonarqube_extensions` – contains plugins, such as language analyzers 
+	
+	Create the volumes with the following commands:
+	```bash
+	$> docker volume create --name sonarqube_data
+	$> docker volume create --name sonarqube_extensions
+	$> docker volume create --name sonarqube_logs
+	``` 
+	[[warning]]
+    | Make sure you're using [volumes](https://docs.docker.com/storage/volumes/) as shown with the above commands, and not [bind mounts](https://docs.docker.com/storage/bind-mounts/). Using bind mounts prevents plugins and languages from populating correctly.
+
+2. Drivers for supported databases (except Oracle) are already provided. If you're using an Oracle database, you need to add the JDBC driver to the `sonar_extensions` volume. To do this:
+
+	a. Start the SonarQube container with the embedded H2 database:
+   
+    ```
+	$ docker run --rm \
+		-p 9000:9000 \
+		-v sonarqube_extensions:/opt/sonarqube/extensions \
+		<image_name>
+	```
+	
+	b. Exit once SonarQube has started properly. 
+   
+	c. Copy the Oracle driver into `sonarqube_extensions/jdbc-driver/oracle`.
+   
+3. Run the image with your database properties defined using the -e environment variable flag:
+
+	```bash
+	$> docker run -d --name sonarqube \
+		-p 9000:9000 \
+		-e SONAR_JDBC_URL=... \
+		-e SONAR_JDBC_USERNAME=... \
+		-e SONAR_JDBC_PASSWORD=... \
+		-v sonarqube_data:/opt/sonarqube/data \
+		-v sonarqube_extensions:/opt/sonarqube/extensions \
+		-v sonarqube_logs:/opt/sonarqube/logs \
+		<image_name>
+	```
+	
+	For more configuration environment variables, see the [Docker Environment Variables](/setup/environment-variables/).
+	
+	[[warning]]
+    | Use of the environment variables `SONARQUBE_JDBC_USERNAME`, `SONARQUBE_JDBC_PASSWORD`, and `SONARQUBE_JDBC_URL` is deprecated and will stop working in future releases.
+
+### SonarQube 7.9.x LTS
+
+ Follow these steps for your first installation:
+
+ 1.	Create volumes `sonarqube_conf`, `sonarqube_data`, `sonarqube_logs`, and `sonarqube_extensions` and start the image with the following command. This will populate all the volumes (copying default plugins, create the Elasticsearch data folder, create the sonar.properties configuration file). Watch the logs, and, once the container is properly started, you can force-exit (ctrl+c) and proceed to the next step.
+
+	```console
+	$ docker run --rm \
+	    -p 9000:9000 \
+	    -v sonarqube_conf:/opt/sonarqube/conf \
+	    -v sonarqube_extensions:/opt/sonarqube/extensions \
+	    -v sonarqube_logs:/opt/sonarqube/logs \
+	    -v sonarqube_data:/opt/sonarqube/data \
+	    <image_name>
+	```
+
+2.	Configure sonar.properties if needed. Please note that due to [SONAR-12501](https://jira.sonarsource.com/browse/SONAR-12501), providing `sonar.jdbc.url`, `sonar.jdbc.username`, `sonar.jdbc.password` and `sonar.web.javaAdditionalOpts` in `sonar.properties` is not working, and you will need to explicitly define theses values in the docker run command with the `-e` flag.
+
+	```plain
+	#Example for PostgreSQL
+	-e sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube
+	```
+
+[[info]]
+| Drivers for supported databases (except Oracle) are already provided. Do not replace the provided drivers; they are the only ones supported. For Oracle, you need to copy the JDBC driver into `$SONARQUBE_HOME/extensions/jdbc-driver/oracle`.
+
+3.	Run the image with your JDBC username and password :
+
+	```console
+	$ docker run -d --name sonarqube \
+	    -p 9000:9000 \
+		-e sonar.jdbc.url=... \
+	    -e sonar.jdbc.username=... \
+	    -e sonar.jdbc.password=... \
+	    -v sonarqube_conf:/opt/sonarqube/conf \
+	    -v sonarqube_extensions:/opt/sonarqube/extensions \
+	    -v sonarqube_logs:/opt/sonarqube/logs \
+	    -v sonarqube_data:/opt/sonarqube/data \
+	    <image_name>
+	```
 
 ## Next Steps
 
@@ -247,42 +246,10 @@ Once your server is installed and running, you may also want to [Install Plugins
 
 ## Troubleshooting/FAQ
 
-### Grant more memory to the web server / compute engine / elastic search
-
-To grant more memory to a server-side process, uncomment and edit the relevant javaOpts property in `$SONARQUBE_HOME/conf/sonar.properties`, specifically:
-
-- `sonar.web.javaOpts` (minimum values: `-server -Xmx768m`)
-- `sonar.ce.javaOpts`
-- `sonar.search.javaOpts`
-
-### Failed to start on Windows Vista
-
-SonarQube seems unable to start when installed under the `Program Files` directory on Windows Vista. It should therefore not be installed there.
-
-### Failed to start SonarQube with Oracle due to bad `USERS` table structure
-
-When other `USERS` tables exist in the Oracle DB, if the `sonarqube` user has read access on this other `USERS` table, the SonarQube web server can't start and an exception like the following one is thrown:
-
-```
-ActiveRecord::ActiveRecordError: ORA-00904: "TOTO": invalid identifier
-: INSERT INTO users (login, name, email, crypted_password, salt, 
-created_at, updated_at, remember_token, remember_token_expires_at, toto, id)
-VALUES('admin', 'Administrator', '', 'bba4c8a0f808f9798cf8b1c153a4bb4f9178cf59', '2519754f77ea67e5d7211cd1414698f465aacebb',
-TIMESTAMP'2011-06-24 22:09:14', TIMESTAMP'2011-06-24 22:09:14', null, null, null, ?)
-ActiveRecord::ActiveRecordError: ORA-00904: "TOTO": invalid identifier
- 
-: INSERT INTO users (login, name, email, crypted_password, salt, 
-created_at, updated_at, remember_token, remember_token_expires_at, toto, id)
-VALUES('admin', 'Administrator', '', 'bba4c8a0f808f9798cf8b1c153a4bb4f9178cf59', 
-'2519754f77ea67e5d7211cd1414698f465aacebb', TIMESTAMP'2011-06-24 22:09:14', TIMESTAMP'2011-06-24 22:09:14', null, null, null, ?)
-```
-
-To fix this issue, the rights of the `sonarqube` Oracle user must be decreased to remove read access on the other `USERS` table(s).
-
 ### Failed to connect to the Marketplace via proxy
 
 Double check that settings for proxy are correctly set in `$SONARQUBE_HOME/conf/sonar.properties`.
-Note that if your proxy username contains "\" (backslash), then it should be escaped - for example username "domain\user" in file should look like:
+Note that if your proxy username contains a backslash, then it should be escaped - for example username "domain\user" in file should look like:
 
 ```
 http.proxyUser=domain\\user

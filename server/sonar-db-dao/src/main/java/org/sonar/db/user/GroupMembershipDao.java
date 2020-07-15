@@ -35,30 +35,30 @@ import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 
 public class GroupMembershipDao implements Dao {
 
-  public List<GroupMembershipDto> selectGroups(DbSession session, GroupMembershipQuery query, Integer userId, int offset, int limit) {
-    Map<String, Object> params = ImmutableMap.of("query", query, "userId", userId, "organizationUuid", query.organizationUuid());
+  public List<GroupMembershipDto> selectGroups(DbSession session, GroupMembershipQuery query, String userUuid, int offset, int limit) {
+    Map<String, Object> params = ImmutableMap.of("query", query, "userUuid", userUuid, "organizationUuid", query.organizationUuid());
     return mapper(session).selectGroups(params, new RowBounds(offset, limit));
   }
 
-  public int countGroups(DbSession session, GroupMembershipQuery query, Integer userId) {
-    Map<String, Object> params = ImmutableMap.of("query", query, "userId", userId, "organizationUuid", query.organizationUuid());
+  public int countGroups(DbSession session, GroupMembershipQuery query, String userUuid) {
+    Map<String, Object> params = ImmutableMap.of("query", query, "userUuid", userUuid, "organizationUuid", query.organizationUuid());
     return mapper(session).countGroups(params);
   }
 
   public List<UserMembershipDto> selectMembers(DbSession session, UserMembershipQuery query, int offset, int limit) {
-    Map<String, Object> params = ImmutableMap.of("query", query, "groupId", query.groupId(), "organizationUuid", query.organizationUuid());
+    Map<String, Object> params = ImmutableMap.of("query", query, "groupUuid", query.groupUuid(), "organizationUuid", query.organizationUuid());
     return mapper(session).selectMembers(params, new RowBounds(offset, limit));
   }
 
   public int countMembers(DbSession session, UserMembershipQuery query) {
-    Map<String, Object> params = ImmutableMap.of("query", query, "groupId", query.groupId(), "organizationUuid", query.organizationUuid());
+    Map<String, Object> params = ImmutableMap.of("query", query, "groupUuid", query.groupUuid(), "organizationUuid", query.organizationUuid());
     return mapper(session).countMembers(params);
   }
 
-  public Map<String, Integer> countUsersByGroups(DbSession session, Collection<Integer> groupIds) {
+  public Map<String, Integer> countUsersByGroups(DbSession session, Collection<String> groupUuids) {
     Map<String, Integer> result = new HashMap<>();
     executeLargeInputs(
-      groupIds,
+      groupUuids,
       input -> {
         List<GroupUserCount> userCounts = mapper(session).countUsersByGroup(input);
         for (GroupUserCount count : userCounts) {
@@ -70,8 +70,8 @@ public class GroupMembershipDao implements Dao {
     return result;
   }
 
-  public List<Integer> selectGroupIdsByUserId(DbSession dbSession, int userId) {
-    return mapper(dbSession).selectGroupIdsByUserId(userId);
+  public List<String> selectGroupUuidsByUserUuid(DbSession dbSession, String userUuid) {
+    return mapper(dbSession).selectGroupUuidsByUserUuid(userUuid);
   }
 
   public Multiset<String> countGroupByLoginsAndOrganization(DbSession dbSession, Collection<String> logins, String organizationUuid) {

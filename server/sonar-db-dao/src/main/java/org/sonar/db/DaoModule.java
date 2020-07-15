@@ -84,6 +84,8 @@ import org.sonar.db.source.FileSourceDao;
 import org.sonar.db.user.GroupDao;
 import org.sonar.db.user.GroupMembershipDao;
 import org.sonar.db.user.RoleDao;
+import org.sonar.db.user.SamlMessageIdDao;
+import org.sonar.db.user.SessionTokensDao;
 import org.sonar.db.user.UserDao;
 import org.sonar.db.user.UserGroupDao;
 import org.sonar.db.user.UserPropertiesDao;
@@ -154,8 +156,10 @@ public class DaoModule extends Module {
     RoleDao.class,
     RuleDao.class,
     RuleRepositoryDao.class,
+    SamlMessageIdDao.class,
     SnapshotDao.class,
     SchemaMigrationDao.class,
+    SessionTokensDao.class,
     UserDao.class,
     UserGroupDao.class,
     UserPermissionDao.class,

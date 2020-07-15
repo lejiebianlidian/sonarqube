@@ -22,14 +22,23 @@ package org.sonar.db.permission;
 import javax.annotation.Nullable;
 
 public class GroupPermissionDto {
-
+  private String uuid;
   private String organizationUuid;
-  private Integer groupId;
-  private Long resourceId;
+  private String groupUuid;
+  private String componentUuid;
   private String role;
 
-  public Integer getGroupId() {
-    return groupId;
+  public String getUuid() {
+    return uuid;
+  }
+
+  public GroupPermissionDto setUuid(String uuid) {
+    this.uuid = uuid;
+    return this;
+  }
+
+  public String getGroupUuid() {
+    return groupUuid;
   }
 
   public String getOrganizationUuid() {
@@ -44,18 +53,18 @@ public class GroupPermissionDto {
   /**
    * Null when Anyone
    */
-  public GroupPermissionDto setGroupId(@Nullable Integer groupId) {
-    this.groupId = groupId;
+  public GroupPermissionDto setGroupUuid(@Nullable String groupUuid) {
+    this.groupUuid = groupUuid;
     return this;
   }
 
   @Nullable
-  public Long getResourceId() {
-    return resourceId;
+  public String getComponentUuid() {
+    return componentUuid;
   }
 
-  public GroupPermissionDto setResourceId(@Nullable Long resourceId) {
-    this.resourceId = resourceId;
+  public GroupPermissionDto setComponentUuid(@Nullable String componentUuid) {
+    this.componentUuid = componentUuid;
     return this;
   }
 

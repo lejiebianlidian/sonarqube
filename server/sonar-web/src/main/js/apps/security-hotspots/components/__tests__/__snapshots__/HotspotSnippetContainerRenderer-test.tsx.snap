@@ -13,6 +13,7 @@ exports[`should render correctly 1`] = `
         "name": "master",
       }
     }
+    displayProjectName={true}
     expandable={false}
     linkToProject={false}
     loading={false}
@@ -54,6 +55,7 @@ exports[`should render correctly: with sourcelines 1`] = `
         "name": "master",
       }
     }
+    displayProjectName={true}
     expandable={false}
     linkToProject={false}
     loading={false}
@@ -133,7 +135,6 @@ exports[`should render correctly: with sourcelines 1`] = `
         displaySCM={false}
         expandBlock={[Function]}
         handleCloseIssues={[Function]}
-        handleLinePopupToggle={[MockFunction]}
         handleOpenIssues={[Function]}
         handleSymbolClick={[MockFunction]}
         highlightedSymbols={Array []}
@@ -238,8 +239,7 @@ exports[`should render correctly: with sourcelines 1`] = `
           }
         }
         issuesByLine={Object {}}
-        last={false}
-        loadDuplications={[Function]}
+        lastSnippetOfLastGroup={false}
         locations={Array []}
         locationsByLine={Object {}}
         onIssueChange={[Function]}

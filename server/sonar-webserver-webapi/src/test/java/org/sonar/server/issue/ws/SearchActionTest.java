@@ -41,11 +41,14 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.Durations;
 import org.sonar.api.utils.System2;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
+import org.sonar.db.component.BranchType;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
+import org.sonar.db.component.SnapshotDto;
 import org.sonar.db.issue.IssueChangeDto;
 import org.sonar.db.issue.IssueDto;
 import org.sonar.db.organization.OrganizationDto;
@@ -64,6 +67,7 @@ import org.sonar.server.issue.IssueFieldsSetter;
 import org.sonar.server.issue.TextRangeResponseFormatter;
 import org.sonar.server.issue.TransitionService;
 import org.sonar.server.issue.index.IssueIndex;
+import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
 import org.sonar.server.issue.index.IssueQuery;
@@ -94,6 +98,7 @@ import static org.sonar.api.utils.DateUtils.formatDateTime;
 import static org.sonar.api.utils.DateUtils.parseDate;
 import static org.sonar.api.utils.DateUtils.parseDateTime;
 import static org.sonar.api.web.UserRole.ISSUE_ADMIN;
+import static org.sonar.db.component.ComponentDto.PULL_REQUEST_SEPARATOR;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
 import static org.sonar.db.issue.IssueTesting.newDto;
 import static org.sonar.server.tester.UserSessionRule.standalone;
@@ -106,7 +111,9 @@ import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_ASSIGNEES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_COMPONENT_KEYS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_CREATED_AFTER;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_HIDE_COMMENTS;
+import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PULL_REQUEST;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_RULES;
+import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SINCE_LEAK_PERIOD;
 
 public class SearchActionTest {
 
@@ -122,7 +129,7 @@ public class SearchActionTest {
   private DbClient dbClient = db.getDbClient();
   private DbSession session = db.getSession();
   private IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSession, new WebAuthorizationTypeSupport(userSession));
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient));
+  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient), null);
   private IssueQueryFactory issueQueryFactory = new IssueQueryFactory(dbClient, Clock.systemUTC(), userSession);
   private IssueFieldsSetter issueFieldsSetter = new IssueFieldsSetter();
   private IssueWorkflow issueWorkflow = new IssueWorkflow(new FunctionExecutor(issueFieldsSetter), issueFieldsSetter);
@@ -130,8 +137,9 @@ public class SearchActionTest {
   private Languages languages = new Languages();
   private UserResponseFormatter userFormatter = new UserResponseFormatter(new AvatarResolverImpl());
   private SearchResponseFormat searchResponseFormat = new SearchResponseFormat(new Durations(), languages, new TextRangeResponseFormatter(), userFormatter);
+  private IssueIndexSyncProgressChecker issueIndexSyncProgressChecker = new IssueIndexSyncProgressChecker(dbClient);
   private WsActionTester ws = new WsActionTester(
-    new SearchAction(userSession, issueIndex, issueQueryFactory, searchResponseLoader, searchResponseFormat, System2.INSTANCE, dbClient));
+    new SearchAction(userSession, issueIndex, issueQueryFactory, issueIndexSyncProgressChecker, searchResponseLoader, searchResponseFormat, System2.INSTANCE, dbClient));
   private StartupIndexer permissionIndexer = new PermissionIndexer(dbClient, es.client(), issueIndexer);
 
   @Before
@@ -278,14 +286,18 @@ public class SearchActionTest {
     RuleDefinitionDto rule = newIssueRule().getDefinition();
     IssueDto issue = db.issues().insertIssue(rule, project, file, i -> i.setKee("82fd47d4-b650-4037-80bc-7b112bd4eac2"));
     dbClient.issueChangeDao().insert(session,
-      new IssueChangeDto().setIssueKey(issue.getKey())
+      new IssueChangeDto()
+        .setUuid(Uuids.createFast())
+        .setIssueKey(issue.getKey())
         .setKey("COMMENT-ABCD")
         .setChangeData("*My comment*")
         .setChangeType(IssueChangeDto.TYPE_COMMENT)
         .setUserUuid(john.getUuid())
         .setIssueChangeCreationDate(parseDateTime("2014-09-09T12:00:00+0000").getTime()));
     dbClient.issueChangeDao().insert(session,
-      new IssueChangeDto().setIssueKey(issue.getKey())
+      new IssueChangeDto()
+        .setUuid(Uuids.createFast())
+        .setIssueKey(issue.getKey())
         .setKey("COMMENT-ABCE")
         .setChangeData("Another comment")
         .setChangeType(IssueChangeDto.TYPE_COMMENT)
@@ -311,14 +323,18 @@ public class SearchActionTest {
     RuleDefinitionDto rule = newIssueRule().getDefinition();
     IssueDto issue = db.issues().insertIssue(rule, project, file, i -> i.setKee("82fd47d4-b650-4037-80bc-7b112bd4eac2"));
     dbClient.issueChangeDao().insert(session,
-      new IssueChangeDto().setIssueKey(issue.getKey())
+      new IssueChangeDto()
+        .setUuid(Uuids.createFast())
+        .setIssueKey(issue.getKey())
         .setKey("COMMENT-ABCD")
         .setChangeData("*My comment*")
         .setChangeType(IssueChangeDto.TYPE_COMMENT)
         .setUserUuid(john.getUuid())
         .setCreatedAt(parseDateTime("2014-09-09T12:00:00+0000").getTime()));
     dbClient.issueChangeDao().insert(session,
-      new IssueChangeDto().setIssueKey(issue.getKey())
+      new IssueChangeDto()
+        .setUuid(Uuids.createFast())
+        .setIssueKey(issue.getKey())
         .setKey("COMMENT-ABCE")
         .setChangeData("Another comment")
         .setChangeType(IssueChangeDto.TYPE_COMMENT)
@@ -509,6 +525,126 @@ public class SearchActionTest {
   }
 
   @Test
+  public void filter_by_leak_period() {
+    UserDto john = db.users().insertUser(u -> u.setLogin("john").setName("John").setEmail("john@email.com"));
+    UserDto alice = db.users().insertUser(u -> u.setLogin("alice").setName("Alice").setEmail("alice@email.com"));
+    OrganizationDto organization = db.organizations().insert();
+    ComponentDto project = db.components().insertComponent(ComponentTesting.newPublicProjectDto(organization, "PROJECT_ID").setDbKey("PROJECT_KEY"));
+    SnapshotDto snapshotDto = db.components().insertSnapshot(project, s -> s.setLast(true).setPeriodDate(parseDateTime("2014-09-05T00:00:00+0100").getTime()));
+    indexPermissions();
+
+    ComponentDto file = db.components().insertComponent(newFileDto(project, null, "FILE_ID").setDbKey("FILE_KEY"));
+    RuleDto rule = newIssueRule();
+    IssueDto issue1 = newDto(rule, file, project)
+      .setIssueCreationDate(parseDateTime("2014-09-04T00:00:00+0100"))
+      .setIssueUpdateDate(parseDateTime("2017-12-04T00:00:00+0100"))
+      .setEffort(10L)
+      .setStatus("OPEN")
+      .setKee("82fd47d4-b650-4037-80bc-7b112bd4eac2")
+      .setSeverity("MAJOR")
+      .setAssigneeUuid(john.getUuid());
+    IssueDto issue2 = newDto(rule, file, project)
+      .setIssueCreationDate(parseDateTime("2014-09-06T00:00:00+0100"))
+      .setIssueUpdateDate(parseDateTime("2017-12-04T00:00:00+0100"))
+      .setEffort(10L)
+      .setStatus("OPEN")
+      .setKee("7b112bd4-b650-4037-80bc-82fd47d4eac2")
+      .setSeverity("MAJOR")
+      .setAssigneeUuid(alice.getUuid());
+    dbClient.issueDao().insert(session, issue1, issue2);
+    session.commit();
+    indexIssues();
+
+    userSession.logIn(john);
+
+    ws.newRequest()
+      .setParam(PARAM_SINCE_LEAK_PERIOD, "true")
+      .setParam(PARAM_COMPONENT_KEYS, "PROJECT_KEY")
+      .execute()
+      .assertJson(this.getClass(), "filter_by_leak_period.json");
+  }
+
+  @Test
+  public void filter_by_leak_period_without_a_period() {
+    UserDto john = db.users().insertUser(u -> u.setLogin("john").setName("John").setEmail("john@email.com"));
+    UserDto alice = db.users().insertUser(u -> u.setLogin("alice").setName("Alice").setEmail("alice@email.com"));
+    OrganizationDto organization = db.organizations().insert();
+    ComponentDto project = db.components().insertComponent(ComponentTesting.newPublicProjectDto(organization, "PROJECT_ID").setDbKey("PROJECT_KEY"));
+    SnapshotDto snapshotDto = db.components().insertSnapshot(project);
+    indexPermissions();
+    ComponentDto file = db.components().insertComponent(newFileDto(project, null, "FILE_ID").setDbKey("FILE_KEY"));
+    RuleDto rule = newIssueRule();
+    IssueDto issue1 = newDto(rule, file, project)
+      .setIssueCreationDate(parseDateTime("2014-09-04T00:00:00+0100"))
+      .setIssueUpdateDate(parseDateTime("2017-12-04T00:00:00+0100"))
+      .setEffort(10L)
+      .setStatus("OPEN")
+      .setKee("82fd47d4-b650-4037-80bc-7b112bd4eac2")
+      .setSeverity("MAJOR")
+      .setAssigneeUuid(john.getUuid());
+    IssueDto issue2 = newDto(rule, file, project)
+      .setIssueCreationDate(parseDateTime("2014-09-04T00:00:00+0100"))
+      .setIssueUpdateDate(parseDateTime("2017-12-04T00:00:00+0100"))
+      .setEffort(10L)
+      .setStatus("OPEN")
+      .setKee("7b112bd4-b650-4037-80bc-82fd47d4eac2")
+      .setSeverity("MAJOR")
+      .setAssigneeUuid(alice.getUuid());
+    dbClient.issueDao().insert(session, issue1, issue2);
+    session.commit();
+    indexIssues();
+
+    userSession.logIn(john);
+
+    ws.newRequest()
+      .setParam(PARAM_COMPONENT_KEYS, "PROJECT_KEY")
+      .setParam(PARAM_SINCE_LEAK_PERIOD, "true")
+      .execute()
+      .assertJson(this.getClass(), "empty_result.json");
+  }
+
+  @Test
+  public void filter_by_leak_period_has_no_effect_on_prs() {
+    UserDto john = db.users().insertUser(u -> u.setLogin("john").setName("John").setEmail("john@email.com"));
+    UserDto alice = db.users().insertUser(u -> u.setLogin("alice").setName("Alice").setEmail("alice@email.com"));
+    OrganizationDto organization = db.organizations().insert();
+    ComponentDto project = db.components().insertPublicProject(organization, c -> c.setUuid("PROJECT_ID").setDbKey("PROJECT_KEY"));
+    ComponentDto pr = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setKey("pr"));
+    SnapshotDto snapshotDto = db.components().insertSnapshot(pr);
+    indexPermissions();
+    ComponentDto file = db.components().insertComponent(newFileDto(pr, null, "FILE_ID").setDbKey("FILE_KEY" + PULL_REQUEST_SEPARATOR + "pr"));
+    RuleDto rule = newIssueRule();
+    IssueDto issue1 = newDto(rule, file, pr)
+      .setIssueCreationDate(parseDateTime("2014-09-04T00:00:00+0100"))
+      .setIssueUpdateDate(parseDateTime("2017-12-04T00:00:00+0100"))
+      .setEffort(10L)
+      .setStatus("OPEN")
+      .setKee("82fd47d4-b650-4037-80bc-7b112bd4eac2")
+      .setSeverity("MAJOR")
+      .setAssigneeUuid(john.getUuid());
+    IssueDto issue2 = newDto(rule, file, pr)
+      .setIssueCreationDate(parseDateTime("2014-09-04T00:00:00+0100"))
+      .setIssueUpdateDate(parseDateTime("2017-12-04T00:00:00+0100"))
+      .setEffort(10L)
+      .setStatus("OPEN")
+      .setKee("7b112bd4-b650-4037-80bc-82fd47d4eac2")
+      .setSeverity("MAJOR")
+      .setAssigneeUuid(alice.getUuid());
+    dbClient.issueDao().insert(session, issue1, issue2);
+    session.commit();
+    indexIssues();
+
+    userSession.logIn(john);
+
+    ws.newRequest()
+      .setParam(PARAM_COMPONENT_KEYS, "PROJECT_KEY")
+      .setParam(PARAM_PULL_REQUEST, "pr")
+      .setParam(PARAM_SINCE_LEAK_PERIOD, "true")
+      .execute()
+      .assertJson(this.getClass(), "filter_by_leak_period_has_no_effect_on_prs.json");
+  }
+
+  @Test
   public void return_empty_when_login_is_unknown() {
     UserDto john = db.users().insertUser(u -> u.setLogin("john").setName("John").setEmail("john@email.com"));
     UserDto alice = db.users().insertUser(u -> u.setLogin("alice").setName("Alice").setEmail("alice@email.com"));
@@ -620,7 +756,7 @@ public class SearchActionTest {
     assertThat(ws.newRequest()
       .setMultiParam("author", singletonList("unknown"))
       .executeProtobuf(SearchWsResponse.class).getIssuesList())
-        .isEmpty();
+      .isEmpty();
   }
 
   @Test
@@ -652,8 +788,8 @@ public class SearchActionTest {
       // This parameter will be ignored
       .setParam("authors", "leia")
       .executeProtobuf(SearchWsResponse.class).getIssuesList())
-        .extracting(Issue::getKey)
-        .containsExactlyInAnyOrder(issue2.getKey());
+      .extracting(Issue::getKey)
+      .containsExactlyInAnyOrder(issue2.getKey());
   }
 
   @Test
@@ -829,8 +965,8 @@ public class SearchActionTest {
     assertThatThrownBy(() -> ws.newRequest()
       .setParam("types", RuleType.SECURITY_HOTSPOT.toString())
       .execute())
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Value of parameter 'types' (SECURITY_HOTSPOT) must be one of: [CODE_SMELL, BUG, VULNERABILITY]");
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Value of parameter 'types' (SECURITY_HOTSPOT) must be one of: [CODE_SMELL, BUG, VULNERABILITY]");
   }
 
   @Test
@@ -971,7 +1107,7 @@ public class SearchActionTest {
     assertThat(def.responseExampleAsString()).isNotEmpty();
 
     assertThat(def.params()).extracting("key").containsExactlyInAnyOrder(
-      "additionalFields", "asc", "assigned", "assignees", "authors", "author", "componentKeys", "componentUuids", "branch",
+      "additionalFields", "asc", "assigned", "assignees", "authors", "author", "componentKeys", "branch",
       "pullRequest", "organization",
       "createdAfter", "createdAt", "createdBefore", "createdInLast", "directories", "facetMode", "facets", "fileUuids", "issues", "languages", "moduleUuids", "onComponentOnly",
       "p", "projects", "ps", "resolutions", "resolved", "rules", "s", "severities", "sinceLeakPeriod",
@@ -982,7 +1118,7 @@ public class SearchActionTest {
       .matches(p -> p.since().equals("6.4"));
 
     WebService.Param branch = def.param(PARAM_BRANCH);
-    assertThat(branch.isInternal()).isTrue();
+    assertThat(branch.isInternal()).isFalse();
     assertThat(branch.isRequired()).isFalse();
     assertThat(branch.since()).isEqualTo("6.6");
 
@@ -1015,15 +1151,16 @@ public class SearchActionTest {
   }
 
   private void indexIssues() {
-    issueIndexer.indexOnStartup(issueIndexer.getIndexTypes());
+    issueIndexer.indexAllIssues();
   }
 
   private void grantPermissionToAnyone(ComponentDto project, String permission) {
     dbClient.groupPermissionDao().insert(session,
       new GroupPermissionDto()
+        .setUuid(Uuids.createFast())
         .setOrganizationUuid(project.getOrganizationUuid())
-        .setGroupId(null)
-        .setResourceId(project.getId())
+        .setGroupUuid(null)
+        .setComponentUuid(project.uuid())
         .setRole(permission));
     session.commit();
     userSession.logIn().addProjectPermission(permission, project);

@@ -18,13 +18,14 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as classNames from 'classnames';
+import { differenceBy, uniq } from 'lodash';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import HelpTooltip from 'sonar-ui-common/components/controls/HelpTooltip';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { isDefined } from 'sonar-ui-common/helpers/types';
-import { getMeasuresAndMeta } from '../../../api/measures';
+import { getMeasuresWithMetrics } from '../../../api/measures';
 import DocTooltip from '../../../components/docs/DocTooltip';
 import { getBranchLikeQuery } from '../../../helpers/branch-like';
 import { enhanceConditionWithMeasure, enhanceMeasuresWithMetrics } from '../../../helpers/measures';
@@ -41,14 +42,22 @@ import { IssueType, MeasurementType, PR_METRICS } from '../utils';
 import AfterMergeEstimate from './AfterMergeEstimate';
 import LargeQualityGateBadge from './LargeQualityGateBadge';
 
-interface Props {
-  branchLike: PullRequest;
-  component: T.Component;
+interface StateProps {
   conditions?: QualityGateStatusCondition[];
-  fetchBranchStatus: (branchLike: BranchLike, projectKey: string) => Promise<void>;
   ignoredConditions?: boolean;
   status?: T.Status;
 }
+
+interface DispatchProps {
+  fetchBranchStatus: (branchLike: BranchLike, projectKey: string) => void;
+}
+
+interface OwnProps {
+  branchLike: PullRequest;
+  component: T.Component;
+}
+
+type Props = StateProps & DispatchProps & OwnProps;
 
 interface State {
   loading: boolean;
@@ -65,33 +74,66 @@ export class PullRequestOverview extends React.PureComponent<Props, State> {
 
   componentDidMount() {
     this.mounted = true;
-    this.fetchBranchData();
+    if (this.props.conditions === undefined) {
+      this.fetchBranchStatusData();
+    } else {
+      this.fetchBranchData();
+    }
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.conditionsHaveChanged(prevProps)) {
+      this.fetchBranchData();
+    }
   }
 
   componentWillUnmount() {
     this.mounted = false;
   }
 
-  fetchBranchData = () => {
+  conditionsHaveChanged = (prevProps: Props) => {
+    const prevConditions = prevProps.conditions ?? [];
+    const newConditions = this.props.conditions ?? [];
+    const diff = differenceBy(
+      prevConditions.filter(c => c.level === 'ERROR'),
+      newConditions.filter(c => c.level === 'ERROR'),
+      c => c.metric
+    );
+
+    return (
+      (prevProps.conditions === undefined && this.props.conditions !== undefined) || diff.length > 0
+    );
+  };
+
+  fetchBranchStatusData = () => {
     const {
       branchLike,
       component: { key }
     } = this.props;
+    this.props.fetchBranchStatus(branchLike, key);
+  };
+
+  fetchBranchData = () => {
+    const {
+      branchLike,
+      component: { key },
+      conditions
+    } = this.props;
 
     this.setState({ loading: true });
 
-    Promise.all([
-      getMeasuresAndMeta(key, PR_METRICS, {
-        additionalFields: 'metrics',
-        ...getBranchLikeQuery(branchLike)
-      }),
-      this.props.fetchBranchStatus(branchLike, key)
-    ]).then(
-      ([{ component, metrics }]) => {
+    const metricKeys =
+      conditions !== undefined
+        ? // Also load metrics that apply to failing QG conditions.
+          uniq([...PR_METRICS, ...conditions.filter(c => c.level !== 'OK').map(c => c.metric)])
+        : PR_METRICS;
+
+    getMeasuresWithMetrics(key, metricKeys, getBranchLikeQuery(branchLike)).then(
+      ({ component, metrics }) => {
         if (this.mounted && component.measures) {
           this.setState({
             loading: false,
-            measures: enhanceMeasuresWithMetrics(component.measures || [], metrics || [])
+            measures: enhanceMeasuresWithMetrics(component.measures || [], metrics)
           });
         }
       },
@@ -244,4 +286,7 @@ const mapStateToProps = (state: Store, { branchLike, component }: Props) => {
 
 const mapDispatchToProps = { fetchBranchStatus: fetchBranchStatus as any };
 
-export default connect(mapStateToProps, mapDispatchToProps)(PullRequestOverview);
+export default connect<StateProps, DispatchProps, OwnProps>(
+  mapStateToProps,
+  mapDispatchToProps
+)(PullRequestOverview);

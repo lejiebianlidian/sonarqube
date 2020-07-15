@@ -19,6 +19,7 @@
  */
 package org.sonar.server.usergroups.ws;
 
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService.NewAction;
@@ -31,13 +32,13 @@ import org.sonar.db.user.UserDto;
 import org.sonar.server.user.UserSession;
 
 import static java.lang.String.format;
+import static org.sonar.server.exceptions.BadRequestException.checkRequest;
+import static org.sonar.server.exceptions.NotFoundException.checkFound;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_GROUP_ID;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_GROUP_NAME;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_LOGIN;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.defineGroupWsParameters;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.defineLoginWsParameter;
-import static org.sonar.server.exceptions.NotFoundException.checkFound;
-import static org.sonar.server.exceptions.BadRequestException.checkRequest;
 
 public class RemoveUserAction implements UserGroupsWsAction {
 
@@ -60,7 +61,9 @@ public class RemoveUserAction implements UserGroupsWsAction {
         PARAM_GROUP_ID, PARAM_GROUP_NAME))
       .setHandler(this)
       .setPost(true)
-      .setSince("5.2");
+      .setSince("5.2")
+      .setChangelog(
+        new Change("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."));
 
     defineGroupWsParameters(action);
     defineLoginWsParameter(action);
@@ -80,7 +83,7 @@ public class RemoveUserAction implements UserGroupsWsAction {
 
       ensureLastAdminIsNotRemoved(dbSession, group, user);
 
-      dbClient.userGroupDao().delete(dbSession, group.getId(), user.getId());
+      dbClient.userGroupDao().delete(dbSession, group.getUuid(), user.getUuid());
       dbSession.commit();
 
       response.noContent();
@@ -92,7 +95,7 @@ public class RemoveUserAction implements UserGroupsWsAction {
    */
   private void ensureLastAdminIsNotRemoved(DbSession dbSession, GroupDto group, UserDto user) {
     int remainingAdmins = dbClient.authorizationDao().countUsersWithGlobalPermissionExcludingGroupMember(dbSession,
-      group.getOrganizationUuid(), OrganizationPermission.ADMINISTER.getKey(), group.getId(), user.getId());
+      group.getOrganizationUuid(), OrganizationPermission.ADMINISTER.getKey(), group.getUuid(), user.getUuid());
     checkRequest(remainingAdmins > 0, "The last administrator user cannot be removed");
   }
 

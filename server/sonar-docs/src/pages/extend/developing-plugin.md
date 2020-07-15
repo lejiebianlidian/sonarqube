@@ -147,7 +147,7 @@ Maven Property|Manifest Key|Notes
 `pluginSourcesUrl` | Plugin-SourcesUrl | URL of SCM repository for open-source plugins. Displayed in page "Marketplace". Default: `${project.scm.url}`
 `pluginOrganizationName` | Plugin-Organization | Organization which develops the plugin, displayed in the page "Marketplace". Default: `${project.organization.name}`
 `pluginOrganizationUrl` | Plugin-OrganizationUrl | URL of the organization, displayed in the page "Marketplace". Default: `${project.organization.url}`
-`sonarLintSupported` | SonarLint-Supported | Whether the (language) plugin supports SonarLint or not. Only SonarSource analyzers (SonarJava, SonarJS, ...) and custom rules plugins for SonarSource analyzers should set this to true. 
+`sonarLintSupported` | SonarLint-Supported | Whether the language plugin supports SonarLint or not. Only SonarSource analyzers and custom rules plugins for SonarSource analyzers should set this to true. 
 `pluginDisplayVersion` | Plugin-Display-Version | The version as displayed in SonarQube administration console. By default it's the raw version, for example "1.2", but can be overridden to "1.2 (build 12345)" for instance. Supported in sonar-packaging-maven-plugin 1.18.0.372. Default: `${project.version}`
 
 
@@ -370,7 +370,7 @@ Internally [SLF4J](http://www.slf4j.org/) is used as a facade of various logging
 As an exception, plugins must not package logging libraries. Dependencies like SLF4J or log4j must be declared with scope "provided".
 
 ### Exposing APIs to Other Plugins
-The common use case is to write a language plugin that will allow some other plugins to contribute additional rules (see for example how it is done in SonarJava). The main plugin will expose some APIs that will be implemented/used by the "rule" plugins.
+The common use case is to write a language plugin that will allow some other plugins to contribute additional rules (see for example how it is done for [Java](https://github.com/SonarSource/sonar-java) analysis). The main plugin will expose some APIs that will be implemented/used by the "rule" plugins.
 
 Plugins are loaded in isolated classloaders. It means a plugin can't access another plugin's classes. There is an exception for package names following pattern `org.sonar.plugins.<pluginKey>.api`. For example all classes in a plugin with the key myplugin that are located in `org.sonar.plugins.myplugin.api` are visible to other plugins.
 
@@ -414,6 +414,7 @@ The rules are:
 * An API is marked as deprecated with both:
    * the annotation @Deprecated
    * the javadoc tag @deprecated whose message must start with "in x.y", for example:
+   
     ```
     /**
      * @deprecated in 4.2. Replaced by {@link #newMethod()}.
@@ -424,6 +425,26 @@ The rules are:
 
 ## API Changes
 
+### Release 8.4
+![](/images/check.svg) Added
+* `org.sonar.api.batch.scm.ScmProvider#forkDate`
+
+![](/images/exclamation.svg) Deprecated
+* `org.sonar.api.rules.Rule#getId()` is deprecated and will always throw UnsupportedOperationException.
+
+### Release 8.3
+![](/images/exclamation.svg) Deprecated
+* `org.sonar.api.utils.text.JsonWriter`
+
+### Release 8.2
+No changes
+
+### Release 8.1
+No changes
+
+### Release 8.0
+No changes
+ 
 ### Release 7.9
 No changes
 

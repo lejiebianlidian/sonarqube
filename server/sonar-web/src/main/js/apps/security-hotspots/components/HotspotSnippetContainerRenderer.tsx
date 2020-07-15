@@ -27,14 +27,13 @@ import SnippetViewer from '../../issues/crossComponentSourceViewer/SnippetViewer
 
 export interface HotspotSnippetContainerRendererProps {
   branchLike?: BranchLike;
+  displayProjectName?: boolean;
   highlightedSymbols: string[];
   hotspot: Hotspot;
   lastLine?: number;
   loading: boolean;
   locations: { [line: number]: T.LinearIssueLocation[] };
-  linePopup?: T.LinePopup & { component: string };
   onExpandBlock: (direction: T.ExpandDirection) => Promise<void>;
-  onLinePopupToggle: (line: T.SourceLine) => void;
   onSymbolClick: (symbols: string[]) => void;
   sourceLines: T.SourceLine[];
   sourceViewerFile: T.SourceViewerFile;
@@ -47,9 +46,9 @@ export default function HotspotSnippetContainerRenderer(
 ) {
   const {
     branchLike,
+    displayProjectName,
     highlightedSymbols,
     hotspot,
-    linePopup,
     loading,
     locations,
     sourceLines,
@@ -61,6 +60,7 @@ export default function HotspotSnippetContainerRenderer(
       <SourceViewerHeaderSlim
         branchLike={branchLike}
         expandable={false}
+        displayProjectName={displayProjectName}
         linkToProject={false}
         loading={loading}
         onExpand={noop}
@@ -76,7 +76,6 @@ export default function HotspotSnippetContainerRenderer(
               displaySCM={false}
               expandBlock={(_i, direction) => props.onExpandBlock(direction)}
               handleCloseIssues={noop}
-              handleLinePopupToggle={props.onLinePopupToggle}
               handleOpenIssues={noop}
               handleSymbolClick={props.onSymbolClick}
               highlightedLocationMessage={undefined}
@@ -84,9 +83,7 @@ export default function HotspotSnippetContainerRenderer(
               index={0}
               issue={hotspot}
               issuesByLine={{}}
-              last={false}
-              linePopup={linePopup}
-              loadDuplications={noop}
+              lastSnippetOfLastGroup={false}
               locations={[]}
               locationsByLine={locations}
               onIssueChange={noop}

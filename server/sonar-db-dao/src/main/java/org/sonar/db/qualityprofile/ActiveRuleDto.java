@@ -36,9 +36,9 @@ public class ActiveRuleDto {
   public static final String INHERITED = ActiveRule.INHERITED;
   public static final String OVERRIDES = ActiveRule.OVERRIDES;
 
-  private Integer id;
-  private Integer profileId;
-  private Integer ruleId;
+  private String uuid;
+  private String profileUuid;
+  private String ruleUuid;
   private Integer severity;
   private String inheritance;
 
@@ -50,6 +50,10 @@ public class ActiveRuleDto {
   private String ruleField;
   private String ruleProfileUuid;
   private String securityStandards;
+
+  public ActiveRuleDto() {
+    // nothing to do here
+  }
 
   public ActiveRuleDto setKey(ActiveRuleKey key) {
     this.repository = key.getRuleKey().repository();
@@ -66,30 +70,30 @@ public class ActiveRuleDto {
     return RuleKey.of(repository, ruleField);
   }
 
-  public Integer getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
-  public ActiveRuleDto setId(Integer id) {
-    this.id = id;
+  public ActiveRuleDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 
-  public Integer getProfileId() {
-    return profileId;
+  public String getProfileUuid() {
+    return profileUuid;
   }
 
-  public ActiveRuleDto setProfileId(Integer profileId) {
-    this.profileId = profileId;
+  public ActiveRuleDto setProfileUuid(String profileUuid) {
+    this.profileUuid = profileUuid;
     return this;
   }
 
-  public Integer getRuleId() {
-    return ruleId;
+  public String getRuleUuid() {
+    return ruleUuid;
   }
 
-  public ActiveRuleDto setRuleId(Integer ruleId) {
-    this.ruleId = ruleId;
+  public ActiveRuleDto setRuleUuid(String ruleUuid) {
+    this.ruleUuid = ruleUuid;
     return this;
   }
 
@@ -157,11 +161,11 @@ public class ActiveRuleDto {
   }
 
   public static ActiveRuleDto createFor(QProfileDto profile, RuleDefinitionDto ruleDto) {
-    requireNonNull(profile.getId(), "Profile is not persisted");
-    requireNonNull(ruleDto.getId(), "Rule is not persisted");
+    requireNonNull(profile.getRulesProfileUuid(), "Profile is not persisted");
+    requireNonNull(ruleDto.getUuid(), "Rule is not persisted");
     ActiveRuleDto dto = new ActiveRuleDto();
-    dto.setProfileId(profile.getId());
-    dto.setRuleId(ruleDto.getId());
+    dto.setProfileUuid(profile.getRulesProfileUuid());
+    dto.setRuleUuid(ruleDto.getUuid());
     dto.setKey(ActiveRuleKey.of(profile, ruleDto.getKey()));
     return dto;
   }

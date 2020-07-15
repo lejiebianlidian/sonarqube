@@ -96,13 +96,13 @@ public class OrganizationUpdaterImpl implements OrganizationUpdater {
     QualityGateDto builtInQualityGate = dbClient.qualityGateDao().selectBuiltIn(dbSession);
     OrganizationDto organization = insertOrganization(dbSession, newOrganization, builtInQualityGate);
     beforeCommit.accept(organization);
-    insertOrganizationMember(dbSession, organization, userCreator.getId());
+    insertOrganizationMember(dbSession, organization, userCreator.getUuid());
     dbClient.qualityGateDao().associate(dbSession, uuidFactory.create(), organization, builtInQualityGate);
     GroupDto ownerGroup = insertOwnersGroup(dbSession, organization);
     GroupDto defaultGroup = defaultGroupCreator.create(dbSession, organization.getUuid());
     insertDefaultTemplateOnGroups(dbSession, organization, ownerGroup, defaultGroup);
-    addCurrentUserToGroup(dbSession, ownerGroup, userCreator.getId());
-    addCurrentUserToGroup(dbSession, defaultGroup, userCreator.getId());
+    addCurrentUserToGroup(dbSession, ownerGroup, userCreator.getUuid());
+    addCurrentUserToGroup(dbSession, defaultGroup, userCreator.getUuid());
     try (DbSession batchDbSession = dbClient.openSession(true)) {
       insertQualityProfiles(dbSession, batchDbSession, organization);
       batchDbSession.commit();
@@ -183,7 +183,7 @@ public class OrganizationUpdaterImpl implements OrganizationUpdater {
   }
 
   private void insertGroupPermission(DbSession dbSession, PermissionTemplateDto template, String permission, @Nullable GroupDto group) {
-    dbClient.permissionTemplateDao().insertGroupPermission(dbSession, template.getId(), group == null ? null : group.getId(), permission);
+    dbClient.permissionTemplateDao().insertGroupPermission(dbSession, template.getUuid(), group == null ? null : group.getUuid(), permission);
   }
 
   private void insertQualityProfiles(DbSession dbSession, DbSession batchDbSession, OrganizationDto organization) {
@@ -194,7 +194,7 @@ public class OrganizationUpdaterImpl implements OrganizationUpdater {
     dbClient.qualityProfileDao().selectBuiltInRuleProfiles(dbSession).forEach(rulesProfile -> {
       OrgQProfileDto dto = new OrgQProfileDto()
         .setOrganizationUuid(organization.getUuid())
-        .setRulesProfileUuid(rulesProfile.getKee())
+        .setRulesProfileUuid(rulesProfile.getUuid())
         .setUuid(uuidFactory.create());
 
       QProfileName name = new QProfileName(rulesProfile.getLanguage(), rulesProfile.getName());
@@ -220,6 +220,7 @@ public class OrganizationUpdaterImpl implements OrganizationUpdater {
    */
   private GroupDto insertOwnersGroup(DbSession dbSession, OrganizationDto organization) {
     GroupDto group = dbClient.groupDao().insert(dbSession, new GroupDto()
+      .setUuid(uuidFactory.create())
       .setOrganizationUuid(organization.getUuid())
       .setName(OWNERS_GROUP_NAME)
       .setDescription(OWNERS_GROUP_DESCRIPTION));
@@ -231,20 +232,21 @@ public class OrganizationUpdaterImpl implements OrganizationUpdater {
     dbClient.groupPermissionDao().insert(
       dbSession,
       new GroupPermissionDto()
+        .setUuid(uuidFactory.create())
         .setOrganizationUuid(group.getOrganizationUuid())
-        .setGroupId(group.getId())
+        .setGroupUuid(group.getUuid())
         .setRole(permission.getKey()));
   }
 
-  private void addCurrentUserToGroup(DbSession dbSession, GroupDto group, int createUserId) {
+  private void addCurrentUserToGroup(DbSession dbSession, GroupDto group, String createUserUuid) {
     dbClient.userGroupDao().insert(
       dbSession,
-      new UserGroupDto().setGroupId(group.getId()).setUserId(createUserId));
+      new UserGroupDto().setGroupUuid(group.getUuid()).setUserUuid(createUserUuid));
   }
 
-  private void insertOrganizationMember(DbSession dbSession, OrganizationDto organizationDto, int userId) {
+  private void insertOrganizationMember(DbSession dbSession, OrganizationDto organizationDto, String userUuid) {
     dbClient.organizationMemberDao().insert(dbSession, new OrganizationMemberDto()
       .setOrganizationUuid(organizationDto.getUuid())
-      .setUserId(userId));
+      .setUserUuid(userUuid));
   }
 }

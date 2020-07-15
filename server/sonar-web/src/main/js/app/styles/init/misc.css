@@ -39,6 +39,10 @@ th.hide-overflow {
   visibility: hidden !important;
 }
 
+.invisible {
+  visibility: hidden;
+}
+
 .note {
   color: var(--secondFontColor);
   font-size: var(--smallFontSize);
@@ -144,8 +148,16 @@ th.hide-overflow {
   padding-top: var(--gridSize) !important;
 }
 
+.padded-right {
+  padding-right: var(--gridSize) !important;
+}
+
 .padded-bottom {
   padding-bottom: var(--gridSize) !important;
+}
+
+.padded-left {
+  padding-left: var(--gridSize) !important;
 }
 
 .little-padded-top {
@@ -166,6 +178,10 @@ th.hide-overflow {
 
 .big-padded-top {
   padding-top: calc(2 * var(--gridSize));
+}
+
+.big-padded-right {
+  padding-right: calc(2 * var(--gridSize));
 }
 
 .huge-padded-top {
@@ -379,6 +395,11 @@ th.huge-spacer-right {
   align-items: center;
 }
 
+.display-flex-justify-start {
+  display: flex !important;
+  justify-content: flex-start !important;
+}
+
 .display-flex-justify-center {
   display: flex !important;
   justify-content: center;
@@ -514,6 +535,10 @@ th.huge-spacer-right {
 
 .capitalize {
   text-transform: capitalize !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .cursor-not-allowed {

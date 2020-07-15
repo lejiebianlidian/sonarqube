@@ -128,15 +128,15 @@ public class SearchAction implements OrganizationsWsAction {
   }
 
   private Set<String> searchOrganizationWithAdminPermission(DbSession dbSession) {
-    Integer userId = userSession.getUserId();
-    return userId == null ? emptySet()
-      : dbClient.organizationDao().selectByPermission(dbSession, userId, ADMINISTER.getKey()).stream().map(OrganizationDto::getUuid).collect(toSet());
+    String userUuid = userSession.getUuid();
+    return userUuid == null ? emptySet()
+      : dbClient.organizationDao().selectByPermission(dbSession, userUuid, ADMINISTER.getKey()).stream().map(OrganizationDto::getUuid).collect(toSet());
   }
 
   private Set<String> searchOrganizationWithProvisionPermission(DbSession dbSession) {
-    Integer userId = userSession.getUserId();
-    return userId == null ? emptySet()
-      : dbClient.organizationDao().selectByPermission(dbSession, userId, PROVISION_PROJECTS.getKey()).stream().map(OrganizationDto::getUuid).collect(toSet());
+    String userUuid = userSession.getUuid();
+    return userUuid == null ? emptySet()
+      : dbClient.organizationDao().selectByPermission(dbSession, userUuid, PROVISION_PROJECTS.getKey()).stream().map(OrganizationDto::getUuid).collect(toSet());
   }
 
   private Organizations.SearchWsResponse buildOrganizations(List<OrganizationDto> organizations, Set<String> adminOrganizationUuids, Set<String> provisionOrganizationUuids,
@@ -195,8 +195,8 @@ public class SearchAction implements OrganizationsWsAction {
   }
 
   @CheckForNull
-  private Integer getUserIdIfFilterOnMembership(Request request) {
+  private String getUserIdIfFilterOnMembership(Request request) {
     boolean filterOnAuthenticatedUser = request.mandatoryParamAsBoolean(PARAM_MEMBER);
-    return (userSession.isLoggedIn() && filterOnAuthenticatedUser) ? userSession.getUserId() : null;
+    return (userSession.isLoggedIn() && filterOnAuthenticatedUser) ? userSession.getUuid() : null;
   }
 }

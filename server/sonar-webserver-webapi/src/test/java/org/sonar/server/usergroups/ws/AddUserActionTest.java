@@ -23,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.impl.utils.AlwaysIncreasingSystem2;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.db.DbTester;
 import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.GroupDto;
@@ -39,6 +41,7 @@ import org.sonar.server.ws.WsActionTester;
 
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.security.DefaultGroups.ANYONE;
 import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_GROUP_NAME;
@@ -58,6 +61,17 @@ public class AddUserActionTest {
   private WsActionTester ws = new WsActionTester(new AddUserAction(db.getDbClient(), userSession, newGroupWsSupport()));
 
   @Test
+  public void verify_definition() {
+    Action wsDef = ws.getDef();
+
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."));
+  }
+
+  @Test
   public void add_user_to_group_referenced_by_its_id() {
     insertDefaultGroupOnDefaultOrganization();
     GroupDto group = db.users().insertGroup();
@@ -66,11 +80,11 @@ public class AddUserActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .setParam("login", user.getLogin())
       .execute();
 
-    assertThat(db.users().selectGroupIdsOfUser(user)).containsOnly(group.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(user)).containsOnly(group.getUuid());
   }
 
   @Test
@@ -86,7 +100,7 @@ public class AddUserActionTest {
       .setParam(PARAM_LOGIN, user.getLogin())
       .execute();
 
-    assertThat(db.users().selectGroupIdsOfUser(user)).containsOnly(group.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(user)).containsOnly(group.getUuid());
   }
 
   @Test
@@ -104,7 +118,7 @@ public class AddUserActionTest {
       .setParam(PARAM_LOGIN, user.getLogin())
       .execute();
 
-    assertThat(db.users().selectGroupIdsOfUser(user)).containsOnly(group.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(user)).containsOnly(group.getUuid());
   }
 
   @Test
@@ -119,11 +133,11 @@ public class AddUserActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", admins.getId().toString())
+      .setParam("id", admins.getUuid().toString())
       .setParam("login", user.getLogin())
       .execute();
 
-    assertThat(db.users().selectGroupIdsOfUser(user)).containsOnly(admins.getId(), users.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(user)).containsOnly(admins.getUuid(), users.getUuid());
   }
 
   @Test
@@ -136,12 +150,12 @@ public class AddUserActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", users.getId().toString())
+      .setParam("id", users.getUuid().toString())
       .setParam("login", user.getLogin())
       .execute();
 
     // do not insert duplicated row
-    assertThat(db.users().selectGroupIdsOfUser(user)).hasSize(1).containsOnly(users.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(user)).hasSize(1).containsOnly(users.getUuid());
   }
 
   @Test
@@ -156,12 +170,12 @@ public class AddUserActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", users.getId().toString())
+      .setParam("id", users.getUuid().toString())
       .setParam("login", user2.getLogin())
       .execute();
 
-    assertThat(db.users().selectGroupIdsOfUser(user1)).containsOnly(users.getId());
-    assertThat(db.users().selectGroupIdsOfUser(user2)).containsOnly(users.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(user1)).containsOnly(users.getUuid());
+    assertThat(db.users().selectGroupUuidsOfUser(user2)).containsOnly(users.getUuid());
   }
 
   @Test
@@ -173,7 +187,7 @@ public class AddUserActionTest {
     loginAsAdminOnDefaultOrganization();
 
     TestResponse response = newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .setParam("login", user.getLogin())
       .execute();
 
@@ -204,7 +218,7 @@ public class AddUserActionTest {
     expectedException.expectMessage("Could not find a user with login 'my-admin'");
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .setParam("login", "my-admin")
       .execute();
   }
@@ -285,7 +299,7 @@ public class AddUserActionTest {
     expectedException.expectMessage("Default group 'default' cannot be used to perform this action");
 
     newRequest()
-      .setParam("id", Integer.toString(defaultGroup.getId()))
+      .setParam("id", defaultGroup.getUuid())
       .setParam(PARAM_LOGIN, user.getLogin())
       .execute();
   }
@@ -310,7 +324,7 @@ public class AddUserActionTest {
 
   private void executeRequest(GroupDto groupDto, UserDto userDto) {
     newRequest()
-      .setParam("id", groupDto.getId().toString())
+      .setParam("id", groupDto.getUuid())
       .setParam("login", userDto.getLogin())
       .execute();
   }

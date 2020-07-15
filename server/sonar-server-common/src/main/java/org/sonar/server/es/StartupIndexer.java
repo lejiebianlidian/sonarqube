@@ -25,12 +25,25 @@ import java.util.Set;
  * This kind of indexers get initialized during web server startup.
  */
 public interface StartupIndexer {
+  enum Type {
+    SYNCHRONOUS, ASYNCHRONOUS
+  }
+
+  default Type getType() {
+    return Type.SYNCHRONOUS;
+  }
+
+  default void triggerAsyncIndexOnStartup(Set<IndexType> uninitializedIndexTypes) {
+    throw new IllegalStateException("ASYNCHRONE StartupIndexer must implement initAsyncIndexOnStartup");
+  }
 
   /**
    * This reindexing method will only be called on startup, and only,
    * if there is at least one uninitialized type.
    */
-  void indexOnStartup(Set<IndexType> uninitializedIndexTypes);
+  default void indexOnStartup(Set<IndexType> uninitializedIndexTypes) {
+    throw new IllegalStateException("SYNCHRONE StartupIndexer must implement indexOnStartup");
+  }
 
   Set<IndexType> getIndexTypes();
 

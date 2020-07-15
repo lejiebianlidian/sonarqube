@@ -78,8 +78,8 @@ public class OrganizationDao implements Dao {
     return executeLargeInputs(organizationUuids, getMapper(dbSession)::selectByUuids);
   }
 
-  public List<OrganizationDto> selectByPermission(DbSession dbSession, Integer userId, String permission) {
-    return getMapper(dbSession).selectByPermission(userId, permission);
+  public List<OrganizationDto> selectByPermission(DbSession dbSession, String userUuid, String permission) {
+    return getMapper(dbSession).selectByPermission(userUuid, permission);
   }
 
   public Optional<OrganizationDto> selectByOrganizationAlmId(DbSession dbSession, ALM alm, String organizationAlmId) {
@@ -109,15 +109,15 @@ public class OrganizationDao implements Dao {
     getMapper(dbSession).updateDefaultTemplates(uuid, defaultTemplates, now);
   }
 
-  public Optional<Integer> getDefaultGroupId(DbSession dbSession, String organizationUuid) {
+  public Optional<String> getDefaultGroupUuid(DbSession dbSession, String organizationUuid) {
     checkUuid(organizationUuid);
-    return Optional.ofNullable(getMapper(dbSession).selectDefaultGroupIdByUuid(organizationUuid));
+    return Optional.ofNullable(getMapper(dbSession).selectDefaultGroupUuidByUuid(organizationUuid));
   }
 
-  public void setDefaultGroupId(DbSession dbSession, String uuid, GroupDto defaultGroup) {
+  public void setDefaultGroupUuid(DbSession dbSession, String uuid, GroupDto defaultGroup) {
     checkUuid(uuid);
-    Integer defaultGroupId = requireNonNull(defaultGroup, "Default group cannot be null").getId();
-    getMapper(dbSession).updateDefaultGroupId(uuid, requireNonNull(defaultGroupId, "Default group id cannot be null"), system2.now());
+    String defaultGroupUuid = requireNonNull(defaultGroup, "Default group cannot be null").getUuid();
+    getMapper(dbSession).updateDefaultGroupUuid(uuid, requireNonNull(defaultGroupUuid, "Default group uuid cannot be null"), system2.now());
   }
 
   public void setDefaultQualityGate(DbSession dbSession, OrganizationDto organization, QGateWithOrgDto qualityGate) {

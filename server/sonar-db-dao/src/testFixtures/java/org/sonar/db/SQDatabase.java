@@ -24,13 +24,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import javax.sql.DataSource;
-import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.output.NullWriter;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarQubeSide;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.Settings;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.utils.System2;
@@ -97,7 +96,7 @@ public class SQDatabase extends DefaultDatabase {
     } catch (SQLException e) {
       throw new IllegalStateException("Fail to create schema", e);
     } finally {
-      DbUtils.closeQuietly(connection);
+      DatabaseUtils.closeQuietly(connection);
     }
   }
 

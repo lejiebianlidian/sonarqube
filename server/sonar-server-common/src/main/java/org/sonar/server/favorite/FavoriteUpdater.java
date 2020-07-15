@@ -41,42 +41,42 @@ public class FavoriteUpdater {
   /**
    * Set favorite to the logged in user. If no user, no action is done
    */
-  public void add(DbSession dbSession, ComponentDto componentDto, @Nullable Integer userId, boolean failIfTooManyFavorites) {
-    if (userId == null) {
+  public void add(DbSession dbSession, ComponentDto componentDto, @Nullable String userUuid, boolean failIfTooManyFavorites) {
+    if (userUuid == null) {
       return;
     }
 
     List<PropertyDto> existingFavoriteOnComponent = dbClient.propertiesDao().selectByQuery(PropertyQuery.builder()
       .setKey(PROP_FAVORITE_KEY)
-      .setUserId(userId)
-      .setComponentId(componentDto.getId())
+      .setUserUuid(userUuid)
+      .setComponentUuid(componentDto.uuid())
       .build(), dbSession);
     checkArgument(existingFavoriteOnComponent.isEmpty(), "Component '%s' is already a favorite", componentDto.getDbKey());
 
-    List<PropertyDto> existingFavorites = dbClient.propertiesDao().selectByKeyAndUserIdAndComponentQualifier(dbSession, PROP_FAVORITE_KEY, userId, componentDto.qualifier());
+    List<PropertyDto> existingFavorites = dbClient.propertiesDao().selectByKeyAndUserUuidAndComponentQualifier(dbSession, PROP_FAVORITE_KEY, userUuid, componentDto.qualifier());
     if (existingFavorites.size() >= 100) {
       checkArgument(!failIfTooManyFavorites, "You cannot have more than 100 favorites on components with qualifier '%s'", componentDto.qualifier());
       return;
     }
     dbClient.propertiesDao().saveProperty(dbSession, new PropertyDto()
       .setKey(PROP_FAVORITE_KEY)
-      .setResourceId(componentDto.getId())
-      .setUserId(userId));
+      .setComponentUuid(componentDto.uuid())
+      .setUserUuid(userUuid));
   }
 
   /**
    * Remove a favorite to the user.
    * @throws IllegalArgumentException if the component is not a favorite
    */
-  public void remove(DbSession dbSession, ComponentDto component, @Nullable Integer userId) {
-    if (userId == null) {
+  public void remove(DbSession dbSession, ComponentDto component, @Nullable String userUuid) {
+    if (userUuid == null) {
       return;
     }
 
     int result = dbClient.propertiesDao().delete(dbSession, new PropertyDto()
       .setKey(PROP_FAVORITE_KEY)
-      .setResourceId(component.getId())
-      .setUserId(userId));
+      .setComponentUuid(component.uuid())
+      .setUserUuid(userUuid));
     checkArgument(result == 1, "Component '%s' is not a favorite", component.getDbKey());
   }
 }

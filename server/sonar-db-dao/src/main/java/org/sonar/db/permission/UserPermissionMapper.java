@@ -26,51 +26,51 @@ import org.apache.ibatis.annotations.Param;
 
 public interface UserPermissionMapper {
 
-  List<UserPermissionDto> selectUserPermissionsByQueryAndUserIds(@Param("query") PermissionQuery query, @Param("userIds") Collection<Integer> userIds);
+  List<UserPermissionDto> selectUserPermissionsByQueryAndUserUuids(@Param("query") PermissionQuery query, @Param("userUuids") Collection<String> userUuids);
 
-  List<Integer> selectUserIdsByQuery(@Param("query") PermissionQuery query);
+  List<String> selectUserUuidsByQuery(@Param("query") PermissionQuery query);
 
   /**
    * Fetch user ids based on permission query and only in a specific scope (global permissions only, organization permissions only or project permissions only)
    */
-  List<Integer> selectUserIdsByQueryAndScope(@Param("query") PermissionQuery query);
+  List<String> selectUserUuidsByQueryAndScope(@Param("query") PermissionQuery query);
 
   /**
-   * Count the number of distinct users returned by {@link #selectUserIdsByQuery(PermissionQuery)}
+   * Count the number of distinct users returned by {@link #selectUserUuidsByQuery(PermissionQuery)}
    * {@link PermissionQuery#getPageOffset()} and {@link PermissionQuery#getPageSize()} are ignored.
    */
   int countUsersByQuery(@Param("query") PermissionQuery query);
 
   /**
    * Count the number of users per permission for a given list of projects.
-   * @param projectIds a non-null and non-empty list of project ids
+   * @param projectUuids a non-null and non-empty list of project ids
    */
-  List<CountPerProjectPermission> countUsersByProjectPermission(@Param("projectIds") List<Long> projectIds);
+  List<CountPerProjectPermission> countUsersByProjectPermission(@Param("projectUuids") List<String> projectUuids);
 
   /**
    * select id of users with at least one permission on the specified project but which do not have the specified permission.
    */
-  Set<Integer> selectUserIdsWithPermissionOnProjectBut(@Param("projectId") long projectId, @Param("permission") String permission);
+  Set<String> selectUserUuidsWithPermissionOnProjectBut(@Param("projectUuid") String projectUuid, @Param("permission") String permission);
 
   void insert(UserPermissionDto dto);
 
-  void deleteGlobalPermission(@Param("userId") int userId, @Param("permission") String permission,
+  void deleteGlobalPermission(@Param("userUuid") String userUuid, @Param("permission") String permission,
     @Param("organizationUuid") String organizationUuid);
 
-  void deleteProjectPermission(@Param("userId") int userId, @Param("permission") String permission,
-    @Param("projectId") long projectId);
+  void deleteProjectPermission(@Param("userUuid") String userUuid, @Param("permission") String permission,
+    @Param("projectUuid") String projectUuid);
 
-  void deleteProjectPermissions(@Param("projectId") long projectId);
+  void deleteProjectPermissions(@Param("projectUuid") String projectUuid);
 
-  int deleteProjectPermissionOfAnyUser(@Param("projectId") long projectId, @Param("permission") String permission);
+  int deleteProjectPermissionOfAnyUser(@Param("projectUuid") String projectUuid, @Param("permission") String permission);
 
-  List<String> selectGlobalPermissionsOfUser(@Param("userId") int userId, @Param("organizationUuid") String organizationUuid);
+  List<String> selectGlobalPermissionsOfUser(@Param("userUuid") String userUuid, @Param("organizationUuid") String organizationUuid);
 
-  List<String> selectProjectPermissionsOfUser(@Param("userId") int userId, @Param("projectId") long projectId);
+  List<String> selectProjectPermissionsOfUser(@Param("userUuid") String userUuid, @Param("projectUuid") String projectUuid);
 
   void deleteByOrganization(@Param("organizationUuid") String organizationUuid);
 
-  void deleteOrganizationMemberPermissions(@Param("organizationUuid") String organizationUuid, @Param("userId") int login);
+  void deleteOrganizationMemberPermissions(@Param("organizationUuid") String organizationUuid, @Param("userUuid") String userUuid);
 
-  void deleteByUserId(@Param("userId") int userId);
+  void deleteByUserUuid(@Param("userUuid") String userUuid);
 }

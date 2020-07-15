@@ -19,7 +19,6 @@ exports[`renders favorite 1`] = `
         Object {
           "pathname": "/dashboard",
           "query": Object {
-            "branch": undefined,
             "id": "foo",
           },
         }
@@ -71,7 +70,6 @@ exports[`renders match 1`] = `
         Object {
           "pathname": "/dashboard",
           "query": Object {
-            "branch": undefined,
             "id": "foo",
           },
         }
@@ -103,113 +101,6 @@ exports[`renders match 1`] = `
 </li>
 `;
 
-exports[`renders organizations 1`] = `
-<li
-  key="foo"
->
-  <Tooltip
-    mouseEnterDelay={1}
-    overlay="foo"
-    placement="left"
-    visible={false}
-  >
-    <Link
-      data-key="foo"
-      onClick={[MockFunction]}
-      onlyActiveOnIndex={false}
-      style={Object {}}
-      to={
-        Object {
-          "pathname": "/dashboard",
-          "query": Object {
-            "branch": undefined,
-            "id": "foo",
-          },
-        }
-      }
-    >
-      <span
-        className="navbar-search-item-link"
-        onMouseEnter={[Function]}
-      >
-        <span
-          className="navbar-search-item-icons little-spacer-right"
-        >
-          <ClockIcon
-            size={12}
-          />
-          <QualifierIcon
-            className="little-spacer-right"
-            qualifier="TRK"
-          />
-        </span>
-        <span
-          className="navbar-search-item-match"
-        >
-          foo
-        </span>
-        <div
-          className="navbar-search-item-right text-muted-2"
-        >
-          bar
-        </div>
-      </span>
-    </Link>
-  </Tooltip>
-</li>
-`;
-
-exports[`renders organizations 2`] = `
-<li
-  key="foo"
->
-  <Tooltip
-    mouseEnterDelay={1}
-    overlay="foo"
-    placement="left"
-    visible={false}
-  >
-    <Link
-      data-key="foo"
-      onClick={[MockFunction]}
-      onlyActiveOnIndex={false}
-      style={Object {}}
-      to={
-        Object {
-          "pathname": "/dashboard",
-          "query": Object {
-            "branch": undefined,
-            "id": "foo",
-          },
-        }
-      }
-    >
-      <span
-        className="navbar-search-item-link"
-        onMouseEnter={[Function]}
-      >
-        <span
-          className="navbar-search-item-icons little-spacer-right"
-        >
-          <ClockIcon
-            size={12}
-          />
-          <QualifierIcon
-            className="little-spacer-right"
-            qualifier="TRK"
-          />
-        </span>
-        <span
-          className="navbar-search-item-match"
-        >
-          foo
-        </span>
-      </span>
-    </Link>
-  </Tooltip>
-</li>
-`;
-
 exports[`renders projects 1`] = `
 <li
   key="qwe"
@@ -229,7 +120,6 @@ exports[`renders projects 1`] = `
         Object {
           "pathname": "/dashboard",
           "query": Object {
-            "branch": undefined,
             "id": "qwe",
           },
         }
@@ -285,7 +175,6 @@ exports[`renders recently browsed 1`] = `
         Object {
           "pathname": "/dashboard",
           "query": Object {
-            "branch": undefined,
             "id": "foo",
           },
         }
@@ -336,7 +225,6 @@ exports[`renders selected 1`] = `
         Object {
           "pathname": "/dashboard",
           "query": Object {
-            "branch": undefined,
             "id": "foo",
           },
         }
@@ -385,7 +273,6 @@ exports[`renders selected 2`] = `
         Object {
           "pathname": "/dashboard",
           "query": Object {
-            "branch": undefined,
             "id": "foo",
           },
         }

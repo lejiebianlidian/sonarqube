@@ -111,7 +111,7 @@
     from organizations org
     <if test="query.member != null">
       inner join organization_members om on org.uuid=om.organization_uuid
-        and om.user_id=#{query.member,jdbcType=INTEGER}
+        and om.user_uuid=#{query.member,jdbcType=VARCHAR}
     </if>
     <where>
       <if test="query.keys != null">
@@ -148,30 +148,30 @@
     select
       <include refid="selectColumns"/>
     from organizations org
-    inner join user_roles u on
-      u.organization_uuid = org.uuid
-      and u.user_id = #{userId,jdbcType=INTEGER}
-      and u.resource_id is null
-      and u.role = #{permission,jdbcType=VARCHAR}
+    inner join user_roles ur on
+      ur.organization_uuid = org.uuid
+      and ur.user_uuid = #{userUuid,jdbcType=VARCHAR}
+      and ur.component_uuid is null
+      and ur.role = #{permission,jdbcType=VARCHAR}
     union
     select
       <include refid="selectColumns"/>
     from organizations org
     inner join group_roles g on
       g.organization_uuid = org.uuid
-      and g.resource_id is null
+      and g.component_uuid is null
       and g.role = #{permission,jdbcType=VARCHAR}
     inner join groups_users gu on
-      gu.group_id = g.group_id
-      and gu.user_id = #{userId,jdbcType=INTEGER}
+      gu.group_uuid = g.group_uuid
+      and gu.user_uuid= #{userUuid,jdbcType=VARCHAR}
   </select>
 
   <select id="selectAllUuids" resultType="String">
     select uuid from organizations
   </select>
 
-  <select id="selectDefaultGroupIdByUuid" resultType="Integer">
-    select org.default_group_id
+  <select id="selectDefaultGroupUuidByUuid" resultType="string">
+    select org.default_group_uuid
     from organizations org
     where
     org.uuid = #{uuid, jdbcType=VARCHAR}
@@ -191,7 +191,7 @@
     select orgUuid, sum(sumncloc.maxncloc) as ncloc from (
     select b.project_uuid, p.organization_uuid as orgUuid, max(lm.value) as maxncloc
     from live_measures lm
-    inner join metrics m on m.id = lm.metric_id
+    inner join metrics m on m.uuid = lm.metric_uuid
     inner join components p on p.uuid = lm.component_uuid
     inner join project_branches b on b.uuid = p.uuid
     where
@@ -269,10 +269,10 @@
       uuid = #{organizationUuid, jdbcType=VARCHAR}
   </update>
 
-  <update id="updateDefaultGroupId">
+  <update id="updateDefaultGroupUuid">
     update organizations
     set
-      default_group_id = #{defaultGroupId, jdbcType=INTEGER},
+      default_group_uuid = #{defaultGroupUuid, jdbcType=VARCHAR},
       updated_at = #{now, jdbcType=BIGINT}
     where
       uuid = #{organizationUuid, jdbcType=VARCHAR}

@@ -20,6 +20,7 @@
 package org.sonar.server.measure.custom.ws;
 
 import org.sonar.api.resources.Scopes;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
@@ -37,11 +38,12 @@ import org.sonar.server.user.UserSession;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
 import static org.sonar.server.component.ComponentFinder.ParamNames.PROJECT_ID_AND_KEY;
+import static org.sonar.server.exceptions.BadRequestException.checkRequest;
 import static org.sonar.server.measure.custom.ws.CustomMeasureValidator.checkPermissions;
 import static org.sonar.server.measure.custom.ws.CustomMeasureValueDescription.measureValueDescription;
 import static org.sonar.server.ws.KeyExamples.KEY_PROJECT_EXAMPLE_001;
-import static org.sonar.server.exceptions.BadRequestException.checkRequest;
 
 public class CreateAction implements CustomMeasuresWsAction {
   public static final String ACTION = "create";
@@ -78,7 +80,9 @@ public class CreateAction implements CustomMeasuresWsAction {
       .setSince("5.2")
       .setDeprecatedSince("7.4")
       .setPost(true)
-      .setHandler(this);
+      .setHandler(this)
+      .setChangelog(
+        new Change("8.4", "Param 'metricId' data type changes from integer to string."));
 
     action.createParam(PARAM_PROJECT_ID)
       .setDescription("Project id")
@@ -89,8 +93,8 @@ public class CreateAction implements CustomMeasuresWsAction {
       .setExampleValue(KEY_PROJECT_EXAMPLE_001);
 
     action.createParam(PARAM_METRIC_ID)
-      .setDescription("Metric id")
-      .setExampleValue("16");
+      .setDescription("Metric uuid")
+      .setExampleValue(UUID_EXAMPLE_01);
 
     action.createParam(PARAM_METRIC_KEY)
       .setDescription("Metric key")
@@ -123,7 +127,7 @@ public class CreateAction implements CustomMeasuresWsAction {
       checkState(user != null, "User with uuid '%s' does not exist", userUuid);
       CustomMeasureDto measure = new CustomMeasureDto()
         .setComponentUuid(component.uuid())
-        .setMetricId(metric.getId())
+        .setMetricUuid(metric.getUuid())
         .setDescription(description)
         .setUserUuid(user.getUuid())
         .setCreatedAt(now)
@@ -143,24 +147,24 @@ public class CreateAction implements CustomMeasuresWsAction {
   }
 
   private void checkMeasureDoesNotExistAlready(DbSession dbSession, ComponentDto component, MetricDto metric) {
-    int nbMeasuresOnSameMetricAndMeasure = dbClient.customMeasureDao().countByComponentIdAndMetricId(dbSession, component.uuid(), metric.getId());
+    int nbMeasuresOnSameMetricAndMeasure = dbClient.customMeasureDao().countByComponentIdAndMetricUuid(dbSession, component.uuid(), metric.getUuid());
     checkRequest(nbMeasuresOnSameMetricAndMeasure == 0,
       "A measure already exists for project '%s' and metric '%s'",
       component.getDbKey(), metric.getKey());
   }
 
   private MetricDto searchMetric(DbSession dbSession, Request request) {
-    Integer metricId = request.paramAsInt(PARAM_METRIC_ID);
+    String metricUuid = request.param(PARAM_METRIC_ID);
     String metricKey = request.param(PARAM_METRIC_KEY);
-    checkArgument(metricId != null ^ metricKey != null, "Either the metric id or the metric key must be provided");
+    checkArgument(metricUuid != null ^ metricKey != null, "Either the metric uuid or the metric key must be provided");
 
-    if (metricId == null) {
+    if (metricUuid == null) {
       MetricDto metric = dbClient.metricDao().selectByKey(dbSession, metricKey);
       checkArgument(metric != null, "Metric with key '%s' does not exist", metricKey);
       return metric;
     }
-    MetricDto metric = dbClient.metricDao().selectById(dbSession, metricId);
-    checkArgument(metric != null, "Metric with id '%s' does not exist", metricId);
+    MetricDto metric = dbClient.metricDao().selectByUuid(dbSession, metricUuid);
+    checkArgument(metric != null, "Metric with uuid '%s' does not exist", metricUuid);
     return metric;
   }
 }

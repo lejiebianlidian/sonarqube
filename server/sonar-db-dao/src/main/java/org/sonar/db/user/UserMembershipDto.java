@@ -24,17 +24,17 @@ import javax.annotation.Nullable;
 
 public class UserMembershipDto {
 
-  private Long id;
-  private Integer groupId;
+  private String uuid;
+  private String groupUuid;
   private String login;
   private String name;
 
-  public Long getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
-  public UserMembershipDto setId(Long id) {
-    this.id = id;
+  public UserMembershipDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 
@@ -58,12 +58,12 @@ public class UserMembershipDto {
   }
 
   @CheckForNull
-  public Integer getGroupId() {
-    return groupId;
+  public String getGroupUuid() {
+    return groupUuid;
   }
 
-  public UserMembershipDto setGroupId(@Nullable Integer groupId) {
-    this.groupId = groupId;
+  public UserMembershipDto setGroupUuid(@Nullable String groupUuid) {
+    this.groupUuid = groupUuid;
     return this;
   }
 }

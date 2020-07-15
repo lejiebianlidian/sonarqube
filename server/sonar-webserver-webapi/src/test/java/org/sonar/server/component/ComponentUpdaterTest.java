@@ -183,15 +183,15 @@ public class ComponentUpdaterTest {
 
   @Test
   public void apply_default_permission_template() {
-    int userId = 42;
+    String userUuid = "42";
     NewComponent project = NewComponent.newComponentBuilder()
       .setKey(DEFAULT_PROJECT_KEY)
       .setName(DEFAULT_PROJECT_NAME)
       .setOrganizationUuid(db.getDefaultOrganization().getUuid())
       .build();
-    ComponentDto dto = underTest.create(db.getSession(), project, userId);
+    ComponentDto dto = underTest.create(db.getSession(), project, userUuid);
 
-    verify(permissionTemplateService).applyDefault(db.getSession(), dto, userId);
+    verify(permissionTemplateService).applyDefault(db.getSession(), dto, userUuid);
   }
 
   @Test
@@ -205,15 +205,15 @@ public class ComponentUpdaterTest {
     when(permissionTemplateService.hasDefaultTemplateWithPermissionOnProjectCreator(any(DbSession.class), any(ComponentDto.class)))
       .thenReturn(true);
 
-    ComponentDto dto = underTest.create(db.getSession(), project, userDto.getId());
+    ComponentDto dto = underTest.create(db.getSession(), project, userDto.getUuid());
 
-    assertThat(db.favorites().hasFavorite(dto, userDto.getId())).isTrue();
+    assertThat(db.favorites().hasFavorite(dto, userDto.getUuid())).isTrue();
   }
 
   @Test
   public void do_not_add_project_to_user_favorites_if_project_creator_is_defined_in_permission_template_and_already_100_favorites() {
     UserDto user = db.users().insertUser();
-    rangeClosed(1, 100).forEach(i -> db.favorites().add(db.components().insertPrivateProject(), user.getId()));
+    rangeClosed(1, 100).forEach(i -> db.favorites().add(db.components().insertPrivateProject(), user.getUuid()));
     NewComponent project = NewComponent.newComponentBuilder()
       .setKey(DEFAULT_PROJECT_KEY)
       .setName(DEFAULT_PROJECT_NAME)
@@ -224,9 +224,9 @@ public class ComponentUpdaterTest {
 
     ComponentDto dto = underTest.create(db.getSession(),
       project,
-      user.getId());
+      user.getUuid());
 
-    assertThat(db.favorites().hasFavorite(dto, user.getId())).isFalse();
+    assertThat(db.favorites().hasFavorite(dto, user.getUuid())).isFalse();
   }
 
   @Test
@@ -290,11 +290,11 @@ public class ComponentUpdaterTest {
   @Test
   public void fail_when_key_has_bad_format() {
     expectedException.expect(BadRequestException.class);
-    expectedException.expectMessage("Malformed key for Project: '  '");
+    expectedException.expectMessage("Malformed key for Project: '1234'");
 
     underTest.create(db.getSession(),
       NewComponent.newComponentBuilder()
-        .setKey("  ")
+        .setKey("1234")
         .setName(DEFAULT_PROJECT_NAME)
         .setOrganizationUuid(db.getDefaultOrganization().getUuid())
         .build(),
@@ -302,13 +302,13 @@ public class ComponentUpdaterTest {
   }
 
   @Test
-  public void properly_fail_when_key_contains_percent_character() {
+  public void fail_when_key_contains_percent_character() {
     expectedException.expect(BadRequestException.class);
-    expectedException.expectMessage("Malformed key for Project: '  '");
+    expectedException.expectMessage("Malformed key for Project: 'roject%Key'");
 
     underTest.create(db.getSession(),
       NewComponent.newComponentBuilder()
-        .setKey("  ")
+        .setKey("roject%Key")
         .setName(DEFAULT_PROJECT_NAME)
         .setOrganizationUuid(db.getDefaultOrganization().getUuid())
         .build(),

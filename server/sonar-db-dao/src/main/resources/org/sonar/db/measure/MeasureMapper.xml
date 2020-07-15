@@ -4,7 +4,8 @@
 <mapper namespace="org.sonar.db.measure.MeasureMapper">
 
   <sql id="measureColumns">
-    pm.metric_id as metricId,
+    pm.uuid as uuid,
+    pm.metric_uuid as metricUuid,
     pm.component_uuid as componentUuid,
     pm.analysis_uuid as analysisUuid,
     pm.value as value,
@@ -18,7 +19,7 @@
   <select id="selectLastMeasure" parameterType="map" resultType="Measure">
     select <include refid="measureColumns"/>
     from project_measures pm
-    inner join metrics m on m.id = pm.metric_id
+    inner join metrics m on m.uuid = pm.metric_uuid
     inner join snapshots s on s.uuid = pm.analysis_uuid
     where
     pm.component_uuid = #{componentUuid,jdbcType=VARCHAR} and
@@ -29,7 +30,7 @@
   <select id="selectMeasure" parameterType="map" resultType="Measure">
     select <include refid="measureColumns"/>
     from project_measures pm
-    inner join metrics m on m.id = pm.metric_id
+    inner join metrics m on m.uuid = pm.metric_uuid
     inner join snapshots s on s.uuid = pm.analysis_uuid
     where
     pm.component_uuid = #{componentUuid,jdbcType=VARCHAR} and
@@ -37,75 +38,12 @@
     s.uuid = #{analysisUuid,jdbcType=VARCHAR}
   </select>
 
-  <select id="selectByQueryOnProjects" parameterType="map" resultType="Measure">
-    select <include refid="measureColumns"/> from project_measures pm
-    <include refid="selectByQueryCommonJoins"/>
-    where
-    <include refid="selectByQueryCommonFilters"/>
-    and analysis.component_uuid=pm.component_uuid
-    and analysis.component_uuid in
-    <foreach item="projectUuid" collection="query.getProjectUuids()" open="(" separator="," close=")">
-      #{projectUuid,jdbcType=VARCHAR}
-    </foreach>
-  </select>
-
-  <select id="selectByQueryOnComponents" parameterType="map" resultType="Measure">
-    select <include refid="measureColumns"/> from project_measures pm
-    <include refid="selectByQueryCommonJoins"/>
-    where
-    <include refid="selectByQueryCommonFilters"/>
-    and analysis.component_uuid=#{query.projectUuid,jdbcType=VARCHAR}
-    and pm.component_uuid in
-    <foreach item="componentUuid" collection="query.getComponentUuids()" open="(" separator="," close=")">
-      #{componentUuid,jdbcType=VARCHAR}
-    </foreach>
-  </select>
-
-  <select id="selectByQueryOnSingleComponent" parameterType="map" resultType="Measure">
-    select <include refid="measureColumns"/> from project_measures pm
-    <include refid="selectByQueryCommonJoins"/>
-    inner join components p on p.project_uuid=analysis.component_uuid
-    and p.uuid=pm.component_uuid
-    where
-    <include refid="selectByQueryCommonFilters"/>
-    and pm.component_uuid=#{query.componentUuid,jdbcType=VARCHAR}
-  </select>
-
   <sql id="selectByQueryCommonJoins">
     inner join snapshots analysis on analysis.uuid = pm.analysis_uuid
     <if test="query.getMetricKeys() != null">
-      inner join metrics m on m.id = pm.metric_id
+      inner join metrics m on m.uuid = pm.metric_uuid
     </if>
   </sql>
-
-  <sql id="selectByQueryCommonFilters">
-    <if test="query.getAnalysisUuid() == null">
-      analysis.islast=${_true}
-    </if>
-    <if test="query.getAnalysisUuid() != null">
-      analysis.uuid = #{query.analysisUuid,jdbcType=VARCHAR}
-    </if>
-    <if test="query.getMetricIds() != null">
-      and pm.metric_id in
-      <foreach item="metricId" collection="query.getMetricIds()" open="(" separator="," close=")">#{metricId}</foreach>
-    </if>
-    <if test="query.getMetricKeys() != null">
-      and m.name in
-      <foreach item="metricKey" collection="query.getMetricKeys()" open="(" separator="," close=")">
-        #{metricKey,jdbcType=VARCHAR}
-      </foreach>
-    </if>
-  </sql>
-
-  <select id="selectPastMeasuresOnSingleAnalysis" parameterType="map" resultType="org.sonar.db.measure.PastMeasureDto">
-    select pm.id as id, pm.metric_id as metricId, pm.value as value
-    from project_measures pm
-    inner join snapshots analysis on analysis.uuid = pm.analysis_uuid
-    where
-    pm.component_uuid = #{componentUuid,jdbcType=VARCHAR}
-    and analysis.uuid = #{analysisUuid,jdbcType=VARCHAR}
-    and pm.metric_id in <foreach item="metricId" collection="metricIds" open="(" separator="," close=")">#{metricId}</foreach>
-  </select>
 
   <select id="selectPastMeasuresOnSeveralAnalyses" parameterType="map" resultType="Measure">
     select <include refid="measureColumns"/>
@@ -119,14 +57,15 @@
     <if test="query.to!=null">
       and analysis.created_at&lt;#{query.to, jdbcType=BIGINT}
     </if>
-    and pm.metric_id in <foreach item="metricId" collection="query.metricIds" open="(" separator="," close=")">#{metricId, jdbcType=VARCHAR}</foreach>
+    and pm.metric_uuid in <foreach item="metricUuid" collection="query.metricUuids" open="(" separator="," close=")">#{metricUuid, jdbcType=VARCHAR}</foreach>
     and analysis.status=#{query.status, jdbcType=VARCHAR}
   </select>
 
   <insert id="insert" parameterType="Measure" useGeneratedKeys="false">
     insert into project_measures (
+    uuid,
     value,
-    metric_id,
+    metric_uuid,
     component_uuid,
     analysis_uuid,
     text_value,
@@ -135,8 +74,9 @@
     variation_value_1,
     measure_data)
     VALUES (
+    #{uuid, jdbcType=VARCHAR},
     #{value, jdbcType=DOUBLE},
-    #{metricId, jdbcType=INTEGER},
+    #{metricUuid, jdbcType=VARCHAR},
     #{componentUuid, jdbcType=VARCHAR},
     #{analysisUuid, jdbcType=VARCHAR},
     #{textValue, jdbcType=VARCHAR},

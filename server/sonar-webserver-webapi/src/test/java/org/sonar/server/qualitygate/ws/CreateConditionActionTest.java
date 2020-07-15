@@ -84,7 +84,7 @@ public class CreateConditionActionTest {
     MetricDto metric = insertMetric();
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -102,7 +102,7 @@ public class CreateConditionActionTest {
     MetricDto metric = insertMetric();
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -122,7 +122,7 @@ public class CreateConditionActionTest {
     MetricDto metric = insertMetric();
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "10")
@@ -142,7 +142,7 @@ public class CreateConditionActionTest {
     expectedException.expectMessage(format("Operation forbidden for built-in Quality Gate '%s'", qualityGate.getName()));
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -161,7 +161,7 @@ public class CreateConditionActionTest {
     expectedException.expectMessage("Value of parameter 'op' (ABC) must be one of: [LT, GT]");
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "ABC")
       .setParam(PARAM_ERROR, "90")
@@ -181,7 +181,7 @@ public class CreateConditionActionTest {
     expectedException.expectMessage(format("Operator %s is not allowed for this metric.", operator));
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, operator)
       .setParam(PARAM_ERROR, "90")
@@ -197,15 +197,15 @@ public class CreateConditionActionTest {
     MetricDto metric = insertMetric();
 
     CreateConditionResponse response = ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "45")
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(CreateConditionResponse.class);
 
-    QualityGateConditionDto condition = new ArrayList<>(dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getId())).get(0);
-    assertThat(response.getId()).isEqualTo(condition.getId());
+    QualityGateConditionDto condition = new ArrayList<>(dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getUuid())).get(0);
+    assertThat(response.getId()).isEqualTo(condition.getUuid());
     assertThat(response.getMetric()).isEqualTo(metric.getKey());
     assertThat(response.getOp()).isEqualTo("LT");
     assertThat(response.getError()).isEqualTo("45");
@@ -222,7 +222,7 @@ public class CreateConditionActionTest {
     expectedException.expectMessage("Insufficient privileges");
 
     ws.newRequest()
-      .setParam(PARAM_GATE_ID, qualityGate.getId().toString())
+      .setParam(PARAM_GATE_ID, qualityGate.getUuid())
       .setParam(PARAM_METRIC, metric.getKey())
       .setParam(PARAM_OPERATOR, "LT")
       .setParam(PARAM_ERROR, "90")
@@ -240,7 +240,8 @@ public class CreateConditionActionTest {
     assertThat(action.params())
       .extracting(WebService.Param::key, WebService.Param::isRequired)
       .containsExactlyInAnyOrder(
-        tuple("gateId", true),
+        tuple("gateId", false),
+        tuple("gateName", false),
         tuple("metric", true),
         tuple("error", true),
         tuple("op", false),
@@ -256,10 +257,10 @@ public class CreateConditionActionTest {
   }
 
   private void assertCondition(QualityGateDto qualityGate, MetricDto metric, String operator, String error) {
-    assertThat(dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getId()))
-      .extracting(QualityGateConditionDto::getQualityGateId, QualityGateConditionDto::getMetricId, QualityGateConditionDto::getOperator,
+    assertThat(dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getUuid()))
+      .extracting(QualityGateConditionDto::getQualityGateUuid, QualityGateConditionDto::getMetricUuid, QualityGateConditionDto::getOperator,
         QualityGateConditionDto::getErrorThreshold)
-      .containsExactlyInAnyOrder(tuple(qualityGate.getId(), metric.getId().longValue(), operator, error));
+      .containsExactlyInAnyOrder(tuple(qualityGate.getUuid(), metric.getUuid(), operator, error));
   }
 
   private void logInAsQualityGateAdmin(OrganizationDto organization) {

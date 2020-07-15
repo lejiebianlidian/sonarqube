@@ -19,7 +19,7 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockGitlabDefinition } from '../../../../../helpers/mocks/alm-settings';
+import { mockGitlabBindingDefinition } from '../../../../../helpers/mocks/alm-settings';
 import GitlabTab, { GitlabTabProps } from '../GitlabTab';
 
 it('should render correctly', () => {
@@ -31,8 +31,9 @@ function shallowRender(props: Partial<GitlabTabProps> = {}) {
   return shallow(
     <GitlabTab
       branchesEnabled={true}
-      definitions={[mockGitlabDefinition()]}
-      loading={false}
+      definitions={[mockGitlabBindingDefinition()]}
+      loadingAlmDefinitions={false}
+      loadingProjectCount={false}
       multipleAlmEnabled={true}
       onDelete={jest.fn()}
       onUpdateDefinitions={jest.fn()}

@@ -23,7 +23,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.ResourceTypes;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.api.web.UserRole;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.component.ResourceTypesRule;
@@ -38,6 +41,7 @@ import org.sonar.server.permission.PermissionServiceImpl;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.web.UserRole.ADMIN;
 import static org.sonar.api.web.UserRole.CODEVIEWER;
 import static org.sonar.api.web.UserRole.ISSUE_ADMIN;
@@ -75,6 +79,17 @@ public class RemoveGroupActionTest extends BasePermissionWsTest<RemoveGroupActio
   }
 
   @Test
+  public void verify_definition() {
+    Action wsDef = wsTester.getDef();
+
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Parameter 'groupId' is deprecated. Format changes from integer to string. Use 'groupName' instead."));
+  }
+
+  @Test
   public void remove_permission_using_group_name() {
     db.users().insertPermissionOnGroup(aGroup, ADMINISTER);
     db.users().insertPermissionOnGroup(aGroup, PROVISION_PROJECTS);
@@ -95,7 +110,7 @@ public class RemoveGroupActionTest extends BasePermissionWsTest<RemoveGroupActio
     loginAsAdmin(db.getDefaultOrganization());
 
     newRequest()
-      .setParam(PARAM_GROUP_ID, aGroup.getId().toString())
+      .setParam(PARAM_GROUP_ID, aGroup.getUuid().toString())
       .setParam(PARAM_PERMISSION, PROVISION_PROJECTS.getKey())
       .execute();
 
@@ -473,10 +488,11 @@ public class RemoveGroupActionTest extends BasePermissionWsTest<RemoveGroupActio
 
   private void unsafeInsertProjectPermissionOnAnyone(String perm, ComponentDto project) {
     GroupPermissionDto dto = new GroupPermissionDto()
+      .setUuid(Uuids.createFast())
       .setOrganizationUuid(project.getOrganizationUuid())
-      .setGroupId(null)
+      .setGroupUuid(null)
       .setRole(perm)
-      .setResourceId(project.getId());
+      .setComponentUuid(project.uuid());
     db.getDbClient().groupPermissionDao().insert(db.getSession(), dto);
     db.commit();
   }

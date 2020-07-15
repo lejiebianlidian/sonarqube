@@ -27,6 +27,7 @@ import org.sonar.api.resources.ResourceTypes;
 import org.sonar.api.utils.System2;
 import org.sonar.api.web.UserRole;
 import org.sonar.core.permission.GlobalPermissions;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.component.ResourceTypesRule;
 import org.sonar.db.permission.template.PermissionTemplateCharacteristicDto;
 import org.sonar.db.permission.template.PermissionTemplateDto;
@@ -35,8 +36,8 @@ import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.exceptions.UnauthorizedException;
 import org.sonar.server.permission.PermissionService;
 import org.sonar.server.permission.PermissionServiceImpl;
-import org.sonar.server.permission.ws.BasePermissionWsTest;
 import org.sonar.server.permission.RequestValidator;
+import org.sonar.server.permission.ws.BasePermissionWsTest;
 import org.sonar.server.permission.ws.WsParameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,7 +72,8 @@ public class RemoveProjectCreatorFromTemplateActionTest extends BasePermissionWs
   public void update_template_permission() {
     PermissionTemplateCharacteristicDto characteristic = db.getDbClient().permissionTemplateCharacteristicDao().insert(db.getSession(),
       new PermissionTemplateCharacteristicDto()
-        .setTemplateId(template.getId())
+        .setUuid(Uuids.createFast())
+        .setTemplateUuid(template.getUuid())
         .setPermission(UserRole.USER)
         .setWithProjectCreator(false)
         .setCreatedAt(1_000_000_000L)
@@ -146,19 +148,19 @@ public class RemoveProjectCreatorFromTemplateActionTest extends BasePermissionWs
 
   private void assertWithoutProjectCreatorFor(String permission) {
     Optional<PermissionTemplateCharacteristicDto> templatePermission = db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(),
-      permission, template.getId());
+      permission, template.getUuid());
     assertThat(templatePermission).isPresent();
     assertThat(templatePermission.get().getWithProjectCreator()).isFalse();
   }
 
   private void assertNoTemplatePermissionFor(String permission) {
     Optional<PermissionTemplateCharacteristicDto> templatePermission = db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(),
-      permission, template.getId());
+      permission, template.getUuid());
     assertThat(templatePermission).isNotPresent();
   }
 
   private PermissionTemplateCharacteristicDto reload(PermissionTemplateCharacteristicDto characteristic) {
-    return db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(), characteristic.getPermission(), characteristic.getTemplateId())
+    return db.getDbClient().permissionTemplateCharacteristicDao().selectByPermissionAndTemplateId(db.getSession(), characteristic.getPermission(), characteristic.getTemplateUuid())
       .get();
   }
 }

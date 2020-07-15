@@ -26,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.rule.Severity;
@@ -69,9 +68,8 @@ public class ActivateRuleActionTest {
   public UserSessionRule userSession = UserSessionRule.standalone();
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
-  @Captor
-  public ArgumentCaptor<Collection<RuleActivation>> ruleActivationCaptor;
 
+  private ArgumentCaptor<Collection<RuleActivation>> ruleActivationCaptor = ArgumentCaptor.forClass(Collection.class);
   private DbClient dbClient = db.getDbClient();
   private QProfileRules qProfileRules = mock(QProfileRules.class);
   private QProfileWsSupport wsSupport = new QProfileWsSupport(dbClient, userSession, TestDefaultOrganizationProvider.from(db));
@@ -177,7 +175,7 @@ public class ActivateRuleActionTest {
     assertThat(activations).hasSize(1);
 
     RuleActivation activation = activations.iterator().next();
-    assertThat(activation.getRuleId()).isEqualTo(rule.getId());
+    assertThat(activation.getRuleUuid()).isEqualTo(rule.getUuid());
     assertThat(activation.getSeverity()).isEqualTo(Severity.BLOCKER);
     assertThat(activation.isReset()).isFalse();
   }
@@ -187,7 +185,7 @@ public class ActivateRuleActionTest {
     userSession.logIn().addPermission(OrganizationPermission.ADMINISTER_QUALITY_PROFILES, organization);
     QProfileDto qualityProfile = db.qualityProfiles().insert(organization);
     RuleKey ruleKey = RuleTesting.randomRuleKey();
-    Integer ruleId = db.rules().insert(ruleKey).getId();
+    String ruleUuid = db.rules().insert(ruleKey).getUuid();
     TestRequest request = ws.newRequest()
       .setMethod("POST")
       .setParam(PARAM_RULE, ruleKey.toString())
@@ -204,7 +202,7 @@ public class ActivateRuleActionTest {
     Collection<RuleActivation> activations = ruleActivationCaptor.getValue();
     assertThat(activations).hasSize(1);
     RuleActivation activation = activations.iterator().next();
-    assertThat(activation.getRuleId()).isEqualTo(ruleId);
+    assertThat(activation.getRuleUuid()).isEqualTo(ruleUuid);
     assertThat(activation.getSeverity()).isEqualTo(Severity.BLOCKER);
     assertThat(activation.isReset()).isFalse();
   }

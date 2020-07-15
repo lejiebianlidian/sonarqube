@@ -19,7 +19,12 @@
  */
 import { get, getJSON, post, postJSON } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
-import { BitbucketProject, BitbucketRepository } from '../types/alm-integration';
+import {
+  BitbucketProject,
+  BitbucketRepository,
+  GithubOrganization,
+  GithubRepository
+} from '../types/alm-integration';
 import { ProjectBase } from './components';
 
 export function setAlmPersonalAccessToken(almSetting: string, pat: string): Promise<void> {
@@ -29,7 +34,7 @@ export function setAlmPersonalAccessToken(almSetting: string, pat: string): Prom
 export function checkPersonalAccessTokenIsValid(almSetting: string): Promise<boolean> {
   return get('/api/alm_integrations/check_pat', { almSetting })
     .then(() => true)
-    .catch(response => {
+    .catch((response: Response) => {
       if (response.status === 400) {
         return false;
       } else {
@@ -80,4 +85,51 @@ export function searchForBitbucketServerRepositories(
     almSetting,
     repositoryName
   });
+}
+
+export function getGithubClientId(almSetting: string): Promise<{ clientId?: string }> {
+  return getJSON('/api/alm_integrations/get_github_client_id', { almSetting });
+}
+
+export function importGithubRepository(
+  almSetting: string,
+  organization: string,
+  repositoryKey: string
+): Promise<{ project: ProjectBase }> {
+  return postJSON('/api/alm_integrations/import_github_project', {
+    almSetting,
+    organization,
+    repositoryKey
+  }).catch(throwGlobalError);
+}
+
+export function getGithubOrganizations(
+  almSetting: string,
+  token: string
+): Promise<{ organizations: GithubOrganization[] }> {
+  return getJSON('/api/alm_integrations/list_github_organizations', {
+    almSetting,
+    token
+  }).catch((response?: Response) => {
+    if (response && response.status !== 400) {
+      throwGlobalError(response);
+    }
+  });
+}
+
+export function getGithubRepositories(data: {
+  almSetting: string;
+  organization: string;
+  ps: number;
+  p?: number;
+  query?: string;
+}): Promise<{ repositories: GithubRepository[]; paging: T.Paging }> {
+  const { almSetting, organization, ps, p = 1, query } = data;
+  return getJSON('/api/alm_integrations/list_github_repositories', {
+    almSetting,
+    organization,
+    p,
+    ps,
+    q: query || undefined
+  }).catch(throwGlobalError);
 }

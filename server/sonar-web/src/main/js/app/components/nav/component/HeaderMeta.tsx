@@ -20,10 +20,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import DetachIcon from 'sonar-ui-common/components/icons/DetachIcon';
+import DateTimeFormatter from 'sonar-ui-common/components/intl/DateTimeFormatter';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import BranchStatus from '../../../../components/common/BranchStatus';
 import HomePageSelect from '../../../../components/controls/HomePageSelect';
-import DateTimeFormatter from '../../../../components/intl/DateTimeFormatter';
 import { isBranch, isPullRequest } from '../../../../helpers/branch-like';
 import { isLoggedIn } from '../../../../helpers/users';
 import { getCurrentUser, Store } from '../../../../store/rootReducer';
@@ -64,7 +64,7 @@ export function HeaderMeta(props: HeaderMetaProps) {
             component.version
           }`}</span>
         )}
-        {isLoggedIn(currentUser) && isABranch && currentPage !== undefined && (
+        {isLoggedIn(currentUser) && currentPage !== undefined && !isPullRequest(branchLike) && (
           <HomePageSelect className="spacer-left" currentPage={currentPage} />
         )}
       </div>
@@ -90,6 +90,8 @@ export function HeaderMeta(props: HeaderMetaProps) {
 export function getCurrentPage(component: T.Component, branchLike: BranchLike | undefined) {
   let currentPage: T.HomePage | undefined;
 
+  const branch = isBranch(branchLike) && !branchLike.isMain ? branchLike.name : undefined;
+
   switch (component.qualifier) {
     case ComponentQualifier.Portfolio:
     case ComponentQualifier.SubPortfolio:
@@ -99,7 +101,7 @@ export function getCurrentPage(component: T.Component, branchLike: BranchLike | 
       currentPage = {
         type: 'APPLICATION',
         component: component.key,
-        branch: isBranch(branchLike) ? branchLike.name : undefined
+        branch
       };
       break;
     case ComponentQualifier.Project:
@@ -107,7 +109,7 @@ export function getCurrentPage(component: T.Component, branchLike: BranchLike | 
       currentPage = {
         type: 'PROJECT',
         component: component.key,
-        branch: isBranch(branchLike) ? branchLike.name : undefined
+        branch
       };
       break;
   }

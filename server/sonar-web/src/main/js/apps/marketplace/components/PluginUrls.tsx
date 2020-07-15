@@ -19,7 +19,7 @@
  */
 import * as React from 'react';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import { Plugin } from '../../../api/plugins';
+import { Plugin } from '../../../types/plugins';
 
 interface Props {
   plugin: Plugin;
@@ -34,14 +34,22 @@ export default function PluginUrls({ plugin }: Props) {
       <ul className="list-inline">
         {plugin.homepageUrl && (
           <li>
-            <a className="js-plugin-homepage" href={plugin.homepageUrl} target="_blank">
+            <a
+              className="js-plugin-homepage"
+              href={plugin.homepageUrl}
+              target="_blank"
+              rel="noopener noreferrer">
               {translate('marketplace.homepage')}
             </a>
           </li>
         )}
         {plugin.issueTrackerUrl && (
           <li>
-            <a className="js-plugin-issues" href={plugin.issueTrackerUrl} target="_blank">
+            <a
+              className="js-plugin-issues"
+              href={plugin.issueTrackerUrl}
+              target="_blank"
+              rel="noopener noreferrer">
               {translate('marketplace.issue_tracker')}
             </a>
           </li>

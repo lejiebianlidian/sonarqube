@@ -61,6 +61,10 @@ public class CeActivityDao implements Dao {
     return mapper(dbSession).selectOlderThan(beforeDate);
   }
 
+  public List<CeActivityDto> selectByTaskType(DbSession dbSession, String taskType) {
+    return mapper(dbSession).selectByTaskType(taskType);
+  }
+
   public void deleteByUuids(DbSession dbSession, Set<String> uuids) {
     executeLargeUpdates(uuids, mapper(dbSession)::deleteByUuids);
   }
@@ -82,6 +86,10 @@ public class CeActivityDao implements Dao {
 
   public Optional<CeActivityDto> selectLastByComponentUuidAndTaskType(DbSession dbSession, String componentUuid, String taskType) {
     return Optional.ofNullable(mapper(dbSession).selectLastByComponentUuidAndTaskType(componentUuid, taskType));
+  }
+
+  public boolean hasAnyFailedIssueSyncTask(DbSession dbSession) {
+    return mapper(dbSession).hasAnyFailedIssueSyncTask() > 0;
   }
 
   private static CeActivityMapper mapper(DbSession dbSession) {

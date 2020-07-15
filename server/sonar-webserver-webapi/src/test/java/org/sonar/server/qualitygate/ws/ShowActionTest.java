@@ -82,15 +82,15 @@ public class ShowActionTest {
       .setParam("organization", organization.getKey())
       .executeProtobuf(ShowWsResponse.class);
 
-    assertThat(response.getId()).isEqualTo(qualityGate.getId());
+    assertThat(response.getId()).isEqualTo(qualityGate.getUuid());
     assertThat(response.getName()).isEqualTo(qualityGate.getName());
     assertThat(response.getIsBuiltIn()).isFalse();
     assertThat(response.getConditionsList()).hasSize(2);
     assertThat(response.getConditionsList())
       .extracting(Condition::getId, Condition::getMetric, Condition::getOp, Condition::getError)
       .containsExactlyInAnyOrder(
-        tuple(condition1.getId(), metric1.getKey(), "GT", condition1.getErrorThreshold()),
-        tuple(condition2.getId(), metric2.getKey(), "LT", condition2.getErrorThreshold()));
+        tuple(condition1.getUuid(), metric1.getKey(), "GT", condition1.getErrorThreshold()),
+        tuple(condition2.getUuid(), metric2.getKey(), "LT", condition2.getErrorThreshold()));
   }
 
   @Test
@@ -104,7 +104,7 @@ public class ShowActionTest {
       .setParam("name", qualityGate.getName())
       .executeProtobuf(ShowWsResponse.class);
 
-    assertThat(response.getId()).isEqualTo(qualityGate.getId());
+    assertThat(response.getId()).isEqualTo(qualityGate.getUuid());
   }
 
   @Test
@@ -128,11 +128,11 @@ public class ShowActionTest {
     db.qualityGates().setDefaultQualityGate(organization, qualityGate);
 
     ShowWsResponse response = ws.newRequest()
-      .setParam("id", qualityGate.getId().toString())
+      .setParam("id", qualityGate.getUuid())
       .setParam("organization", organization.getKey())
       .executeProtobuf(ShowWsResponse.class);
 
-    assertThat(response.getId()).isEqualTo(qualityGate.getId());
+    assertThat(response.getId()).isEqualTo(qualityGate.getUuid());
     assertThat(response.getName()).isEqualTo(qualityGate.getName());
   }
 
@@ -147,7 +147,7 @@ public class ShowActionTest {
       .setParam("organization", organization.getKey())
       .executeProtobuf(ShowWsResponse.class);
 
-    assertThat(response.getId()).isEqualTo(qualityGate.getId());
+    assertThat(response.getId()).isEqualTo(qualityGate.getUuid());
     assertThat(response.getName()).isEqualTo(qualityGate.getName());
     assertThat(response.getConditionsList()).isEmpty();
   }
@@ -279,7 +279,7 @@ public class ShowActionTest {
 
     ws.newRequest()
       .setParam("name", qualityGate.getName())
-      .setParam("id", qualityGate.getId().toString())
+      .setParam("id", qualityGate.getUuid())
       .setParam("organization", organization.getKey())
       .execute();
   }
@@ -295,7 +295,7 @@ public class ShowActionTest {
     db.commit();
 
     expectedException.expect(IllegalStateException.class);
-    expectedException.expectMessage(format("Could not find metric with id %s", metric.getId()));
+    expectedException.expectMessage(format("Could not find metric with id %s", metric.getUuid()));
 
     ws.newRequest()
       .setParam("name", qualityGate.getName())
@@ -367,10 +367,10 @@ public class ShowActionTest {
     QGateWithOrgDto qualityGate = db.qualityGates().insertQualityGate(otherOrganization);
 
     expectedException.expect(NotFoundException.class);
-    expectedException.expectMessage(format("No quality gate has been found for id %s in organization %s", qualityGate.getId(), organization.getName()));
+    expectedException.expectMessage(format("No quality gate has been found for id %s in organization %s", qualityGate.getUuid(), organization.getName()));
 
     ws.newRequest()
-      .setParam("id", qualityGate.getId().toString())
+      .setParam("id", qualityGate.getUuid())
       .setParam("organization", organization.getKey())
       .execute();
   }

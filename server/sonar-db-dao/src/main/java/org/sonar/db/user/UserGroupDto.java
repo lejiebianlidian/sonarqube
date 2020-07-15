@@ -21,24 +21,24 @@ package org.sonar.db.user;
 
 public class UserGroupDto {
 
-  private int userId;
-  private int groupId;
+  private String userUuid;
+  private String groupUuid;
 
-  public int getUserId() {
-    return userId;
+  public String getUserUuid() {
+    return userUuid;
   }
 
-  public UserGroupDto setUserId(int userId) {
-    this.userId = userId;
+  public UserGroupDto setUserUuid(String userUuid) {
+    this.userUuid = userUuid;
     return this;
   }
 
-  public int getGroupId() {
-    return groupId;
+  public String getGroupUuid() {
+    return groupUuid;
   }
 
-  public UserGroupDto setGroupId(int groupId) {
-    this.groupId = groupId;
+  public UserGroupDto setGroupUuid(String groupUuid) {
+    this.groupUuid = groupUuid;
     return this;
   }
 }

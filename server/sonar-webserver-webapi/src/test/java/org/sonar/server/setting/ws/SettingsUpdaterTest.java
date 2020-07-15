@@ -59,7 +59,7 @@ public class SettingsUpdaterTest {
   PropertyDbTester propertyDb = new PropertyDbTester(db);
   ComponentDbTester componentDb = new ComponentDbTester(db);
 
-  PropertyDefinitions definitions = new PropertyDefinitions();
+  PropertyDefinitions definitions = new PropertyDefinitions(System2.INSTANCE);
   ComponentDto project;
 
   SettingsUpdater underTest= new SettingsUpdater(dbClient, definitions);
@@ -206,17 +206,17 @@ public class SettingsUpdaterTest {
   }
 
   private void assertProjectPropertyDoesNotExist(String key) {
-    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentId(project.getId()).setKey(key).build(), dbSession)).isEmpty();
+    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(project.uuid()).setKey(key).build(), dbSession)).isEmpty();
   }
 
   private void assertProjectPropertyExists(String key) {
-    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentId(project.getId()).setKey(key).build(), dbSession)).isNotEmpty();
+    assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(project.uuid()).setKey(key).build(), dbSession)).isNotEmpty();
   }
 
   private void assertUserPropertyExists(String key, UserDto user) {
     assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder()
         .setKey(key)
-        .setUserId(user.getId())
+      .setUserUuid(user.getUuid())
         .build(),
       dbSession)).isNotEmpty();
   }

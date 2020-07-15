@@ -126,7 +126,7 @@ public class CreateActionTest {
     assertThat(dbUser.get().isRoot()).isFalse();
 
     // member of default group in default organization
-    assertThat(db.users().selectGroupIdsOfUser(dbUser.get())).containsOnly(defaultGroupInDefaultOrg.getId());
+    assertThat(db.users().selectGroupUuidsOfUser(dbUser.get())).containsOnly(defaultGroupInDefaultOrg.getUuid());
   }
 
   @Test
@@ -142,7 +142,7 @@ public class CreateActionTest {
 
     Optional<UserDto> dbUser = db.users().selectUserByLogin("john");
     assertThat(dbUser).isPresent();
-    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), defaultOrganizationProvider.get().getUuid(), dbUser.get().getId())).isPresent();
+    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), defaultOrganizationProvider.get().getUuid(), dbUser.get().getUuid())).isPresent();
   }
 
   @Test

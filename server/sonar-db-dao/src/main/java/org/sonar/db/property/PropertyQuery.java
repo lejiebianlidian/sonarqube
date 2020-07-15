@@ -24,25 +24,25 @@ import javax.annotation.Nullable;
 public class PropertyQuery {
 
   private final String key;
-  private final Long componentId;
-  private final Integer userId;
+  private final String componentUuid;
+  private final String userUuid;
 
   private PropertyQuery(Builder builder) {
     this.key = builder.key;
-    this.componentId = builder.componentId;
-    this.userId = builder.userId;
+    this.componentUuid = builder.componentUuid;
+    this.userUuid = builder.userUuid;
   }
 
   public String key() {
     return key;
   }
 
-  public Long componentId() {
-    return componentId;
+  public String componentUuid() {
+    return componentUuid;
   }
 
-  public Integer userId() {
-    return userId;
+  public String userUuid() {
+    return userUuid;
   }
 
   public static Builder builder() {
@@ -51,21 +51,21 @@ public class PropertyQuery {
 
   public static class Builder {
     private String key;
-    private Long componentId;
-    private Integer userId;
+    private String componentUuid;
+    private String userUuid;
 
     public Builder setKey(String key) {
       this.key = key;
       return this;
     }
 
-    public Builder setComponentId(@Nullable Long componentId) {
-      this.componentId = componentId;
+    public Builder setComponentUuid(@Nullable String componentUuid) {
+      this.componentUuid = componentUuid;
       return this;
     }
 
-    public Builder setUserId(Integer userId) {
-      this.userId = userId;
+    public Builder setUserUuid(String userUuid) {
+      this.userUuid = userUuid;
       return this;
     }
 

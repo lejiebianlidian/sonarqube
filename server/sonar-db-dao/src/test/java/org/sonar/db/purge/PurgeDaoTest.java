@@ -19,7 +19,6 @@
  */
 package org.sonar.db.purge;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
@@ -41,7 +40,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.issue.Issue;
-import org.sonar.api.resources.Scopes;
 import org.sonar.api.utils.System2;
 import org.sonar.core.util.CloseableIterator;
 import org.sonar.core.util.UuidFactoryFast;
@@ -85,12 +83,10 @@ import org.sonar.db.webhook.WebhookDto;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -216,44 +212,6 @@ public class PurgeDaoTest {
   }
 
   @Test
-  public void shouldDeleteHistoricalDataOfDirectoriesAndFiles() {
-    MetricDto metricWithHistory = db.measures().insertMetric(t -> t.setDeleteHistoricalData(false));
-    MetricDto metricWithoutHistory = db.measures().insertMetric(t -> t.setDeleteHistoricalData(true));
-    ComponentDto project = db.components().insertPrivateProject();
-    SnapshotDto lastAnalysis = db.components().insertSnapshot(project, t -> t.setLast(true));
-    SnapshotDto oldAnalysis = db.components().insertSnapshot(project, t -> t.setLast(false));
-    db.measures().insertMeasure(project, lastAnalysis, metricWithHistory);
-    db.measures().insertMeasure(project, lastAnalysis, metricWithoutHistory);
-    db.measures().insertMeasure(project, oldAnalysis, metricWithHistory);
-    db.measures().insertMeasure(project, oldAnalysis, metricWithoutHistory);
-    ComponentDto otherProject = db.components().insertPrivateProject();
-    SnapshotDto otherLastAnalysis = db.components().insertSnapshot(otherProject, t -> t.setLast(true));
-    SnapshotDto otherOldAnalysis = db.components().insertSnapshot(otherProject, t -> t.setLast(false));
-    db.measures().insertMeasure(otherProject, otherLastAnalysis, metricWithHistory);
-    db.measures().insertMeasure(otherProject, otherLastAnalysis, metricWithoutHistory);
-    db.measures().insertMeasure(otherProject, otherOldAnalysis, metricWithHistory);
-    db.measures().insertMeasure(otherProject, otherOldAnalysis, metricWithoutHistory);
-
-    PurgeConfiguration conf = new PurgeConfiguration(project.uuid(), project.uuid(), asList(Scopes.DIRECTORY, Scopes.FILE),
-      30, Optional.of(30), System2.INSTANCE, emptySet());
-
-    underTest.purge(dbSession, conf, PurgeListener.EMPTY, new PurgeProfiler());
-    dbSession.commit();
-
-    assertThat(db.select("select metric_id as \"METRIC\",analysis_uuid as \"ANALYSIS\" from project_measures"))
-      .extracting(t -> ((Long) t.get("METRIC")).intValue(), t -> t.get("ANALYSIS"))
-      .containsOnly(
-        tuple(metricWithHistory.getId(), lastAnalysis.getUuid()),
-        tuple(metricWithoutHistory.getId(), lastAnalysis.getUuid()),
-        tuple(metricWithHistory.getId(), oldAnalysis.getUuid()),
-
-        tuple(metricWithHistory.getId(), otherLastAnalysis.getUuid()),
-        tuple(metricWithoutHistory.getId(), otherLastAnalysis.getUuid()),
-        tuple(metricWithHistory.getId(), otherOldAnalysis.getUuid()),
-        tuple(metricWithoutHistory.getId(), otherOldAnalysis.getUuid()));
-  }
-
-  @Test
   public void close_issues_clean_index_and_file_sources_of_disabled_components_specified_by_uuid_in_configuration() {
     RuleDefinitionDto rule = db.rules().insert();
     ComponentDto project = db.components().insertPublicProject();
@@ -327,14 +285,14 @@ public class PurgeDaoTest {
     // deletes live measure of selected
     assertThat(db.countRowsOfTable("live_measures")).isEqualTo(4);
     List<LiveMeasureDto> liveMeasureDtos = db.getDbClient().liveMeasureDao()
-      .selectByComponentUuidsAndMetricIds(dbSession, ImmutableSet.of(srcFile.uuid(), dir.uuid(), project.uuid(), enabledFile.uuid()),
-        ImmutableSet.of(metric1.getId(), metric2.getId()));
+      .selectByComponentUuidsAndMetricUuids(dbSession, ImmutableSet.of(srcFile.uuid(), dir.uuid(), project.uuid(), enabledFile.uuid()),
+        ImmutableSet.of(metric1.getUuid(), metric2.getUuid()));
     assertThat(liveMeasureDtos)
       .extracting(LiveMeasureDto::getComponentUuid)
       .containsOnly(enabledFile.uuid(), project.uuid());
     assertThat(liveMeasureDtos)
-      .extracting(LiveMeasureDto::getMetricId)
-      .containsOnly(metric1.getId(), metric2.getId());
+      .extracting(LiveMeasureDto::getMetricUuid)
+      .containsOnly(metric1.getUuid(), metric2.getUuid());
   }
 
   @Test
@@ -346,11 +304,11 @@ public class PurgeDaoTest {
     ComponentDto otherProject = db.components().insertPrivateProject();
     SnapshotDto otherAnalysis1 = db.components().insertSnapshot(otherProject);
 
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(idUuidPairOf(analysis1)));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), singletonList(analysis1.getUuid()));
 
     assertThat(uuidsIn("snapshots")).containsOnly(analysis2.getUuid(), analysis3.getUuid(), otherAnalysis1.getUuid());
 
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(idUuidPairOf(analysis1), idUuidPairOf(analysis3), idUuidPairOf(otherAnalysis1)));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), asList(analysis1.getUuid(), analysis3.getUuid(), otherAnalysis1.getUuid()));
 
     assertThat(uuidsIn("snapshots")).containsOnly(analysis2.getUuid());
   }
@@ -377,7 +335,7 @@ public class PurgeDaoTest {
     // note: projectEvent3 has no component change
 
     // delete non existing analysis has no effect
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(new IdUuidPair(3, "foo")));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), singletonList( "foo"));
     assertThat(uuidsIn("event_component_changes", "event_analysis_uuid"))
       .containsOnly(projectAnalysis1.getUuid(), projectAnalysis2.getUuid());
     assertThat(db.countRowsOfTable("event_component_changes"))
@@ -385,7 +343,7 @@ public class PurgeDaoTest {
     assertThat(uuidsIn("events"))
       .containsOnly(projectEvent1.getUuid(), projectEvent2.getUuid(), projectEvent3.getUuid());
 
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(idUuidPairOf(projectAnalysis1)));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), singletonList(projectAnalysis1.getUuid()));
     assertThat(uuidsIn("event_component_changes", "event_analysis_uuid"))
       .containsOnly(projectAnalysis2.getUuid());
     assertThat(db.countRowsOfTable("event_component_changes"))
@@ -393,7 +351,7 @@ public class PurgeDaoTest {
     assertThat(uuidsIn("events"))
       .containsOnly(projectEvent2.getUuid(), projectEvent3.getUuid());
 
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(idUuidPairOf(projectAnalysis4)));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), singletonList(projectAnalysis4.getUuid()));
     assertThat(uuidsIn("event_component_changes", "event_analysis_uuid"))
       .containsOnly(projectAnalysis2.getUuid());
     assertThat(db.countRowsOfTable("event_component_changes"))
@@ -401,7 +359,7 @@ public class PurgeDaoTest {
     assertThat(uuidsIn("events"))
       .containsOnly(projectEvent2.getUuid(), projectEvent3.getUuid());
 
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(idUuidPairOf(projectAnalysis3)));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), singletonList(projectAnalysis3.getUuid()));
     assertThat(uuidsIn("event_component_changes", "event_analysis_uuid"))
       .containsOnly(projectAnalysis2.getUuid());
     assertThat(db.countRowsOfTable("event_component_changes"))
@@ -409,7 +367,7 @@ public class PurgeDaoTest {
     assertThat(uuidsIn("events"))
       .containsOnly(projectEvent2.getUuid());
 
-    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), ImmutableList.of(idUuidPairOf(projectAnalysis2)));
+    underTest.deleteAnalyses(dbSession, new PurgeProfiler(), singletonList(projectAnalysis2.getUuid()));
     assertThat(db.countRowsOfTable("event_component_changes"))
       .isZero();
     assertThat(db.countRowsOfTable("events"))
@@ -1001,50 +959,6 @@ public class PurgeDaoTest {
   }
 
   @Test
-  public void deleteProject_fails_with_IAE_if_specified_component_is_module() {
-    ComponentDto privateProject = db.components().insertPrivateProject();
-    ComponentDto module = db.components().insertComponent(ComponentTesting.newModuleDto(privateProject));
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Couldn't find root component with uuid " + module.uuid());
-
-    underTest.deleteProject(dbSession, module.uuid());
-  }
-
-  @Test
-  public void deleteProject_fails_with_IAE_if_specified_component_is_directory() {
-    ComponentDto privateProject = db.components().insertPrivateProject();
-    ComponentDto directory = db.components().insertComponent(newDirectory(privateProject, "A/B"));
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Couldn't find root component with uuid " + directory.uuid());
-
-    underTest.deleteProject(dbSession, directory.uuid());
-  }
-
-  @Test
-  public void deleteProject_fails_with_IAE_if_specified_component_is_file() {
-    ComponentDto privateProject = db.components().insertPrivateProject();
-    ComponentDto file = db.components().insertComponent(newFileDto(privateProject));
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Couldn't find root component with uuid " + file.uuid());
-
-    underTest.deleteProject(dbSession, file.uuid());
-  }
-
-  @Test
-  public void deleteProject_fails_with_IAE_if_specified_component_is_subview() {
-    ComponentDto view = db.components().insertView();
-    ComponentDto subview = db.components().insertComponent(newSubView(view));
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Couldn't find root component with uuid " + subview.uuid());
-
-    underTest.deleteProject(dbSession, subview.uuid());
-  }
-
-  @Test
   public void should_delete_old_closed_issues() {
     RuleDefinitionDto rule = db.rules().insert();
     ComponentDto project = db.components().insertPublicProject();
@@ -1358,8 +1272,8 @@ public class PurgeDaoTest {
 
     underTest.deleteProject(dbSession, project1.uuid());
 
-    assertThat(dbClient.liveMeasureDao().selectByComponentUuidsAndMetricIds(dbSession, asList(project1.uuid(), module1.uuid()), asList(metric.getId()))).isEmpty();
-    assertThat(dbClient.liveMeasureDao().selectByComponentUuidsAndMetricIds(dbSession, asList(project2.uuid(), module2.uuid()), asList(metric.getId()))).hasSize(2);
+    assertThat(dbClient.liveMeasureDao().selectByComponentUuidsAndMetricUuids(dbSession, asList(project1.uuid(), module1.uuid()), asList(metric.getUuid()))).isEmpty();
+    assertThat(dbClient.liveMeasureDao().selectByComponentUuidsAndMetricUuids(dbSession, asList(project2.uuid(), module2.uuid()), asList(metric.getUuid()))).hasSize(2);
   }
 
   private void verifyNoEffect(ComponentDto firstRoot, ComponentDto... otherRoots) {
@@ -1493,15 +1407,15 @@ public class PurgeDaoTest {
     ComponentDto subview3 = db.components().insertComponent(newSubView(view));
     ComponentDto pc = db.components().insertComponent(newProjectCopy("a", db.components().insertPrivateProject(), view));
     insertPropertyFor(view, subview1, subview2, subview3, pc);
-    assertThat(getResourceIdOfProperties()).containsOnly(view.getId(), subview1.getId(), subview2.getId(), subview3.getId(), pc.getId());
+    assertThat(getResourceIdOfProperties()).containsOnly(view.uuid(), subview1.uuid(), subview2.uuid(), subview3.uuid(), pc.uuid());
 
     underTest.deleteNonRootComponentsInView(dbSession, singletonList(subview1));
     assertThat(getResourceIdOfProperties())
-      .containsOnly(view.getId(), subview2.getId(), subview3.getId(), pc.getId());
+      .containsOnly(view.uuid(), subview2.uuid(), subview3.uuid(), pc.uuid());
 
     underTest.deleteNonRootComponentsInView(dbSession, asList(subview2, subview3, pc));
     assertThat(getResourceIdOfProperties())
-      .containsOnly(view.getId(), pc.getId());
+      .containsOnly(view.uuid(), pc.uuid());
   }
 
   @Test
@@ -1611,7 +1525,7 @@ public class PurgeDaoTest {
   private void insertManualMeasureFor(ComponentDto... componentDtos) {
     Arrays.stream(componentDtos).forEach(componentDto -> dbClient.customMeasureDao().insert(dbSession, new CustomMeasureDto()
       .setComponentUuid(componentDto.uuid())
-      .setMetricId(new Random().nextInt())));
+      .setMetricUuid(randomAlphabetic(3))));
     dbSession.commit();
   }
 
@@ -1620,16 +1534,16 @@ public class PurgeDaoTest {
       .map(row -> (String) row.get("COMPONENT_UUID"));
   }
 
-  private Stream<Long> getResourceIdOfProperties() {
-    return db.select("select resource_id as \"ID\" from properties").stream()
-      .map(row -> (Long) row.get("ID"));
+  private Stream<String> getResourceIdOfProperties() {
+    return db.select("select component_uuid as \"uuid\" from properties").stream()
+      .map(row -> (String) row.get("uuid"));
   }
 
   private void insertPropertyFor(ComponentDto... components) {
     Stream.of(components).forEach(componentDto -> db.properties().insertProperty(new PropertyDto()
       .setKey(randomAlphabetic(3))
       .setValue(randomAlphabetic(3))
-      .setResourceId(componentDto.getId())));
+      .setComponentUuid(componentDto.uuid())));
   }
 
   private Stream<String> getComponentUuidsOfMeasures() {
@@ -1639,7 +1553,7 @@ public class PurgeDaoTest {
 
   private void insertMeasureFor(ComponentDto... components) {
     Arrays.stream(components).forEach(componentDto -> db.getDbClient().measureDao().insert(dbSession, new MeasureDto()
-      .setMetricId(new Random().nextInt())
+      .setMetricUuid(randomAlphabetic(3))
       .setComponentUuid(componentDto.uuid())
       .setAnalysisUuid(randomAlphabetic(3))));
     dbSession.commit();
@@ -1739,7 +1653,7 @@ public class PurgeDaoTest {
   }
 
   private static PurgeConfiguration newConfigurationWith30Days(String rootUuid) {
-    return new PurgeConfiguration(rootUuid, rootUuid, emptyList(), 30, Optional.of(30), System2.INSTANCE, emptySet());
+    return new PurgeConfiguration(rootUuid, rootUuid, 30, Optional.of(30), System2.INSTANCE, emptySet());
   }
 
   private static PurgeConfiguration newConfigurationWith30Days(System2 system2, String rootUuid, String projectUuid) {
@@ -1747,17 +1661,13 @@ public class PurgeDaoTest {
   }
 
   private static PurgeConfiguration newConfigurationWith30Days(System2 system2, String rootUuid, String projectUuid, Set<String> disabledComponentUuids) {
-    return new PurgeConfiguration(rootUuid, projectUuid, emptyList(), 30, Optional.of(30), system2, disabledComponentUuids);
+    return new PurgeConfiguration(rootUuid, projectUuid, 30, Optional.of(30), system2, disabledComponentUuids);
   }
 
   private Stream<String> uuidsOfAnalysesOfRoot(ComponentDto rootComponent) {
     return db.select("select uuid as \"UUID\" from snapshots where component_uuid='" + rootComponent.uuid() + "'")
       .stream()
       .map(t -> (String) t.get("UUID"));
-  }
-
-  private static IdUuidPair idUuidPairOf(SnapshotDto analysis3) {
-    return new IdUuidPair(analysis3.getId(), analysis3.getUuid());
   }
 
 }

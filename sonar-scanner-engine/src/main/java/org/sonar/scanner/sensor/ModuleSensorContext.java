@@ -23,11 +23,11 @@ import javax.annotation.concurrent.ThreadSafe;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputModule;
+import org.sonar.api.batch.fs.internal.DefaultInputProject;
 import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.sensor.internal.SensorStorage;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.config.Settings;
-import org.sonar.api.batch.fs.internal.DefaultInputProject;
 
 @ThreadSafe
 public class ModuleSensorContext extends ProjectSensorContext {

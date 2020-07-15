@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,6 +47,7 @@ import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.IndexingResult;
 import org.sonar.server.es.ProjectIndexer;
+import org.sonar.server.es.StartupIndexer;
 import org.sonar.server.permission.index.AuthorizationScope;
 import org.sonar.server.permission.index.IndexPermissions;
 import org.sonar.server.security.SecurityStandards;
@@ -55,6 +57,7 @@ import org.sonar.server.security.SecurityStandards.VulnerabilityProbability;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.rules.ExpectedException.none;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
@@ -75,7 +78,7 @@ public class IssueIndexerTest {
   public LogTester logTester = new LogTester();
 
   private OrganizationDto organization;
-  private IssueIndexer underTest = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()));
+  private IssueIndexer underTest = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
 
   @Before
   public void setUp() {
@@ -105,7 +108,7 @@ public class IssueIndexerTest {
     IssueDto issue1 = db.issues().insert(organization);
     IssueDto issue2 = db.issues().insert(organization);
 
-    underTest.indexOnStartup(emptySet());
+    underTest.indexAllIssues();
 
     assertThatIndexHasOnly(issue1, issue2);
   }
@@ -118,7 +121,7 @@ public class IssueIndexerTest {
     ComponentDto file = db.components().insertComponent(newFileDto(project, dir, "F1"));
     IssueDto issue = db.issues().insert(rule, project, file);
 
-    underTest.indexOnStartup(emptySet());
+    underTest.indexAllIssues();
 
     IssueDoc doc = es.getDocuments(TYPE_ISSUE, IssueDoc.class).get(0);
     assertThat(doc.getId()).isEqualTo(issue.getKey());
@@ -152,7 +155,7 @@ public class IssueIndexerTest {
     ComponentDto file = db.components().insertComponent(newFileDto(project, dir, "F1"));
     IssueDto issue = db.issues().insert(rule, project, file);
 
-    underTest.indexOnStartup(emptySet());
+    underTest.indexAllIssues();
 
     IssueDoc doc = es.getDocuments(TYPE_ISSUE, IssueDoc.class).get(0);
     assertThat(doc.getCwe()).containsExactlyInAnyOrder("123", "863");
@@ -426,7 +429,7 @@ public class IssueIndexerTest {
   }
 
   private IndexingResult indexProject(String projectUuid, ProjectIndexer.Cause cause) {
-    Collection<EsQueueDto> items = underTest.prepareForRecovery(db.getSession(), asList(projectUuid), cause);
+    Collection<EsQueueDto> items = underTest.prepareForRecovery(db.getSession(), singletonList(projectUuid), cause);
     db.commit();
     return underTest.index(db.getSession(), items);
   }
@@ -480,7 +483,7 @@ public class IssueIndexerTest {
     IssueDoc issueDoc = new IssueDoc();
     issueDoc.setKey("key");
     issueDoc.setProjectUuid("parent-does-not-exist");
-    new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()))
+    new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null)
       .index(asList(issueDoc).iterator());
 
     assertThat(es.countDocuments(TYPE_ISSUE)).isEqualTo(1L);
@@ -495,7 +498,7 @@ public class IssueIndexerTest {
     ComponentDto file = db.components().insertComponent(newFileDto(branch, dir, "F1"));
     IssueDto issue = db.issues().insert(rule, branch, file);
 
-    underTest.indexOnStartup(emptySet());
+    underTest.indexAllIssues();
 
     IssueDoc doc = es.getDocuments(TYPE_ISSUE, IssueDoc.class).get(0);
     assertThat(doc.getId()).isEqualTo(issue.getKey());
@@ -504,6 +507,11 @@ public class IssueIndexerTest {
     assertThat(doc.projectUuid()).isEqualTo(branch.getMainBranchProjectUuid());
     assertThat(doc.branchUuid()).isEqualTo(branch.uuid());
     assertThat(doc.isMainBranch()).isFalse();
+  }
+
+  @Test
+  public void getType(){
+    Assertions.assertThat(underTest.getType()).isEqualTo(StartupIndexer.Type.ASYNCHRONOUS);
   }
 
   private void addIssueToIndex(String projectUuid, String issueKey) {

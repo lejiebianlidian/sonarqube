@@ -19,14 +19,29 @@
  */
 import { getBaseUrl, Location } from 'sonar-ui-common/helpers/urls';
 import { getProfilePath } from '../apps/quality-profiles/utils';
-import { BranchLike } from '../types/branch-like';
+import { BranchLike, BranchParameters } from '../types/branch-like';
+import { ComponentQualifier, isPortfolioLike } from '../types/component';
 import { GraphType } from '../types/project-activity';
 import { getBranchLikeQuery, isBranch, isMainBranch, isPullRequest } from './branch-like';
 
 type Query = Location['query'];
 
+export function getComponentOverviewUrl(
+  componentKey: string,
+  componentQualifier: ComponentQualifier | string,
+  branchParameters?: BranchParameters
+) {
+  return isPortfolioLike(componentQualifier)
+    ? getPortfolioUrl(componentKey)
+    : getProjectQueryUrl(componentKey, branchParameters);
+}
+
 export function getProjectUrl(project: string, branch?: string): Location {
   return { pathname: '/dashboard', query: { id: project, branch } };
+}
+
+export function getProjectQueryUrl(project: string, branchParameters?: BranchParameters): Location {
+  return { pathname: '/dashboard', query: { id: project, ...branchParameters } };
 }
 
 export function getPortfolioUrl(key: string): Location {
@@ -78,10 +93,18 @@ export function getComponentIssuesUrl(componentKey: string, query?: Query): Loca
  * Generate URL for a component's security hotspot page
  */
 export function getComponentSecurityHotspotsUrl(componentKey: string, query: Query = {}): Location {
-  const { branch, pullRequest, sinceLeakPeriod, hotspots, assignedToMe } = query;
+  const { branch, pullRequest, sinceLeakPeriod, hotspots, assignedToMe, category } = query;
   return {
     pathname: '/security_hotspots',
-    query: { id: componentKey, branch, pullRequest, sinceLeakPeriod, hotspots, assignedToMe }
+    query: {
+      id: componentKey,
+      branch,
+      pullRequest,
+      sinceLeakPeriod,
+      hotspots,
+      assignedToMe,
+      category
+    }
   };
 }
 

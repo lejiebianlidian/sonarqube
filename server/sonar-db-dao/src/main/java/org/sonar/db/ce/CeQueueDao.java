@@ -166,8 +166,8 @@ public class CeQueueDao implements Dao {
     return builder.build();
   }
 
-  public Optional<CeQueueDto> peek(DbSession session, String workerUuid) {
-    List<String> eligibles = mapper(session).selectEligibleForPeek(ONE_RESULT_PAGINATION);
+  public Optional<CeQueueDto> peek(DbSession session, String workerUuid, boolean excludeIndexationJob, boolean excludeViewRefresh) {
+    List<String> eligibles = mapper(session).selectEligibleForPeek(ONE_RESULT_PAGINATION, excludeIndexationJob, excludeViewRefresh);
     if (eligibles.isEmpty()) {
       return Optional.empty();
     }
@@ -188,6 +188,10 @@ public class CeQueueDao implements Dao {
     CeQueueDto result = mapper(session).selectByUuid(eligibleTaskUuid);
     session.commit();
     return Optional.ofNullable(result);
+  }
+
+  public boolean hasAnyIssueSyncTaskPendingOrInProgress(DbSession dbSession) {
+    return mapper(dbSession).hasAnyIssueSyncTaskPendingOrInProgress();
   }
 
   private static CeQueueMapper mapper(DbSession session) {

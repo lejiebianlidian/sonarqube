@@ -69,8 +69,6 @@ module.exports = {
     leakPrimaryColor: '#fbf3d5',
     leakSecondaryColor: '#f1e8cb',
 
-    snippetFontColor: '#f0f0f0',
-
     // issues
     issueBgColor: '#f2dede',
     hotspotBgColor: '#eeeff4',
@@ -194,6 +192,8 @@ module.exports = {
     // ui elements
     pageMainZIndex: '50',
     pageSideZIndex: '51',
+
+    globalBannerZIndex: '60',
 
     tooltipZIndex: '8000',
 

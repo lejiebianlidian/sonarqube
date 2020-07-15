@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+export enum Visibility {
+  Public = 'public',
+  Private = 'private'
+}
+
 export enum ComponentQualifier {
   Application = 'APP',
   Directory = 'DIR',
@@ -27,4 +32,22 @@ export enum ComponentQualifier {
   SubPortfolio = 'SVW',
   SubProject = 'BRC',
   TestFile = 'UTS'
+}
+
+export enum ProjectKeyValidationResult {
+  Valid = 'valid',
+  Empty = 'empty',
+  TooLong = 'too_long',
+  InvalidChar = 'invalid_char',
+  OnlyDigits = 'only_digits'
+}
+
+export function isPortfolioLike(componentQualifier?: string | ComponentQualifier) {
+  return Boolean(
+    componentQualifier &&
+      [
+        ComponentQualifier.Portfolio.toString(),
+        ComponentQualifier.SubPortfolio.toString()
+      ].includes(componentQualifier)
+  );
 }

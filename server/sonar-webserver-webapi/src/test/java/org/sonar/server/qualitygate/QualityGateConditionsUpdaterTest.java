@@ -392,14 +392,14 @@ public class QualityGateConditionsUpdaterTest {
   }
 
   private void verifyCondition(QualityGateConditionDto dto, QualityGateDto qualityGate, MetricDto metric, String operator, String error) {
-    QualityGateConditionDto reloaded = db.getDbClient().gateConditionDao().selectById(dto.getId(), db.getSession());
-    assertThat(reloaded.getQualityGateId()).isEqualTo(qualityGate.getId());
-    assertThat(reloaded.getMetricId()).isEqualTo(metric.getId().longValue());
+    QualityGateConditionDto reloaded = db.getDbClient().gateConditionDao().selectByUuid(dto.getUuid(), db.getSession());
+    assertThat(reloaded.getQualityGateUuid()).isEqualTo(qualityGate.getUuid());
+    assertThat(reloaded.getMetricUuid()).isEqualTo(metric.getUuid());
     assertThat(reloaded.getOperator()).isEqualTo(operator);
     assertThat(reloaded.getErrorThreshold()).isEqualTo(error);
 
-    assertThat(dto.getQualityGateId()).isEqualTo(qualityGate.getId());
-    assertThat(dto.getMetricId()).isEqualTo(metric.getId().longValue());
+    assertThat(dto.getQualityGateUuid()).isEqualTo(qualityGate.getUuid());
+    assertThat(dto.getMetricUuid()).isEqualTo(metric.getUuid());
     assertThat(dto.getOperator()).isEqualTo(operator);
     assertThat(dto.getErrorThreshold()).isEqualTo(error);
   }

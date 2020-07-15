@@ -163,7 +163,7 @@ public class DeleteActionTest {
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .execute();
 
-    UserDto userReloaded = dbClient.userDao().selectUserById(dbSession, user.getId());
+    UserDto userReloaded =  dbClient.userDao().selectByUuid(dbSession, user.getUuid());
     assertThat(userReloaded.getHomepageType()).isNull();
     assertThat(userReloaded.getHomepageParameter()).isNull();
   }
@@ -182,7 +182,7 @@ public class DeleteActionTest {
       .setParam(PARAM_ORGANIZATION, organization.getKey())
       .execute();
 
-    UserDto userReloaded = dbClient.userDao().selectUserById(dbSession, user.getId());
+    UserDto userReloaded =  dbClient.userDao().selectByUuid(dbSession, user.getUuid());
     assertThat(userReloaded.getHomepageType()).isNull();
     assertThat(userReloaded.getHomepageParameter()).isNull();
     verify(projectLifeCycleListeners).onProjectsDeleted(ImmutableSet.of(Project.from(project)));
@@ -405,9 +405,9 @@ public class DeleteActionTest {
     sendRequest(org);
 
     verifyOrganizationDoesNotExist(org);
-    assertThat(dbClient.groupDao().selectByIds(dbSession, of(group1.getId(), otherGroup1.getId(), group2.getId(), otherGroup2.getId())))
-      .extracting(GroupDto::getId)
-      .containsOnly(otherGroup1.getId(), otherGroup2.getId());
+    assertThat(dbClient.groupDao().selectByUuids(dbSession, of(group1.getUuid(), otherGroup1.getUuid(), group2.getUuid(), otherGroup2.getUuid())))
+      .extracting(GroupDto::getUuid)
+      .containsOnly(otherGroup1.getUuid(), otherGroup2.getUuid());
     assertThat(dbClient.permissionTemplateDao().selectByUuid(dbSession, templateDto.getUuid()))
       .isNull();
     assertThat(dbClient.permissionTemplateDao().selectByUuid(dbSession, otherTemplateDto.getUuid()))
@@ -438,9 +438,9 @@ public class DeleteActionTest {
     sendRequest(org);
 
     verifyOrganizationDoesNotExist(org);
-    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), org.getUuid(), user1.getId())).isNotPresent();
-    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), org.getUuid(), user2.getId())).isNotPresent();
-    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), otherOrg.getUuid(), user1.getId())).isPresent();
+    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), org.getUuid(), user1.getUuid())).isNotPresent();
+    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), org.getUuid(), user2.getUuid())).isNotPresent();
+    assertThat(db.getDbClient().organizationMemberDao().select(db.getSession(), otherOrg.getUuid(), user1.getUuid())).isPresent();
     assertThat(userIndex.search(UserQuery.builder().setOrganizationUuid(org.getUuid()).build(), new SearchOptions()).getTotal()).isEqualTo(0);
     assertThat(userIndex.search(UserQuery.builder().setOrganizationUuid(otherOrg.getUuid()).build(), new SearchOptions()).getTotal()).isEqualTo(1);
     verify(projectLifeCycleListeners).onProjectsDeleted(emptySet());

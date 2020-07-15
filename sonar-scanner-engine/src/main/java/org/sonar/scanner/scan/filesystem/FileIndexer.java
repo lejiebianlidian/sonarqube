@@ -44,6 +44,8 @@ import org.sonar.scanner.issue.ignore.scanner.IssueExclusionsLoader;
 import org.sonar.scanner.scan.ScanProperties;
 import org.sonar.scanner.util.ProgressReport;
 
+import static java.lang.String.format;
+
 /**
  * Index input files into {@link InputComponentStore}.
  */
@@ -98,14 +100,6 @@ public class FileIndexer {
     throws IOException {
     // get case of real file without resolving link
     Path realAbsoluteFile = sourceFile.toRealPath(LinkOption.NOFOLLOW_LINKS).toAbsolutePath().normalize();
-    if (!realAbsoluteFile.startsWith(project.getBaseDir())) {
-      LOG.warn("File '{}' is ignored. It is not located in project basedir '{}'.", realAbsoluteFile.toAbsolutePath(), project.getBaseDir());
-      return;
-    }
-    if (!realAbsoluteFile.startsWith(module.getBaseDir())) {
-      LOG.warn("File '{}' is ignored. It is not located in module basedir '{}'.", realAbsoluteFile.toAbsolutePath(), module.getBaseDir());
-      return;
-    }
     Path projectRelativePath = project.getBaseDir().relativize(realAbsoluteFile);
     Path moduleRelativePath = module.getBaseDir().relativize(realAbsoluteFile);
     boolean included = evaluateInclusionsFilters(moduleExclusionFilters, realAbsoluteFile, projectRelativePath, moduleRelativePath, type);
@@ -116,6 +110,14 @@ public class FileIndexer {
     boolean excluded = evaluateExclusionsFilters(moduleExclusionFilters, realAbsoluteFile, projectRelativePath, moduleRelativePath, type);
     if (excluded) {
       exclusionCounter.increaseByPatternsCount();
+      return;
+    }
+    if (!realAbsoluteFile.startsWith(project.getBaseDir())) {
+      LOG.warn("File '{}' is ignored. It is not located in project basedir '{}'.", realAbsoluteFile.toAbsolutePath(), project.getBaseDir());
+      return;
+    }
+    if (!realAbsoluteFile.startsWith(module.getBaseDir())) {
+      LOG.warn("File '{}' is ignored. It is not located in module basedir '{}'.", realAbsoluteFile.toAbsolutePath(), module.getBaseDir());
       return;
     }
 
@@ -141,7 +143,8 @@ public class FileIndexer {
     checkIfAlreadyIndexed(inputFile);
     componentStore.put(module.key(), inputFile);
     issueExclusionsLoader.addMulticriteriaPatterns(inputFile);
-    LOG.debug("'{}' indexed {}with language '{}'", projectRelativePath, type == Type.TEST ? "as test " : "", inputFile.language());
+    String langStr = inputFile.language() != null ? format("with language '%s'", inputFile.language()) : "with no language";
+    LOG.debug("'{}' indexed {}{}", projectRelativePath, type == Type.TEST ? "as test " : "", langStr);
     evaluateCoverageExclusions(moduleCoverageAndDuplicationExclusions, inputFile);
     evaluateDuplicationExclusions(moduleCoverageAndDuplicationExclusions, inputFile);
     if (properties.preloadFileMetadata()) {

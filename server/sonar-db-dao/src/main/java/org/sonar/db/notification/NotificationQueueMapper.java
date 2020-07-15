@@ -28,7 +28,7 @@ public interface NotificationQueueMapper {
 
   void insert(NotificationQueueDto actionPlanDto);
 
-  void delete(long id);
+  void delete(String uuid);
 
   List<NotificationQueueDto> findOldest(int count);
 

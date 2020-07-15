@@ -61,7 +61,7 @@ class RuleActivationContext {
   private final ListMultimap<String, QProfileDto> profilesByParentUuid = ArrayListMultimap.create();
 
   // The rules/active rules involved in the group of activations/de-activations
-  private final Map<Integer, RuleWrapper> rulesById = new HashMap<>();
+  private final Map<String, RuleWrapper> rulesByUuid = new HashMap<>();
   private final Map<ActiveRuleKey, ActiveRuleWrapper> activeRulesByKey = new HashMap<>();
 
   // Cursors used to move in the rules and in the tree of profiles.
@@ -81,10 +81,10 @@ class RuleActivationContext {
     this.date = builder.date;
     this.descendantProfilesSupplier = builder.descendantProfilesSupplier;
 
-    ListMultimap<Integer, RuleParamDto> paramsByRuleId = builder.ruleParams.stream().collect(index(RuleParamDto::getRuleId));
+    ListMultimap<String, RuleParamDto> paramsByRuleId = builder.ruleParams.stream().collect(index(RuleParamDto::getRuleUuid));
     for (RuleDefinitionDto rule : builder.rules) {
-      RuleWrapper wrapper = new RuleWrapper(rule, paramsByRuleId.get(rule.getId()));
-      rulesById.put(rule.getId(), wrapper);
+      RuleWrapper wrapper = new RuleWrapper(rule, paramsByRuleId.get(rule.getUuid()));
+      rulesByUuid.put(rule.getUuid(), wrapper);
     }
 
     this.baseRulesProfile = builder.baseRulesProfile;
@@ -102,9 +102,9 @@ class RuleActivationContext {
   }
 
   private void register(Collection<ActiveRuleDto> activeRules, Collection<ActiveRuleParamDto> activeRuleParams) {
-    ListMultimap<Integer, ActiveRuleParamDto> paramsByActiveRuleId = activeRuleParams.stream().collect(index(ActiveRuleParamDto::getActiveRuleId));
+    ListMultimap<String, ActiveRuleParamDto> paramsByActiveRuleUuid = activeRuleParams.stream().collect(index(ActiveRuleParamDto::getActiveRuleUuid));
     for (ActiveRuleDto activeRule : activeRules) {
-      ActiveRuleWrapper wrapper = new ActiveRuleWrapper(activeRule, paramsByActiveRuleId.get(activeRule.getId()));
+      ActiveRuleWrapper wrapper = new ActiveRuleWrapper(activeRule, paramsByActiveRuleUuid.get(activeRule.getUuid()));
       this.activeRulesByKey.put(activeRule.getKey(), wrapper);
     }
   }
@@ -166,7 +166,7 @@ class RuleActivationContext {
    * Whether the profile cursor is on the base profile or not.
    */
   boolean isCascading() {
-    return currentRulesProfile != null && !currentRulesProfile.getKee().equals(baseRulesProfile.getKee());
+    return currentRulesProfile != null && !currentRulesProfile.getUuid().equals(baseRulesProfile.getUuid());
   }
 
   /**
@@ -193,9 +193,9 @@ class RuleActivationContext {
       return;
     }
     Collection<QProfileDto> baseProfiles = profilesByUuid.values().stream()
-      .filter(p -> p.getRulesProfileUuid().equals(baseRulesProfile.getKee()))
+      .filter(p -> p.getRulesProfileUuid().equals(baseRulesProfile.getUuid()))
       .collect(toArrayList(profilesByUuid.size()));
-    DescendantProfilesSupplier.Result result = descendantProfilesSupplier.get(baseProfiles, rulesById.keySet());
+    DescendantProfilesSupplier.Result result = descendantProfilesSupplier.get(baseProfiles, rulesByUuid.keySet());
     register(result.getProfiles());
     register(result.getActiveRules(), result.getActiveRuleParams());
     descendantsLoaded = true;
@@ -204,8 +204,8 @@ class RuleActivationContext {
   /**
    * Move the cursor to the given rule and back to the base profile.
    */
-  public void reset(int ruleId) {
-    doSwitch(this.baseRulesProfile, ruleId);
+  public void reset(String ruleUuid) {
+    doSwitch(this.baseRulesProfile, ruleUuid);
   }
 
   /**
@@ -216,19 +216,19 @@ class RuleActivationContext {
     QProfileDto qp = requireNonNull(this.profilesByUuid.get(to.getKee()), () -> "No profile with uuid " + to.getKee());
 
     RulesProfileDto ruleProfile = RulesProfileDto.from(qp);
-    doSwitch(ruleProfile, getRule().get().getId());
+    doSwitch(ruleProfile, getRule().get().getUuid());
   }
 
-  private void doSwitch(RulesProfileDto ruleProfile, int ruleId) {
-    this.currentRule = rulesById.get(ruleId);
-    checkRequest(this.currentRule != null, "Rule with ID %s not found", ruleId);
+  private void doSwitch(RulesProfileDto ruleProfile, String ruleUuid) {
+    this.currentRule = rulesByUuid.get(ruleUuid);
+    checkRequest(this.currentRule != null, "Rule with UUID %s not found", ruleUuid);
     RuleKey ruleKey = currentRule.get().getKey();
 
     checkRequest(ruleProfile.getLanguage().equals(currentRule.get().getLanguage()),
       "%s rule %s cannot be activated on %s profile %s", currentRule.get().getLanguage(), ruleKey, ruleProfile.getLanguage(), ruleProfile.getName());
     this.currentRulesProfile = ruleProfile;
     this.currentProfiles = profilesByUuid.values().stream()
-      .filter(p -> p.getRulesProfileUuid().equals(ruleProfile.getKee()))
+      .filter(p -> p.getRulesProfileUuid().equals(ruleProfile.getUuid()))
       .collect(Collectors.toList());
     this.currentActiveRule = this.activeRulesByKey.get(ActiveRuleKey.of(ruleProfile, ruleKey));
     this.currentParentActiveRule = this.currentProfiles.stream()

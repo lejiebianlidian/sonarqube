@@ -19,13 +19,16 @@
  */
 package org.sonar.db.component;
 
+import com.google.common.collect.Sets;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +40,7 @@ import org.sonar.db.project.ProjectDto;
 import org.sonar.db.protobuf.DbProjectBranches;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.StringUtils.repeat;
@@ -506,6 +510,26 @@ public class BranchDaoTest {
   }
 
   @Test
+  public void selectProjectUuidsWithIssuesNeedSync() {
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+    ComponentDto project3 = db.components().insertPrivateProject();
+    ComponentDto project4 = db.components().insertPrivateProject();
+    ProjectDto project1Dto = db.components().getProjectDto(project1);
+    ProjectDto project2Dto = db.components().getProjectDto(project2);
+    ProjectDto project3Dto = db.components().getProjectDto(project3);
+    ProjectDto project4Dto = db.components().getProjectDto(project4);
+
+    BranchDto branch1 = db.components().insertProjectBranch(project1Dto, branchDto -> branchDto.setNeedIssueSync(true));
+    BranchDto branch2 = db.components().insertProjectBranch(project1Dto, branchDto -> branchDto.setNeedIssueSync(false));
+    BranchDto branch3 = db.components().insertProjectBranch(project2Dto);
+
+    assertThat(underTest.selectProjectUuidsWithIssuesNeedSync(db.getSession(),
+      Sets.newHashSet(project1Dto.getUuid(), project2Dto.getUuid(), project3Dto.getUuid(), project4Dto.getUuid())))
+        .containsOnly(project1.uuid());
+  }
+
+  @Test
   public void existsNonMainBranch() {
     assertThat(underTest.hasNonMainBranches(dbSession)).isFalse();
     ComponentDto project = db.components().insertPrivateProject();
@@ -516,6 +540,22 @@ public class BranchDaoTest {
 
     ComponentDto branch2 = db.components().insertProjectBranch(project);
     assertThat(underTest.hasNonMainBranches(dbSession)).isTrue();
+  }
+
+  @Test
+  public void hasAnyBranchWhereNeedIssueSync() {
+    assertThat(underTest.hasAnyBranchWhereNeedIssueSync(dbSession, true)).isFalse();
+    assertThat(underTest.hasAnyBranchWhereNeedIssueSync(dbSession, false)).isFalse();
+
+    ComponentDto project = db.components().insertPrivateProject();
+    ComponentDto branch = db.components().insertProjectBranch(project, b -> b.setNeedIssueSync(false));
+
+    assertThat(underTest.hasAnyBranchWhereNeedIssueSync(dbSession, true)).isFalse();
+    assertThat(underTest.hasAnyBranchWhereNeedIssueSync(dbSession, false)).isTrue();
+
+    project = db.components().insertPrivateProject();
+    branch = db.components().insertProjectBranch(project, b -> b.setNeedIssueSync(true));
+    assertThat(underTest.hasAnyBranchWhereNeedIssueSync(dbSession, true)).isTrue();
   }
 
   @Test
@@ -534,7 +574,121 @@ public class BranchDaoTest {
     assertThat(underTest.countByTypeAndCreationDate(dbSession, BranchType.PULL_REQUEST, NOW + 100)).isEqualTo(0);
   }
 
-  private static String emptyToNull(@Nullable String newValue) {
-    return newValue == null || newValue.isEmpty() ? null : newValue;
+  @Test
+  public void countByNeedIssueSync() {
+    assertThat(underTest.countByNeedIssueSync(dbSession, true)).isZero();
+    assertThat(underTest.countByNeedIssueSync(dbSession, false)).isZero();
+
+    // master branch with flag set to false
+    ComponentDto project = db.components().insertPrivateProject();
+    // branches & PRs
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(true));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(false));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(true));
+
+    assertThat(underTest.countByNeedIssueSync(dbSession, true)).isEqualTo(4);
+    assertThat(underTest.countByNeedIssueSync(dbSession, false)).isEqualTo(4);
+  }
+
+  @Test
+  public void countAll() {
+    assertThat(underTest.countAll(dbSession)).isZero();
+
+    ComponentDto project = db.components().insertPrivateProject();
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(true));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(false));
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(true));
+
+    assertThat(underTest.countAll(dbSession)).isEqualTo(8);
+  }
+
+  @Test
+  public void selectBranchNeedingIssueSync() {
+    ComponentDto project = db.components().insertPrivateProject();
+    String uuid = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true)).uuid();
+    db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+
+    assertThat(underTest.selectBranchNeedingIssueSync(dbSession))
+      .extracting(BranchDto::getUuid)
+      .containsExactly(uuid);
+  }
+
+  @Test
+  public void updateAllNeedIssueSync() {
+    ComponentDto project = db.components().insertPrivateProject();
+    String uuid1 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true)).uuid();
+    String uuid2 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false)).uuid();
+
+    underTest.updateAllNeedIssueSync(dbSession);
+
+    Optional<BranchDto> project1 = underTest.selectByUuid(dbSession, uuid1);
+    assertThat(project1).isPresent();
+    assertThat(project1.get().isNeedIssueSync()).isTrue();
+
+    Optional<BranchDto> project2 = underTest.selectByUuid(dbSession, uuid2);
+    assertThat(project2).isPresent();
+    assertThat(project2.get().isNeedIssueSync()).isTrue();
+  }
+
+  @Test
+  public void updateNeedIssueSync() {
+    ComponentDto project = db.components().insertPrivateProject();
+    String uuid1 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false)).uuid();
+    String uuid2 = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true)).uuid();
+
+    underTest.updateNeedIssueSync(dbSession, uuid1, true);
+    underTest.updateNeedIssueSync(dbSession, uuid2, false);
+
+    Optional<BranchDto> project1 = underTest.selectByUuid(dbSession, uuid1);
+    assertThat(project1).isPresent();
+    assertThat(project1.get().isNeedIssueSync()).isTrue();
+
+    Optional<BranchDto> project2 = underTest.selectByUuid(dbSession, uuid2);
+    assertThat(project2).isPresent();
+    assertThat(project2.get().isNeedIssueSync()).isFalse();
+  }
+
+  @Test
+  public void doAnyOfComponentsNeedIssueSync() {
+    assertThat(underTest.doAnyOfComponentsNeedIssueSync(dbSession, emptyList())).isFalse();
+
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+    ProjectDto projectDto = db.components().getProjectDto(project1);
+    db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+    BranchDto projectBranch1 = db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+    BranchDto projectBranch2 = db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+    db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(false));
+    BranchDto pullRequest1 = db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(true));
+    BranchDto pullRequest2 = db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(false));
+    db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.PULL_REQUEST).setNeedIssueSync(true));
+
+    assertThat(underTest.doAnyOfComponentsNeedIssueSync(dbSession, singletonList(project1.getKey()))).isTrue();
+    assertThat(underTest.doAnyOfComponentsNeedIssueSync(dbSession, singletonList(project2.getKey()))).isFalse();
+  }
+
+  @Test
+  public void doAnyOfComponentsNeedIssueSync_test_more_than_1000() {
+    List<String> componentKeys = IntStream.range(0, 1100).mapToObj(value -> db.components().insertPrivateProject())
+      .map(ComponentDto::getDbKey)
+      .collect(Collectors.toList());
+
+    assertThat(underTest.doAnyOfComponentsNeedIssueSync(dbSession, componentKeys)).isFalse();
+
+    ComponentDto project = db.components().insertPrivateProject();
+    ProjectDto projectDto = db.components().getProjectDto(project);
+    db.components().insertProjectBranch(projectDto, b -> b.setBranchType(BranchType.BRANCH).setNeedIssueSync(true));
+
+    componentKeys.add(project.getDbKey());
+
+    assertThat(underTest.doAnyOfComponentsNeedIssueSync(dbSession, componentKeys)).isTrue();
   }
 }

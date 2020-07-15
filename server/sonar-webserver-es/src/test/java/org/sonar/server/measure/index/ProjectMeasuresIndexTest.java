@@ -21,6 +21,7 @@ package org.sonar.server.measure.index;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -58,12 +59,12 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.groups.Tuple.tuple;
 import static org.sonar.api.measures.CoreMetrics.ALERT_STATUS_KEY;
 import static org.sonar.api.measures.CoreMetrics.COVERAGE_KEY;
 import static org.sonar.api.measures.Metric.Level.ERROR;
 import static org.sonar.api.measures.Metric.Level.OK;
 import static org.sonar.api.measures.Metric.Level.WARN;
+import static org.sonar.api.resources.Qualifiers.APP;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
 import static org.sonar.db.user.GroupTesting.newGroupDto;
@@ -71,6 +72,7 @@ import static org.sonar.db.user.UserTesting.newUserDto;
 import static org.sonar.server.measure.index.ProjectMeasuresIndexDefinition.FIELD_TAGS;
 import static org.sonar.server.measure.index.ProjectMeasuresIndexDefinition.TYPE_PROJECT_MEASURES;
 import static org.sonar.server.measure.index.ProjectMeasuresQuery.Operator;
+import static org.sonarqube.ws.client.project.ProjectsWsParameters.FILTER_QUALIFIER;
 
 @RunWith(DataProviderRunner.class)
 public class ProjectMeasuresIndexTest {
@@ -97,6 +99,9 @@ public class ProjectMeasuresIndexTest {
   private static final ComponentDto PROJECT1 = ComponentTesting.newPrivateProjectDto(ORG).setUuid("Project-1").setName("Project 1").setDbKey("key-1");
   private static final ComponentDto PROJECT2 = ComponentTesting.newPrivateProjectDto(ORG).setUuid("Project-2").setName("Project 2").setDbKey("key-2");
   private static final ComponentDto PROJECT3 = ComponentTesting.newPrivateProjectDto(ORG).setUuid("Project-3").setName("Project 3").setDbKey("key-3");
+  private static final ComponentDto APP1 = ComponentTesting.newApplication(ORG).setUuid("App-1").setName("App 1").setDbKey("app-key-1");
+  private static final ComponentDto APP2 = ComponentTesting.newApplication(ORG).setUuid("App-2").setName("App 2").setDbKey("app-key-2");
+  private static final ComponentDto APP3 = ComponentTesting.newApplication(ORG).setUuid("App-3").setName("App 3").setDbKey("app-key-3");
   private static final UserDto USER1 = newUserDto();
   private static final UserDto USER2 = newUserDto();
   private static final GroupDto GROUP1 = newGroupDto();
@@ -208,7 +213,7 @@ public class ProjectMeasuresIndexTest {
 
     SearchIdResult<String> result = underTest.search(new ProjectMeasuresQuery(), new SearchOptions().setPage(2, 3));
 
-    assertThat(result.getIds()).containsExactly("P4", "P5", "P6");
+    assertThat(result.getUuids()).containsExactly("P4", "P5", "P6");
     assertThat(result.getTotal()).isEqualTo(9);
   }
 
@@ -491,58 +496,79 @@ public class ProjectMeasuresIndexTest {
   }
 
   @Test
-  public void return_only_projects_authorized_for_user() {
-    indexForUser(USER1, newDoc(PROJECT1), newDoc(PROJECT2));
-    indexForUser(USER2, newDoc(PROJECT3));
+  public void filter_on_qualifier() {
+    index(newDoc(PROJECT1), newDoc(PROJECT2), newDoc(PROJECT3),
+      newDoc(APP1), newDoc(APP2), newDoc(APP3));
 
-    userSession.logIn(USER1);
-    assertResults(new ProjectMeasuresQuery(), PROJECT1, PROJECT2);
+    assertResults(new ProjectMeasuresQuery(),
+      APP1, APP2, APP3, PROJECT1, PROJECT2, PROJECT3);
+
+    assertResults(new ProjectMeasuresQuery().setQualifiers(Sets.newHashSet(PROJECT, APP)),
+      APP1, APP2, APP3, PROJECT1, PROJECT2, PROJECT3);
+
+    assertResults(new ProjectMeasuresQuery().setQualifiers(Sets.newHashSet(PROJECT)),
+      PROJECT1, PROJECT2, PROJECT3);
+
+    assertResults(new ProjectMeasuresQuery().setQualifiers(Sets.newHashSet(APP)),
+      APP1, APP2, APP3);
   }
 
   @Test
-  public void return_only_projects_authorized_for_user_groups() {
-    indexForGroup(GROUP1, newDoc(PROJECT1), newDoc(PROJECT2));
+  public void return_only_projects_and_applications_authorized_for_user() {
+    indexForUser(USER1, newDoc(PROJECT1), newDoc(PROJECT2),
+      newDoc(APP1), newDoc(APP2));
+    indexForUser(USER2, newDoc(PROJECT3), newDoc(APP3));
+
+    userSession.logIn(USER1);
+    assertResults(new ProjectMeasuresQuery(), APP1, APP2, PROJECT1, PROJECT2);
+  }
+
+  @Test
+  public void return_only_projects_and_applications_authorized_for_user_groups() {
+    indexForGroup(GROUP1, newDoc(PROJECT1), newDoc(PROJECT2),
+      newDoc(APP1), newDoc(APP2));
     indexForGroup(GROUP2, newDoc(PROJECT3));
 
     userSession.logIn().setGroups(GROUP1);
-    assertResults(new ProjectMeasuresQuery(), PROJECT1, PROJECT2);
+    assertResults(new ProjectMeasuresQuery(), APP1, APP2, PROJECT1, PROJECT2);
   }
 
   @Test
-  public void return_only_projects_authorized_for_user_and_groups() {
-    indexForUser(USER1, newDoc(PROJECT1), newDoc(PROJECT2));
+  public void return_only_projects_and_applications_authorized_for_user_and_groups() {
+    indexForUser(USER1, newDoc(PROJECT1), newDoc(PROJECT2),
+      newDoc(APP1), newDoc(APP2));
     indexForGroup(GROUP1, newDoc(PROJECT3));
 
     userSession.logIn(USER1).setGroups(GROUP1);
-    assertResults(new ProjectMeasuresQuery(), PROJECT1, PROJECT2, PROJECT3);
+    assertResults(new ProjectMeasuresQuery(), APP1, APP2, PROJECT1, PROJECT2, PROJECT3);
   }
 
   @Test
-  public void anonymous_user_can_only_access_projects_authorized_for_anyone() {
-    index(newDoc(PROJECT1));
-    indexForUser(USER1, newDoc(PROJECT2));
+  public void anonymous_user_can_only_access_projects_and_applications_authorized_for_anyone() {
+    index(newDoc(PROJECT1), newDoc(APP1));
+    indexForUser(USER1, newDoc(PROJECT2), newDoc(APP2));
 
     userSession.anonymous();
-    assertResults(new ProjectMeasuresQuery(), PROJECT1);
+    assertResults(new ProjectMeasuresQuery(), APP1, PROJECT1);
   }
 
   @Test
-  public void root_user_can_access_all_projects() {
-    indexForUser(USER1, newDoc(PROJECT1));
+  public void root_user_can_access_all_projects_and_applications() {
+    indexForUser(USER1, newDoc(PROJECT1), newDoc(APP1));
     // connecting with a root but not USER1
     userSession.logIn().setRoot();
 
-    assertResults(new ProjectMeasuresQuery(), PROJECT1);
+    assertResults(new ProjectMeasuresQuery(), APP1, PROJECT1);
   }
 
   @Test
-  public void return_all_projects_when_setIgnoreAuthorization_is_true() {
-    indexForUser(USER1, newDoc(PROJECT1), newDoc(PROJECT2));
-    indexForUser(USER2, newDoc(PROJECT3));
+  public void return_all_projects_and_applications_when_setIgnoreAuthorization_is_true() {
+    indexForUser(USER1, newDoc(PROJECT1), newDoc(PROJECT2), newDoc(APP1), newDoc(APP2));
+    indexForUser(USER2, newDoc(PROJECT3), newDoc(APP3));
     userSession.logIn(USER1);
 
-    assertResults(new ProjectMeasuresQuery().setIgnoreAuthorization(false), PROJECT1, PROJECT2);
-    assertResults(new ProjectMeasuresQuery().setIgnoreAuthorization(true), PROJECT1, PROJECT2, PROJECT3);
+    assertResults(new ProjectMeasuresQuery().setIgnoreAuthorization(false), APP1, APP2, PROJECT1, PROJECT2);
+    assertResults(new ProjectMeasuresQuery().setIgnoreAuthorization(true), APP1, APP2, APP3, PROJECT1, PROJECT2, PROJECT3);
   }
 
   @Test
@@ -1239,10 +1265,11 @@ public class ProjectMeasuresIndexTest {
     assertThat(underTest.search(new ProjectMeasuresQuery().setIgnoreWarning(true), new SearchOptions().addFacets(ALERT_STATUS_KEY)).getFacets().get(ALERT_STATUS_KEY)).containsOnly(
       entry(ERROR.name(), 4L),
       entry(OK.name(), 2L));
-    assertThat(underTest.search(new ProjectMeasuresQuery().setIgnoreWarning(false), new SearchOptions().addFacets(ALERT_STATUS_KEY)).getFacets().get(ALERT_STATUS_KEY)).containsOnly(
-      entry(ERROR.name(), 4L),
-      entry(WARN.name(), 0L),
-      entry(OK.name(), 2L));
+    assertThat(underTest.search(new ProjectMeasuresQuery().setIgnoreWarning(false), new SearchOptions().addFacets(ALERT_STATUS_KEY)).getFacets().get(ALERT_STATUS_KEY))
+      .containsOnly(
+        entry(ERROR.name(), 4L),
+        entry(WARN.name(), 0L),
+        entry(OK.name(), 2L));
   }
 
   @Test
@@ -1347,6 +1374,80 @@ public class ProjectMeasuresIndexTest {
     assertThat(result).containsOnly(
       entry("java", 2L),
       entry("xoo", 1L));
+  }
+
+  @Test
+  public void facet_qualifier() {
+    index(
+      // 2 docs with qualifier APP
+      newDoc().setQualifier(APP),
+      newDoc().setQualifier(APP),
+      // 4 docs with qualifier TRK
+      newDoc().setQualifier(PROJECT),
+      newDoc().setQualifier(PROJECT),
+      newDoc().setQualifier(PROJECT),
+      newDoc().setQualifier(PROJECT));
+
+    LinkedHashMap<String, Long> result = underTest.search(new ProjectMeasuresQuery(), new SearchOptions().addFacets(FILTER_QUALIFIER)).getFacets().get(FILTER_QUALIFIER);
+
+    assertThat(result).containsOnly(
+      entry(APP, 2L),
+      entry(PROJECT, 4L));
+  }
+
+  @Test
+  public void facet_qualifier_is_sticky() {
+    index(
+      // 2 docs with qualifier APP
+      newDoc(NCLOC, 10d, COVERAGE, 0d).setQualifier(APP),
+      newDoc(NCLOC, 10d, COVERAGE, 0d).setQualifier(APP),
+      // 4 docs with qualifier TRK
+      newDoc(NCLOC, 100d, COVERAGE, 0d).setQualifier(PROJECT),
+      newDoc(NCLOC, 5000d, COVERAGE, 40d).setQualifier(PROJECT),
+      newDoc(NCLOC, 12000d, COVERAGE, 50d).setQualifier(PROJECT),
+      newDoc(NCLOC, 13000d, COVERAGE, 60d).setQualifier(PROJECT));
+
+    Facets facets = underTest.search(new ProjectMeasuresQuery()
+      .setQualifiers(Sets.newHashSet(PROJECT))
+      .addMetricCriterion(MetricCriterion.create(COVERAGE, Operator.LT, 55d)),
+      new SearchOptions().addFacets(FILTER_QUALIFIER, NCLOC)).getFacets();
+
+    // Sticky facet on qualifier does not take into account qualifier filter
+    assertThat(facets.get(FILTER_QUALIFIER)).containsOnly(
+      entry(APP, 2L),
+      entry(PROJECT, 3L));
+    // But facet on ncloc does well take into into filters
+    assertThat(facets.get(NCLOC)).containsExactly(
+      entry("*-1000.0", 1L),
+      entry("1000.0-10000.0", 1L),
+      entry("10000.0-100000.0", 1L),
+      entry("100000.0-500000.0", 0L),
+      entry("500000.0-*", 0L));
+  }
+
+  @Test
+  public void facet_qualifier_contains_only_app_and_projects_authorized_for_user() {
+    // User can see these projects
+    indexForUser(USER1,
+      // 3 docs with qualifier APP, PROJECT
+      newDoc().setQualifier(APP),
+      newDoc().setQualifier(APP),
+      newDoc().setQualifier(PROJECT));
+
+    // User cannot see these projects
+    indexForUser(USER2,
+      // 4 docs with qualifier PROJECT
+      newDoc().setQualifier(PROJECT),
+      newDoc().setQualifier(PROJECT),
+      newDoc().setQualifier(PROJECT),
+      newDoc().setQualifier(PROJECT));
+
+    userSession.logIn(USER1);
+    LinkedHashMap<String, Long> result = underTest.search(new ProjectMeasuresQuery(), new SearchOptions().addFacets(FILTER_QUALIFIER)).getFacets().get(FILTER_QUALIFIER);
+
+    assertThat(result).containsOnly(
+      entry(APP, 2L),
+      entry(PROJECT, 1L));
   }
 
   @Test
@@ -1512,6 +1613,51 @@ public class ProjectMeasuresIndexTest {
   }
 
   @Test
+  public void search_statistics_should_ignore_applications() {
+    es.putDocuments(TYPE_PROJECT_MEASURES,
+      // insert projects
+      newDoc(ComponentTesting.newPrivateProjectDto(ORG), "lines", 10, "coverage", 80)
+        .setLanguages(Arrays.asList("java", "cs", "js"))
+        .setNclocLanguageDistributionFromMap(ImmutableMap.of("java", 200, "cs", 250, "js", 50)),
+      newDoc(ComponentTesting.newPrivateProjectDto(ORG), "lines", 20, "coverage", 80)
+        .setLanguages(Arrays.asList("java", "python", "kotlin"))
+        .setNclocLanguageDistributionFromMap(ImmutableMap.of("java", 300, "python", 100, "kotlin", 404)),
+
+      // insert applications
+      newDoc(ComponentTesting.newApplication(ORG), "lines", 1000, "coverage", 70)
+        .setLanguages(Arrays.asList("java", "python", "kotlin"))
+        .setNclocLanguageDistributionFromMap(ImmutableMap.of("java", 300, "python", 100, "kotlin", 404)),
+      newDoc(ComponentTesting.newApplication(ORG), "lines", 20, "coverage", 80)
+        .setLanguages(Arrays.asList("java", "python", "kotlin"))
+        .setNclocLanguageDistributionFromMap(ImmutableMap.of("java", 300, "python", 100, "kotlin", 404)));
+
+    ProjectMeasuresStatistics result = underTest.searchTelemetryStatistics();
+
+    assertThat(result.getProjectCount()).isEqualTo(2);
+    assertThat(result.getProjectCountByLanguage()).containsOnly(
+      entry("java", 2L), entry("cs", 1L), entry("js", 1L), entry("python", 1L), entry("kotlin", 1L));
+    assertThat(result.getNclocByLanguage()).containsOnly(
+      entry("java", 500L), entry("cs", 250L), entry("js", 50L), entry("python", 100L), entry("kotlin", 404L));
+  }
+
+  @Test
+  public void search_statistics_should_count_0_if_no_projects() {
+    es.putDocuments(TYPE_PROJECT_MEASURES,
+      // insert applications
+      newDoc(ComponentTesting.newApplication(ORG), "lines", 1000, "coverage", 70)
+        .setLanguages(Arrays.asList("java", "python", "kotlin"))
+        .setNclocLanguageDistributionFromMap(ImmutableMap.of("java", 300, "python", 100, "kotlin", 404)),
+      newDoc(ComponentTesting.newApplication(ORG), "lines", 20, "coverage", 80)
+        .setLanguages(Arrays.asList("java", "python", "kotlin"))
+        .setNclocLanguageDistributionFromMap(ImmutableMap.of("java", 300, "python", 100, "kotlin", 404)));
+
+    ProjectMeasuresStatistics result = underTest.searchTelemetryStatistics();
+
+    assertThat(result.getProjectCount()).isEqualTo(0);
+    assertThat(result.getProjectCountByLanguage()).isEmpty();
+  }
+
+  @Test
   public void fail_if_page_size_greater_than_500() {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Page size must be lower than or equals to 500");
@@ -1526,12 +1672,12 @@ public class ProjectMeasuresIndexTest {
 
   private void indexForUser(UserDto user, ProjectMeasuresDoc... docs) {
     es.putDocuments(TYPE_PROJECT_MEASURES, docs);
-    authorizationIndexer.allow(stream(docs).map(doc -> new IndexPermissions(doc.getId(), PROJECT).addUserId(user.getId())).collect(toList()));
+    authorizationIndexer.allow(stream(docs).map(doc -> new IndexPermissions(doc.getId(), PROJECT).addUserUuid(user.getUuid())).collect(toList()));
   }
 
   private void indexForGroup(GroupDto group, ProjectMeasuresDoc... docs) {
     es.putDocuments(TYPE_PROJECT_MEASURES, docs);
-    authorizationIndexer.allow(stream(docs).map(doc -> new IndexPermissions(doc.getId(), PROJECT).addGroupId(group.getId())).collect(toList()));
+    authorizationIndexer.allow(stream(docs).map(doc -> new IndexPermissions(doc.getId(), PROJECT).addGroupUuid(group.getUuid())).collect(toList()));
   }
 
   private static ProjectMeasuresDoc newDoc(ComponentDto project) {
@@ -1539,7 +1685,8 @@ public class ProjectMeasuresIndexTest {
       .setOrganizationUuid(project.getOrganizationUuid())
       .setId(project.uuid())
       .setKey(project.getDbKey())
-      .setName(project.name());
+      .setName(project.name())
+      .setQualifier(project.qualifier());
   }
 
   private static ProjectMeasuresDoc newDoc() {
@@ -1579,7 +1726,7 @@ public class ProjectMeasuresIndexTest {
   }
 
   private void assertResults(ProjectMeasuresQuery query, ComponentDto... expectedProjects) {
-    List<String> result = underTest.search(query, new SearchOptions()).getIds();
+    List<String> result = underTest.search(query, new SearchOptions()).getUuids();
     assertThat(result).containsExactly(Arrays.stream(expectedProjects).map(ComponentDto::uuid).toArray(String[]::new));
   }
 

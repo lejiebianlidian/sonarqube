@@ -93,8 +93,9 @@ public class QualityGateDbTester {
 
   @SafeVarargs
   public final QualityGateConditionDto addCondition(QualityGateDto qualityGate, MetricDto metric, Consumer<QualityGateConditionDto>... dtoPopulators) {
-    QualityGateConditionDto condition = new QualityGateConditionDto().setQualityGateId(qualityGate.getId())
-      .setMetricId(metric.getId())
+    QualityGateConditionDto condition = new QualityGateConditionDto().setQualityGateUuid(qualityGate.getUuid())
+      .setUuid(Uuids.createFast())
+      .setMetricUuid(metric.getUuid())
       .setOperator("GT")
       .setErrorThreshold(randomNumeric(10));
     Arrays.stream(dtoPopulators).forEach(dtoPopulator -> dtoPopulator.accept(condition));

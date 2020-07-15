@@ -28,12 +28,12 @@ import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.api.rule.Severity;
 import org.sonar.api.rules.RulePriority;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition.NewBuiltInQualityProfile;
 import org.sonar.api.utils.System2;
-import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.qualityprofile.ActiveRuleDto;
@@ -357,12 +357,12 @@ public class BuiltInQProfileUpdateImplTest {
     assertThat(activeRule.getCreatedAt()).isNotNull();
     assertThat(activeRule.getUpdatedAt()).isNotNull();
 
-    List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleId(db.getSession(), activeRule.getId());
+    List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid());
     assertThat(params).hasSize(expectedParams.size());
 
     if (changes != null) {
       ActiveRuleChange change = changes.stream()
-        .filter(c -> c.getActiveRule().getId().equals(activeRule.getId()))
+        .filter(c -> c.getActiveRule().getUuid().equals(activeRule.getUuid()))
         .findFirst().orElseThrow(IllegalStateException::new);
       assertThat(change.getInheritance()).isEqualTo(expectedInheritance);
       assertThat(change.getSeverity()).isEqualTo(expectedSeverity);
@@ -371,7 +371,7 @@ public class BuiltInQProfileUpdateImplTest {
   }
 
   private static void assertThatRuleHasParams(DbTester db, ActiveRuleDto activeRule, Tuple... expectedParams) {
-    assertThat(db.getDbClient().activeRuleDao().selectParamsByActiveRuleId(db.getSession(), activeRule.getId()))
+    assertThat(db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid()))
       .extracting(ActiveRuleParamDto::getKey, ActiveRuleParamDto::getValue)
       .containsExactlyInAnyOrder(expectedParams);
   }
@@ -404,7 +404,8 @@ public class BuiltInQProfileUpdateImplTest {
   }
 
   private void assertThatRuleIsDeactivated(QProfileDto profile, RuleDefinitionDto rule) {
-    Collection<ActiveRuleDto> activeRules = db.getDbClient().activeRuleDao().selectByRulesAndRuleProfileUuids(db.getSession(), singletonList(rule.getId()), singletonList(profile.getRulesProfileUuid()));
+    Collection<ActiveRuleDto> activeRules = db.getDbClient().activeRuleDao().selectByRulesAndRuleProfileUuids(
+      db.getSession(), singletonList(rule.getUuid()), singletonList(profile.getRulesProfileUuid()));
     assertThat(activeRules).isEmpty();
   }
 
@@ -415,7 +416,7 @@ public class BuiltInQProfileUpdateImplTest {
   private void assertThatProfileIsMarkedAsUpdated(RulesProfileDto dto) {
     RulesProfileDto reloaded = db.getDbClient().qualityProfileDao().selectBuiltInRuleProfiles(db.getSession())
       .stream()
-      .filter(p -> p.getKee().equals(dto.getKee()))
+      .filter(p -> p.getUuid().equals(dto.getUuid()))
       .findFirst()
       .get();
     assertThat(reloaded.getRulesUpdatedAt()).isNotEmpty();
@@ -424,7 +425,7 @@ public class BuiltInQProfileUpdateImplTest {
   private void assertThatProfileIsNotMarkedAsUpdated(RulesProfileDto dto) {
     RulesProfileDto reloaded = db.getDbClient().qualityProfileDao().selectBuiltInRuleProfiles(db.getSession())
       .stream()
-      .filter(p -> p.getKee().equals(dto.getKee()))
+      .filter(p -> p.getUuid().equals(dto.getUuid()))
       .findFirst()
       .get();
     assertThat(reloaded.getRulesUpdatedAt()).isNull();
@@ -438,9 +439,9 @@ public class BuiltInQProfileUpdateImplTest {
 
   private void activateRuleInDb(RulesProfileDto profile, RuleDefinitionDto rule, RulePriority severity) {
     ActiveRuleDto dto = new ActiveRuleDto()
-      .setProfileId(profile.getId())
+      .setProfileUuid(profile.getUuid())
       .setSeverity(severity.name())
-      .setRuleId(rule.getId())
+      .setRuleUuid(rule.getUuid())
       .setCreatedAt(PAST)
       .setUpdatedAt(PAST);
     db.getDbClient().activeRuleDao().insert(db.getSession(), dto);

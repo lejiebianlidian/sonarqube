@@ -22,8 +22,8 @@ import * as React from 'react';
 import { click } from 'sonar-ui-common/helpers/testUtils';
 import UserListItem from '../UserListItem';
 
-jest.mock('../../../../components/intl/DateFromNow');
-jest.mock('../../../../components/intl/DateTimeFormatter');
+jest.mock('sonar-ui-common/components/intl/DateFromNow');
+jest.mock('sonar-ui-common/components/intl/DateTimeFormatter');
 
 const user: T.User = {
   active: true,
@@ -47,13 +47,13 @@ it('should display a change password button', () => {
     shallowRender({ organizationsEnabled: true })
       .find('UserGroups')
       .exists()
-  ).toBeFalsy();
+  ).toBe(false);
 });
 
 it('should open the correct forms', () => {
   const wrapper = shallowRender();
   click(wrapper.find('.js-user-tokens'));
-  expect(wrapper.find('TokensFormModal').exists()).toBeTruthy();
+  expect(wrapper.find('TokensFormModal').exists()).toBe(true);
 });
 
 function shallowRender(props: Partial<UserListItem['props']> = {}) {

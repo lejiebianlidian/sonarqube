@@ -21,6 +21,7 @@ package org.sonar.server.metric.ws;
 
 import com.google.common.collect.Lists;
 import java.util.List;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
@@ -30,6 +31,10 @@ import org.sonar.db.metric.MetricDto;
 import org.sonar.server.user.UserSession;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.join;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_02;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_03;
 
 public class DeleteAction implements MetricsWsAction {
   private static final String PARAM_IDS = "ids";
@@ -52,11 +57,13 @@ public class DeleteAction implements MetricsWsAction {
       .setHandler(this)
       .setSince("5.2")
       .setDeprecatedSince("7.7")
-      .setPost(true);
+      .setPost(true)
+      .setChangelog(
+        new Change("8.4", "Parameter 'ids' format changes from integer to string."));
 
     action.createParam(PARAM_IDS)
-      .setDescription("Metrics ids to delete.")
-      .setExampleValue("5, 23, 42");
+      .setDescription("Metrics uuids to delete.")
+      .setExampleValue(join(", ", UUID_EXAMPLE_01, UUID_EXAMPLE_02, UUID_EXAMPLE_03));
 
     action.createParam(PARAM_KEYS)
       .setDescription("Metrics keys to delete")
@@ -68,9 +75,9 @@ public class DeleteAction implements MetricsWsAction {
     userSession.checkLoggedIn().checkIsSystemAdministrator();
 
     try (DbSession dbSession = dbClient.openSession(false)) {
-      List<Integer> ids = loadIds(dbSession, request);
-      dbClient.metricDao().disableCustomByIds(dbSession, ids);
-      dbClient.customMeasureDao().deleteByMetricIds(dbSession, ids);
+      List<String> uuids = loadUuids(dbSession, request);
+      dbClient.metricDao().disableCustomByUuids(dbSession, uuids);
+      dbClient.customMeasureDao().deleteByMetricUuids(dbSession, uuids);
       dbClient.gateConditionDao().deleteConditionsWithInvalidMetrics(dbSession);
       dbSession.commit();
     }
@@ -78,17 +85,14 @@ public class DeleteAction implements MetricsWsAction {
     response.noContent();
   }
 
-  private List<Integer> loadIds(DbSession dbSession, Request request) {
-    List<String> idsAsStrings = request.paramAsStrings(PARAM_IDS);
+  private List<String> loadUuids(DbSession dbSession, Request request) {
+    List<String> uuids = request.paramAsStrings(PARAM_IDS);
     List<String> keys = request.paramAsStrings(PARAM_KEYS);
-    checkArgument(idsAsStrings != null || keys != null, "Ids or keys must be provided.");
-    List<Integer> ids;
-    if (idsAsStrings != null) {
-      ids = Lists.transform(idsAsStrings, Integer::valueOf);
-    } else {
-      ids = Lists.transform(dbClient.metricDao().selectByKeys(dbSession, keys), MetricDto::getId);
+    checkArgument(uuids != null || keys != null, "Uuids or keys must be provided.");
+    if (uuids == null) {
+      uuids = Lists.transform(dbClient.metricDao().selectByKeys(dbSession, keys), MetricDto::getUuid);
     }
 
-    return ids;
+    return uuids;
   }
 }

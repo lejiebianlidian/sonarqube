@@ -1,73 +1,165 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should render correctly for SonarCloud 1`] = `
+exports[`should render correctly 1`] = `
 <Fragment>
+  <Helmet
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="my_account.create_new.TRK"
+    titleTemplate="%s"
+  />
   <A11ySkipTarget
     anchor="create_project_main"
   />
-  <Connect(withCurrentUser(whenLoggedIn(Connect(withUserOrganizations(Connect(CreateProjectPageSonarCloud))))))
-    location={
-      Object {
-        "action": "PUSH",
-        "hash": "",
-        "key": "key",
-        "pathname": "/path",
-        "query": Object {},
-        "search": "",
-        "state": Object {},
+  <div
+    className="page page-limited huge-spacer-bottom position-relative"
+    id="create-project"
+  >
+    <CreateProjectModeSelection
+      almCounts={
+        Object {
+          "azure": 0,
+          "bitbucket": 0,
+          "github": 0,
+          "gitlab": 0,
+        }
       }
-    }
-    params={Object {}}
-    router={
-      Object {
-        "createHref": [MockFunction],
-        "createPath": [MockFunction],
-        "go": [MockFunction],
-        "goBack": [MockFunction],
-        "goForward": [MockFunction],
-        "isActive": [MockFunction],
-        "push": [MockFunction],
-        "replace": [MockFunction],
-        "setRouteLeaveHook": [MockFunction],
-      }
-    }
-    routes={Array []}
-  />
+      loadingBindings={true}
+      onSelectMode={[Function]}
+    />
+  </div>
 </Fragment>
 `;
 
-exports[`should render correctly for SonarQube 1`] = `
+exports[`should render correctly if no branch support 1`] = `
 <Fragment>
+  <Helmet
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="my_account.create_new.TRK"
+    titleTemplate="%s"
+  />
   <A11ySkipTarget
     anchor="create_project_main"
   />
-  <Connect(withCurrentUser(whenLoggedIn(Connect(withAppState(CreateProjectPageSonarQube)))))
-    location={
-      Object {
-        "action": "PUSH",
-        "hash": "",
-        "key": "key",
-        "pathname": "/path",
-        "query": Object {},
-        "search": "",
-        "state": Object {},
-      }
-    }
-    params={Object {}}
-    router={
-      Object {
-        "createHref": [MockFunction],
-        "createPath": [MockFunction],
-        "go": [MockFunction],
-        "goBack": [MockFunction],
-        "goForward": [MockFunction],
-        "isActive": [MockFunction],
-        "push": [MockFunction],
-        "replace": [MockFunction],
-        "setRouteLeaveHook": [MockFunction],
-      }
-    }
-    routes={Array []}
+  <div
+    className="page page-limited huge-spacer-bottom position-relative"
+    id="create-project"
+  >
+    <ManualProjectCreate
+      onProjectCreate={[Function]}
+    />
+  </div>
+</Fragment>
+`;
+
+exports[`should render correctly if the BBS method is selected 1`] = `
+<Fragment>
+  <Helmet
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="my_account.create_new.TRK"
+    titleTemplate="%s"
   />
+  <A11ySkipTarget
+    anchor="create_project_main"
+  />
+  <div
+    className="page page-limited huge-spacer-bottom position-relative"
+    id="create-project"
+  >
+    <BitbucketProjectCreate
+      bitbucketSettings={Array []}
+      canAdmin={false}
+      loadingBindings={true}
+      location={
+        Object {
+          "action": "PUSH",
+          "hash": "",
+          "key": "key",
+          "pathname": "/path",
+          "query": Object {
+            "mode": "bitbucket",
+          },
+          "search": "",
+          "state": Object {},
+        }
+      }
+      onProjectCreate={[Function]}
+    />
+  </div>
+</Fragment>
+`;
+
+exports[`should render correctly if the GitHub method is selected 1`] = `
+<Fragment>
+  <Helmet
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="my_account.create_new.TRK"
+    titleTemplate="%s"
+  />
+  <A11ySkipTarget
+    anchor="create_project_main"
+  />
+  <div
+    className="page page-limited huge-spacer-bottom position-relative"
+    id="create-project"
+  >
+    <GitHubProjectCreate
+      canAdmin={false}
+      loadingBindings={true}
+      location={
+        Object {
+          "action": "PUSH",
+          "hash": "",
+          "key": "key",
+          "pathname": "/path",
+          "query": Object {
+            "mode": "github",
+          },
+          "search": "",
+          "state": Object {},
+        }
+      }
+      onProjectCreate={[Function]}
+      router={
+        Object {
+          "createHref": [MockFunction],
+          "createPath": [MockFunction],
+          "go": [MockFunction],
+          "goBack": [MockFunction],
+          "goForward": [MockFunction],
+          "isActive": [MockFunction],
+          "push": [MockFunction],
+          "replace": [MockFunction],
+          "setRouteLeaveHook": [MockFunction],
+        }
+      }
+      settings={Array []}
+    />
+  </div>
+</Fragment>
+`;
+
+exports[`should render correctly if the manual method is selected 1`] = `
+<Fragment>
+  <Helmet
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="my_account.create_new.TRK"
+    titleTemplate="%s"
+  />
+  <A11ySkipTarget
+    anchor="create_project_main"
+  />
+  <div
+    className="page page-limited huge-spacer-bottom position-relative"
+    id="create-project"
+  >
+    <ManualProjectCreate
+      onProjectCreate={[Function]}
+    />
+  </div>
 </Fragment>
 `;

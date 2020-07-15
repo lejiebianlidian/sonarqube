@@ -32,16 +32,16 @@ import static java.util.Objects.requireNonNull;
 @Immutable
 public class UserId {
 
-  private final int id;
+  private final String uuid;
   private final String login;
 
-  public UserId(int userId, String login) {
-    this.id = userId;
+  public UserId(String uuid, String login) {
+    this.uuid = uuid;
     this.login = requireNonNull(login);
   }
 
-  public int getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
   public String getLogin() {
@@ -49,6 +49,6 @@ public class UserId {
   }
 
   public static UserId from(UserDto dto) {
-    return new UserId(dto.getId(), dto.getLogin());
+    return new UserId(dto.getUuid(), dto.getLogin());
   }
 }

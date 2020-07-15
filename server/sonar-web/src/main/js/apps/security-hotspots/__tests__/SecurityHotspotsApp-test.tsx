@@ -19,7 +19,7 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { addNoFooterPageClass } from 'sonar-ui-common/helpers/pages';
+import { addSideBarClass } from 'sonar-ui-common/helpers/pages';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getMeasures } from '../../../api/measures';
 import { getSecurityHotspotList, getSecurityHotspots } from '../../../api/security-hotspots';
@@ -44,8 +44,8 @@ import SecurityHotspotsAppRenderer from '../SecurityHotspotsAppRenderer';
 beforeEach(() => jest.clearAllMocks());
 
 jest.mock('sonar-ui-common/helpers/pages', () => ({
-  addNoFooterPageClass: jest.fn(),
-  removeNoFooterPageClass: jest.fn()
+  addSideBarClass: jest.fn(),
+  removeSideBarClass: jest.fn()
 }));
 
 jest.mock('../../../api/measures', () => ({
@@ -82,7 +82,7 @@ it('should load data correctly', async () => {
   expect(wrapper.state().loading).toBe(true);
   expect(wrapper.state().loadingMeasure).toBe(true);
 
-  expect(addNoFooterPageClass).toBeCalled();
+  expect(addSideBarClass).toBeCalled();
   expect(getStandards).toBeCalled();
   expect(getSecurityHotspots).toBeCalledWith(
     expect.objectContaining({
@@ -105,6 +105,25 @@ it('should load data correctly', async () => {
   });
   expect(wrapper.state().loadingMeasure).toBe(false);
   expect(wrapper.state().hotspotsReviewedMeasure).toBe('86.6');
+});
+
+it('should handle category request', async () => {
+  const hotspots = [mockRawHotspot(), mockRawHotspot({ securityCategory: 'log-injection' })];
+  (getSecurityHotspots as jest.Mock).mockResolvedValue({
+    hotspots,
+    paging: {
+      total: 1
+    }
+  });
+  (getMeasures as jest.Mock).mockResolvedValue([{ value: '86.6' }]);
+
+  const wrapper = shallowRender({
+    location: mockLocation({ query: { category: hotspots[1].securityCategory } })
+  });
+
+  await waitAndUpdate(wrapper);
+
+  expect(wrapper.state().selectedHotspot).toBe(hotspots[1]);
 });
 
 it('should load data correctly when hotspot key list is forced', async () => {
@@ -131,7 +150,7 @@ it('should load data correctly when hotspot key list is forced', async () => {
     branch: 'branch-6.7'
   });
   expect(wrapper.state().hotspotKeys).toEqual(hotspotKeys);
-  expect(wrapper.find(SecurityHotspotsAppRenderer).props().isStaticListOfHotspots).toBeTruthy();
+  expect(wrapper.find(SecurityHotspotsAppRenderer).props().isStaticListOfHotspots).toBe(true);
 
   // Reset
   (getSecurityHotspots as jest.Mock).mockClear();

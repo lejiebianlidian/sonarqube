@@ -29,12 +29,16 @@ import org.sonar.db.component.KeyType;
 
 public interface LiveMeasureMapper {
 
-  List<LiveMeasureDto> selectByComponentUuidsAndMetricIds(
+  List<LiveMeasureDto> selectByComponentUuidsAndMetricUuids(
     @Param("componentUuids") Collection<String> componentUuids,
-    @Param("metricIds") Collection<Integer> metricIds);
+    @Param("metricUuids") Collection<String> metricUuids);
 
   List<LiveMeasureDto> selectByComponentUuidsAndMetricKeys(
     @Param("componentUuids") Collection<String> componentUuids,
+    @Param("metricKeys") Collection<String> metricKeys);
+
+  List<LiveMeasureDto> selectByComponentUuidAndMetricKeys(
+    @Param("componentUuid")String componentUuid,
     @Param("metricKeys") Collection<String> metricKeys);
 
   void scrollSelectByComponentUuidAndMetricKeys(
@@ -70,10 +74,13 @@ public interface LiveMeasureMapper {
     @Param("now") long now);
 
   int upsert(
-    @Param("dtos") List<LiveMeasureDto> dtos,
+    @Param("dto") LiveMeasureDto dto,
     @Param("now") long now);
 
-  int deleteByComponentUuidExcludingMetricIds(
+  void deleteByComponentUuidExcludingMetricUuids(
     @Param("componentUuid") String componentUuid,
-    @Param("excludedMetricIds") List<Integer> excludedMetricIds);
+    @Param("excludedMetricUuids") List<String> excludedMetricUuids);
+
+  void deleteByComponent(@Param("componentUuid") String componentUuid);
+
 }

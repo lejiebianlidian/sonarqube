@@ -23,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.impl.utils.AlwaysIncreasingSystem2;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.api.web.UserRole;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDbTester;
@@ -43,6 +45,7 @@ import org.sonar.server.ws.TestResponse;
 import org.sonar.server.ws.WsActionTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.core.permission.GlobalPermissions.SYSTEM_ADMIN;
 import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_GROUP_ID;
@@ -63,6 +66,17 @@ public class DeleteActionTest {
   private WsActionTester ws = new WsActionTester(new DeleteAction(db.getDbClient(), userSession, newGroupWsSupport()));
 
   @Test
+  public void verify_definition() {
+    Action wsDef = ws.getDef();
+
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."));
+  }
+
+  @Test
   public void response_has_no_content() {
     addAdmin(db.getDefaultOrganization());
     insertDefaultGroupOnDefaultOrganization();
@@ -70,7 +84,7 @@ public class DeleteActionTest {
     loginAsAdminOnDefaultOrganization();
 
     TestResponse response = newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .execute();
 
     assertThat(response.getStatus()).isEqualTo(204);
@@ -84,10 +98,10 @@ public class DeleteActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .execute();
 
-    assertThat(db.users().selectGroupById(group.getId())).isNull();
+    assertThat(db.users().selectGroupByUuid(group.getUuid())).isNull();
   }
 
   @Test
@@ -101,7 +115,7 @@ public class DeleteActionTest {
       .setParam(PARAM_GROUP_NAME, group.getName())
       .execute();
 
-    assertThat(db.users().selectGroupById(group.getId())).isNull();
+    assertThat(db.users().selectGroupByUuid(group.getUuid())).isNull();
   }
 
   @Test
@@ -117,7 +131,7 @@ public class DeleteActionTest {
       .setParam(PARAM_GROUP_NAME, group.getName())
       .execute();
 
-    assertThat(db.users().selectGroupById(group.getId())).isNull();
+    assertThat(db.users().selectGroupByUuid(group.getUuid())).isNull();
   }
 
   @Test
@@ -145,7 +159,7 @@ public class DeleteActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .execute();
 
     assertThat(db.countRowsOfTable("groups_users")).isEqualTo(0);
@@ -161,7 +175,7 @@ public class DeleteActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .execute();
 
     assertThat(db.countRowsOfTable("group_roles")).isEqualTo(0);
@@ -173,13 +187,13 @@ public class DeleteActionTest {
     insertDefaultGroupOnDefaultOrganization();
     GroupDto group = db.users().insertGroup();
     PermissionTemplateDto template = db.getDbClient().permissionTemplateDao().insert(db.getSession(), PermissionTemplateTesting.newPermissionTemplateDto());
-    db.getDbClient().permissionTemplateDao().insertGroupPermission(db.getSession(), template.getId(), group.getId(), "perm");
+    db.getDbClient().permissionTemplateDao().insertGroupPermission(db.getSession(), template.getUuid(), group.getUuid(), "perm");
     db.commit();
     loginAsAdminOnDefaultOrganization();
     assertThat(db.countRowsOfTable("perm_templates_groups")).isEqualTo(1);
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .execute();
 
     assertThat(db.countRowsOfTable("perm_templates_groups")).isEqualTo(0);
@@ -195,7 +209,7 @@ public class DeleteActionTest {
     loginAsAdminOnDefaultOrganization();
 
     newRequest()
-      .setParam("id", group.getId().toString())
+      .setParam("id", group.getUuid())
       .execute();
 
     assertThat(db.countRowsOfTable("qprofile_edit_groups")).isZero();
@@ -224,7 +238,7 @@ public class DeleteActionTest {
     expectedException.expectMessage("Default group 'default' cannot be used to perform this action");
 
     newRequest()
-      .setParam("id", defaultGroup.getId().toString())
+      .setParam("id", defaultGroup.getUuid())
       .execute();
   }
 
@@ -239,7 +253,7 @@ public class DeleteActionTest {
     expectedException.expectMessage("Default group 'default' cannot be used to perform this action");
 
     newRequest()
-      .setParam("id", defaultGroup.getId().toString())
+      .setParam("id", defaultGroup.getUuid())
       .execute();
   }
 
@@ -294,7 +308,7 @@ public class DeleteActionTest {
 
   private void executeDeleteGroupRequest(GroupDto adminGroup1) {
     newRequest()
-      .setParam(PARAM_GROUP_ID, adminGroup1.getId().toString())
+      .setParam(PARAM_GROUP_ID, adminGroup1.getUuid())
       .execute();
   }
 

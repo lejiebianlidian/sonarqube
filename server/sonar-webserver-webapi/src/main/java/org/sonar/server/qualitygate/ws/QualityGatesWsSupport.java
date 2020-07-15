@@ -19,6 +19,7 @@
  */
 package org.sonar.server.qualitygate.ws;
 
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.sonar.api.server.ws.Request;
@@ -45,8 +46,6 @@ import static org.sonar.db.permission.OrganizationPermission.ADMINISTER_QUALITY_
 import static org.sonar.server.exceptions.NotFoundException.checkFound;
 import static org.sonar.server.exceptions.NotFoundException.checkFoundWithOptional;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_ORGANIZATION;
-import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_PROJECT_ID;
-import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_PROJECT_KEY;
 import static org.sonar.server.user.AbstractUserSession.insufficientPrivilegesException;
 
 public class QualityGatesWsSupport {
@@ -63,14 +62,20 @@ public class QualityGatesWsSupport {
     this.componentFinder = componentFinder;
   }
 
-  public QGateWithOrgDto getByOrganizationAndId(DbSession dbSession, OrganizationDto organization, long qualityGateId) {
+  public QGateWithOrgDto getByOrganizationAndUuid(DbSession dbSession, OrganizationDto organization, String qualityGateUuid) {
     return checkFound(
-      dbClient.qualityGateDao().selectByOrganizationAndId(dbSession, organization, qualityGateId),
-      "No quality gate has been found for id %s in organization %s", qualityGateId, organization.getName());
+      dbClient.qualityGateDao().selectByOrganizationAndUuid(dbSession, organization, qualityGateUuid),
+      "No quality gate has been found for id %s in organization %s", qualityGateUuid, organization.getName());
   }
 
-  QualityGateConditionDto getCondition(DbSession dbSession, long id) {
-    return checkFound(dbClient.gateConditionDao().selectById(id, dbSession), "No quality gate condition with id '%d'", id);
+  public QGateWithOrgDto getByOrganizationAndName(DbSession dbSession, OrganizationDto organization, String qualityGateName) {
+    return checkFound(
+      dbClient.qualityGateDao().selectByOrganizationAndName(dbSession, organization, qualityGateName),
+      "No quality gate has been found for name %s in organization %s", qualityGateName, organization.getName());
+  }
+
+  QualityGateConditionDto getCondition(DbSession dbSession, String uuid) {
+    return checkFound(dbClient.gateConditionDao().selectByUuid(uuid, dbSession), "No quality gate condition with uuid '%s'", uuid);
   }
 
   boolean isQualityGateAdmin(OrganizationDto organization) {
@@ -88,8 +93,7 @@ public class QualityGatesWsSupport {
   }
 
   Qualitygates.Actions getActions(OrganizationDto organization, QualityGateDto qualityGate, @Nullable QualityGateDto defaultQualityGate) {
-    Long defaultId = defaultQualityGate == null ? null : defaultQualityGate.getId();
-    boolean isDefault = qualityGate.getId().equals(defaultId);
+    boolean isDefault = defaultQualityGate != null && Objects.equals(defaultQualityGate.getUuid(), qualityGate.getUuid());
     boolean isBuiltIn = qualityGate.isBuiltIn();
     boolean isQualityGateAdmin = isQualityGateAdmin(organization);
     return Qualitygates.Actions.newBuilder()
@@ -124,29 +128,10 @@ public class QualityGatesWsSupport {
     throw insufficientPrivilegesException();
   }
 
-  ProjectDto getProject(DbSession dbSession, OrganizationDto organization, @Nullable String projectKey, @Nullable String projectId) {
-    ProjectDto project;
-    if (projectId != null) {
-      project = getProjectById(dbSession, projectId);
-    } else if (projectKey != null) {
-      project = componentFinder.getProjectByKey(dbSession, projectKey);
-    } else {
-      throw new IllegalArgumentException(String.format("Must specify %s or %s", PARAM_PROJECT_KEY, PARAM_PROJECT_ID));
-    }
-
+  ProjectDto getProject(DbSession dbSession, OrganizationDto organization, String projectKey) {
+    ProjectDto project = componentFinder.getProjectByKey(dbSession, projectKey);
     checkProjectBelongsToOrganization(organization, project);
     return project;
-  }
-
-  ProjectDto getProjectById(DbSession dbSession, String projectId) {
-    try {
-      long dbId = Long.parseLong(projectId);
-      return dbClient.componentDao().selectById(dbSession, dbId)
-        .flatMap(c -> dbClient.projectDao().selectByUuid(dbSession, c.uuid()))
-        .orElseThrow(() -> new NotFoundException(String.format("Project '%s' not found", projectId)));
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Invalid id: " + projectId);
-    }
   }
 
   void checkProjectBelongsToOrganization(OrganizationDto organization, ProjectDto project) {

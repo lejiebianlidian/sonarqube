@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.sonar.server.es.newindex.FakeIndexDefinition.TYPE_FAKE;
 
 public class IndexerStartupTaskTest {
@@ -48,6 +49,7 @@ public class IndexerStartupTaskTest {
 
   @Before
   public void setUp() {
+    when(indexer.getType()).thenReturn(StartupIndexer.Type.SYNCHRONOUS);
     doReturn(ImmutableSet.of(TYPE_FAKE)).when(indexer).getIndexTypes();
   }
 

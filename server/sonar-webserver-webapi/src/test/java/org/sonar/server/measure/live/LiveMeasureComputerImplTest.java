@@ -39,6 +39,7 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.resources.Qualifiers;
+import org.sonar.api.utils.System2;
 import org.sonar.core.config.CorePropertyDefinitions;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
@@ -399,7 +400,7 @@ public class LiveMeasureComputerImplTest {
     when(qGateComputer.getMetricsRelatedTo(qualityGate)).thenReturn(singleton(CoreMetrics.ALERT_STATUS_KEY));
     when(qGateComputer.refreshGateStatus(eq(project), same(qualityGate), any(MeasureMatrix.class)))
       .thenReturn(newQualityGate);
-    MapSettings settings = new MapSettings(new PropertyDefinitions(CorePropertyDefinitions.all()));
+    MapSettings settings = new MapSettings(new PropertyDefinitions(System2.INSTANCE, CorePropertyDefinitions.all()));
     ProjectConfigurationLoader configurationLoader = new TestProjectConfigurationLoader(settings.asConfig());
 
     LiveMeasureComputerImpl underTest = new LiveMeasureComputerImpl(db.getDbClient(), formulaFactory, qGateComputer, configurationLoader, projectIndexer);
@@ -420,7 +421,7 @@ public class LiveMeasureComputerImplTest {
     LiveMeasureDto measure = db.getDbClient().liveMeasureDao().selectMeasure(db.getSession(), component.uuid(), intMetric.getKey()).get();
     assertThat(measure.getComponentUuid()).isEqualTo(component.uuid());
     assertThat(measure.getProjectUuid()).isEqualTo(component.projectUuid());
-    assertThat(measure.getMetricId()).isEqualTo(intMetric.getId());
+    assertThat(measure.getMetricUuid()).isEqualTo(intMetric.getUuid());
     assertThat(measure.getValue()).isEqualTo(expectedValue);
     return measure;
   }
@@ -429,7 +430,7 @@ public class LiveMeasureComputerImplTest {
     LiveMeasureDto measure = db.getDbClient().liveMeasureDao().selectMeasure(db.getSession(), component.uuid(), ratingMetric.getKey()).get();
     assertThat(measure.getComponentUuid()).isEqualTo(component.uuid());
     assertThat(measure.getProjectUuid()).isEqualTo(component.projectUuid());
-    assertThat(measure.getMetricId()).isEqualTo(ratingMetric.getId());
+    assertThat(measure.getMetricUuid()).isEqualTo(ratingMetric.getUuid());
     assertThat(measure.getValue()).isEqualTo(expectedRating.getIndex());
     assertThat(measure.getDataAsString()).isEqualTo(expectedRating.name());
     return measure;
@@ -439,7 +440,7 @@ public class LiveMeasureComputerImplTest {
     LiveMeasureDto measure = db.getDbClient().liveMeasureDao().selectMeasure(db.getSession(), component.uuid(), intMetric.getKey()).get();
     assertThat(measure.getComponentUuid()).isEqualTo(component.uuid());
     assertThat(measure.getProjectUuid()).isEqualTo(component.projectUuid());
-    assertThat(measure.getMetricId()).isEqualTo(intMetric.getId());
+    assertThat(measure.getMetricUuid()).isEqualTo(intMetric.getUuid());
     assertThat(measure.getValue()).isNull();
     assertThat(measure.getVariation()).isEqualTo(expectedValue);
   }
@@ -448,7 +449,7 @@ public class LiveMeasureComputerImplTest {
     LiveMeasureDto measure = db.getDbClient().liveMeasureDao().selectMeasure(db.getSession(), component.uuid(), ratingMetric.getKey()).get();
     assertThat(measure.getComponentUuid()).isEqualTo(component.uuid());
     assertThat(measure.getProjectUuid()).isEqualTo(component.projectUuid());
-    assertThat(measure.getMetricId()).isEqualTo(ratingMetric.getId());
+    assertThat(measure.getMetricUuid()).isEqualTo(ratingMetric.getUuid());
     assertThat(measure.getVariation()).isEqualTo((double) expectedValue.getIndex());
   }
 

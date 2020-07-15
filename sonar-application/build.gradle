@@ -148,7 +148,7 @@ task zip(type: Zip, dependsOn: [configurations.compile]) {
     from(tasks.getByPath(':server:sonar-web:yarn_run').outputs) { a ->
       if (official) {
          project(':private:branding').fileTree('src').visit { b ->
-           if (!b.isDirectory) {
+           if (!b.isDirectory()) {
              a.exclude b.relativePath.toString()
            }
          }
@@ -178,7 +178,8 @@ zip.doFirst {
 // Check the size of the archive
 zip.doLast {
   def minLength = 220000000
-  def maxLength = 230000000
+  def maxLength = 235000000
+
   def length = archiveFile.get().asFile.length()
   if (length < minLength)
     throw new GradleException("$archiveName size ($length) too small. Min is $minLength")

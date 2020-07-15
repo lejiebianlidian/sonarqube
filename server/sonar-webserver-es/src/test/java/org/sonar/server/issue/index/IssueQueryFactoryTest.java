@@ -24,6 +24,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -43,6 +44,7 @@ import org.sonar.server.tester.UserSessionRule;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -87,7 +89,7 @@ public class IssueQueryFactoryTest {
       .setStatuses(asList("CLOSED"))
       .setResolutions(asList("FALSE-POSITIVE"))
       .setResolved(true)
-      .setProjectKeys(asList(project.getDbKey()))
+      .setProjects(asList(project.getDbKey()))
       .setModuleUuids(asList(module.uuid()))
       .setDirectories(asList("aDirPath"))
       .setFileUuids(asList(file.uuid()))
@@ -185,7 +187,7 @@ public class IssueQueryFactoryTest {
   @Test
   public void add_unknown_when_no_component_found() {
     SearchRequest request = new SearchRequest()
-      .setComponentKeys(asList("does_not_exist"));
+      .setComponents(asList("does_not_exist"));
 
     IssueQuery query = underTest.create(request);
 
@@ -212,7 +214,7 @@ public class IssueQueryFactoryTest {
   @Test
   public void fail_if_components_and_components_uuid_params_are_set_at_the_same_time() {
     SearchRequest request = new SearchRequest()
-      .setComponentKeys(singletonList("foo"))
+      .setComponents(singletonList("foo"))
       .setComponentUuids(singletonList("bar"));
 
     expectedException.expect(IllegalArgumentException.class);
@@ -222,35 +224,10 @@ public class IssueQueryFactoryTest {
   }
 
   @Test
-  public void fail_if_both_componentRoots_and_componentRootUuids_params_are_set() {
-    SearchRequest request = new SearchRequest()
-      .setComponentRoots(singletonList("foo"))
-      .setComponentRootUuids(singletonList("bar"));
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("At most one of the following parameters can be provided: componentKeys and componentUuids");
-
-    underTest.create(request);
-  }
-
-  @Test
-  public void fail_if_componentRoots_references_components_with_different_qualifier() {
-    ComponentDto project = db.components().insertPrivateProject();
-    ComponentDto file = db.components().insertComponent(newFileDto(project));
-    SearchRequest request = new SearchRequest()
-      .setComponentRoots(asList(project.getDbKey(), file.getDbKey()));
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("All components must have the same qualifier, found FIL,TRK");
-
-    underTest.create(request);
-  }
-
-  @Test
-  public void param_componentRootUuids_enables_search_in_view_tree_if_user_has_permission_on_view() {
+  public void param_componentUuids_enables_search_in_view_tree_if_user_has_permission_on_view() {
     ComponentDto view = db.components().insertView();
     SearchRequest request = new SearchRequest()
-      .setComponentRootUuids(asList(view.uuid()));
+      .setComponentUuids(asList(view.uuid()));
     userSession.registerComponents(view);
 
     IssueQuery query = underTest.create(request);
@@ -276,6 +253,7 @@ public class IssueQueryFactoryTest {
   @Test
   public void application_search_project_issues_on_leak() {
     Date now = new Date();
+    when(clock.millis()).thenReturn(now.getTime());
     ComponentDto project1 = db.components().insertPublicProject();
     SnapshotDto analysis1 = db.components().insertSnapshot(project1, s -> s.setPeriodDate(addDays(now, -14).getTime()));
     ComponentDto project2 = db.components().insertPublicProject();
@@ -292,8 +270,8 @@ public class IssueQueryFactoryTest {
       .setSinceLeakPeriod(true));
 
     assertThat(result.createdAfterByProjectUuids()).hasSize(1);
-    assertThat(result.createdAfterByProjectUuids().get(project1.uuid()).date().getTime()).isEqualTo(analysis1.getPeriodDate());
-    assertThat(result.createdAfterByProjectUuids().get(project1.uuid()).inclusive()).isFalse();
+    assertThat(result.createdAfterByProjectUuids().entrySet()).extracting(Map.Entry::getKey, e -> e.getValue().date(), e -> e.getValue().inclusive()).containsOnly(
+      tuple(project1.uuid(), new Date(analysis1.getPeriodDate()), false));
     assertThat(result.viewUuids()).containsExactlyInAnyOrder(application.uuid());
   }
 
@@ -302,7 +280,7 @@ public class IssueQueryFactoryTest {
     ComponentDto view = db.components().insertView();
     ComponentDto subView = db.components().insertComponent(newSubView(view));
     SearchRequest request = new SearchRequest()
-      .setComponentRootUuids(asList(subView.uuid()));
+      .setComponentUuids(asList(subView.uuid()));
 
     IssueQuery query = underTest.create(request);
 
@@ -324,7 +302,7 @@ public class IssueQueryFactoryTest {
   public void onComponentOnly_restricts_search_to_specified_componentKeys() {
     ComponentDto project = db.components().insertPrivateProject();
     SearchRequest request = new SearchRequest()
-      .setComponentKeys(asList(project.getDbKey()))
+      .setComponents(asList(project.getDbKey()))
       .setOnComponentOnly(true);
 
     IssueQuery query = underTest.create(request);
@@ -390,13 +368,13 @@ public class IssueQueryFactoryTest {
     ComponentDto branch = db.components().insertProjectBranch(project);
 
     assertThat(underTest.create(new SearchRequest()
-      .setProjectKeys(singletonList(branch.getKey()))
+      .setProjects(singletonList(branch.getKey()))
       .setBranch(branch.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.projectUuids()), IssueQuery::isMainBranch)
         .containsOnly(branch.uuid(), singletonList(project.uuid()), false);
 
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(branch.getKey()))
+      .setComponents(singletonList(branch.getKey()))
       .setBranch(branch.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.projectUuids()), IssueQuery::isMainBranch)
         .containsOnly(branch.uuid(), singletonList(project.uuid()), false);
@@ -409,20 +387,20 @@ public class IssueQueryFactoryTest {
     ComponentDto file = db.components().insertComponent(newFileDto(branch));
 
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(file.getKey()))
+      .setComponents(singletonList(file.getKey()))
       .setBranch(branch.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.fileUuids()), IssueQuery::isMainBranch)
         .containsOnly(branch.uuid(), singletonList(file.uuid()), false);
 
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(branch.getKey()))
+      .setComponents(singletonList(branch.getKey()))
       .setFileUuids(singletonList(file.uuid()))
       .setBranch(branch.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.fileUuids()), IssueQuery::isMainBranch)
         .containsOnly(branch.uuid(), singletonList(file.uuid()), false);
 
     assertThat(underTest.create(new SearchRequest()
-      .setProjectKeys(singletonList(branch.getKey()))
+      .setProjects(singletonList(branch.getKey()))
       .setFileUuids(singletonList(file.uuid()))
       .setBranch(branch.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.fileUuids()), IssueQuery::isMainBranch)
@@ -436,7 +414,7 @@ public class IssueQueryFactoryTest {
     ComponentDto file = db.components().insertComponent(newFileDto(branch));
 
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(file.getKey()))
+      .setComponents(singletonList(file.getKey()))
       .setBranch(branch.getBranch())
       .setOnComponentOnly(true)))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.componentUuids()), IssueQuery::isMainBranch)
@@ -449,12 +427,12 @@ public class IssueQueryFactoryTest {
     ComponentDto branch = db.components().insertProjectBranch(project);
 
     assertThat(underTest.create(new SearchRequest()
-      .setProjectKeys(singletonList(project.getKey()))
+      .setProjects(singletonList(project.getKey()))
       .setBranch("master")))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.projectUuids()), IssueQuery::isMainBranch)
         .containsOnly(project.uuid(), singletonList(project.uuid()), true);
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(project.getKey()))
+      .setComponents(singletonList(project.getKey()))
       .setBranch("master")))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.projectUuids()), IssueQuery::isMainBranch)
         .containsOnly(project.uuid(), singletonList(project.uuid()), true);
@@ -470,7 +448,7 @@ public class IssueQueryFactoryTest {
     userSession.addProjectPermission(USER, application);
 
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(application.getKey())))
+      .setComponents(singletonList(application.getKey())))
       .viewUuids()).containsExactly(application.uuid());
   }
 
@@ -490,15 +468,15 @@ public class IssueQueryFactoryTest {
 
     // Search on applicationBranch1
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(applicationBranch1.getKey()))
+      .setComponents(singletonList(applicationBranch1.getKey()))
       .setBranch(applicationBranch1.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.projectUuids()), IssueQuery::isMainBranch)
         .containsOnly(applicationBranch1.uuid(), Collections.emptyList(), false);
 
     // Search on project1Branch1
     assertThat(underTest.create(new SearchRequest()
-      .setComponentKeys(singletonList(applicationBranch1.getKey()))
-      .setProjectKeys(singletonList(project1.getKey()))
+      .setComponents(singletonList(applicationBranch1.getKey()))
+      .setProjects(singletonList(project1.getKey()))
       .setBranch(applicationBranch1.getBranch())))
         .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.projectUuids()), IssueQuery::isMainBranch)
         .containsOnly(applicationBranch1.uuid(), singletonList(project1.uuid()), false);
@@ -558,7 +536,7 @@ public class IssueQueryFactoryTest {
 
     underTest.create(new SearchRequest()
       .setSinceLeakPeriod(true)
-      .setComponentKeys(asList(project1.getKey(), project2.getKey())));
+      .setComponents(asList(project1.getKey(), project2.getKey())));
   }
 
   @Test

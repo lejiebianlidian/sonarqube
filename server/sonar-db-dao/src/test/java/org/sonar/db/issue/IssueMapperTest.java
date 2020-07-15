@@ -42,6 +42,7 @@ import org.sonar.api.utils.DateUtils;
 import org.sonar.api.utils.System2;
 import org.sonar.core.issue.FieldDiffs;
 import org.sonar.core.util.UuidFactoryFast;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
@@ -93,11 +94,10 @@ public class IssueMapperTest {
 
     IssueDto result = underTest.selectByKey("ABCDE");
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isNotNull();
     assertThat(result.getKey()).isEqualTo("ABCDE");
     assertThat(result.getComponentUuid()).isEqualTo(file.uuid());
     assertThat(result.getProjectUuid()).isEqualTo(project.uuid());
-    assertThat(result.getRuleId()).isEqualTo(rule.getId());
+    assertThat(result.getRuleUuid()).isEqualTo(rule.getUuid());
     assertThat(result.getType()).isEqualTo(2);
     assertThat(result.getLine()).isEqualTo(500);
     assertThat(result.getGap()).isEqualTo(3.14d);
@@ -127,7 +127,7 @@ public class IssueMapperTest {
     update.setKee("ABCDE");
     update.setComponentUuid("other component uuid");
     update.setProjectUuid(project.uuid());
-    update.setRuleId(rule.getId());
+    update.setRuleUuid(rule.getUuid());
     update.setType(3);
     update.setLine(500);
     update.setGap(3.14);
@@ -153,11 +153,10 @@ public class IssueMapperTest {
 
     IssueDto result = underTest.selectByKey("ABCDE");
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isNotNull();
     assertThat(result.getKey()).isEqualTo("ABCDE");
     assertThat(result.getComponentUuid()).isEqualTo(file.uuid());
     assertThat(result.getProjectUuid()).isEqualTo(project.uuid());
-    assertThat(result.getRuleId()).isEqualTo(rule.getId());
+    assertThat(result.getRuleUuid()).isEqualTo(rule.getUuid());
     assertThat(result.getType()).isEqualTo(3);
     assertThat(result.getLine()).isEqualTo(500);
     assertThat(result.getGap()).isEqualTo(3.14d);
@@ -274,7 +273,7 @@ public class IssueMapperTest {
     ComponentDto component = randomComponent(organization);
     IssueDto issueWithRule = insertNewClosedIssue(component, ruleType);
     IssueChangeDto issueChange = insertToClosedDiff(issueWithRule);
-    IssueDto issueWithoutRule = insertNewClosedIssue(component, new RuleDefinitionDto().setType(ruleType).setId(-50));
+    IssueDto issueWithoutRule = insertNewClosedIssue(component, new RuleDefinitionDto().setType(ruleType).setUuid("uuid-50"));
     insertToClosedDiff(issueWithoutRule);
 
     RecorderResultHandler resultHandler = new RecorderResultHandler();
@@ -480,6 +479,7 @@ public class IssueMapperTest {
     IntStream.range(0, random.nextInt(3)).forEach(i -> diffs.setDiff("key_a" + i, "old_" + i, "new_" + i));
 
     IssueChangeDto changeDto = IssueChangeDto.of(issue.getKey(), diffs);
+    changeDto.setUuid(Uuids.createFast());
     dbTester.getDbClient().issueChangeDao().insert(dbSession, changeDto);
     return changeDto;
   }
@@ -499,7 +499,7 @@ public class IssueMapperTest {
   private final IssueDto insertNewClosedIssue(ComponentDto component, RuleDefinitionDto rule, long issueCloseTime, Consumer<IssueDto>... consumers) {
     IssueDto res = new IssueDto()
       .setKee(UuidFactoryFast.getInstance().create())
-      .setRuleId(rule.getId())
+      .setRuleUuid(rule.getUuid())
       .setType(rule.getType())
       .setComponentUuid(component.uuid())
       .setProjectUuid(component.projectUuid())
@@ -540,7 +540,7 @@ public class IssueMapperTest {
       .setKee("ABCDE")
       .setComponentUuid(file.uuid())
       .setProjectUuid(project.uuid())
-      .setRuleId(rule.getId())
+      .setRuleUuid(rule.getUuid())
       .setType(2)
       .setLine(500)
       .setGap(3.14)

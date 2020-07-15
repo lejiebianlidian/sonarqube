@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.sonar.api.measures.Metric.ValueType;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.metric.MetricDto;
@@ -89,10 +90,11 @@ public class QualityGateConditionsUpdater {
     String errorThreshold) {
     MetricDto metric = getNonNullMetric(dbSession, metricKey);
     validateCondition(metric, operator, errorThreshold);
-    checkConditionDoesNotExistOnSameMetric(getConditions(dbSession, qualityGate.getId()), metric);
+    checkConditionDoesNotExistOnSameMetric(getConditions(dbSession, qualityGate.getUuid()), metric);
 
-    QualityGateConditionDto newCondition = new QualityGateConditionDto().setQualityGateId(qualityGate.getId())
-      .setMetricId(metric.getId()).setMetricKey(metric.getKey())
+    QualityGateConditionDto newCondition = new QualityGateConditionDto().setQualityGateUuid(qualityGate.getUuid())
+      .setUuid(Uuids.create())
+      .setMetricUuid(metric.getUuid()).setMetricKey(metric.getKey())
       .setOperator(operator)
       .setErrorThreshold(errorThreshold);
     dbClient.gateConditionDao().insert(newCondition, dbSession);
@@ -105,7 +107,7 @@ public class QualityGateConditionsUpdater {
     validateCondition(metric, operator, errorThreshold);
 
     condition
-      .setMetricId(metric.getId())
+      .setMetricUuid(metric.getUuid())
       .setMetricKey(metric.getKey())
       .setOperator(operator)
       .setErrorThreshold(errorThreshold);
@@ -121,8 +123,8 @@ public class QualityGateConditionsUpdater {
     return metric;
   }
 
-  private Collection<QualityGateConditionDto> getConditions(DbSession dbSession, long qGateId) {
-    return dbClient.gateConditionDao().selectForQualityGate(dbSession, qGateId);
+  private Collection<QualityGateConditionDto> getConditions(DbSession dbSession, String qGateUuid) {
+    return dbClient.gateConditionDao().selectForQualityGate(dbSession, qGateUuid);
   }
 
   private static void validateCondition(MetricDto metric, String operator, String errorThreshold) {
@@ -161,7 +163,7 @@ public class QualityGateConditionsUpdater {
       return;
     }
 
-    boolean conditionExists = conditions.stream().anyMatch(c -> c.getMetricId() == metric.getId());
+    boolean conditionExists = conditions.stream().anyMatch(c -> c.getMetricUuid().equals(metric.getUuid()));
     checkRequest(!conditionExists, format("Condition on metric '%s' already exists.", metric.getShortName()));
   }
 

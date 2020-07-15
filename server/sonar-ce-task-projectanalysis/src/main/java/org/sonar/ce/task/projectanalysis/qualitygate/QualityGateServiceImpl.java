@@ -43,9 +43,9 @@ public class QualityGateServiceImpl implements QualityGateService {
   }
 
   @Override
-  public Optional<QualityGate> findById(long id) {
+  public Optional<QualityGate> findByUuid(String uuid) {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      QualityGateDto qualityGateDto = dbClient.qualityGateDao().selectById(dbSession, id);
+      QualityGateDto qualityGateDto = dbClient.qualityGateDao().selectByUuid(dbSession, uuid);
       if (qualityGateDto == null) {
         return Optional.empty();
       }
@@ -76,15 +76,15 @@ public class QualityGateServiceImpl implements QualityGateService {
   }
 
   private QualityGate toQualityGate(DbSession dbSession, QualityGateDto qualityGateDto) {
-    Collection<QualityGateConditionDto> dtos = dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGateDto.getId());
+    Collection<QualityGateConditionDto> dtos = dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGateDto.getUuid());
 
     Iterable<Condition> conditions = dtos.stream()
-      .map(input -> metricRepository.getOptionalById(input.getMetricId())
+      .map(input -> metricRepository.getOptionalByUuid(input.getMetricUuid())
         .map(metric -> new Condition(metric, input.getOperator(), input.getErrorThreshold()))
         .orElse(null))
       .filter(Objects::nonNull)
       .collect(toList(dtos.size()));
 
-    return new QualityGate(qualityGateDto.getId(), qualityGateDto.getName(), conditions);
+    return new QualityGate(qualityGateDto.getUuid(), qualityGateDto.getName(), conditions);
   }
 }

@@ -27,13 +27,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.issue.Issue;
+import org.sonar.api.rules.RuleType;
 import org.sonar.core.issue.DefaultIssue;
 import org.sonar.core.issue.IssueChangeContext;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.issue.IssueDto;
+import org.sonar.db.issue.IssueTesting;
 import org.sonar.db.organization.OrganizationTesting;
-import org.sonar.db.rule.RuleDto;
+import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.issue.workflow.FunctionExecutor;
 import org.sonar.server.issue.workflow.IssueWorkflow;
 import org.sonar.server.tester.UserSessionRule;
@@ -45,8 +48,7 @@ import static org.mockito.Mockito.when;
 import static org.sonar.api.issue.Issue.STATUS_CLOSED;
 import static org.sonar.api.web.UserRole.ISSUE_ADMIN;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
-import static org.sonar.db.issue.IssueTesting.newDto;
-import static org.sonar.db.rule.RuleTesting.newRuleDto;
+import static org.sonar.db.rule.RuleTesting.newRule;
 
 public class TransitionActionTest {
 
@@ -75,6 +77,10 @@ public class TransitionActionTest {
   @Test
   public void execute() {
     loginAndAddProjectPermission("john", ISSUE_ADMIN);
+    if (issue.type() == RuleType.SECURITY_HOTSPOT) {
+      // this transition is not done for hotspots
+      issue.setType(RuleType.CODE_SMELL);
+    }
     issue.setStatus(Issue.STATUS_RESOLVED);
     issue.setResolution(Issue.RESOLUTION_FIXED);
 
@@ -104,7 +110,7 @@ public class TransitionActionTest {
   public void fail_to_verify_when_parameter_not_found() {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Missing parameter : 'transition'");
-    action.verify(ImmutableMap.of("unknwown", "reopen"), Lists.newArrayList(), userSession);
+    action.verify(ImmutableMap.of("unknown", "reopen"), Lists.newArrayList(), userSession);
   }
 
   @Test
@@ -114,10 +120,10 @@ public class TransitionActionTest {
   }
 
   private IssueDto newIssue() {
-    RuleDto rule = newRuleDto().setId(10);
+    RuleDefinitionDto rule = newRule().setUuid(Uuids.createFast());
     ComponentDto project = ComponentTesting.newPrivateProjectDto(OrganizationTesting.newOrganizationDto());
     ComponentDto file = (newFileDto(project));
-    return newDto(rule, file, project);
+    return IssueTesting.newIssue(rule, project, file);
   }
 
   private void loginAndAddProjectPermission(String login, String permission) {

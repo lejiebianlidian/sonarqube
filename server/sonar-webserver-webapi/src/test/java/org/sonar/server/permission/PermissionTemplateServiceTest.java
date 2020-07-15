@@ -28,6 +28,7 @@ import org.sonar.api.impl.utils.AlwaysIncreasingSystem2;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.ResourceTypes;
 import org.sonar.api.web.UserRole;
+import org.sonar.core.util.SequenceUuidFactory;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
@@ -64,7 +65,8 @@ public class PermissionTemplateServiceTest {
   private DbSession session = dbTester.getSession();
   private ProjectIndexers projectIndexers = new TestProjectIndexers();
 
-  private PermissionTemplateService underTest = new PermissionTemplateService(dbTester.getDbClient(), projectIndexers, userSession, defaultTemplatesResolver);
+  private PermissionTemplateService underTest = new PermissionTemplateService(dbTester.getDbClient(), projectIndexers, userSession, defaultTemplatesResolver,
+    new SequenceUuidFactory());
 
   @Test
   public void apply_does_not_insert_permission_to_group_AnyOne_when_applying_template_on_private_project() {
@@ -87,7 +89,7 @@ public class PermissionTemplateServiceTest {
     dbTester.permissionTemplates().addAnyoneToTemplate(permissionTemplate, "p1");
     dbTester.organizations().setDefaultTemplates(organization, permissionTemplate.getUuid(), null, null);
 
-    underTest.applyDefault(session, privateProject, creator.getId());
+    underTest.applyDefault(session, privateProject, creator.getUuid());
 
     assertThat(selectProjectPermissionsOfGroup(organization, null, privateProject)).isEmpty();
   }
@@ -266,7 +268,7 @@ public class PermissionTemplateServiceTest {
     dbTester.permissionTemplates().addProjectCreatorToTemplate(permissionTemplate, "p1");
     dbTester.organizations().setDefaultTemplates(organization, permissionTemplate.getUuid(), null, null);
 
-    underTest.applyDefault(session, publicProject, user.getId());
+    underTest.applyDefault(session, publicProject, user.getUuid());
 
     assertThat(selectProjectPermissionsOfUser(user, publicProject))
       .containsOnly("p1", UserRole.ADMIN, UserRole.ISSUE_ADMIN, UserRole.SECURITYHOTSPOT_ADMIN, SCAN.getKey());
@@ -283,7 +285,7 @@ public class PermissionTemplateServiceTest {
     dbTester.permissionTemplates().addProjectCreatorToTemplate(permissionTemplate, "p1");
     dbTester.organizations().setDefaultTemplates(organization, permissionTemplate.getUuid(), null, null);
 
-    underTest.applyDefault(session, privateProject, user.getId());
+    underTest.applyDefault(session, privateProject, user.getUuid());
 
     assertThat(selectProjectPermissionsOfUser(user, privateProject))
       .containsOnly("p1", UserRole.CODEVIEWER, UserRole.USER, UserRole.ADMIN, UserRole.ISSUE_ADMIN, UserRole.SECURITYHOTSPOT_ADMIN, SCAN.getKey());
@@ -435,12 +437,12 @@ public class PermissionTemplateServiceTest {
 
   private List<String> selectProjectPermissionsOfGroup(OrganizationDto organizationDto, @Nullable GroupDto groupDto, ComponentDto project) {
     return dbTester.getDbClient().groupPermissionDao().selectProjectPermissionsOfGroup(session,
-      organizationDto.getUuid(), groupDto != null ? groupDto.getId() : null, project.getId());
+      organizationDto.getUuid(), groupDto != null ? groupDto.getUuid() : null, project.uuid());
   }
 
   private List<String> selectProjectPermissionsOfUser(UserDto userDto, ComponentDto project) {
     return dbTester.getDbClient().userPermissionDao().selectProjectPermissionsOfUser(session,
-      userDto.getId(), project.getId());
+      userDto.getUuid(), project.uuid());
   }
 
   @Test
@@ -451,13 +453,13 @@ public class PermissionTemplateServiceTest {
     dbTester.users().insertMember(group, user);
     PermissionTemplateDto template = templateDb.insertTemplate(organization);
     dbTester.organizations().setDefaultTemplates(template, null, null);
-    templateDb.addProjectCreatorToTemplate(template.getId(), SCAN.getKey());
-    templateDb.addUserToTemplate(template.getId(), user.getId(), UserRole.USER);
-    templateDb.addGroupToTemplate(template.getId(), group.getId(), UserRole.CODEVIEWER);
-    templateDb.addGroupToTemplate(template.getId(), null, UserRole.ISSUE_ADMIN);
+    templateDb.addProjectCreatorToTemplate(template.getUuid(), SCAN.getKey());
+    templateDb.addUserToTemplate(template.getUuid(), user.getUuid(), UserRole.USER);
+    templateDb.addGroupToTemplate(template.getUuid(), group.getUuid(), UserRole.CODEVIEWER);
+    templateDb.addGroupToTemplate(template.getUuid(), null, UserRole.ISSUE_ADMIN);
 
     // authenticated user
-    checkWouldUserHaveScanPermission(organization, user.getId(), true);
+    checkWouldUserHaveScanPermission(organization, user.getUuid(), true);
 
     // anonymous user
     checkWouldUserHaveScanPermission(organization, null, false);
@@ -478,8 +480,8 @@ public class PermissionTemplateServiceTest {
     checkWouldUserHaveScanPermission(dbTester.getDefaultOrganization(), null, false);
   }
 
-  private void checkWouldUserHaveScanPermission(OrganizationDto organization, @Nullable Integer userId, boolean expectedResult) {
-    assertThat(underTest.wouldUserHaveScanPermissionWithDefaultTemplate(session, organization.getUuid(), userId, "PROJECT_KEY"))
+  private void checkWouldUserHaveScanPermission(OrganizationDto organization, @Nullable String userUuid, boolean expectedResult) {
+    assertThat(underTest.wouldUserHaveScanPermissionWithDefaultTemplate(session, organization.getUuid(), userUuid, "PROJECT_KEY"))
       .isEqualTo(expectedResult);
   }
 

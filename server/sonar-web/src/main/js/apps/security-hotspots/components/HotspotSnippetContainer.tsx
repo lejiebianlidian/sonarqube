@@ -22,12 +22,14 @@ import { getSources } from '../../../api/components';
 import { locationsByLine } from '../../../components/SourceViewer/helpers/indexing';
 import { getBranchLikeQuery } from '../../../helpers/branch-like';
 import { BranchLike } from '../../../types/branch-like';
+import { ComponentQualifier } from '../../../types/component';
 import { Hotspot } from '../../../types/security-hotspots';
 import { constructSourceViewerFile } from '../utils';
 import HotspotSnippetContainerRenderer from './HotspotSnippetContainerRenderer';
 
 interface Props {
   branchLike?: BranchLike;
+  component: T.Component;
   hotspot: Hotspot;
 }
 
@@ -35,7 +37,6 @@ interface State {
   highlightedSymbols: string[];
   lastLine?: number;
   loading: boolean;
-  linePopup?: T.LinePopup & { component: string };
   sourceLines: T.SourceLine[];
 }
 
@@ -141,31 +142,13 @@ export default class HotspotSnippetContainer extends React.Component<Props, Stat
     });
   };
 
-  handleLinePopupToggle = (params: T.LinePopup & { component: string }) => {
-    const { component, index, line, name, open } = params;
-    this.setState((state: State) => {
-      const samePopup =
-        state.linePopup !== undefined &&
-        state.linePopup.line === line &&
-        state.linePopup.name === name &&
-        state.linePopup.component === component &&
-        state.linePopup.index === index;
-      if (open !== false && !samePopup) {
-        return { linePopup: params };
-      } else if (open !== true && samePopup) {
-        return { linePopup: undefined };
-      }
-      return null;
-    });
-  };
-
   handleSymbolClick = (highlightedSymbols: string[]) => {
     this.setState({ highlightedSymbols });
   };
 
   render() {
-    const { branchLike, hotspot } = this.props;
-    const { highlightedSymbols, lastLine, linePopup, loading, sourceLines } = this.state;
+    const { branchLike, component, hotspot } = this.props;
+    const { highlightedSymbols, lastLine, loading, sourceLines } = this.state;
 
     const locations = locationsByLine([hotspot]);
 
@@ -174,14 +157,13 @@ export default class HotspotSnippetContainer extends React.Component<Props, Stat
     return (
       <HotspotSnippetContainerRenderer
         branchLike={branchLike}
+        displayProjectName={component.qualifier === ComponentQualifier.Application}
         highlightedSymbols={highlightedSymbols}
         hotspot={hotspot}
         lastLine={lastLine}
-        linePopup={linePopup}
         loading={loading}
         locations={locations}
         onExpandBlock={this.handleExpansion}
-        onLinePopupToggle={this.handleLinePopupToggle}
         onSymbolClick={this.handleSymbolClick}
         sourceLines={sourceLines}
         sourceViewerFile={sourceViewerFile}

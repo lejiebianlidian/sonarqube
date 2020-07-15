@@ -22,5 +22,5 @@ import * as React from 'react';
 import ReliabilityFilter from '../ReliabilityFilter';
 
 it('renders', () => {
-  expect(shallow(<ReliabilityFilter onQueryChange={jest.fn()} query={{}} />)).toMatchSnapshot();
+  expect(shallow(<ReliabilityFilter onQueryChange={jest.fn()} />)).toMatchSnapshot();
 });

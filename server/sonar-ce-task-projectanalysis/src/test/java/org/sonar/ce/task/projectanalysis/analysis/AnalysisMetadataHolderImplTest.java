@@ -47,7 +47,6 @@ import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 public class AnalysisMetadataHolderImplTest {
 
   private static Analysis baseProjectAnalysis = new Analysis.Builder()
-    .setId(1)
     .setUuid("uuid_1")
     .setCreatedAt(123456789L)
     .build();
@@ -137,6 +136,33 @@ public class AnalysisMetadataHolderImplTest {
     expectedException.expectMessage("Analysis date has already been set");
 
     underTest.setAnalysisDate(SOME_DATE);
+  }
+
+  @Test
+  public void getForkDate_returns_date_with_same_time_as_the_one_set_with_setForkDate() {
+
+    underTest.setForkDate(SOME_DATE);
+
+    assertThat(underTest.getForkDate()).isEqualTo(SOME_DATE);
+  }
+
+  @Test
+  public void getForkDate_throws_ISE_when_holder_is_not_initialized() {
+    expectedException.expect(IllegalStateException.class);
+    expectedException.expectMessage("Fork date has not been set");
+
+    new AnalysisMetadataHolderImpl(editionProvider).getForkDate();
+  }
+
+  @Test
+  public void setForkDate_throws_ISE_when_called_twice() {
+    AnalysisMetadataHolderImpl underTest = new AnalysisMetadataHolderImpl(editionProvider);
+    underTest.setForkDate(SOME_DATE);
+
+    expectedException.expect(IllegalStateException.class);
+    expectedException.expectMessage("Fork date has already been set");
+
+    underTest.setForkDate(SOME_DATE);
   }
 
   @Test

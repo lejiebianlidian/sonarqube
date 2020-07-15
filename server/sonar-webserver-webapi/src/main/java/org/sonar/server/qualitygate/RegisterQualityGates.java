@@ -46,6 +46,7 @@ import static org.sonar.api.measures.CoreMetrics.NEW_COVERAGE_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_DUPLICATED_LINES_DENSITY_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_MAINTAINABILITY_RATING_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_RELIABILITY_RATING_KEY;
+import static org.sonar.api.measures.CoreMetrics.NEW_SECURITY_HOTSPOTS_REVIEWED_KEY;
 import static org.sonar.api.measures.CoreMetrics.NEW_SECURITY_RATING_KEY;
 import static org.sonar.db.qualitygate.QualityGateConditionDto.OPERATOR_GREATER_THAN;
 import static org.sonar.db.qualitygate.QualityGateConditionDto.OPERATOR_LESS_THAN;
@@ -62,7 +63,8 @@ public class RegisterQualityGates implements Startable {
     new QualityGateCondition().setMetricKey(NEW_RELIABILITY_RATING_KEY).setOperator(OPERATOR_GREATER_THAN).setErrorThreshold(A_RATING),
     new QualityGateCondition().setMetricKey(NEW_MAINTAINABILITY_RATING_KEY).setOperator(OPERATOR_GREATER_THAN).setErrorThreshold(A_RATING),
     new QualityGateCondition().setMetricKey(NEW_COVERAGE_KEY).setOperator(OPERATOR_LESS_THAN).setErrorThreshold("80"),
-    new QualityGateCondition().setMetricKey(NEW_DUPLICATED_LINES_DENSITY_KEY).setOperator(OPERATOR_GREATER_THAN).setErrorThreshold("3"));
+    new QualityGateCondition().setMetricKey(NEW_DUPLICATED_LINES_DENSITY_KEY).setOperator(OPERATOR_GREATER_THAN).setErrorThreshold("3"),
+    new QualityGateCondition().setMetricKey(NEW_SECURITY_HOTSPOTS_REVIEWED_KEY).setOperator(OPERATOR_LESS_THAN).setErrorThreshold("100"));
 
   private final DbClient dbClient;
   private final QualityGateConditionsUpdater qualityGateConditionsUpdater;
@@ -108,12 +110,12 @@ public class RegisterQualityGates implements Startable {
   }
 
   private void updateQualityConditionsIfRequired(DbSession dbSession, QualityGateDto builtin) {
-    Map<Long, String> idToKeyMetric = dbClient.metricDao().selectAll(dbSession).stream()
-      .collect(toMap(metricDto -> metricDto.getId().longValue(), MetricDto::getKey));
+    Map<String, String> uuidToKeyMetric = dbClient.metricDao().selectAll(dbSession).stream()
+      .collect(toMap(MetricDto::getUuid, MetricDto::getKey));
 
-    List<QualityGateCondition> qualityGateConditions = qualityGateConditionDao.selectForQualityGate(dbSession, builtin.getId())
+    List<QualityGateCondition> qualityGateConditions = qualityGateConditionDao.selectForQualityGate(dbSession, builtin.getUuid())
       .stream()
-      .map(dto -> QualityGateCondition.from(dto, idToKeyMetric))
+      .map(dto -> QualityGateCondition.from(dto, uuidToKeyMetric))
       .collect(MoreCollectors.toList());
 
     // Find all conditions that are not present in QUALITY_GATE_CONDITIONS
@@ -121,7 +123,7 @@ public class RegisterQualityGates implements Startable {
     List<QualityGateCondition> qgConditionsToBeDeleted = new ArrayList<>(qualityGateConditions);
     qgConditionsToBeDeleted.removeAll(QUALITY_GATE_CONDITIONS);
     qgConditionsToBeDeleted
-      .forEach(qgc -> qualityGateConditionDao.delete(qgc.toQualityGateDto(builtin.getId()), dbSession));
+      .forEach(qgc -> qualityGateConditionDao.delete(qgc.toQualityGateDto(builtin.getUuid()), dbSession));
 
     // Find all conditions that are not present in qualityGateConditions
     // Those conditions must be created
@@ -151,26 +153,26 @@ public class RegisterQualityGates implements Startable {
   }
 
   private static class QualityGateCondition {
-    private Long id;
+    private String uuid;
     private String metricKey;
     private String operator;
     private String errorThreshold;
 
-    public static QualityGateCondition from(QualityGateConditionDto qualityGateConditionDto, Map<Long, String> mapping) {
+    public static QualityGateCondition from(QualityGateConditionDto qualityGateConditionDto, Map<String, String> mapping) {
       return new QualityGateCondition()
-        .setId(qualityGateConditionDto.getId())
-        .setMetricKey(mapping.get(qualityGateConditionDto.getMetricId()))
+        .setUuid(qualityGateConditionDto.getUuid())
+        .setMetricKey(mapping.get(qualityGateConditionDto.getMetricUuid()))
         .setOperator(qualityGateConditionDto.getOperator())
         .setErrorThreshold(qualityGateConditionDto.getErrorThreshold());
     }
 
     @CheckForNull
-    public Long getId() {
-      return id;
+    public String getUuid() {
+      return uuid;
     }
 
-    public QualityGateCondition setId(Long id) {
-      this.id = id;
+    public QualityGateCondition setUuid(String uuid) {
+      this.uuid = uuid;
       return this;
     }
 
@@ -201,13 +203,13 @@ public class RegisterQualityGates implements Startable {
       return this;
     }
 
-    public QualityGateConditionDto toQualityGateDto(long qualityGateId) {
+    public QualityGateConditionDto toQualityGateDto(String qualityGateUuid) {
       return new QualityGateConditionDto()
-        .setId(id)
+        .setUuid(uuid)
         .setMetricKey(metricKey)
         .setOperator(operator)
         .setErrorThreshold(errorThreshold)
-        .setQualityGateId(qualityGateId);
+        .setQualityGateUuid(qualityGateUuid);
     }
 
     // id does not belongs to equals to be able to be compared with builtin

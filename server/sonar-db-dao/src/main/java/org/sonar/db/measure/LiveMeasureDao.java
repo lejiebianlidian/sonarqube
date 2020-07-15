@@ -19,7 +19,6 @@
  */
 package org.sonar.db.measure;
 
-import com.google.common.collect.Iterables;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +33,6 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.KeyType;
 import org.sonar.db.dialect.Dialect;
 
-import static java.util.Collections.singletonList;
 import static org.sonar.api.measures.CoreMetrics.NCLOC_KEY;
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 
@@ -46,23 +44,23 @@ public class LiveMeasureDao implements Dao {
     this.system2 = system2;
   }
 
-  public List<LiveMeasureDto> selectByComponentUuidsAndMetricIds(DbSession dbSession, Collection<String> largeComponentUuids, Collection<Integer> metricIds) {
-    if (largeComponentUuids.isEmpty() || metricIds.isEmpty()) {
+  public List<LiveMeasureDto> selectByComponentUuidsAndMetricUuids(DbSession dbSession, Collection<String> largeComponentUuids, Collection<String> metricUuis) {
+    if (largeComponentUuids.isEmpty() || metricUuis.isEmpty()) {
       return Collections.emptyList();
     }
 
     return executeLargeInputs(
       largeComponentUuids,
-      componentUuids -> mapper(dbSession).selectByComponentUuidsAndMetricIds(componentUuids, metricIds));
+      componentUuids -> mapper(dbSession).selectByComponentUuidsAndMetricUuids(componentUuids, metricUuis));
   }
 
-  public void scrollSelectByComponentUuidAndMetricKeys(DbSession dbSession, String componentUuid, Collection<String> metricIds,
+  public void scrollSelectByComponentUuidAndMetricKeys(DbSession dbSession, String componentUuid, Collection<String> metricKeys,
     ResultHandler<LiveMeasureDto> handler) {
-    if (metricIds.isEmpty()) {
+    if (metricKeys.isEmpty()) {
       return;
     }
 
-    mapper(dbSession).scrollSelectByComponentUuidAndMetricKeys(componentUuid, metricIds, handler);
+    mapper(dbSession).scrollSelectByComponentUuidAndMetricKeys(componentUuid, metricKeys, handler);
   }
 
   public List<LiveMeasureDto> selectByComponentUuidsAndMetricKeys(DbSession dbSession, Collection<String> largeComponentUuids, Collection<String> metricKeys) {
@@ -75,18 +73,17 @@ public class LiveMeasureDao implements Dao {
       componentUuids -> mapper(dbSession).selectByComponentUuidsAndMetricKeys(componentUuids, metricKeys));
   }
 
-  public Optional<LiveMeasureDto> selectByComponentUuidAndMetricKey(DbSession dbSession, String componentUuid, String metricKey) {
-    LiveMeasureDto liveMeasureDto = mapper(dbSession).selectByComponentUuidAndMetricKey(componentUuid, metricKey);
-    return Optional.ofNullable(liveMeasureDto);
+  public List<LiveMeasureDto> selectByComponentUuidAndMetricKeys(DbSession dbSession, String componentUuid, Collection<String> metricKeys) {
+    if (metricKeys.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return mapper(dbSession).selectByComponentUuidAndMetricKeys(componentUuid, metricKeys);
   }
 
   public Optional<LiveMeasureDto> selectMeasure(DbSession dbSession, String componentUuid, String metricKey) {
-    List<LiveMeasureDto> measures = selectByComponentUuidsAndMetricKeys(dbSession, singletonList(componentUuid), singletonList(metricKey));
-    // couple of columns [component_uuid, metric_id] is unique. List can't have more than 1 item.
-    if (measures.size() == 1) {
-      return Optional.of(measures.get(0));
-    }
-    return Optional.empty();
+    LiveMeasureDto liveMeasureDto = mapper(dbSession).selectByComponentUuidAndMetricKey(componentUuid, metricKey);
+    return Optional.ofNullable(liveMeasureDto);
   }
 
   public void selectTreeByQuery(DbSession dbSession, ComponentDto baseComponent, MeasureTreeQuery query, ResultHandler<LiveMeasureDto> resultHandler) {
@@ -112,6 +109,10 @@ public class LiveMeasureDao implements Dao {
     mapper(dbSession).insert(dto, Uuids.create(), system2.now());
   }
 
+  public void update(DbSession dbSession, LiveMeasureDto dto) {
+    mapper(dbSession).update(dto, system2.now());
+  }
+
   public void insertOrUpdate(DbSession dbSession, LiveMeasureDto dto) {
     LiveMeasureMapper mapper = mapper(dbSession);
     long now = system2.now();
@@ -120,28 +121,21 @@ public class LiveMeasureDao implements Dao {
     }
   }
 
-  /**
-   * Similar to {@link #insertOrUpdate(DbSession, LiveMeasureDto)}, except that:
-   * <ul>
-   * <li>it is batch session friendly (single same statement for both updates and inserts)</li>
-   * <li>it triggers a single SQL request</li>
-   * </ul>
-   * <p>
-   * <strong>This method should not be called unless {@link Dialect#supportsUpsert()} is true</strong>
-   */
-  public int upsert(DbSession dbSession, Iterable<LiveMeasureDto> dtos) {
-    for (LiveMeasureDto dto : dtos) {
-      dto.setUuidForUpsert(Uuids.create());
-    }
-    int updated = 0;
-    for (List<LiveMeasureDto> chunk : Iterables.partition(dtos, 100)) {
-      updated += mapper(dbSession).upsert(chunk, system2.now());
-    }
-    return updated;
+  public void deleteByComponent(DbSession dbSession, String componentUuid) {
+    mapper(dbSession).deleteByComponent(componentUuid);
   }
 
-  public int deleteByComponentUuidExcludingMetricIds(DbSession dbSession, String componentUuid, List<Integer> excludedMetricIds) {
-    return mapper(dbSession).deleteByComponentUuidExcludingMetricIds(componentUuid, excludedMetricIds);
+  /**
+   * Similar to {@link #insertOrUpdate(DbSession, LiveMeasureDto)}, except that it triggers a single SQL request
+   * <strong>This method should not be called unless {@link Dialect#supportsUpsert()} is true</strong>
+   */
+  public int upsert(DbSession dbSession, LiveMeasureDto dto) {
+    dto.setUuidForUpsert(Uuids.create());
+    return mapper(dbSession).upsert(dto, system2.now());
+  }
+
+  public void deleteByComponentUuidExcludingMetricUuids(DbSession dbSession, String componentUuid, List<String> excludedMetricUuids) {
+    mapper(dbSession).deleteByComponentUuidExcludingMetricUuids(componentUuid, excludedMetricUuids);
   }
 
   private static LiveMeasureMapper mapper(DbSession dbSession) {

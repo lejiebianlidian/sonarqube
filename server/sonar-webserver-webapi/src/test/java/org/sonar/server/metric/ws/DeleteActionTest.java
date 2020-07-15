@@ -23,6 +23,8 @@ import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.api.server.ws.Change;
+import org.sonar.api.server.ws.WebService.Action;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbTester;
@@ -39,6 +41,7 @@ import org.sonar.server.ws.WsActionTester;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.db.measure.custom.CustomMeasureTesting.newCustomMeasureDto;
 import static org.sonar.db.metric.MetricTesting.newMetricDto;
 
@@ -53,6 +56,19 @@ public class DeleteActionTest {
 
   private DbClient dbClient = db.getDbClient();
   private WsActionTester ws = new WsActionTester(new DeleteAction(dbClient, userSessionRule));
+
+  @Test
+  public void verify_definition() {
+    Action wsDef = ws.getDef();
+
+    assertThat(wsDef.deprecatedSince()).isEqualTo("7.7");
+    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.since()).isEqualTo("5.2");
+    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription)
+      .containsExactly(
+        tuple("8.4", "Parameter 'ids' format changes from integer to string."));
+  }
 
   @Test
   public void delete_by_keys() {
@@ -71,7 +87,7 @@ public class DeleteActionTest {
     loggedAsSystemAdministrator();
     MetricDto metric = insertCustomMetric("custom-key");
 
-    TestResponse response = newRequest().setParam("ids", String.valueOf(metric.getId())).execute();
+    TestResponse response = newRequest().setParam("ids", String.valueOf(metric.getUuid())).execute();
 
     assertThat(db.getDbClient().metricDao().selectEnabled(db.getSession())).isEmpty();
     assertThat(response.getStatus()).isEqualTo(204);
@@ -93,16 +109,16 @@ public class DeleteActionTest {
   public void delete_associated_measures() {
     loggedAsSystemAdministrator();
     MetricDto metric = insertCustomMetric("custom-key");
-    CustomMeasureDto customMeasure = newCustomMeasureDto().setMetricId(metric.getId());
-    CustomMeasureDto undeletedCustomMeasure = newCustomMeasureDto().setMetricId(metric.getId() + 1);
+    CustomMeasureDto customMeasure = newCustomMeasureDto().setMetricUuid(metric.getUuid());
+    CustomMeasureDto undeletedCustomMeasure = newCustomMeasureDto().setMetricUuid("unknown");
     dbClient.customMeasureDao().insert(db.getSession(), customMeasure);
     dbClient.customMeasureDao().insert(db.getSession(), undeletedCustomMeasure);
     db.getSession().commit();
 
     newRequest().setParam("keys", "custom-key").execute();
 
-    assertThat(dbClient.customMeasureDao().selectById(db.getSession(), customMeasure.getId())).isNull();
-    assertThat(dbClient.customMeasureDao().selectById(db.getSession(), undeletedCustomMeasure.getId())).isNotNull();
+    assertThat(dbClient.customMeasureDao().selectByUuid(db.getSession(), customMeasure.getUuid())).isEmpty();
+    assertThat(dbClient.customMeasureDao().selectByUuid(db.getSession(), undeletedCustomMeasure.getUuid())).isNotEmpty();
   }
 
   @Test
@@ -118,9 +134,9 @@ public class DeleteActionTest {
 
     newRequest().setParam("keys", "custom-key").execute();
 
-    assertThat(dbClient.gateConditionDao().selectForQualityGate(db.getSession(), qualityGate1.getId())).isEmpty();
-    assertThat(dbClient.gateConditionDao().selectForQualityGate(db.getSession(), qualityGate2.getId()))
-      .extracting(QualityGateConditionDto::getMetricId).containsOnly(nonCustomMetric.getId().longValue());
+    assertThat(dbClient.gateConditionDao().selectForQualityGate(db.getSession(), qualityGate1.getUuid())).isEmpty();
+    assertThat(dbClient.gateConditionDao().selectForQualityGate(db.getSession(), qualityGate2.getUuid()))
+      .extracting(QualityGateConditionDto::getMetricUuid).containsOnly(nonCustomMetric.getUuid());
   }
 
   @Test

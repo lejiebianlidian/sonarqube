@@ -22,6 +22,7 @@ package org.sonar.server.usergroups.ws;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
@@ -64,7 +65,6 @@ public class SearchActionTest {
 
   private WsActionTester ws = new WsActionTester(new SearchAction(db.getDbClient(), userSession, newGroupWsSupport(), new DefaultGroupFinder(db.getDbClient())));
 
-
   @Test
   public void define_search_action() {
     WebService.Action action = ws.getDef();
@@ -72,6 +72,10 @@ public class SearchActionTest {
     assertThat(action.key()).isEqualTo("search");
     assertThat(action.responseExampleAsString()).isNotEmpty();
     assertThat(action.params()).hasSize(5);
+    assertThat(action.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
+      tuple("8.4", "Field 'id' in the response is deprecated. Format changes from integer to string."),
+      tuple("6.4", "Paging response fields moved to a Paging object"),
+      tuple("6.4", "'default' response field has been added"));
   }
 
   @Test
@@ -161,15 +165,15 @@ public class SearchActionTest {
     insertDefaultGroup(db.getDefaultOrganization(), "sonar-users", 0);
     loginAsDefaultOrgAdmin();
 
-    assertThat(call(ws.newRequest()).getGroupsList()).extracting(Group::hasId, Group::hasName, Group::hasDescription, Group::hasMembersCount)
+    assertThat(call(ws.newRequest()).getGroupsList()).extracting(Group::hasUuid, Group::hasName, Group::hasDescription, Group::hasMembersCount)
       .containsOnly(tuple(true, true, true, true));
-    assertThat(call(ws.newRequest().setParam(FIELDS, "")).getGroupsList()).extracting(Group::hasId, Group::hasName, Group::hasDescription, Group::hasMembersCount)
+    assertThat(call(ws.newRequest().setParam(FIELDS, "")).getGroupsList()).extracting(Group::hasUuid, Group::hasName, Group::hasDescription, Group::hasMembersCount)
       .containsOnly(tuple(true, true, true, true));
-    assertThat(call(ws.newRequest().setParam(FIELDS, "name")).getGroupsList()).extracting(Group::hasId, Group::hasName, Group::hasDescription, Group::hasMembersCount)
+    assertThat(call(ws.newRequest().setParam(FIELDS, "name")).getGroupsList()).extracting(Group::hasUuid, Group::hasName, Group::hasDescription, Group::hasMembersCount)
       .containsOnly(tuple(true, true, false, false));
-    assertThat(call(ws.newRequest().setParam(FIELDS, "description")).getGroupsList()).extracting(Group::hasId, Group::hasName, Group::hasDescription, Group::hasMembersCount)
+    assertThat(call(ws.newRequest().setParam(FIELDS, "description")).getGroupsList()).extracting(Group::hasUuid, Group::hasName, Group::hasDescription, Group::hasMembersCount)
       .containsOnly(tuple(true, false, true, false));
-    assertThat(call(ws.newRequest().setParam(FIELDS, "membersCount")).getGroupsList()).extracting(Group::hasId, Group::hasName, Group::hasDescription, Group::hasMembersCount)
+    assertThat(call(ws.newRequest().setParam(FIELDS, "membersCount")).getGroupsList()).extracting(Group::hasUuid, Group::hasName, Group::hasDescription, Group::hasMembersCount)
       .containsOnly(tuple(true, false, false, true));
   }
 
@@ -184,7 +188,7 @@ public class SearchActionTest {
 
     SearchWsResponse response = call(ws.newRequest().setParam("organization", org.getKey()));
 
-    assertThat(response.getGroupsList()).extracting(Group::getId, Group::getName).containsOnly(tuple(group.getId().longValue(), "users"));
+    assertThat(response.getGroupsList()).extracting(Group::getUuid, Group::getName).containsOnly(tuple(group.getUuid(), "users"));
   }
 
   @Test

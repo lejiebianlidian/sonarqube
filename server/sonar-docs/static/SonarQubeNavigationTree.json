@@ -55,9 +55,14 @@
         ]
       },
       "/analysis/coverage/",
-      "/analysis/external-issues/",
+      {
+        "title": "Importing External Issues",
+        "children": [
+		  "/analysis/external-issues/",
+		  "/analysis/generic-issue/"
+		]
+      },
       "/analysis/background-tasks/",
-      "/analysis/generic-issue/",
       "/analysis/generic-test/",
       {
         "title": "Pull Request Analysis",
@@ -73,7 +78,14 @@
           "/branches/branches-faq/"
         ]
       },
-      "/analysis/gitlab-cicd/",
+	  {
+        "title": "CI Integration",
+        "children": [
+          "/analysis/branch-pr-analysis-overview/",
+		  "/analysis/gitlab-cicd/",
+          "/analysis/jenkins/"
+        ]
+      },
       "/analysis/scm-integration/",
       "/analysis/security_configuration/"
     ]
@@ -109,7 +121,8 @@
       "/project-administration/managing-project-history/",
       "/project-administration/narrowing-the-focus/",
 	  "/project-administration/new-code-period/",
-	  "/project-administration/configuring-portfolios-and-applications/",
+	  "/project-administration/managing-portfolios/",
+	  "/project-administration/managing-applications/",
       "/project-administration/portfolio-pdf-configuration/",
       "/project-administration/project-settings/",
       "/project-administration/webhooks/"
@@ -131,7 +144,8 @@
       "/instance-administration/project-move/",
       "/instance-administration/custom-measures/",
       "/instance-administration/compute-engine-performance/",
-      "/instance-administration/db-copy/"
+      "/instance-administration/db-copy/",
+      "/instance-administration/backup-restore/"
     ]
   },
   {

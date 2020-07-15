@@ -59,13 +59,13 @@ public class DefaultNotificationManager implements NotificationManager {
   private NotificationChannel[] notificationChannels;
   private final DbClient dbClient;
 
+
   private boolean alreadyLoggedDeserializationIssue = false;
 
   /**
    * Default constructor used by Pico
    */
-  public DefaultNotificationManager(NotificationChannel[] channels,
-    DbClient dbClient) {
+  public DefaultNotificationManager(NotificationChannel[] channels, DbClient dbClient) {
     this.notificationChannels = channels;
     this.dbClient = dbClient;
   }

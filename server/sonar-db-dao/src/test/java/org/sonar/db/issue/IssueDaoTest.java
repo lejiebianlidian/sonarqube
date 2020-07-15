@@ -79,10 +79,9 @@ public class IssueDaoTest {
 
     IssueDto issue = underTest.selectOrFailByKey(db.getSession(), ISSUE_KEY1);
     assertThat(issue.getKee()).isEqualTo(ISSUE_KEY1);
-    assertThat(issue.getId()).isGreaterThan(0L);
     assertThat(issue.getComponentUuid()).isEqualTo(FILE_UUID);
     assertThat(issue.getProjectUuid()).isEqualTo(PROJECT_UUID);
-    assertThat(issue.getRuleId()).isEqualTo(RULE.getId());
+    assertThat(issue.getRuleUuid()).isEqualTo(RULE.getUuid());
     assertThat(issue.getLanguage()).isEqualTo(RULE.getLanguage());
     assertThat(issue.getSeverity()).isEqualTo("BLOCKER");
     assertThat(issue.getType()).isEqualTo(2);
@@ -395,9 +394,9 @@ public class IssueDaoTest {
 
   private static IssueDto newIssueDto(String key) {
     IssueDto dto = new IssueDto();
-    dto.setComponent(new ComponentDto().setDbKey("struts:Action").setId(123L).setUuid("component-uuid"));
-    dto.setProject(new ComponentDto().setDbKey("struts").setId(100L).setUuid("project-uuid"));
-    dto.setRule(RuleTesting.newRule(RuleKey.of("squid", "S001")).setId(200));
+    dto.setComponent(new ComponentDto().setDbKey("struts:Action").setUuid("component-uuid"));
+    dto.setProject(new ComponentDto().setDbKey("struts").setUuid("project-uuid"));
+    dto.setRule(RuleTesting.newRule(RuleKey.of("squid", "S001")).setUuid("uuid-200"));
     dto.setKee(key);
     dto.setType(2);
     dto.setLine(500);
@@ -426,11 +425,11 @@ public class IssueDaoTest {
     db.components().insertComponent(newFileDto(projectDto).setUuid(FILE_UUID).setDbKey(FILE_KEY));
     underTest.insert(db.getSession(), newIssueDto(ISSUE_KEY1)
       .setMessage("the message")
-      .setRuleId(RULE.getId())
+      .setRuleUuid(RULE.getUuid())
       .setComponentUuid(FILE_UUID)
       .setProjectUuid(PROJECT_UUID));
     underTest.insert(db.getSession(), newIssueDto(ISSUE_KEY2)
-      .setRuleId(RULE.getId())
+      .setRuleUuid(RULE.getUuid())
       .setComponentUuid(FILE_UUID)
       .setProjectUuid(PROJECT_UUID));
     db.getSession().commit();

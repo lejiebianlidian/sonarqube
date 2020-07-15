@@ -20,6 +20,8 @@ syntax = "proto2";
 
 package sonarqube.ws.almsetting;
 
+import "ws-commons.proto";
+
 option java_package = "org.sonarqube.ws";
 option java_outer_classname = "AlmIntegrations";
 option optimize_for = SPEED;
@@ -46,4 +48,34 @@ message BBSRepo {
 message BBSProject {
   optional string key = 1;
   optional string name = 2;
+}
+
+// WS api/alm_integrations/get_github_client_id
+message GithubClientIdWsResponse {
+  optional string clientId = 1;
+}
+
+// WS api/alm_integrations/list_github_organizations
+message ListGithubOrganizationsWsResponse {
+  optional sonarqube.ws.commons.Paging paging = 1;
+  repeated GithubOrganization organizations = 2;
+}
+
+message GithubOrganization {
+  optional string key = 1;
+  optional string name = 2;
+}
+
+// WS api/alm_integrations/list_github_repositories
+message ListGithubRepositoriesWsResponse {
+  optional sonarqube.ws.commons.Paging paging = 1;
+  repeated GithubRepository repositories = 2;
+}
+
+message GithubRepository {
+  optional int64 id = 1;
+  optional string key = 2;
+  optional string name = 3;
+  optional string url = 4;
+  optional string sqProjectKey = 5;
 }

@@ -21,6 +21,7 @@ package org.sonar.ce.db;
 
 import java.util.Map;
 import org.sonar.api.utils.System2;
+import org.sonar.core.util.UuidFactory;
 import org.sonar.db.DbSession;
 import org.sonar.db.MyBatis;
 import org.sonar.db.property.PropertiesDao;
@@ -36,8 +37,8 @@ import org.sonar.db.property.PropertyDto;
  * </p>
  */
 public class ReadOnlyPropertiesDao extends PropertiesDao {
-  public ReadOnlyPropertiesDao(MyBatis mybatis, System2 system2) {
-    super(mybatis, system2);
+  public ReadOnlyPropertiesDao(MyBatis mybatis, System2 system2, UuidFactory uuidFactory) {
+    super(mybatis, system2, uuidFactory);
   }
 
   @Override
@@ -51,12 +52,12 @@ public class ReadOnlyPropertiesDao extends PropertiesDao {
   }
 
   @Override
-  public void deleteProjectProperty(String key, Long projectId) {
+  public void deleteProjectProperty(String key, String projectUuid) {
     // do nothing
   }
 
   @Override
-  public void deleteProjectProperty(String key, Long projectId, DbSession session) {
+  public void deleteProjectProperty(String key, String projectUuid, DbSession session) {
     // do nothing
   }
 

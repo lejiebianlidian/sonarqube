@@ -17,34 +17,61 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { isSonarCloud } from '../../../../helpers/system';
-import { mockLocation, mockRouter } from '../../../../helpers/testMocks';
-import CreateProjectPage from '../CreateProjectPage';
+import { getAlmSettings } from '../../../../api/alm-settings';
+import { mockLocation, mockLoggedInUser, mockRouter } from '../../../../helpers/testMocks';
+import { AlmKeys } from '../../../../types/alm-settings';
+import { CreateProjectPage } from '../CreateProjectPage';
+import { CreateProjectModes } from '../types';
 
-jest.mock('../../../../helpers/system', () => ({
-  isSonarCloud: jest.fn().mockReturnValue(false)
+jest.mock('../../../../api/alm-settings', () => ({
+  getAlmSettings: jest.fn().mockResolvedValue([{ alm: AlmKeys.Bitbucket, key: 'foo' }])
 }));
 
-it('should render correctly for SonarQube', () => {
-  const wrapper = shallowRender();
+beforeEach(jest.clearAllMocks);
+
+it('should render correctly', () => {
+  expect(shallowRender()).toMatchSnapshot();
+  expect(getAlmSettings).toBeCalled();
+});
+
+it('should render correctly if no branch support', () => {
+  expect(shallowRender({ appState: { branchesEnabled: false } })).toMatchSnapshot();
+  expect(getAlmSettings).not.toBeCalled();
+});
+
+it('should render correctly if the manual method is selected', () => {
+  expect(
+    shallowRender({
+      location: mockLocation({ query: { mode: CreateProjectModes.Manual } })
+    })
+  ).toMatchSnapshot();
+});
+
+it('should render correctly if the BBS method is selected', () => {
+  expect(
+    shallowRender({
+      location: mockLocation({ query: { mode: CreateProjectModes.BitbucketServer } })
+    })
+  ).toMatchSnapshot();
+});
+
+it('should render correctly if the GitHub method is selected', () => {
+  const wrapper = shallowRender({
+    location: mockLocation({ query: { mode: CreateProjectModes.GitHub } })
+  });
   expect(wrapper).toMatchSnapshot();
 });
 
-it('should render correctly for SonarCloud', () => {
-  (isSonarCloud as jest.Mock).mockReturnValue(true);
-  const wrapper = shallowRender();
-  expect(wrapper).toMatchSnapshot();
-});
-
-function shallowRender(props = {}) {
-  return shallow(
+function shallowRender(props: Partial<CreateProjectPage['props']> = {}) {
+  return shallow<CreateProjectPage>(
     <CreateProjectPage
+      appState={{ branchesEnabled: true }}
+      currentUser={mockLoggedInUser()}
       location={mockLocation()}
-      params={{}}
       router={mockRouter()}
-      routes={[]}
       {...props}
     />
   );

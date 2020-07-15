@@ -151,7 +151,7 @@ public class OrganizationDaoTest {
   }
 
   @Test
-  public void description_url_avatarUrl_and_userId_are_optional() {
+  public void description_url_avatarUrl_and_userUuid_are_optional() {
     when(system2.now()).thenReturn(SOME_DATE);
     insertOrganization(copyOf(ORGANIZATION_DTO_1).setDescription(null).setUrl(null).setAvatarUrl(null));
 
@@ -162,7 +162,7 @@ public class OrganizationDaoTest {
     assertThat(row.get("description")).isNull();
     assertThat(row.get("url")).isNull();
     assertThat(row.get("avatarUrl")).isNull();
-    assertThat(row.get("userId")).isNull();
+    assertThat(row.get("userUuid")).isNull();
     assertThat(row.get("createdAt")).isEqualTo(SOME_DATE);
     assertThat(row.get("updatedAt")).isEqualTo(SOME_DATE);
     assertThat(row.get("defaultTemplate")).isNull();
@@ -535,7 +535,7 @@ public class OrganizationDaoTest {
     db.organizations().addMember(organization, user);
     db.organizations().addMember(anotherOrganization, user);
 
-    List<OrganizationDto> result = underTest.selectByQuery(dbSession, newOrganizationQueryBuilder().setMember(user.getId()).build(), forPage(1).andSize(100));
+    List<OrganizationDto> result = underTest.selectByQuery(dbSession, newOrganizationQueryBuilder().setMember(user.getUuid()).build(), forPage(1).andSize(100));
 
     assertThat(result).extracting(OrganizationDto::getUuid)
       .containsExactlyInAnyOrder(organization.getUuid(), anotherOrganization.getUuid())
@@ -555,7 +555,7 @@ public class OrganizationDaoTest {
 
     List<OrganizationDto> result = underTest.selectByQuery(dbSession, newOrganizationQueryBuilder()
       .setKeys(Arrays.asList(organization.getKey(), anotherOrganization.getKey(), organizationWithoutMember.getKey()))
-      .setMember(user.getId()).build(), forPage(1).andSize(100));
+      .setMember(user.getUuid()).build(), forPage(1).andSize(100));
 
     assertThat(result).extracting(OrganizationDto::getUuid)
       .containsExactlyInAnyOrder(organization.getUuid(), anotherOrganization.getUuid())
@@ -679,46 +679,46 @@ public class OrganizationDaoTest {
   }
 
   @Test
-  public void getDefaultGroupId_returns_empty_when_default_group_id_is_null() {
-    insertOrganization(ORGANIZATION_DTO_1.setDefaultGroupId(null));
+  public void getDefaultGroupUuid_returns_empty_when_default_group_uuid_is_null() {
+    insertOrganization(ORGANIZATION_DTO_1.setDefaultGroupUuid(null));
 
-    assertThat(underTest.getDefaultGroupId(dbSession, ORGANIZATION_DTO_1.getUuid())).isEmpty();
+    assertThat(underTest.getDefaultGroupUuid(dbSession, ORGANIZATION_DTO_1.getUuid())).isEmpty();
   }
 
   @Test
-  public void getDefaultGroupId_returns_data_when_default_group_id_is_not_null() {
+  public void getDefaultGroupUuid_returns_data_when_default_group_uuid_is_not_null() {
     when(system2.now()).thenReturn(DATE_3);
     insertOrganization(ORGANIZATION_DTO_1);
-    underTest.setDefaultGroupId(dbSession, ORGANIZATION_DTO_1.getUuid(), GroupTesting.newGroupDto().setId(10));
+    underTest.setDefaultGroupUuid(dbSession, ORGANIZATION_DTO_1.getUuid(), GroupTesting.newGroupDto().setUuid("10"));
 
-    Optional<Integer> optional = underTest.getDefaultGroupId(dbSession, ORGANIZATION_DTO_1.getUuid());
+    Optional<String> optional = underTest.getDefaultGroupUuid(dbSession, ORGANIZATION_DTO_1.getUuid());
     assertThat(optional).isNotEmpty();
-    assertThat(optional.get()).isEqualTo(10);
+    assertThat(optional.get()).isEqualTo("10");
     verifyOrganizationUpdatedAt(ORGANIZATION_DTO_1.getUuid(), DATE_3);
   }
 
   @Test
-  public void setDefaultGroupId_throws_NPE_when_uuid_is_null() {
+  public void setDefaultGroupUuid_throws_NPE_when_uuid_is_null() {
     expectedException.expect(NullPointerException.class);
     expectedException.expectMessage("uuid can't be null");
 
-    underTest.setDefaultGroupId(dbSession, null, GroupTesting.newGroupDto().setId(10));
+    underTest.setDefaultGroupUuid(dbSession, null, GroupTesting.newGroupDto().setUuid("10"));
   }
 
   @Test
-  public void setDefaultGroupId_throws_NPE_when_default_group_is_null() {
+  public void setDefaultGroupUuid_throws_NPE_when_default_group_is_null() {
     expectedException.expect(NullPointerException.class);
     expectedException.expectMessage("Default group cannot be null");
 
-    underTest.setDefaultGroupId(dbSession, "uuid", null);
+    underTest.setDefaultGroupUuid(dbSession, "uuid", null);
   }
 
   @Test
-  public void setDefaultGroupId_throws_NPE_when_default_group_id_is_null() {
+  public void setDefaultGroupUuid_throws_NPE_when_default_group_uuid_is_null() {
     expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage("Default group id cannot be null");
+    expectedException.expectMessage("Default group uuid cannot be null");
 
-    underTest.setDefaultGroupId(dbSession, "uuid", GroupTesting.newGroupDto().setId(null));
+    underTest.setDefaultGroupUuid(dbSession, "uuid", GroupTesting.newGroupDto().setUuid(null));
   }
 
   @Test
@@ -801,7 +801,7 @@ public class OrganizationDaoTest {
       .setName("new_name")
       .setDescription("new_desc")
       .setAvatarUrl("new_avatar")
-      .setDefaultGroupId(11)
+      .setDefaultGroupUuid("11")
       .setSubscription(PAID)
       .setUrl("new_url")
       .setCreatedAt(2_000L)
@@ -877,15 +877,15 @@ public class OrganizationDaoTest {
     OrganizationDto organization3 = db.organizations().insert();
     db.users().insertPermissionOnUser(organization3, otherUser, PERMISSION_2);
 
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), PERMISSION_2))
       .extracting(OrganizationDto::getUuid)
       .containsOnly(organization1.getUuid(), organization2.getUuid());
 
-    assertThat(underTest.selectByPermission(dbSession, otherUser.getId(), PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, otherUser.getUuid(), PERMISSION_2))
       .extracting(OrganizationDto::getUuid)
       .containsOnly(organization3.getUuid());
 
-    assertThat(underTest.selectByPermission(dbSession, 1234, PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, "1234", PERMISSION_2))
       .isEmpty();
   }
 
@@ -906,15 +906,15 @@ public class OrganizationDaoTest {
     db.users().insertPermissionOnGroup(group2, PERMISSION_1);
     db.users().insertMember(group2, otherUser);
 
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), PERMISSION_1))
       .extracting(OrganizationDto::getUuid)
       .containsOnly(organization1.getUuid(), organization2.getUuid());
 
-    assertThat(underTest.selectByPermission(dbSession, otherUser.getId(), PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, otherUser.getUuid(), PERMISSION_1))
       .extracting(OrganizationDto::getUuid)
       .containsOnly(organization3.getUuid());
 
-    assertThat(underTest.selectByPermission(dbSession, 1234, PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, "1234", PERMISSION_1))
       .isEmpty();
   }
 
@@ -931,7 +931,7 @@ public class OrganizationDaoTest {
     db.users().insertMember(group2, user);
     db.users().insertPermissionOnUser(organization, user, permission);
 
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), permission))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), permission))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(organization.getUuid());
   }
@@ -947,16 +947,16 @@ public class OrganizationDaoTest {
     db.users().insertPermissionOnUser(organization, otherUser, PERMISSION_2);
     db.users().insertPermissionOnUser(otherOrganization, otherUser, PERMISSION_1);
 
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), PERMISSION_1))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(organization.getUuid());
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), PERMISSION_2))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(otherOrganization.getUuid());
-    assertThat(underTest.selectByPermission(dbSession, otherUser.getId(), PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, otherUser.getUuid(), PERMISSION_1))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(otherOrganization.getUuid());
-    assertThat(underTest.selectByPermission(dbSession, otherUser.getId(), PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, otherUser.getUuid(), PERMISSION_2))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(organization.getUuid());
   }
@@ -980,16 +980,16 @@ public class OrganizationDaoTest {
     db.users().insertMember(group2, otherUser);
     db.users().insertMember(otherGroup1, otherUser);
 
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), PERMISSION_1))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(organization.getUuid());
-    assertThat(underTest.selectByPermission(dbSession, user.getId(), PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, user.getUuid(), PERMISSION_2))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(otherOrganization.getUuid());
-    assertThat(underTest.selectByPermission(dbSession, otherUser.getId(), PERMISSION_1))
+    assertThat(underTest.selectByPermission(dbSession, otherUser.getUuid(), PERMISSION_1))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(otherOrganization.getUuid());
-    assertThat(underTest.selectByPermission(dbSession, otherUser.getId(), PERMISSION_2))
+    assertThat(underTest.selectByPermission(dbSession, otherUser.getUuid(), PERMISSION_2))
       .extracting(OrganizationDto::getUuid)
       .containsOnlyOnce(organization.getUuid());
   }

@@ -22,9 +22,10 @@ import { Link } from 'react-router';
 import Checkbox from 'sonar-ui-common/components/controls/Checkbox';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
+import DateTooltipFormatter from 'sonar-ui-common/components/intl/DateTooltipFormatter';
 import { Project } from '../../api/components';
 import PrivacyBadgeContainer from '../../components/common/PrivacyBadgeContainer';
-import DateTooltipFormatter from '../../components/intl/DateTooltipFormatter';
+import { getComponentOverviewUrl } from '../../helpers/urls';
 import './ProjectRow.css';
 import ProjectRowActions from './ProjectRowActions';
 
@@ -53,8 +54,8 @@ export default class ProjectRow extends React.PureComponent<Props> {
         <td className="nowrap hide-overflow project-row-text-cell">
           <Link
             className="link-with-icon"
-            to={{ pathname: '/dashboard', query: { id: project.key } }}>
-            <QualifierIcon qualifier={project.qualifier} />
+            to={getComponentOverviewUrl(project.key, project.qualifier)}>
+            <QualifierIcon className="little-spacer-right" qualifier={project.qualifier} />
 
             <Tooltip overlay={project.name} placement="left">
               <span>{project.name}</span>
@@ -63,12 +64,7 @@ export default class ProjectRow extends React.PureComponent<Props> {
         </td>
 
         <td className="thin nowrap">
-          <PrivacyBadgeContainer
-            organization={organization}
-            qualifier={project.qualifier}
-            tooltipProps={{ projectKey: project.key }}
-            visibility={project.visibility}
-          />
+          <PrivacyBadgeContainer qualifier={project.qualifier} visibility={project.visibility} />
         </td>
 
         <td className="nowrap hide-overflow project-row-text-cell">

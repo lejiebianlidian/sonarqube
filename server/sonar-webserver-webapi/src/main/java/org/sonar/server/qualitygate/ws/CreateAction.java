@@ -19,6 +19,7 @@
  */
 package org.sonar.server.qualitygate.ws;
 
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
@@ -59,6 +60,8 @@ public class CreateAction implements QualityGatesWsAction {
       .setDescription("Create a Quality Gate.<br>" +
         "Requires the 'Administer Quality Gates' permission.")
       .setSince("4.3")
+      .setChangelog(
+        new Change("8.4", "Field 'id' in the response is deprecated. Format changes from integer to string."))
       .setResponseExample(getClass().getResource("create-example.json"))
       .setHandler(this);
 
@@ -82,7 +85,7 @@ public class CreateAction implements QualityGatesWsAction {
 
       QualityGateDto newQualityGate = qualityGateUpdater.create(dbSession, organizationDto, name);
       CreateResponse.Builder createResponse = CreateResponse.newBuilder()
-        .setId(newQualityGate.getId())
+        .setId(newQualityGate.getUuid())
         .setName(newQualityGate.getName());
       dbSession.commit();
       writeProtobuf(createResponse.build(), request, response);

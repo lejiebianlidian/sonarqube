@@ -23,38 +23,38 @@ import java.util.Date;
 import javax.annotation.Nullable;
 
 public class PermissionTemplateGroupDto {
-  private Long id;
-  private Long templateId;
-  private Integer groupId;
+  private String uuid;
+  private String templateUuid;
+  private String groupUuid;
   private String permission;
   private String groupName;
   private Date createdAt;
   private Date updatedAt;
 
-  public Long getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
-  public PermissionTemplateGroupDto setId(Long id) {
-    this.id = id;
+  public PermissionTemplateGroupDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 
-  public Long getTemplateId() {
-    return templateId;
+  public String getTemplateUuid() {
+    return templateUuid;
   }
 
-  public PermissionTemplateGroupDto setTemplateId(Long templateId) {
-    this.templateId = templateId;
+  public PermissionTemplateGroupDto setTemplateUuid(String templateUuid) {
+    this.templateUuid = templateUuid;
     return this;
   }
 
-  public Integer getGroupId() {
-    return groupId;
+  public String getGroupUuid() {
+    return groupUuid;
   }
 
-  public PermissionTemplateGroupDto setGroupId(@Nullable Integer groupId) {
-    this.groupId = groupId;
+  public PermissionTemplateGroupDto setGroupUuid(@Nullable String groupUuid) {
+    this.groupUuid = groupUuid;
     return this;
   }
 

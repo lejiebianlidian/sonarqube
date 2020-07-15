@@ -22,6 +22,7 @@ package org.sonar.server.organization;
 import java.util.List;
 import org.sonar.api.rule.RuleStatus;
 import org.sonar.api.server.ServerSide;
+import org.sonar.core.util.UuidFactory;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.permission.GroupPermissionDto;
@@ -43,16 +44,18 @@ public class OrganisationSupport {
   private final DefaultGroupCreator defaultGroupCreator;
   private final DefaultGroupFinder defaultGroupFinder;
   private final RuleIndexer ruleIndexer;
+  private final UuidFactory uuidFactory;
 
   public OrganisationSupport(DbClient dbClient, DefaultOrganizationProvider defaultOrganizationProvider,
     OrganizationFlags organizationFlags, DefaultGroupCreator defaultGroupCreator, DefaultGroupFinder defaultGroupFinder,
-    RuleIndexer ruleIndexer) {
+    RuleIndexer ruleIndexer, UuidFactory uuidFactory) {
     this.dbClient = dbClient;
     this.defaultOrganizationProvider = defaultOrganizationProvider;
     this.organizationFlags = organizationFlags;
     this.defaultGroupCreator = defaultGroupCreator;
     this.defaultGroupFinder = defaultGroupFinder;
     this.ruleIndexer = ruleIndexer;
+    this.uuidFactory = uuidFactory;
   }
 
   public void enable(String login) {
@@ -61,9 +64,9 @@ public class OrganisationSupport {
       if (!organizationFlags.isEnabled(dbSession)) {
         flagAdminUserAsRoot(dbSession, login);
         createDefaultMembersGroup(dbSession, defaultOrganizationUuid);
-        List<Integer> disabledTemplateAndCustomRuleIds = disableTemplateRulesAndCustomRules(dbSession);
+        List<String> disabledTemplateAndCustomRuleUuids = disableTemplateRulesAndCustomRules(dbSession);
         enableFeature(dbSession);
-        ruleIndexer.commitAndIndex(dbSession, disabledTemplateAndCustomRuleIds);
+        ruleIndexer.commitAndIndex(dbSession, disabledTemplateAndCustomRuleUuids);
       }
     }
   }
@@ -73,37 +76,40 @@ public class OrganisationSupport {
   }
 
   private void createDefaultMembersGroup(DbSession dbSession, String defaultOrganizationUuid) {
-    GroupDto sonarUsersGroupId = defaultGroupFinder.findDefaultGroup(dbSession, defaultOrganizationUuid);
+    GroupDto sonarUsersGroup = defaultGroupFinder.findDefaultGroup(dbSession, defaultOrganizationUuid);
     GroupDto members = defaultGroupCreator.create(dbSession, defaultOrganizationUuid);
-    copySonarUsersGroupPermissionsToMembersGroup(dbSession, defaultOrganizationUuid, sonarUsersGroupId, members);
-    copySonarUsersGroupPermissionTemplatesToMembersGroup(dbSession, sonarUsersGroupId, members);
+    copySonarUsersGroupPermissionsToMembersGroup(dbSession, defaultOrganizationUuid, sonarUsersGroup, members);
+    copySonarUsersGroupPermissionTemplatesToMembersGroup(dbSession, sonarUsersGroup, members);
     associateMembersOfDefaultOrganizationToGroup(dbSession, defaultOrganizationUuid, members);
   }
 
   private void associateMembersOfDefaultOrganizationToGroup(DbSession dbSession, String defaultOrganizationUuid, GroupDto membersGroup) {
-    List<Integer> organizationMembers = dbClient.organizationMemberDao().selectUserIdsByOrganizationUuid(dbSession, defaultOrganizationUuid);
-    organizationMembers.forEach(member -> dbClient.userGroupDao().insert(dbSession, new UserGroupDto().setGroupId(membersGroup.getId()).setUserId(member)));
+    List<String> organizationMembers = dbClient.organizationMemberDao().selectUserUuidsByOrganizationUuid(dbSession, defaultOrganizationUuid);
+    organizationMembers.forEach(member -> dbClient.userGroupDao().insert(dbSession, new UserGroupDto().setGroupUuid(membersGroup.getUuid()).setUserUuid(member)));
   }
 
   private void copySonarUsersGroupPermissionsToMembersGroup(DbSession dbSession, String defaultOrganizationUuid, GroupDto sonarUsersGroup, GroupDto membersGroup) {
-    dbClient.groupPermissionDao().selectAllPermissionsByGroupId(dbSession, defaultOrganizationUuid, sonarUsersGroup.getId(),
+    dbClient.groupPermissionDao().selectAllPermissionsByGroupUuid(dbSession, defaultOrganizationUuid, sonarUsersGroup.getUuid(),
       context -> {
         GroupPermissionDto groupPermissionDto = (GroupPermissionDto) context.getResultObject();
         dbClient.groupPermissionDao().insert(dbSession,
-          new GroupPermissionDto().setOrganizationUuid(defaultOrganizationUuid).setGroupId(membersGroup.getId())
+          new GroupPermissionDto()
+            .setUuid(uuidFactory.create())
+            .setOrganizationUuid(defaultOrganizationUuid)
+            .setGroupUuid(membersGroup.getUuid())
             .setRole(groupPermissionDto.getRole())
-            .setResourceId(groupPermissionDto.getResourceId()));
+            .setComponentUuid(groupPermissionDto.getComponentUuid()));
       });
   }
 
   private void copySonarUsersGroupPermissionTemplatesToMembersGroup(DbSession dbSession, GroupDto sonarUsersGroup, GroupDto membersGroup) {
-    List<PermissionTemplateGroupDto> sonarUsersPermissionTemplates = dbClient.permissionTemplateDao().selectAllGroupPermissionTemplatesByGroupId(dbSession,
-      sonarUsersGroup.getId());
+    List<PermissionTemplateGroupDto> sonarUsersPermissionTemplates = dbClient.permissionTemplateDao().selectAllGroupPermissionTemplatesByGroupUuid(dbSession,
+      sonarUsersGroup.getUuid());
     sonarUsersPermissionTemplates.forEach(permissionTemplateGroup -> dbClient.permissionTemplateDao().insertGroupPermission(dbSession,
-      permissionTemplateGroup.getTemplateId(), membersGroup.getId(), permissionTemplateGroup.getPermission()));
+      permissionTemplateGroup.getTemplateUuid(), membersGroup.getUuid(), permissionTemplateGroup.getPermission()));
   }
 
-  private List<Integer> disableTemplateRulesAndCustomRules(DbSession dbSession) {
+  private List<String> disableTemplateRulesAndCustomRules(DbSession dbSession) {
     List<RuleDefinitionDto> rules = dbClient.ruleDao().selectAllDefinitions(dbSession).stream()
       .filter(r -> r.isTemplate() || r.isCustomRule())
       .collect(toList());
@@ -111,7 +117,7 @@ public class OrganisationSupport {
       r.setStatus(RuleStatus.REMOVED);
       dbClient.ruleDao().update(dbSession, r);
     });
-    return rules.stream().map(RuleDefinitionDto::getId).collect(toList());
+    return rules.stream().map(RuleDefinitionDto::getUuid).collect(toList());
   }
 
   private void enableFeature(DbSession dbSession) {

@@ -3,34 +3,34 @@
 
 <mapper namespace="org.sonar.db.user.RoleMapper">
 
-  <select id="selectComponentIdsByPermissionAndUserId" parameterType="map" resultType="long">
+  <select id="selectComponentUuidsByPermissionAndUserUuid" parameterType="map" resultType="String">
     select
-      ur.resource_id
+      ur.component_uuid
     from
       user_roles ur
     where
-      ur.user_id = #{userId,jdbcType=INTEGER}
+      ur.user_uuid = #{userUuid,jdbcType=VARCHAR}
       and ur.role = #{permission,jdbcType=VARCHAR}
-      and ur.resource_id is not null
+      and ur.component_uuid is not null
     union
     select
-      gr.resource_id
+      gr.component_uuid
     from
       group_roles gr
     inner join groups_users gu on
-      gr.group_id=gu.group_id
+      gr.group_uuid=gu.group_uuid
     where
       gr.role = #{permission,jdbcType=VARCHAR}
-      and gr.resource_id is not null
-      and gu.user_id=#{userId,jdbcType=INTEGER}
+      and gr.component_uuid is not null
+      and gu.user_uuid=#{userUuid,jdbcType=VARCHAR}
     order by
-      resource_id
+      component_uuid
   </select>
 
-  <delete id="deleteGroupRolesByGroupId" parameterType="int">
+  <delete id="deleteGroupRolesByGroupUuid" parameterType="String">
     delete from
       group_roles
     where
-      group_id=#{id,jdbcType=INTEGER}
+      group_uuid=#{uuid,jdbcType=VARCHAR}
   </delete>
 </mapper>

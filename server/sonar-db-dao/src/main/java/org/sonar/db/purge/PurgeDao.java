@@ -35,10 +35,7 @@ import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.BranchMapper;
-import org.sonar.db.component.ComponentDao;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.component.ComponentTreeQuery;
-import org.sonar.db.component.ComponentTreeQuery.Strategy;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
@@ -51,11 +48,9 @@ public class PurgeDao implements Dao {
   private static final Set<String> QUALIFIERS_MODULE_SUBVIEW = ImmutableSet.of("BRC", "SVW");
   private static final String SCOPE_PROJECT = "PRJ";
 
-  private final ComponentDao componentDao;
   private final System2 system2;
 
-  public PurgeDao(ComponentDao componentDao, System2 system2) {
-    this.componentDao = componentDao;
+  public PurgeDao(System2 system2) {
     this.system2 = system2;
   }
 
@@ -64,7 +59,6 @@ public class PurgeDao implements Dao {
     PurgeCommands commands = new PurgeCommands(session, mapper, profiler, system2);
     String rootUuid = conf.rootUuid();
     deleteAbortedAnalyses(rootUuid, commands);
-    deleteDataOfComponentsWithoutHistoricalData(session, rootUuid, conf.getScopesWithoutHistoricalData(), commands);
     purgeAnalyses(commands, rootUuid);
     purgeDisabledComponents(commands, conf, listener);
     deleteOldClosedIssues(conf, mapper, listener);
@@ -94,7 +88,7 @@ public class PurgeDao implements Dao {
   }
 
   private static void purgeAnalyses(PurgeCommands commands, String rootUuid) {
-    List<IdUuidPair> analysisUuids = commands.selectSnapshotIdUuids(
+    List<String> analysisUuids = commands.selectSnapshotUuids(
       new PurgeSnapshotQuery(rootUuid)
         .setIslast(false)
         .setNotPurged(true));
@@ -127,31 +121,8 @@ public class PurgeDao implements Dao {
     commands.deleteAbortedAnalyses(rootUuid);
   }
 
-  private void deleteDataOfComponentsWithoutHistoricalData(DbSession dbSession, String rootUuid, Collection<String> scopesWithoutHistoricalData, PurgeCommands purgeCommands) {
-    if (scopesWithoutHistoricalData.isEmpty()) {
-      return;
-    }
-
-    List<String> analysisUuids = purgeCommands.selectSnapshotUuids(
-      new PurgeSnapshotQuery(rootUuid)
-        .setIslast(false)
-        .setNotPurged(true));
-    List<String> componentWithoutHistoricalDataUuids = componentDao
-      .selectDescendants(
-        dbSession,
-        ComponentTreeQuery.builder()
-          .setBaseUuid(rootUuid)
-          .setScopes(scopesWithoutHistoricalData)
-          .setStrategy(Strategy.LEAVES)
-          .build())
-      .stream().map(ComponentDto::uuid)
-      .collect(MoreCollectors.toList());
-
-    purgeCommands.deleteComponentMeasures(analysisUuids, componentWithoutHistoricalDataUuids);
-  }
-
   private static void deleteOldDisabledComponents(PurgeCommands commands, PurgeMapper mapper, String rootUuid) {
-    List<IdUuidPair> disabledComponentsWithoutIssue = mapper.selectDisabledComponentsWithoutIssues(rootUuid);
+    List<String> disabledComponentsWithoutIssue = mapper.selectDisabledComponentsWithoutIssues(rootUuid);
     commands.deleteDisabledComponentsWithoutIssues(disabledComponentsWithoutIssue);
   }
 
@@ -219,12 +190,7 @@ public class PurgeDao implements Dao {
   }
 
   private static void deleteRootComponent(String rootUuid, PurgeMapper mapper, PurgeCommands commands) {
-    List<IdUuidPair> rootAndModulesOrSubviews = mapper.selectRootAndModulesOrSubviewsByProjectUuid(rootUuid);
-    long rootId = rootAndModulesOrSubviews.stream()
-      .filter(pair -> pair.getUuid().equals(rootUuid))
-      .map(IdUuidPair::getId)
-      .findFirst()
-      .orElseThrow(() -> new IllegalArgumentException("Couldn't find root component with uuid " + rootUuid));
+    List<String> rootAndModulesOrSubviews = mapper.selectRootAndModulesOrSubviewsByProjectUuid(rootUuid);
     commands.deleteLinks(rootUuid);
     commands.deleteAnalyses(rootUuid);
     commands.deleteByRootAndModulesOrSubviews(rootAndModulesOrSubviews);
@@ -237,7 +203,7 @@ public class PurgeDao implements Dao {
     commands.deleteLiveMeasures(rootUuid);
     commands.deleteProjectMappings(rootUuid);
     commands.deleteProjectAlmBindings(rootUuid);
-    commands.deletePermissions(rootId);
+    commands.deletePermissions(rootUuid);
     commands.deleteNewCodePeriods(rootUuid);
     commands.deleteBranch(rootUuid);
     commands.deleteComponents(rootUuid);
@@ -263,9 +229,9 @@ public class PurgeDao implements Dao {
   }
 
   private static void deleteNonRootComponentsInView(Set<ComponentDto> nonRootComponents, PurgeCommands purgeCommands) {
-    List<IdUuidPair> subviewsOrProjectCopies = nonRootComponents.stream()
+    List<String> subviewsOrProjectCopies = nonRootComponents.stream()
       .filter(PurgeDao::isModuleOrSubview)
-      .map(PurgeDao::toIdUuidPair)
+      .map(ComponentDto::uuid)
       .collect(MoreCollectors.toList());
     purgeCommands.deleteByRootAndModulesOrSubviews(subviewsOrProjectCopies);
     List<String> nonRootComponentUuids = nonRootComponents.stream().map(ComponentDto::uuid).collect(MoreCollectors.toList(nonRootComponents.size()));
@@ -281,12 +247,8 @@ public class PurgeDao implements Dao {
     return SCOPE_PROJECT.equals(dto.scope()) && QUALIFIERS_MODULE_SUBVIEW.contains(dto.qualifier());
   }
 
-  private static IdUuidPair toIdUuidPair(ComponentDto dto) {
-    return new IdUuidPair(dto.getId(), dto.uuid());
-  }
-
-  public void deleteAnalyses(DbSession session, PurgeProfiler profiler, List<IdUuidPair> analysisIdUuids) {
-    new PurgeCommands(session, profiler, system2).deleteAnalyses(analysisIdUuids);
+  public void deleteAnalyses(DbSession session, PurgeProfiler profiler, List<String> analysisUuids) {
+    new PurgeCommands(session, profiler, system2).deleteAnalyses(analysisUuids);
   }
 
   private static PurgeMapper mapper(DbSession session) {

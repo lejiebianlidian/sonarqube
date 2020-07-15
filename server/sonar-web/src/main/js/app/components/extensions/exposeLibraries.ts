@@ -58,19 +58,20 @@ import PullRequestIcon from 'sonar-ui-common/components/icons/PullRequestIcon';
 import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
 import SecurityHotspotIcon from 'sonar-ui-common/components/icons/SecurityHotspotIcon';
 import VulnerabilityIcon from 'sonar-ui-common/components/icons/VulnerabilityIcon';
+import DateFormatter from 'sonar-ui-common/components/intl/DateFormatter';
+import DateFromNow from 'sonar-ui-common/components/intl/DateFromNow';
+import DateTimeFormatter from 'sonar-ui-common/components/intl/DateTimeFormatter';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
 import DuplicationsRating from 'sonar-ui-common/components/ui/DuplicationsRating';
 import Level from 'sonar-ui-common/components/ui/Level';
 import Rating from 'sonar-ui-common/components/ui/Rating';
+import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
 import NotFound from '../../../app/components/NotFound';
 import Favorite from '../../../components/controls/Favorite';
 import HomePageSelect from '../../../components/controls/HomePageSelect';
 import BranchLikeIcon from '../../../components/icons/BranchLikeIcon';
-import DateFormatter from '../../../components/intl/DateFormatter';
-import DateFromNow from '../../../components/intl/DateFromNow';
-import DateTimeFormatter from '../../../components/intl/DateTimeFormatter';
 import CoverageRating from '../../../components/ui/CoverageRating';
 import {
   getBranchLikeQuery,
@@ -175,6 +176,9 @@ const exposeLibraries = () => {
     Tooltip,
     VulnerabilityIcon
   };
+
+  global.t = translate;
+  global.tp = translateWithParameters;
 };
 
 export default exposeLibraries;

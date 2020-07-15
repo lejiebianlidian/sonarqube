@@ -25,13 +25,13 @@ public interface QualityGateConditionMapper {
 
   void insert(QualityGateConditionDto newCondition);
 
-  List<QualityGateConditionDto> selectForQualityGate(long qGateId);
+  List<QualityGateConditionDto> selectForQualityGate(String qGateUuid);
 
   void update(QualityGateConditionDto newCondition);
 
-  QualityGateConditionDto selectById(long id);
+  QualityGateConditionDto selectByUuid(String uuid);
 
-  void delete(long id);
+  void delete(String uuid);
 
   void deleteConditionsWithInvalidMetrics();
 }

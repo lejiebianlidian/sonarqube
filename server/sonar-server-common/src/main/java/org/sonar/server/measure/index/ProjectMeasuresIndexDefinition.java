@@ -44,20 +44,25 @@ public class ProjectMeasuresIndexDefinition implements IndexDefinition {
   public static final String FIELD_ORGANIZATION_UUID = "organizationUuid";
 
   /**
-   * Project key. Only projects (qualifier=TRK)
+   * Project key. Only projects and applications (qualifier=TRK, APP)
    */
   public static final String FIELD_KEY = "key";
   public static final String FIELD_NAME = "name";
+  public static final String FIELD_QUALIFIER = "qualifier";
   public static final String FIELD_ANALYSED_AT = "analysedAt";
   public static final String FIELD_QUALITY_GATE_STATUS = "qualityGateStatus";
   public static final String FIELD_TAGS = "tags";
   public static final String FIELD_MEASURES = "measures";
-  public static final String FIELD_MEASURES_KEY = "key";
-  public static final String FIELD_MEASURES_VALUE = "value";
+  public static final String SUB_FIELD_MEASURES_KEY = "key";
+  public static final String SUB_FIELD_MEASURES_VALUE = "value";
+  public static final String FIELD_MEASURES_MEASURE_KEY = FIELD_MEASURES + "." + SUB_FIELD_MEASURES_KEY;
+  public static final String FIELD_MEASURES_MEASURE_VALUE = FIELD_MEASURES + "." + SUB_FIELD_MEASURES_VALUE;
   public static final String FIELD_LANGUAGES = "languages";
-  public static final String FIELD_NCLOC_LANGUAGE_DISTRIBUTION = "nclocLanguageDistribution";
-  public static final String FIELD_DISTRIB_LANGUAGE = "language";
-  public static final String FIELD_DISTRIB_NCLOC = "ncloc";
+  public static final String FIELD_NCLOC_DISTRIBUTION = "nclocLanguageDistribution";
+  public static final String SUB_FIELD_DISTRIB_LANGUAGE = "language";
+  public static final String SUB_FIELD_DISTRIB_NCLOC = "ncloc";
+  public static final String FIELD_NCLOC_DISTRIBUTION_LANGUAGE = FIELD_NCLOC_DISTRIBUTION + "." + SUB_FIELD_DISTRIB_LANGUAGE;
+  public static final String FIELD_NCLOC_DISTRIBUTION_NCLOC = FIELD_NCLOC_DISTRIBUTION + "." + SUB_FIELD_DISTRIB_NCLOC;
 
   private final Configuration config;
   private final boolean enableSource;
@@ -93,17 +98,18 @@ public class ProjectMeasuresIndexDefinition implements IndexDefinition {
     mapping.keywordFieldBuilder(FIELD_UUID).disableNorms().build();
     mapping.keywordFieldBuilder(FIELD_ORGANIZATION_UUID).disableNorms().build();
     mapping.keywordFieldBuilder(FIELD_KEY).disableNorms().addSubFields(SORTABLE_ANALYZER).build();
+    mapping.keywordFieldBuilder(FIELD_QUALIFIER).disableNorms().build();
     mapping.keywordFieldBuilder(FIELD_NAME).addSubFields(SORTABLE_ANALYZER, SEARCH_GRAMS_ANALYZER).build();
     mapping.keywordFieldBuilder(FIELD_QUALITY_GATE_STATUS).build();
     mapping.keywordFieldBuilder(FIELD_TAGS).build();
     mapping.keywordFieldBuilder(FIELD_LANGUAGES).build();
     mapping.nestedFieldBuilder(FIELD_MEASURES)
-      .addKeywordField(FIELD_MEASURES_KEY)
-      .addDoubleField(FIELD_MEASURES_VALUE)
+      .addKeywordField(SUB_FIELD_MEASURES_KEY)
+      .addDoubleField(SUB_FIELD_MEASURES_VALUE)
       .build();
-    mapping.nestedFieldBuilder(FIELD_NCLOC_LANGUAGE_DISTRIBUTION)
-      .addKeywordField(FIELD_DISTRIB_LANGUAGE)
-      .addIntegerField(FIELD_DISTRIB_NCLOC)
+    mapping.nestedFieldBuilder(FIELD_NCLOC_DISTRIBUTION)
+      .addKeywordField(SUB_FIELD_DISTRIB_LANGUAGE)
+      .addIntegerField(SUB_FIELD_DISTRIB_NCLOC)
       .build();
     mapping.createDateTimeField(FIELD_ANALYSED_AT);
   }

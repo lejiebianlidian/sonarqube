@@ -32,6 +32,7 @@ import org.sonar.server.qualitygate.QualityGateConditionsUpdater;
 import org.sonarqube.ws.Qualitygates.UpdateConditionResponse;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
 import static org.sonar.server.qualitygate.ws.QualityGatesWs.addConditionParams;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.ACTION_UPDATE_CONDITION;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_ERROR;
@@ -60,6 +61,7 @@ public class UpdateConditionAction implements QualityGatesWsAction {
       .setPost(true)
       .setSince("4.3")
       .setChangelog(
+        new Change("8.4", "Parameter 'id' format changes from integer to string. "),
         new Change("7.6", "Removed optional 'warning' and 'period' parameters"),
         new Change("7.6", "Made 'error' parameter mandatory"),
         new Change("7.6", "Reduced the possible values of 'op' parameter to LT and GT"))
@@ -69,7 +71,7 @@ public class UpdateConditionAction implements QualityGatesWsAction {
       .createParam(PARAM_ID)
       .setDescription("Condition ID")
       .setRequired(true)
-      .setExampleValue("10");
+      .setExampleValue(UUID_EXAMPLE_01);
 
     addConditionParams(createCondition);
     wsSupport.createOrganizationParam(createCondition);
@@ -77,7 +79,7 @@ public class UpdateConditionAction implements QualityGatesWsAction {
 
   @Override
   public void handle(Request request, Response response) {
-    int id = request.mandatoryParamAsInt(PARAM_ID);
+    String id = request.mandatoryParam(PARAM_ID);
     String metric = request.mandatoryParam(PARAM_METRIC);
     String operator = request.mandatoryParam(PARAM_OPERATOR);
     String error = request.mandatoryParam(PARAM_ERROR);
@@ -85,12 +87,12 @@ public class UpdateConditionAction implements QualityGatesWsAction {
     try (DbSession dbSession = dbClient.openSession(false)) {
       OrganizationDto organization = wsSupport.getOrganization(dbSession, request);
       QualityGateConditionDto condition = wsSupport.getCondition(dbSession, id);
-      QGateWithOrgDto qualityGateDto = dbClient.qualityGateDao().selectByOrganizationAndId(dbSession, organization, condition.getQualityGateId());
-      checkState(qualityGateDto != null, "Condition '%s' is linked to an unknown quality gate '%s'", id, condition.getQualityGateId());
+      QGateWithOrgDto qualityGateDto = dbClient.qualityGateDao().selectByOrganizationAndUuid(dbSession, organization, condition.getQualityGateUuid());
+      checkState(qualityGateDto != null, "Condition '%s' is linked to an unknown quality gate '%s'", id, condition.getQualityGateUuid());
       wsSupport.checkCanEdit(qualityGateDto);
       QualityGateConditionDto updatedCondition = qualityGateConditionsUpdater.updateCondition(dbSession, condition, metric, operator, error);
       UpdateConditionResponse.Builder updateConditionResponse = UpdateConditionResponse.newBuilder()
-        .setId(updatedCondition.getId())
+        .setId(updatedCondition.getUuid())
         .setMetric(updatedCondition.getMetricKey())
         .setError(updatedCondition.getErrorThreshold())
         .setOp(updatedCondition.getOperator());

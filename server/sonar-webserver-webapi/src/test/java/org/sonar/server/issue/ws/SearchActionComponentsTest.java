@@ -42,6 +42,7 @@ import org.sonar.server.issue.IssueFieldsSetter;
 import org.sonar.server.issue.TextRangeResponseFormatter;
 import org.sonar.server.issue.TransitionService;
 import org.sonar.server.issue.index.IssueIndex;
+import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
 import org.sonar.server.issue.index.IssueQueryFactory;
@@ -75,12 +76,10 @@ import static org.sonar.db.component.ComponentTesting.newSubView;
 import static org.sonar.db.component.ComponentTesting.newView;
 import static org.sonarqube.ws.client.component.ComponentsWsParameters.PARAM_BRANCH;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_COMPONENT_KEYS;
-import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_COMPONENT_UUIDS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_DIRECTORIES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_FILE_UUIDS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_MODULE_UUIDS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PROJECTS;
-import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PROJECT_KEYS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PULL_REQUEST;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SINCE_LEAK_PERIOD;
 
@@ -97,7 +96,7 @@ public class SearchActionComponentsTest {
 
   private DbClient dbClient = db.getDbClient();
   private IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSession, new WebAuthorizationTypeSupport(userSession));
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient));
+  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient), null);
   private ViewIndexer viewIndexer = new ViewIndexer(dbClient, es.client());
   private IssueQueryFactory issueQueryFactory = new IssueQueryFactory(dbClient, Clock.systemUTC(), userSession);
   private IssueFieldsSetter issueFieldsSetter = new IssueFieldsSetter();
@@ -108,7 +107,10 @@ public class SearchActionComponentsTest {
   private SearchResponseFormat searchResponseFormat = new SearchResponseFormat(new Durations(), languages, new TextRangeResponseFormatter(), userFormatter);
   private PermissionIndexerTester permissionIndexer = new PermissionIndexerTester(es, issueIndexer);
 
-  private WsActionTester ws = new WsActionTester(new SearchAction(userSession, issueIndex, issueQueryFactory, searchResponseLoader, searchResponseFormat,
+  private IssueIndexSyncProgressChecker issueIndexSyncProgressChecker = new IssueIndexSyncProgressChecker(db.getDbClient());
+
+  private WsActionTester ws = new WsActionTester(
+    new SearchAction(userSession, issueIndex, issueQueryFactory, issueIndexSyncProgressChecker, searchResponseLoader, searchResponseFormat,
     System2.INSTANCE, dbClient));
 
   @Test
@@ -216,7 +218,7 @@ public class SearchActionComponentsTest {
     indexIssues();
 
     ws.newRequest()
-      .setParam(PARAM_COMPONENT_UUIDS, project.uuid())
+      .setParam(PARAM_COMPONENT_KEYS, project.getDbKey())
       .setParam(PARAM_SINCE_LEAK_PERIOD, "true")
       .execute()
       .assertJson(this.getClass(), "search_since_leak_period.json");
@@ -239,7 +241,7 @@ public class SearchActionComponentsTest {
     indexIssues();
 
     ws.newRequest()
-      .setParam(PARAM_COMPONENT_UUIDS, project.uuid())
+      .setParam(PARAM_COMPONENT_KEYS, project.getDbKey())
       .setParam(PARAM_FILE_UUIDS, file.uuid())
       .setParam(PARAM_SINCE_LEAK_PERIOD, "true")
       .execute()
@@ -262,16 +264,6 @@ public class SearchActionComponentsTest {
 
     ws.newRequest()
       .setParam(PARAM_FILE_UUIDS, "unknown")
-      .execute()
-      .assertJson(this.getClass(), "no_issue.json");
-
-    ws.newRequest()
-      .setParam(PARAM_COMPONENT_UUIDS, file.uuid())
-      .execute()
-      .assertJson(this.getClass(), "search_by_file_uuid.json");
-
-    ws.newRequest()
-      .setParam(PARAM_COMPONENT_UUIDS, "unknown")
       .execute()
       .assertJson(this.getClass(), "no_issue.json");
   }
@@ -581,7 +573,7 @@ public class SearchActionComponentsTest {
 
     SearchWsResponse result = ws.newRequest()
       .setParam(PARAM_COMPONENT_KEYS, application.getDbKey())
-      .setParam(PARAM_PROJECT_KEYS, project1.getDbKey())
+      .setParam(PARAM_PROJECTS, project1.getDbKey())
       .executeProtobuf(SearchWsResponse.class);
 
     assertThat(result.getIssuesList()).extracting(Issue::getKey)
@@ -612,7 +604,7 @@ public class SearchActionComponentsTest {
 
     SearchWsResponse result = ws.newRequest()
       .setParam(PARAM_COMPONENT_KEYS, application.getDbKey())
-      .setParam(PARAM_PROJECT_KEYS, project1.getDbKey())
+      .setParam(PARAM_PROJECTS, project1.getDbKey())
       .setParam(PARAM_SINCE_LEAK_PERIOD, "true")
       .executeProtobuf(SearchWsResponse.class);
 
@@ -675,7 +667,7 @@ public class SearchActionComponentsTest {
 
     // On project key + branch
     assertThat(ws.newRequest()
-      .setParam(PARAM_PROJECT_KEYS, project.getKey())
+      .setParam(PARAM_PROJECTS, project.getKey())
       .setParam(PARAM_BRANCH, branch.getBranch())
       .executeProtobuf(SearchWsResponse.class).getIssuesList())
         .extracting(Issue::getKey, Issue::getComponent, Issue::getBranch)
@@ -809,7 +801,7 @@ public class SearchActionComponentsTest {
   }
 
   private void indexIssues() {
-    issueIndexer.indexOnStartup(null);
+    issueIndexer.indexAllIssues();
   }
 
   private void indexIssuesAndViews() {

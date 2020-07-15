@@ -40,7 +40,7 @@ public final class IssueChangeDto implements Serializable {
   public static final String TYPE_FIELD_CHANGE = "diff";
   public static final String TYPE_COMMENT = "comment";
 
-  private Long id;
+  private String uuid;
   private String kee;
   private String issueKey;
   /**
@@ -89,12 +89,12 @@ public final class IssueChangeDto implements Serializable {
     return dto;
   }
 
-  public Long getId() {
-    return id;
+  public String getUuid() {
+    return uuid;
   }
 
-  public IssueChangeDto setId(Long id) {
-    this.id = id;
+  public IssueChangeDto setUuid(String uuid) {
+    this.uuid = uuid;
     return this;
   }
 

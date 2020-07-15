@@ -92,7 +92,6 @@ public class BuiltInQProfileInsertImplTest {
     // same row in table rules_profiles is used
     assertThat(profileOnOrg1.getKee()).isNotEqualTo(profileOnOrg2.getKee());
     assertThat(profileOnOrg1.getRulesProfileUuid()).isEqualTo(profileOnOrg2.getRulesProfileUuid());
-    assertThat(profileOnOrg1.getId()).isEqualTo(profileOnOrg2.getId());
   }
 
   @Test
@@ -173,21 +172,21 @@ public class BuiltInQProfileInsertImplTest {
 
   private void verifyActiveRuleInDb(QProfileDto profile, RuleDefinitionDto rule, String expectedSeverity) {
     ActiveRuleDto activeRule = db.getDbClient().activeRuleDao().selectByKey(dbSession, ActiveRuleKey.of(profile, rule.getKey())).get();
-    assertThat(activeRule.getId()).isPositive();
+    assertThat(activeRule.getUuid()).isNotNull();
     assertThat(activeRule.getInheritance()).isNull();
     assertThat(activeRule.doesOverride()).isFalse();
-    assertThat(activeRule.getRuleId()).isEqualTo(rule.getId());
-    assertThat(activeRule.getProfileId()).isEqualTo(profile.getId());
+    assertThat(activeRule.getRuleUuid()).isEqualTo(rule.getUuid());
+    assertThat(activeRule.getProfileUuid()).isEqualTo(profile.getRulesProfileUuid());
     assertThat(activeRule.getSeverityString()).isEqualTo(expectedSeverity);
     assertThat(activeRule.getCreatedAt()).isPositive();
     assertThat(activeRule.getUpdatedAt()).isPositive();
 
-    List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleId(dbSession, activeRule.getId());
+    List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(dbSession, activeRule.getUuid());
     assertThat(params).isEmpty();
 
     QProfileChangeQuery changeQuery = new QProfileChangeQuery(profile.getKee());
     QProfileChangeDto change = db.getDbClient().qProfileChangeDao().selectByQuery(dbSession, changeQuery).stream()
-      .filter(c -> c.getDataAsMap().get("ruleId").equals(String.valueOf(rule.getId())))
+      .filter(c -> c.getDataAsMap().get("ruleUuid").equals(rule.getUuid()))
       .findFirst()
       .get();
     assertThat(change.getChangeType()).isEqualTo(ActiveRuleChange.Type.ACTIVATED.name());
@@ -208,7 +207,7 @@ public class BuiltInQProfileInsertImplTest {
     assertThat(profileOnOrg1.getUserUpdatedAt()).isNull();
     assertThat(profileOnOrg1.getRulesUpdatedAt()).isNotEmpty();
     assertThat(profileOnOrg1.getKee()).isNotEqualTo(profileOnOrg1.getRulesProfileUuid());
-    assertThat(profileOnOrg1.getId()).isNotNull();
+    assertThat(profileOnOrg1.getRulesProfileUuid()).isNotNull();
     return profileOnOrg1;
   }
 

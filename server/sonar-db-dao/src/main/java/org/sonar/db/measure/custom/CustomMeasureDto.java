@@ -23,16 +23,24 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
 public class CustomMeasureDto {
+  private String uuid = null;
+  private String metricUuid = null;
+  private String componentUuid = null;
+  private double value = 0.0D;
+  private String textValue = null;
+  private String userUuid = null;
+  private String description = null;
+  private long createdAt = 0L;
+  private long updatedAt = 0L;
 
-  private long id;
-  private int metricId;
-  private String componentUuid;
-  private double value;
-  private String textValue;
-  private String userUuid;
-  private String description;
-  private long createdAt;
-  private long updatedAt;
+  public String getUuid() {
+    return uuid;
+  }
+
+  public CustomMeasureDto setUuid(String uuid) {
+    this.uuid = uuid;
+    return this;
+  }
 
   @CheckForNull
   public String getDescription() {
@@ -72,21 +80,12 @@ public class CustomMeasureDto {
     return this;
   }
 
-  public int getMetricId() {
-    return metricId;
+  public String getMetricUuid() {
+    return metricUuid;
   }
 
-  public CustomMeasureDto setMetricId(int metricId) {
-    this.metricId = metricId;
-    return this;
-  }
-
-  public long getId() {
-    return id;
-  }
-
-  public CustomMeasureDto setId(long id) {
-    this.id = id;
+  public CustomMeasureDto setMetricUuid(String metricUuid) {
+    this.metricUuid = metricUuid;
     return this;
   }
 

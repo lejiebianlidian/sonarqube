@@ -20,8 +20,15 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { SubmitButton } from 'sonar-ui-common/components/controls/buttons';
+import ValidationInput from 'sonar-ui-common/components/controls/ValidationInput';
 import { change, submit, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
-import { createProject } from '../../../../api/components';
+import { createProject, doesComponentExists } from '../../../../api/components';
+import ProjectKeyInput from '../../../../components/common/ProjectKeyInput';
+import { validateProjectKey } from '../../../../helpers/projects';
+import { mockEvent } from '../../../../helpers/testMocks';
+import { ProjectKeyValidationResult } from '../../../../types/component';
+import { PROJECT_NAME_MAX_LEN } from '../constants';
 import ManualProjectCreate from '../ManualProjectCreate';
 
 jest.mock('../../../../api/components', () => ({
@@ -31,9 +38,10 @@ jest.mock('../../../../api/components', () => ({
     .mockImplementation(({ component }) => Promise.resolve(component === 'exists'))
 }));
 
-jest.mock('../../../../helpers/system', () => ({
-  isSonarCloud: jest.fn().mockReturnValue(true)
-}));
+jest.mock('../../../../helpers/projects', () => {
+  const { ProjectKeyValidationResult } = jest.requireActual('../../../../types/component');
+  return { validateProjectKey: jest.fn(() => ProjectKeyValidationResult.Valid) };
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -43,127 +51,99 @@ it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot();
 });
 
-it('should correctly create a public project', async () => {
+it('should correctly create a project', async () => {
   const onProjectCreate = jest.fn();
   const wrapper = shallowRender({ onProjectCreate });
-  wrapper.find('withRouter(OrganizationInput)').prop<Function>('onChange')({ key: 'foo' });
 
-  change(wrapper.find('input#project-key'), 'bar');
+  wrapper
+    .find(ProjectKeyInput)
+    .props()
+    .onProjectKeyChange(mockEvent({ currentTarget: { value: 'bar' } }));
   change(wrapper.find('input#project-name'), 'Bar');
-  expect(wrapper.find('SubmitButton').prop('disabled')).toBe(false);
+  expect(wrapper.find(SubmitButton).props().disabled).toBe(false);
+  expect(validateProjectKey).toBeCalledWith('bar');
+  expect(doesComponentExists).toBeCalledWith({ component: 'bar' });
 
   submit(wrapper.find('form'));
   expect(createProject).toBeCalledWith({
     project: 'bar',
-    name: 'Bar',
-    organization: 'foo',
-    visibility: 'public'
+    name: 'Bar'
   });
 
   await waitAndUpdate(wrapper);
   expect(onProjectCreate).toBeCalledWith(['bar']);
-});
-
-it('should correctly create a private project', async () => {
-  const onProjectCreate = jest.fn();
-  const wrapper = shallowRender({ onProjectCreate });
-  wrapper.find('withRouter(OrganizationInput)').prop<Function>('onChange')({ key: 'bar' });
-
-  change(wrapper.find('input#project-key'), 'bar');
-  change(wrapper.find('input#project-name'), 'Bar');
-
-  submit(wrapper.find('form'));
-  expect(createProject).toBeCalledWith({
-    project: 'bar',
-    name: 'Bar',
-    organization: 'bar',
-    visibility: 'private'
-  });
-
-  await waitAndUpdate(wrapper);
-  expect(onProjectCreate).toBeCalledWith(['bar']);
-});
-
-it('should not display any status when the key is not defined', () => {
-  const wrapper = shallowRender();
-  const projectKeyInput = wrapper.find('ValidationInput').first();
-  expect(projectKeyInput.prop('isInvalid')).toBe(false);
-  expect(projectKeyInput.prop('isValid')).toBe(false);
 });
 
 it('should not display any status when the name is not defined', () => {
   const wrapper = shallowRender();
-  const projectKeyInput = wrapper.find('ValidationInput').last();
-  expect(projectKeyInput.prop('isInvalid')).toBe(false);
-  expect(projectKeyInput.prop('isValid')).toBe(false);
+  const projectNameInput = wrapper.find(ValidationInput);
+  expect(projectNameInput.props().isInvalid).toBe(false);
+  expect(projectNameInput.props().isValid).toBe(false);
 });
 
 it('should have an error when the key is invalid', () => {
+  (validateProjectKey as jest.Mock).mockReturnValueOnce(ProjectKeyValidationResult.TooLong);
   const wrapper = shallowRender();
-  change(wrapper.find('input#project-key'), 'KEy-with#speci@l_char');
-  expect(
-    wrapper
-      .find('ValidationInput')
-      .first()
-      .prop('isInvalid')
-  ).toBe(true);
+  const instance = wrapper.instance();
+  instance.handleProjectKeyChange(mockEvent());
+  expect(wrapper.find(ProjectKeyInput).props().error).toBe(
+    `onboarding.create_project.project_key.error.${ProjectKeyValidationResult.TooLong}`
+  );
 });
 
 it('should have an error when the key already exists', async () => {
   const wrapper = shallowRender();
-  change(wrapper.find('input#project-key'), 'exists');
-
+  wrapper.instance().handleProjectKeyChange(mockEvent({ currentTarget: { value: 'exists' } }));
   await waitAndUpdate(wrapper);
-  expect(
-    wrapper
-      .find('ValidationInput')
-      .first()
-      .prop('isInvalid')
-  ).toBe(true);
+  expect(wrapper.state().projectKeyError).toBe('onboarding.create_project.project_key.taken');
 });
 
 it('should ignore promise return if value has been changed in the meantime', async () => {
+  (validateProjectKey as jest.Mock)
+    .mockReturnValueOnce(ProjectKeyValidationResult.Valid)
+    .mockReturnValueOnce(ProjectKeyValidationResult.InvalidChar);
   const wrapper = shallowRender();
+  const instance = wrapper.instance();
 
-  change(wrapper.find('input#project-key'), 'exists');
-  change(wrapper.find('input#project-key'), 'exists%');
+  instance.handleProjectKeyChange(mockEvent({ currentTarget: { value: 'exists' } }));
+  instance.handleProjectKeyChange(mockEvent({ currentTarget: { value: 'exists%' } }));
 
   await waitAndUpdate(wrapper);
 
-  expect(wrapper.state('touched')).toBe(true);
-  expect(wrapper.state('projectKeyError')).toBe('onboarding.create_project.project_key.error');
+  expect(wrapper.state().touched).toBe(true);
+  expect(wrapper.state().projectKeyError).toBe(
+    `onboarding.create_project.project_key.error.${ProjectKeyValidationResult.InvalidChar}`
+  );
 });
 
 it('should autofill the name based on the key', () => {
   const wrapper = shallowRender();
-  change(wrapper.find('input#project-key'), 'bar');
-  expect(wrapper.find('input#project-name').prop('value')).toBe('bar');
+  wrapper.instance().handleProjectKeyChange(mockEvent({ currentTarget: { value: 'bar' } }));
+  expect(wrapper.find('input#project-name').props().value).toBe('bar');
 });
 
-it('should have an error when the name is empty', () => {
+it('should have an error when the name is incorrect', () => {
   const wrapper = shallowRender();
-  change(wrapper.find('input#project-key'), 'bar');
-  change(wrapper.find('input#project-name'), '');
-  expect(
-    wrapper
-      .find('ValidationInput')
-      .last()
-      .prop('isInvalid')
-  ).toBe(true);
-  expect(wrapper.state('projectNameError')).toBe('onboarding.create_project.display_name.error');
+  wrapper.setState({ touched: true });
+  const instance = wrapper.instance();
+
+  instance.handleProjectNameChange(mockEvent({ currentTarget: { value: '' } }));
+  expect(wrapper.find(ValidationInput).props().isInvalid).toBe(true);
+  expect(wrapper.state().projectNameError).toBe(
+    'onboarding.create_project.display_name.error.empty'
+  );
+
+  instance.handleProjectNameChange(
+    mockEvent({ currentTarget: { value: new Array(PROJECT_NAME_MAX_LEN + 1).fill('a').join('') } })
+  );
+  expect(wrapper.find(ValidationInput).props().isInvalid).toBe(true);
+  expect(wrapper.state().projectNameError).toBe(
+    'onboarding.create_project.display_name.error.too_long'
+  );
 });
 
 function shallowRender(props: Partial<ManualProjectCreate['props']> = {}) {
   return shallow<ManualProjectCreate>(
-    <ManualProjectCreate
-      currentUser={{ groups: [], isLoggedIn: true, login: 'foo', name: 'Foo', scmAccounts: [] }}
-      fetchMyOrganizations={jest.fn()}
-      onProjectCreate={jest.fn()}
-      userOrganizations={[
-        { key: 'foo', name: 'Foo' },
-        { key: 'bar', name: 'Bar', subscription: 'PAID' }
-      ]}
-      {...props}
-    />
+    <ManualProjectCreate onProjectCreate={jest.fn()} {...props} />
   );
 }

@@ -26,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.server.ws.WebService;
@@ -67,9 +66,8 @@ public class DeactivateRuleActionTest {
   public UserSessionRule userSession = UserSessionRule.standalone();
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
-  @Captor
-  public ArgumentCaptor<Collection<Integer>> ruleIdsCaptor;
 
+  private ArgumentCaptor<Collection<String>> ruleUuidsCaptor = ArgumentCaptor.forClass(Collection.class);
   private DbClient dbClient = db.getDbClient();
   private QProfileRules qProfileRules = mock(QProfileRules.class);
   private QProfileWsSupport wsSupport = new QProfileWsSupport(dbClient, userSession, TestDefaultOrganizationProvider.from(db));
@@ -107,8 +105,8 @@ public class DeactivateRuleActionTest {
 
     assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_NO_CONTENT);
     ArgumentCaptor<QProfileDto> qProfileDtoCaptor = ArgumentCaptor.forClass(QProfileDto.class);
-    verify(qProfileRules).deactivateAndCommit(any(DbSession.class), qProfileDtoCaptor.capture(), ruleIdsCaptor.capture());
-    assertThat(ruleIdsCaptor.getValue()).containsExactly(rule.getId());
+    verify(qProfileRules).deactivateAndCommit(any(DbSession.class), qProfileDtoCaptor.capture(), ruleUuidsCaptor.capture());
+    assertThat(ruleUuidsCaptor.getValue()).containsExactly(rule.getUuid());
     assertThat(qProfileDtoCaptor.getValue().getKee()).isEqualTo(qualityProfile.getKee());
   }
 
@@ -127,8 +125,8 @@ public class DeactivateRuleActionTest {
 
     assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_NO_CONTENT);
     ArgumentCaptor<QProfileDto> qProfileDtoCaptor = ArgumentCaptor.forClass(QProfileDto.class);
-    verify(qProfileRules).deactivateAndCommit(any(DbSession.class), qProfileDtoCaptor.capture(), ruleIdsCaptor.capture());
-    assertThat(ruleIdsCaptor.getValue()).containsExactly(rule.getId());
+    verify(qProfileRules).deactivateAndCommit(any(DbSession.class), qProfileDtoCaptor.capture(), ruleUuidsCaptor.capture());
+    assertThat(ruleUuidsCaptor.getValue()).containsExactly(rule.getUuid());
     assertThat(qProfileDtoCaptor.getValue().getKee()).isEqualTo(qualityProfile.getKee());
   }
 

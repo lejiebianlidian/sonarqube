@@ -3,9 +3,10 @@ title: SonarScanner for Jenkins
 url: /analysis/scan/sonarscanner-for-jenkins/
 ---
 
-[[info]]
-| By [SonarSource](https://www.sonarsource.com/) – GNU LGPL 3 – [Issue Tracker](https://jira.sonarsource.com/browse/SONARJNKNS) – [Source](https://github.com/SonarSource/sonar-scanner-jenkins)  
-| Click [here](https://plugins.jenkins.io/sonar) for the latest version.
+<!-- static -->
+<!-- update_center:scannerjenkins -->
+<!-- /static -->
+<update-center updatecenterkey="scannerjenkins"></update-center>
 
 This plugin lets you centralize the configuration of SonarQube server connection details in Jenkins global configuration.
 
@@ -121,7 +122,7 @@ node {
   }
   stage('SonarQube analysis') {
     withSonarQubeEnv(credentialsId: 'f225455e-ea59-40fa-8af7-08176e86507a', installationName: 'My SonarQube Server') { // You can override the credential to be used
-      sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar'
+      sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar'
     }
   }
 }

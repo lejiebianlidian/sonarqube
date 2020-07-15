@@ -26,6 +26,8 @@ import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.web.UserRole;
+import org.sonar.core.util.UuidFactory;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.BranchMapper;
@@ -57,14 +59,16 @@ public class UpdateVisibilityAction implements ProjectsWsAction {
   private final UserSession userSession;
   private final ProjectIndexers projectIndexers;
   private final ProjectsWsSupport projectsWsSupport;
+  private final UuidFactory uuidFactory;
 
   public UpdateVisibilityAction(DbClient dbClient, ComponentFinder componentFinder, UserSession userSession,
-    ProjectIndexers projectIndexers, ProjectsWsSupport projectsWsSupport) {
+    ProjectIndexers projectIndexers, ProjectsWsSupport projectsWsSupport, UuidFactory uuidFactory) {
     this.dbClient = dbClient;
     this.componentFinder = componentFinder;
     this.userSession = userSession;
     this.projectIndexers = projectIndexers;
     this.projectsWsSupport = projectsWsSupport;
+    this.uuidFactory = uuidFactory;
   }
 
   public void define(WebService.NewController context) {
@@ -137,34 +141,35 @@ public class UpdateVisibilityAction implements ProjectsWsAction {
 
   private void updatePermissionsToPrivate(DbSession dbSession, ComponentDto component) {
     // delete project permissions for group AnyOne
-    dbClient.groupPermissionDao().deleteByRootComponentIdAndGroupId(dbSession, component.getId(), null);
+    dbClient.groupPermissionDao().deleteByRootComponentUuidAndGroupUuid(dbSession, component.uuid(), null);
     // grant UserRole.CODEVIEWER and UserRole.USER to any group or user with at least one permission on project
     PUBLIC_PERMISSIONS.forEach(permission -> {
-      dbClient.groupPermissionDao().selectGroupIdsWithPermissionOnProjectBut(dbSession, component.getId(), permission)
-        .forEach(groupId -> insertProjectPermissionOnGroup(dbSession, component, permission, groupId));
-      dbClient.userPermissionDao().selectUserIdsWithPermissionOnProjectBut(dbSession, component.getId(), permission)
-        .forEach(userId -> insertProjectPermissionOnUser(dbSession, component, permission, userId));
+      dbClient.groupPermissionDao().selectGroupUuidsWithPermissionOnProjectBut(dbSession, component.uuid(), permission)
+        .forEach(group -> insertProjectPermissionOnGroup(dbSession, component, permission, group));
+      dbClient.userPermissionDao().selectUserUuidsWithPermissionOnProjectBut(dbSession, component.uuid(), permission)
+        .forEach(userUuid -> insertProjectPermissionOnUser(dbSession, component, permission, userUuid));
     });
   }
 
-  private void insertProjectPermissionOnUser(DbSession dbSession, ComponentDto component, String permission, Integer userId) {
-    dbClient.userPermissionDao().insert(dbSession, new UserPermissionDto(component.getOrganizationUuid(), permission, userId, component.getId()));
+  private void insertProjectPermissionOnUser(DbSession dbSession, ComponentDto component, String permission, String userUuid) {
+    dbClient.userPermissionDao().insert(dbSession, new UserPermissionDto(Uuids.create(), component.getOrganizationUuid(), permission, userUuid, component.uuid()));
   }
 
-  private void insertProjectPermissionOnGroup(DbSession dbSession, ComponentDto component, String permission, Integer groupId) {
+  private void insertProjectPermissionOnGroup(DbSession dbSession, ComponentDto component, String permission, String groupUuid) {
     dbClient.groupPermissionDao().insert(dbSession, new GroupPermissionDto()
+      .setUuid(uuidFactory.create())
       .setOrganizationUuid(component.getOrganizationUuid())
-      .setResourceId(component.getId())
-      .setGroupId(groupId)
+      .setComponentUuid(component.uuid())
+      .setGroupUuid(groupUuid)
       .setRole(permission));
   }
 
   private void updatePermissionsToPublic(DbSession dbSession, ComponentDto component) {
     PUBLIC_PERMISSIONS.forEach(permission -> {
       // delete project group permission for UserRole.CODEVIEWER and UserRole.USER
-      dbClient.groupPermissionDao().deleteByRootComponentIdAndPermission(dbSession, component.getId(), permission);
+      dbClient.groupPermissionDao().deleteByRootComponentUuidAndPermission(dbSession, component.uuid(), permission);
       // delete project user permission for UserRole.CODEVIEWER and UserRole.USER
-      dbClient.userPermissionDao().deleteProjectPermissionOfAnyUser(dbSession, component.getId(), permission);
+      dbClient.userPermissionDao().deleteProjectPermissionOfAnyUser(dbSession, component.uuid(), permission);
     });
   }
 

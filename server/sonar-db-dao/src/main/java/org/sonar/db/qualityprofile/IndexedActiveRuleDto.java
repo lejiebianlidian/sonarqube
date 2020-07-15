@@ -22,20 +22,24 @@ package org.sonar.db.qualityprofile;
 import javax.annotation.CheckForNull;
 
 public class IndexedActiveRuleDto {
-  private long id;
-  private int ruleId;
+  private String uuid;
+  private String ruleUuid;
   private int severity;
   private String inheritance;
   private String repository;
   private String key;
   private String ruleProfileUuid;
 
-  public long getId() {
-    return id;
+  public IndexedActiveRuleDto() {
+    // nothing to do here
   }
 
-  public int getRuleId() {
-    return ruleId;
+  public String getUuid() {
+    return uuid;
+  }
+
+  public String getRuleUuid() {
+    return ruleUuid;
   }
 
   public int getSeverity() {

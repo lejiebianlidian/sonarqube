@@ -38,6 +38,7 @@ import org.sonar.db.property.PropertyDto;
 import org.sonar.db.property.PropertyQuery;
 import org.sonar.db.qualityprofile.QProfileDto;
 import org.sonar.db.user.GroupDto;
+import org.sonar.db.user.SessionTokenDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.exceptions.BadRequestException;
@@ -120,7 +121,7 @@ public class DeactivateActionTest {
 
     deactivate(user.getLogin());
 
-    assertThat(db.getDbClient().groupMembershipDao().selectGroupIdsByUserId(dbSession, user.getId())).isEmpty();
+    assertThat(db.getDbClient().groupMembershipDao().selectGroupUuidsByUserUuid(dbSession, user.getUuid())).isEmpty();
   }
 
   @Test
@@ -143,12 +144,12 @@ public class DeactivateActionTest {
     ComponentDto project = db.components().insertPrivateProject();
     db.properties().insertProperty(newUserPropertyDto(user));
     db.properties().insertProperty(newUserPropertyDto(user));
-    db.properties().insertProperty(newUserPropertyDto(user).setResourceId(project.getId()));
+    db.properties().insertProperty(newUserPropertyDto(user).setComponentUuid(project.uuid()));
 
     deactivate(user.getLogin());
 
-    assertThat(db.getDbClient().propertiesDao().selectByQuery(PropertyQuery.builder().setUserId(user.getId()).build(), dbSession)).isEmpty();
-    assertThat(db.getDbClient().propertiesDao().selectByQuery(PropertyQuery.builder().setUserId(user.getId()).setComponentId(project.getId()).build(), dbSession)).isEmpty();
+    assertThat(db.getDbClient().propertiesDao().selectByQuery(PropertyQuery.builder().setUserUuid(user.getUuid()).build(), dbSession)).isEmpty();
+    assertThat(db.getDbClient().propertiesDao().selectByQuery(PropertyQuery.builder().setUserUuid(user.getUuid()).setComponentUuid(project.uuid()).build(), dbSession)).isEmpty();
   }
 
   @Test
@@ -163,8 +164,8 @@ public class DeactivateActionTest {
 
     deactivate(user.getLogin());
 
-    assertThat(db.getDbClient().userPermissionDao().selectGlobalPermissionsOfUser(dbSession, user.getId(), db.getDefaultOrganization().getUuid())).isEmpty();
-    assertThat(db.getDbClient().userPermissionDao().selectProjectPermissionsOfUser(dbSession, user.getId(), project.getId())).isEmpty();
+    assertThat(db.getDbClient().userPermissionDao().selectGlobalPermissionsOfUser(dbSession, user.getUuid(), db.getDefaultOrganization().getUuid())).isEmpty();
+    assertThat(db.getDbClient().userPermissionDao().selectProjectPermissionsOfUser(dbSession, user.getUuid(), project.uuid())).isEmpty();
   }
 
   @Test
@@ -173,13 +174,14 @@ public class DeactivateActionTest {
     UserDto user = db.users().insertUser();
     PermissionTemplateDto template = db.permissionTemplates().insertTemplate();
     PermissionTemplateDto anotherTemplate = db.permissionTemplates().insertTemplate();
-    db.permissionTemplates().addUserToTemplate(template.getId(), user.getId(), USER);
-    db.permissionTemplates().addUserToTemplate(anotherTemplate.getId(), user.getId(), CODEVIEWER);
+    db.permissionTemplates().addUserToTemplate(template.getUuid(), user.getUuid(), USER);
+    db.permissionTemplates().addUserToTemplate(anotherTemplate.getUuid(), user.getUuid(), CODEVIEWER);
 
     deactivate(user.getLogin());
 
-    assertThat(db.getDbClient().permissionTemplateDao().selectUserPermissionsByTemplateId(dbSession, template.getId())).extracting(PermissionTemplateUserDto::getUserId).isEmpty();
-    assertThat(db.getDbClient().permissionTemplateDao().selectUserPermissionsByTemplateId(dbSession, anotherTemplate.getId())).extracting(PermissionTemplateUserDto::getUserId)
+    assertThat(db.getDbClient().permissionTemplateDao().selectUserPermissionsByTemplateId(dbSession, template.getUuid())).extracting(PermissionTemplateUserDto::getUserUuid)
+      .isEmpty();
+    assertThat(db.getDbClient().permissionTemplateDao().selectUserPermissionsByTemplateId(dbSession, anotherTemplate.getUuid())).extracting(PermissionTemplateUserDto::getUserUuid)
       .isEmpty();
   }
 
@@ -201,9 +203,9 @@ public class DeactivateActionTest {
     UserDto user = db.users().insertUser();
     ComponentDto project = db.components().insertPrivateProject();
     ComponentDto anotherProject = db.components().insertPrivateProject();
-    db.properties().insertProperty(new PropertyDto().setKey("sonar.issues.defaultAssigneeLogin").setValue(user.getLogin()).setResourceId(project.getId()));
-    db.properties().insertProperty(new PropertyDto().setKey("sonar.issues.defaultAssigneeLogin").setValue(user.getLogin()).setResourceId(anotherProject.getId()));
-    db.properties().insertProperty(new PropertyDto().setKey("other").setValue(user.getLogin()).setResourceId(anotherProject.getId()));
+    db.properties().insertProperty(new PropertyDto().setKey("sonar.issues.defaultAssigneeLogin").setValue(user.getLogin()).setComponentUuid(project.uuid()));
+    db.properties().insertProperty(new PropertyDto().setKey("sonar.issues.defaultAssigneeLogin").setValue(user.getLogin()).setComponentUuid(anotherProject.uuid()));
+    db.properties().insertProperty(new PropertyDto().setKey("other").setValue(user.getLogin()).setComponentUuid(anotherProject.uuid()));
 
     deactivate(user.getLogin());
 
@@ -222,8 +224,8 @@ public class DeactivateActionTest {
 
     deactivate(user.getLogin());
 
-    assertThat(dbClient.organizationMemberDao().select(db.getSession(), organization.getUuid(), user.getId())).isNotPresent();
-    assertThat(dbClient.organizationMemberDao().select(db.getSession(), anotherOrganization.getUuid(), user.getId())).isNotPresent();
+    assertThat(dbClient.organizationMemberDao().select(db.getSession(), organization.getUuid(), user.getUuid())).isNotPresent();
+    assertThat(dbClient.organizationMemberDao().select(db.getSession(), anotherOrganization.getUuid(), user.getUuid())).isNotPresent();
   }
 
   @Test
@@ -256,6 +258,22 @@ public class DeactivateActionTest {
 
     assertThat(db.getDbClient().almPatDao().selectByUserAndAlmSetting(dbSession, user.getUuid(), almSettingDto)).isEmpty();
     assertThat(db.getDbClient().almPatDao().selectByUserAndAlmSetting(dbSession, anotherUser.getUuid(), almSettingDto)).isNotNull();
+  }
+
+  @Test
+  public void deactivate_user_deletes_his_session_tokens() {
+    logInAsSystemAdministrator();
+    UserDto user = db.users().insertUser();
+    SessionTokenDto sessionToken1 = db.users().insertSessionToken(user);
+    SessionTokenDto sessionToken2 =db.users().insertSessionToken(user);
+    UserDto anotherUser = db.users().insertUser();
+    SessionTokenDto sessionToken3 =db.users().insertSessionToken(anotherUser);
+
+    deactivate(user.getLogin());
+
+    assertThat(db.getDbClient().sessionTokensDao().selectByUuid(dbSession, sessionToken1.getUuid())).isNotPresent();
+    assertThat(db.getDbClient().sessionTokensDao().selectByUuid(dbSession, sessionToken2.getUuid())).isNotPresent();
+    assertThat(db.getDbClient().sessionTokensDao().selectByUuid(dbSession, sessionToken3.getUuid())).isPresent();
   }
 
   @Test

@@ -21,6 +21,7 @@ package org.sonar.api.batch.scm;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.CheckForNull;
@@ -68,8 +69,9 @@ public abstract class ScmProvider {
 
   /**
    * Return a map between paths given as argument and the corresponding line numbers which are new compared to the provided target branch.
-   * If null is returned or if a path is not included in the map, an imprecise fallback mechanism will be used to detect which lines
-   * are new (based on SCM dates).
+   * If nothing is returned for a file, the scanner will consider that the provider was unable to determine changes for that file and it will
+   * assume that nothing was changed in it.
+   * If null is returned, an imprecise fallback mechanism will be used to detect which lines are new (based on SCM dates).
    *
    * @param files Absolute path of files of interest
    * @return null if the SCM provider was not able to compute the new lines
@@ -77,6 +79,17 @@ public abstract class ScmProvider {
    */
   @CheckForNull
   public Map<Path, Set<Integer>> branchChangedLines(String targetBranchName, Path rootBaseDir, Set<Path> files) {
+    return null;
+  }
+
+  /**
+   * Find the date of the merge base between the current branch and the given reference branch.
+   *
+   * @return null if the SCM provider was not able to compute the date
+   * @since 8.4
+   */
+  @CheckForNull
+  public Instant forkDate(String referenceBranchName, Path rootBaseDir) {
     return null;
   }
 
@@ -100,6 +113,7 @@ public abstract class ScmProvider {
    * for example the SHA1 of the current HEAD in a Git branch.
    * @since 7.0
    */
+  @CheckForNull
   public String revisionId(Path path) {
     throw new UnsupportedOperationException(formatUnsupportedMessage("Getting revision id"));
   }

@@ -19,9 +19,9 @@
  */
 import * as React from 'react';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
+import DateFormatter from 'sonar-ui-common/components/intl/DateFormatter';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import { Release, Update } from '../../../api/plugins';
-import DateFormatter from '../../../components/intl/DateFormatter';
+import { Release, Update } from '../../../types/plugins';
 
 interface Props {
   release: Release;
@@ -47,7 +47,11 @@ export default function PluginChangeLogItem({ release, update }: Props) {
           <DateFormatter date={release.date} />
         </span>
         {release.changeLogUrl && (
-          <a className="js-plugin-changelog-link" href={release.changeLogUrl} target="_blank">
+          <a
+            className="js-plugin-changelog-link"
+            href={release.changeLogUrl}
+            target="_blank"
+            rel="noopener noreferrer">
             {translate('marketplace.release_notes')}
           </a>
         )}

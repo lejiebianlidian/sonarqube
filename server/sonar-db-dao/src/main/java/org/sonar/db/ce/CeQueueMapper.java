@@ -36,7 +36,9 @@ public interface CeQueueMapper {
 
   int countByQuery(@Param("query") CeTaskQuery query);
 
-  List<String> selectEligibleForPeek(@Param("pagination") Pagination pagination);
+  List<String> selectEligibleForPeek(@Param("pagination") Pagination pagination,
+                                     @Param("excludeIndexationJob") boolean excludeIndexationJob,
+                                     @Param("excludeViewRefresh") boolean excludeViewRefresh);
 
   @CheckForNull
   CeQueueDto selectByUuid(@Param("uuid") String uuid);
@@ -82,4 +84,7 @@ public interface CeQueueMapper {
     @Param("old") UpdateIf.OldProperties oldProperties);
 
   int deleteByUuid(@Param("uuid") String uuid, @Nullable @Param("deleteIf") DeleteIf deleteIf);
+
+  boolean hasAnyIssueSyncTaskPendingOrInProgress();
+
 }

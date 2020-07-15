@@ -66,6 +66,16 @@ it('Should fetch data', async () => {
   expect(getIssueFlowSnippets).toBeCalledWith('foo');
 });
 
+it('Should handle no access rights', async () => {
+  (getIssueFlowSnippets as jest.Mock).mockRejectedValueOnce({ status: 403 });
+
+  const wrapper = shallowRender();
+  await waitAndUpdate(wrapper);
+
+  expect(wrapper.state().notAccessible).toBe(true);
+  expect(wrapper).toMatchSnapshot();
+});
+
 it('should handle issue popup', () => {
   const wrapper = shallowRender();
   // open
@@ -77,23 +87,6 @@ it('should handle issue popup', () => {
   expect(wrapper.state('issuePopup')).toBeUndefined();
 });
 
-it('should handle line popup', async () => {
-  const wrapper = shallowRender();
-  await waitAndUpdate(wrapper);
-
-  const linePopup = { component: 'foo', index: 0, line: 16, name: 'b.tsx' };
-  wrapper.find('ComponentSourceSnippetViewer').prop<Function>('onLinePopupToggle')(linePopup);
-  expect(wrapper.state('linePopup')).toEqual(linePopup);
-
-  wrapper.find('ComponentSourceSnippetViewer').prop<Function>('onLinePopupToggle')(linePopup);
-  expect(wrapper.state('linePopup')).toEqual(undefined);
-
-  const openLinePopup = { ...linePopup, open: true };
-  wrapper.find('ComponentSourceSnippetViewer').prop<Function>('onLinePopupToggle')(openLinePopup);
-  wrapper.find('ComponentSourceSnippetViewer').prop<Function>('onLinePopupToggle')(openLinePopup);
-  expect(wrapper.state('linePopup')).toEqual(linePopup);
-});
-
 it('should handle duplication popup', async () => {
   const files = { b: { key: 'b', name: 'B.tsx', project: 'foo', projectName: 'Foo' } };
   const duplications = [{ blocks: [{ _ref: '1', from: 1, size: 2 }] }];
@@ -102,7 +95,7 @@ it('should handle duplication popup', async () => {
   const wrapper = shallowRender();
   await waitAndUpdate(wrapper);
 
-  wrapper.find('ComponentSourceSnippetViewer').prop<Function>('loadDuplications')(
+  wrapper.find('ComponentSourceSnippetGroupViewer').prop<Function>('loadDuplications')(
     'foo',
     mockSourceLine()
   );
@@ -112,15 +105,9 @@ it('should handle duplication popup', async () => {
   expect(wrapper.state('duplicatedFiles')).toEqual(files);
   expect(wrapper.state('duplications')).toEqual(duplications);
   expect(wrapper.state('duplicationsByLine')).toEqual({ '1': [0], '2': [0] });
-  expect(wrapper.state('linePopup')).toEqual({
-    component: 'foo',
-    index: 0,
-    line: 16,
-    name: 'duplications'
-  });
 
   expect(
-    wrapper.find('ComponentSourceSnippetViewer').prop<Function>('renderDuplicationPopup')(
+    wrapper.find('ComponentSourceSnippetGroupViewer').prop<Function>('renderDuplicationPopup')(
       mockSourceViewerFile(),
       0,
       16

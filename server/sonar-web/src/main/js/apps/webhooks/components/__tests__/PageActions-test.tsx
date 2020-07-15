@@ -38,7 +38,7 @@ it('should display the create form', () => {
   const onCreate = jest.fn();
   const wrapper = getWrapper({ onCreate });
   click(wrapper.find('.js-webhook-create'));
-  expect(wrapper.find('CreateWebhookForm').exists()).toBeTruthy();
+  expect(wrapper.find('CreateWebhookForm').exists()).toBe(true);
   wrapper.find('CreateWebhookForm').prop<Function>('onDone')({
     name: 'foo',
     url: 'http://foo.bar'

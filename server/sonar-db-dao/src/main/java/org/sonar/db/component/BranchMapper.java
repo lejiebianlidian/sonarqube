@@ -48,7 +48,24 @@ public interface BranchMapper {
 
   List<BranchDto> selectByUuids(@Param("uuids") Collection<String> uuids);
 
+  List<String> selectProjectUuidsWithIssuesNeedSync(@Param("projectUuids") Collection<String> uuids);
+
   long countNonMainBranches();
 
   long countByTypeAndCreationDate(@Param("branchType") String branchType, @Param("sinceDate") long sinceDate);
+
+  short hasAnyBranchWhereNeedIssueSync(@Param("needIssueSync") boolean needIssueSync);
+
+  int countByNeedIssueSync(@Param("needIssueSync") boolean needIssueSync);
+
+  int countAll();
+
+  List<BranchDto> selectBranchNeedingIssueSync();
+
+  long updateAllNeedIssueSync(@Param("now") long now);
+
+  long updateNeedIssueSync(@Param("uuid") String uuid, @Param("needIssueSync")boolean needIssueSync,@Param("now") long now);
+
+  short doAnyOfComponentsNeedIssueSync(@Param("componentKeys") List<String> components);
+
 }

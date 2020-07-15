@@ -35,13 +35,13 @@ import org.sonar.server.user.UserSession;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
+import static org.sonar.server.exceptions.NotFoundException.checkFound;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_GROUP_ID;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_GROUP_NAME;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_LOGIN;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.PARAM_ORGANIZATION_KEY;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.defineGroupWsParameters;
 import static org.sonar.server.usergroups.ws.GroupWsSupport.defineLoginWsParameter;
-import static org.sonar.server.exceptions.NotFoundException.checkFound;
 
 public class AddUserAction implements UserGroupsWsAction {
 
@@ -64,7 +64,8 @@ public class AddUserAction implements UserGroupsWsAction {
       .setHandler(this)
       .setPost(true)
       .setSince("5.2")
-      .setChangelog(new Change("6.4", "It's no longer possible to add a user to the default group"));
+      .setChangelog(
+        new Change("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."));
 
     defineGroupWsParameters(action);
     defineLoginWsParameter(action);
@@ -85,7 +86,7 @@ public class AddUserAction implements UserGroupsWsAction {
       support.checkGroupIsNotDefault(dbSession, group);
 
       if (!isMemberOf(dbSession, user, group)) {
-        UserGroupDto membershipDto = new UserGroupDto().setGroupId(group.getId()).setUserId(user.getId());
+        UserGroupDto membershipDto = new UserGroupDto().setGroupUuid(group.getUuid()).setUserUuid(user.getUuid());
         dbClient.userGroupDao().insert(dbSession, membershipDto);
         dbSession.commit();
       }
@@ -94,12 +95,12 @@ public class AddUserAction implements UserGroupsWsAction {
     }
   }
 
-  private boolean isMemberOf(DbSession dbSession, UserDto user, GroupDto groupId) {
-    return dbClient.groupMembershipDao().selectGroupIdsByUserId(dbSession, user.getId()).contains(groupId.getId());
+  private boolean isMemberOf(DbSession dbSession, UserDto user, GroupDto group) {
+    return dbClient.groupMembershipDao().selectGroupUuidsByUserUuid(dbSession, user.getUuid()).contains(group.getUuid());
   }
 
   private void checkMembership(DbSession dbSession, OrganizationDto organization, UserDto user) {
-    checkArgument(dbClient.organizationMemberDao().select(dbSession, organization.getUuid(), user.getId()).isPresent(),
+    checkArgument(dbClient.organizationMemberDao().select(dbSession, organization.getUuid(), user.getUuid()).isPresent(),
       "User '%s' is not member of organization '%s'", user.getLogin(), organization.getKey());
   }
 }

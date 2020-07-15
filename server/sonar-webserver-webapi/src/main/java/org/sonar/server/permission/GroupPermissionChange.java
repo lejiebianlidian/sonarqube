@@ -23,15 +23,15 @@ import javax.annotation.Nullable;
 
 public class GroupPermissionChange extends PermissionChange {
 
-  private final GroupIdOrAnyone groupId;
+  private final GroupUuidOrAnyone group;
 
-  public GroupPermissionChange(Operation operation, String permission, @Nullable ProjectId projectId,
-    GroupIdOrAnyone groupId, PermissionService permissionService) {
-    super(operation, groupId.getOrganizationUuid(), permission, projectId, permissionService);
-    this.groupId = groupId;
+  public GroupPermissionChange(Operation operation, String permission, @Nullable ProjectUuid projectUuid,
+    GroupUuidOrAnyone group, PermissionService permissionService) {
+    super(operation, group.getOrganizationUuid(), permission, projectUuid, permissionService);
+    this.group = group;
   }
 
-  public GroupIdOrAnyone getGroupIdOrAnyone() {
-    return groupId;
+  public GroupUuidOrAnyone getGroupUuidOrAnyone() {
+    return group;
   }
 }

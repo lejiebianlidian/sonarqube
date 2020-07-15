@@ -83,11 +83,11 @@ public class SearchActionTest {
     assertJson(response).isSimilarTo("{\n" +
       "  \"customMeasures\": [\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure1.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure1.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure1.getTextValue() + "\",\n" +
       "      \"description\": \"" + customMeasure1.getDescription() + "\",\n" +
       "      \"metric\": {\n" +
-      "        \"id\": \"" + metric1.getId() + "\",\n" +
+      "        \"id\": \"" + metric1.getUuid() + "\",\n" +
       "        \"key\": \"" + metric1.getKey() + "\",\n" +
       "        \"type\": \"" + metric1.getValueType() + "\",\n" +
       "        \"name\": \"" + metric1.getShortName() + "\",\n" +
@@ -98,11 +98,11 @@ public class SearchActionTest {
       "      \"pending\": true,\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure2.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure2.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure2.getTextValue() + "\",\n" +
       "      \"description\": \"" + customMeasure2.getDescription() + "\",\n" +
       "      \"metric\": {\n" +
-      "        \"id\": \"" + metric2.getId() + "\",\n" +
+      "        \"id\": \"" + metric2.getUuid() + "\",\n" +
       "        \"key\": \"" + metric2.getKey() + "\",\n" +
       "        \"type\": \"" + metric2.getValueType() + "\",\n" +
       "        \"name\": \"" + metric2.getShortName() + "\",\n" +
@@ -113,11 +113,11 @@ public class SearchActionTest {
       "      \"pending\": true,\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure3.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure3.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure3.getTextValue() + "\",\n" +
       "      \"description\": \"" + customMeasure3.getDescription() + "\",\n" +
       "      \"metric\": {\n" +
-      "        \"id\": \"" + metric3.getId() + "\",\n" +
+      "        \"id\": \"" + metric3.getUuid() + "\",\n" +
       "        \"key\": \"" + metric3.getKey() + "\",\n" +
       "        \"type\": \"" + metric3.getValueType() + "\",\n" +
       "        \"name\": \"" + metric3.getShortName() + "\",\n" +
@@ -156,29 +156,29 @@ public class SearchActionTest {
     assertJson(response).isSimilarTo("{\n" +
       "  \"customMeasures\": [\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure1.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure1.getUuid() + "\",\n" +
       "      \"user\": {\n" +
-      "        \"login\": \"" + user1.getLogin() +"\",\n" +
-      "        \"name\": \"" + user1.getName() +"\",\n" +
-      "        \"email\": \"" + user1.getEmail() +"\",\n" +
+      "        \"login\": \"" + user1.getLogin() + "\",\n" +
+      "        \"name\": \"" + user1.getName() + "\",\n" +
+      "        \"email\": \"" + user1.getEmail() + "\",\n" +
       "        \"active\": true\n" +
       "      }" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure2.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure2.getUuid() + "\",\n" +
       "      \"user\": {\n" +
-      "        \"login\": \"" + user1.getLogin() +"\",\n" +
-      "        \"name\": \"" + user1.getName() +"\",\n" +
-      "        \"email\": \"" + user1.getEmail() +"\",\n" +
+      "        \"login\": \"" + user1.getLogin() + "\",\n" +
+      "        \"name\": \"" + user1.getName() + "\",\n" +
+      "        \"email\": \"" + user1.getEmail() + "\",\n" +
       "        \"active\": true\n" +
       "      }" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure3.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure3.getUuid() + "\",\n" +
       "      \"user\": {\n" +
-      "        \"login\": \"" + user2.getLogin() +"\",\n" +
-      "        \"name\": \"" + user2.getName() +"\",\n" +
-      "        \"email\": \"" + user2.getEmail() +"\",\n" +
+      "        \"login\": \"" + user2.getLogin() + "\",\n" +
+      "        \"name\": \"" + user2.getName() + "\",\n" +
+      "        \"email\": \"" + user2.getEmail() + "\",\n" +
       "        \"active\": true\n" +
       "      }" +
       "    }\n" +
@@ -207,15 +207,15 @@ public class SearchActionTest {
     assertJson(response).isSimilarTo("{\n" +
       "  \"customMeasures\": [\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure1.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure1.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure1.getTextValue() + "\"\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure2.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure2.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure2.getTextValue() + "\"\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure3.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure3.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure3.getTextValue() + "\"\n" +
       "    }\n" +
       "  ],\n" +
@@ -246,15 +246,15 @@ public class SearchActionTest {
     assertJson(response).isSimilarTo("{\n" +
       "  \"customMeasures\": [\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure1.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure1.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure1.getTextValue() + "\"\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure2.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure2.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure2.getTextValue() + "\"\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure3.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure3.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure3.getTextValue() + "\"\n" +
       "    }\n" +
       "  ],\n" +
@@ -287,10 +287,10 @@ public class SearchActionTest {
     assertJson(response).isSimilarTo("{\n" +
       "  \"customMeasures\": [\n" +
       "    {\n" +
-      "      \"id\": \"" + measureById.get(8).getId() + "\",\n" +
+      "      \"id\": \"" + measureById.get(8).getUuid() + "\",\n" +
       "    },\n" +
       "    {\n" +
-      "      \"id\": \"" + measureById.get(9).getId() + "\",\n" +
+      "      \"id\": \"" + measureById.get(9).getUuid() + "\",\n" +
       "    },\n" +
       "  ],\n" +
       "  \"total\": 10,\n" +
@@ -340,7 +340,7 @@ public class SearchActionTest {
     assertJson(response).isSimilarTo("{\n" +
       "  \"customMeasures\": [\n" +
       "    {\n" +
-      "      \"id\": \"" + customMeasure.getId() + "\",\n" +
+      "      \"id\": \"" + customMeasure.getUuid() + "\",\n" +
       "      \"value\": \"" + customMeasure.getTextValue() + "\",\n" +
       "      \"pending\": false\n" +
       "    },\n" +

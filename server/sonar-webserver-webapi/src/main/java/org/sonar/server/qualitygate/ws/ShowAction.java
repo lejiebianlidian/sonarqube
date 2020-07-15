@@ -41,12 +41,13 @@ import org.sonarqube.ws.Qualitygates.ShowWsResponse;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.ofNullable;
+import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
 import static org.sonar.core.util.stream.MoreCollectors.toList;
 import static org.sonar.core.util.stream.MoreCollectors.toSet;
 import static org.sonar.core.util.stream.MoreCollectors.uniqueIndex;
+import static org.sonar.server.exceptions.NotFoundException.checkFound;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_ID;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_NAME;
-import static org.sonar.server.exceptions.NotFoundException.checkFound;
 import static org.sonar.server.ws.WsUtils.writeProtobuf;
 
 public class ShowAction implements QualityGatesWsAction {
@@ -68,6 +69,8 @@ public class ShowAction implements QualityGatesWsAction {
       .setSince("4.3")
       .setResponseExample(Resources.getResource(this.getClass(), "show-example.json"))
       .setChangelog(
+        new Change("8.4", "Parameter 'id' is deprecated. Format changes from integer to string. Use 'name' instead."),
+        new Change("8.4", "Field 'id' in the response is deprecated."),
         new Change("7.6", "'period' and 'warning' fields of conditions are removed from the response"),
         new Change("7.0", "'isBuiltIn' field is added to the response"),
         new Change("7.0", "'actions' field is added in the response"))
@@ -75,7 +78,7 @@ public class ShowAction implements QualityGatesWsAction {
 
     action.createParam(PARAM_ID)
       .setDescription("ID of the quality gate. Either id or name must be set")
-      .setExampleValue("1");
+      .setExampleValue(UUID_EXAMPLE_01);
 
     action.createParam(PARAM_NAME)
       .setDescription("Name of the quality gate. Either id or name must be set")
@@ -86,61 +89,61 @@ public class ShowAction implements QualityGatesWsAction {
 
   @Override
   public void handle(Request request, Response response) {
-    Long id = request.paramAsLong(PARAM_ID);
+    String id = request.param(PARAM_ID);
     String name = request.param(PARAM_NAME);
     checkOneOfIdOrNamePresent(id, name);
 
     try (DbSession dbSession = dbClient.openSession(false)) {
       OrganizationDto organization = wsSupport.getOrganization(dbSession, request);
-      QualityGateDto qualityGate = getByNameOrId(dbSession, organization, name, id);
+      QualityGateDto qualityGate = getByNameOrUuid(dbSession, organization, name, id);
       Collection<QualityGateConditionDto> conditions = getConditions(dbSession, qualityGate);
-      Map<Integer, MetricDto> metricsById = getMetricsById(dbSession, conditions);
+      Map<String, MetricDto> metricsByUuid = getMetricsByUuid(dbSession, conditions);
       QualityGateDto defaultQualityGate = qualityGateFinder.getDefault(dbSession, organization);
-      writeProtobuf(buildResponse(organization, qualityGate, defaultQualityGate, conditions, metricsById), request, response);
+      writeProtobuf(buildResponse(organization, qualityGate, defaultQualityGate, conditions, metricsByUuid), request, response);
     }
   }
 
-  private QualityGateDto getByNameOrId(DbSession dbSession, OrganizationDto organization, @Nullable String name, @Nullable Long id) {
+  private QualityGateDto getByNameOrUuid(DbSession dbSession, OrganizationDto organization, @Nullable String name, @Nullable String uuid) {
     if (name != null) {
       return checkFound(dbClient.qualityGateDao().selectByOrganizationAndName(dbSession, organization, name), "No quality gate has been found for name %s", name);
     }
-    if (id != null) {
-      return wsSupport.getByOrganizationAndId(dbSession, organization, id);
+    if (uuid != null) {
+      return wsSupport.getByOrganizationAndUuid(dbSession, organization, uuid);
     }
     throw new IllegalArgumentException("No parameter has been set to identify a quality gate");
   }
 
   public Collection<QualityGateConditionDto> getConditions(DbSession dbSession, QualityGateDto qualityGate) {
-    return dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getId());
+    return dbClient.gateConditionDao().selectForQualityGate(dbSession, qualityGate.getUuid());
   }
 
-  private Map<Integer, MetricDto> getMetricsById(DbSession dbSession, Collection<QualityGateConditionDto> conditions) {
-    Set<Integer> metricIds = conditions.stream().map(c -> (int) c.getMetricId()).collect(toSet());
-    return dbClient.metricDao().selectByIds(dbSession, metricIds).stream()
+  private Map<String, MetricDto> getMetricsByUuid(DbSession dbSession, Collection<QualityGateConditionDto> conditions) {
+    Set<String> metricUuids = conditions.stream().map(QualityGateConditionDto::getMetricUuid).collect(toSet());
+    return dbClient.metricDao().selectByUuids(dbSession, metricUuids).stream()
       .filter(MetricDto::isEnabled)
-      .collect(uniqueIndex(MetricDto::getId));
+      .collect(uniqueIndex(MetricDto::getUuid));
   }
 
   private ShowWsResponse buildResponse(OrganizationDto organization, QualityGateDto qualityGate, QualityGateDto defaultQualityGate,
-    Collection<QualityGateConditionDto> conditions, Map<Integer, MetricDto> metricsById) {
+    Collection<QualityGateConditionDto> conditions, Map<String, MetricDto> metricsByUuid) {
     return ShowWsResponse.newBuilder()
-      .setId(qualityGate.getId())
+      .setId(qualityGate.getUuid())
       .setName(qualityGate.getName())
       .setIsBuiltIn(qualityGate.isBuiltIn())
       .addAllConditions(conditions.stream()
-        .map(toWsCondition(metricsById))
+        .map(toWsCondition(metricsByUuid))
         .collect(toList()))
       .setActions(wsSupport.getActions(organization, qualityGate, defaultQualityGate))
       .build();
   }
 
-  private static Function<QualityGateConditionDto, ShowWsResponse.Condition> toWsCondition(Map<Integer, MetricDto> metricsById) {
+  private static Function<QualityGateConditionDto, ShowWsResponse.Condition> toWsCondition(Map<String, MetricDto> metricsByUuid) {
     return condition -> {
-      int metricId = (int) condition.getMetricId();
-      MetricDto metric = metricsById.get(metricId);
-      checkState(metric != null, "Could not find metric with id %s", metricId);
+      String metricUuid = condition.getMetricUuid();
+      MetricDto metric = metricsByUuid.get(metricUuid);
+      checkState(metric != null, "Could not find metric with id %s", metricUuid);
       ShowWsResponse.Condition.Builder builder = ShowWsResponse.Condition.newBuilder()
-        .setId(condition.getId())
+        .setId(condition.getUuid())
         .setMetric(metric.getKey())
         .setOp(condition.getOperator());
       ofNullable(condition.getErrorThreshold()).ifPresent(builder::setError);
@@ -148,7 +151,7 @@ public class ShowAction implements QualityGatesWsAction {
     };
   }
 
-  private static void checkOneOfIdOrNamePresent(@Nullable Long qGateId, @Nullable String qGateName) {
-    checkArgument(qGateId == null ^ qGateName == null, "Either '%s' or '%s' must be provided", PARAM_ID, PARAM_NAME);
+  private static void checkOneOfIdOrNamePresent(@Nullable String qGateUuid, @Nullable String qGateName) {
+    checkArgument(qGateUuid == null ^ qGateName == null, "Either '%s' or '%s' must be provided", PARAM_ID, PARAM_NAME);
   }
 }

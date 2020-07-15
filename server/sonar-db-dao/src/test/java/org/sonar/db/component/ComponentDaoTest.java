@@ -36,13 +36,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.assertj.core.api.ListAssert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.sonar.api.impl.utils.AlwaysIncreasingSystem2;
 import org.sonar.api.resources.Qualifiers;
@@ -58,19 +56,24 @@ import org.sonar.db.source.FileSourceDto;
 import static com.google.common.collect.ImmutableSet.of;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.resources.Qualifiers.APP;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
+import static org.sonar.api.resources.Qualifiers.SUBVIEW;
+import static org.sonar.api.resources.Qualifiers.VIEW;
 import static org.sonar.api.utils.DateUtils.parseDate;
 import static org.sonar.db.component.BranchType.BRANCH;
 import static org.sonar.db.component.BranchType.PULL_REQUEST;
+import static org.sonar.db.component.ComponentTesting.newApplication;
 import static org.sonar.db.component.ComponentTesting.newBranchDto;
 import static org.sonar.db.component.ComponentTesting.newDirectory;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
@@ -92,9 +95,6 @@ public class ComponentDaoTest {
   private static final String FILE_3_UUID = "file-3-uuid";
   private static final String A_VIEW_UUID = "view-uuid";
   private static final ComponentQuery ALL_PROJECTS_COMPONENT_QUERY = ComponentQuery.builder().setQualifiers("TRK").build();
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   private System2 system2 = new AlwaysIncreasingSystem2(1000L);
 
@@ -182,9 +182,8 @@ public class ComponentDaoTest {
   public void selectOrFailByUuid_fails_when_component_not_found() {
     db.components().insertPublicProject();
 
-    expectedException.expect(RowNotFoundException.class);
-
-    underTest.selectOrFailByUuid(dbSession, "unknown");
+    assertThatThrownBy(() -> underTest.selectOrFailByUuid(dbSession, "unknown"))
+      .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
@@ -252,9 +251,8 @@ public class ComponentDaoTest {
   public void selectOrFailByKey_fails_when_component_not_found() {
     db.components().insertPrivateProject();
 
-    expectedException.expect(RowNotFoundException.class);
-
-    underTest.selectOrFailByKey(dbSession, "unknown");
+    assertThatThrownBy(() -> underTest.selectOrFailByKey(dbSession, "unknown"))
+      .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
@@ -337,22 +335,6 @@ public class ComponentDaoTest {
   }
 
   @Test
-  public void get_by_ids() {
-    ComponentDto project1 = db.components().insertPrivateProject();
-    ComponentDto project2 = db.components().insertPrivateProject();
-
-    List<ComponentDto> results = underTest.selectByIds(dbSession, asList(project1.getId(), project2.getId()));
-
-    assertThat(results)
-      .extracting(ComponentDto::uuid, ComponentDto::getDbKey)
-      .containsExactlyInAnyOrder(
-        tuple(project1.uuid(), project1.getDbKey()),
-        tuple(project2.uuid(), project2.getDbKey()));
-
-    assertThat(underTest.selectByIds(dbSession, singletonList(0L))).isEmpty();
-  }
-
-  @Test
   public void get_by_uuids() {
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto project2 = db.components().insertPrivateProject();
@@ -393,31 +375,6 @@ public class ComponentDaoTest {
   }
 
   @Test
-  public void get_by_id() {
-    ComponentDto project = db.components().insertPrivateProject();
-
-    assertThat(underTest.selectById(dbSession, project.getId())).isNotNull();
-  }
-
-  @Test
-  public void get_by_id_on_disabled_component() {
-    ComponentDto enabledProject = db.components().insertPrivateProject();
-    ComponentDto disabledProject = db.components().insertPrivateProject(p -> p.setEnabled(false));
-
-    Optional<ComponentDto> result = underTest.selectById(dbSession, disabledProject.getId());
-    assertThat(result).isPresent();
-    assertThat(result.get().isEnabled()).isFalse();
-  }
-
-  @Test
-  public void get_nullable_by_id() {
-    ComponentDto project = db.components().insertPrivateProject();
-
-    assertThat(underTest.selectById(dbSession, project.getId())).isPresent();
-    assertThat(underTest.selectById(dbSession, 0L)).isEmpty();
-  }
-
-  @Test
   public void select_component_keys_by_qualifiers() {
     ComponentDto project = db.components().insertPrivateProject();
     ComponentDto module = db.components().insertComponent(newModuleDto(project));
@@ -433,10 +390,9 @@ public class ComponentDaoTest {
 
   @Test
   public void fail_with_IAE_select_component_keys_by_qualifiers_on_empty_qualifier() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Qualifiers cannot be empty");
-
-    underTest.selectComponentsByQualifiers(dbSession, Collections.emptySet());
+    assertThatThrownBy(() -> underTest.selectComponentsByQualifiers(dbSession, Collections.emptySet()))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Qualifiers cannot be empty");
   }
 
   @Test
@@ -1208,20 +1164,9 @@ public class ComponentDaoTest {
 
   @Test
   public void countByQuery_with_organization_throws_NPE_of_organizationUuid_is_null() {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage("organizationUuid can't be null");
-
-    underTest.countByQuery(dbSession, null, ALL_PROJECTS_COMPONENT_QUERY);
-  }
-
-  @Test
-  public void countByQuery_throws_IAE_if_too_many_component_ids() {
-    Set<Long> ids = LongStream.range(0L, 1_010L).boxed().collect(toSet());
-    ComponentQuery.Builder query = ComponentQuery.builder()
-      .setQualifiers(PROJECT)
-      .setComponentIds(ids);
-
-    assertThatCountByQueryThrowsIAE(query, "Too many component ids in query");
+    assertThatThrownBy(() -> underTest.countByQuery(dbSession, null, ALL_PROJECTS_COMPONENT_QUERY))
+      .isInstanceOf(NullPointerException.class)
+      .hasMessage("organizationUuid can't be null");
   }
 
   @Test
@@ -1245,10 +1190,9 @@ public class ComponentDaoTest {
   }
 
   private void assertThatCountByQueryThrowsIAE(ComponentQuery.Builder query, String expectedMessage) {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(expectedMessage);
-
-    underTest.countByQuery(dbSession, query.build());
+    assertThatThrownBy(() -> underTest.countByQuery(dbSession, query.build()))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage(expectedMessage);
   }
 
   @Test
@@ -1275,16 +1219,24 @@ public class ComponentDaoTest {
   public void selectForIndexing_all() {
     assertSelectForIndexing(null)
       .doesNotContain("DIS7")
-      .doesNotContain("COPY8")
-      .containsExactlyInAnyOrder("U1", "U2", "U3", "U4", "U5", "U6", "VW1");
+      .doesNotContain("COPY8") // copied projects
+      .doesNotContain("U2", "U6")// modules
+      .doesNotContain("U3")// dir
+      .doesNotContain("U4")// file
+      .containsExactlyInAnyOrder("U1", "U5", "VW1");
   }
 
   @Test
   public void selectForIndexing_project() {
     assertSelectForIndexing("U1")
       .doesNotContain("DIS7")
-      .doesNotContain("COPY8")
-      .containsExactlyInAnyOrder("U1", "U2", "U3", "U4");
+      .doesNotContain("COPY8") // copied projects
+      .doesNotContain("U6") // other projects
+      .doesNotContain("VW1") // view
+      .doesNotContain("U2", "U6")// modules
+      .doesNotContain("U3")// dir
+      .doesNotContain("U4")// file
+      .containsExactlyInAnyOrder("U1");
   }
 
   private ListAssert<String> assertSelectForIndexing(@Nullable String projectUuid) {
@@ -1305,7 +1257,8 @@ public class ComponentDaoTest {
     ComponentDto moduleOnProject2 = db.components().insertComponent(newModuleDto("U6", project2));
 
     List<ComponentDto> components = new ArrayList<>();
-    underTest.scrollForIndexing(dbSession, projectUuid, context -> components.add(context.getResultObject()));
+    underTest.scrollForIndexing(dbSession, projectUuid,
+      context -> components.add(context.getResultObject()));
     return (ListAssert<String>) assertThat(components).extracting(ComponentDto::uuid);
   }
 
@@ -1404,7 +1357,7 @@ public class ComponentDaoTest {
     ComponentDto project1 = db.components().insertPrivateProject(db.getDefaultOrganization(), (t) -> t.setDbKey("PROJECT_1"));
     db.components().insertPrivateProject(db.getDefaultOrganization(), (t) -> t.setDbKey("PROJECT_2"));
 
-    underTest.delete(dbSession, project1.getId());
+    underTest.delete(dbSession, project1.uuid());
     dbSession.commit();
 
     assertThat(underTest.selectByKey(dbSession, "PROJECT_1")).isEmpty();
@@ -1413,20 +1366,9 @@ public class ComponentDaoTest {
 
   @Test
   public void selectByQuery_with_organization_throws_NPE_of_organizationUuid_is_null() {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage("organizationUuid can't be null");
-
-    underTest.selectByQuery(dbSession, null, ALL_PROJECTS_COMPONENT_QUERY, 1, 1);
-  }
-
-  @Test
-  public void selectByQuery_throws_IAE_if_too_many_component_ids() {
-    Set<Long> ids = LongStream.range(0L, 1_010L).boxed().collect(toSet());
-    ComponentQuery.Builder query = ComponentQuery.builder()
-      .setQualifiers(PROJECT)
-      .setComponentIds(ids);
-
-    assertThatSelectByQueryThrowsIAE(query, "Too many component ids in query");
+    assertThatThrownBy(() -> underTest.selectByQuery(dbSession, null, ALL_PROJECTS_COMPONENT_QUERY, 1, 1))
+      .isInstanceOf(NullPointerException.class)
+      .hasMessage("organizationUuid can't be null");
   }
 
   @Test
@@ -1450,10 +1392,9 @@ public class ComponentDaoTest {
   }
 
   private void assertThatSelectByQueryThrowsIAE(ComponentQuery.Builder query, String expectedMessage) {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(expectedMessage);
-
-    underTest.selectByQuery(dbSession, query.build(), 0, Integer.MAX_VALUE);
+    assertThatThrownBy(() -> underTest.selectByQuery(dbSession, query.build(), 0, Integer.MAX_VALUE))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage(expectedMessage);
   }
 
   @Test
@@ -1673,34 +1614,6 @@ public class ComponentDaoTest {
     assertThat(underTest.selectByQuery(dbSession, privateProjectsQuery, 0, 10)).extracting(ComponentDto::getDbKey).containsExactly("private-key");
     assertThat(underTest.selectByQuery(dbSession, publicProjectsQuery, 0, 10)).extracting(ComponentDto::getDbKey).containsExactly("public-key");
     assertThat(underTest.selectByQuery(dbSession, allProjectsQuery, 0, 10)).extracting(ComponentDto::getDbKey).containsOnly("public-key", "private-key");
-  }
-
-  @Test
-  public void selectByQuery_on_empty_list_of_component_id() {
-    db.components().insertPrivateProject();
-    ComponentQuery dbQuery = ComponentQuery.builder().setQualifiers(PROJECT).setComponentIds(emptySet()).build();
-
-    List<ComponentDto> result = underTest.selectByQuery(dbSession, dbQuery, 0, 10);
-    int count = underTest.countByQuery(dbSession, dbQuery);
-
-    assertThat(result).isEmpty();
-    assertThat(count).isEqualTo(0);
-  }
-
-  @Test
-  public void selectByQuery_on_component_ids() {
-    OrganizationDto organizationDto = db.organizations().insert();
-    ComponentDto sonarqube = db.components().insertComponent(newPrivateProjectDto(organizationDto));
-    ComponentDto jdk8 = db.components().insertComponent(newPrivateProjectDto(organizationDto));
-    ComponentDto cLang = db.components().insertComponent(newPrivateProjectDto(organizationDto));
-
-    ComponentQuery query = ComponentQuery.builder().setQualifiers(PROJECT)
-      .setComponentIds(newHashSet(sonarqube.getId(), jdk8.getId())).build();
-    List<ComponentDto> result = underTest.selectByQuery(dbSession, query, 0, 10);
-
-    assertThat(result).hasSize(2).extracting(ComponentDto::getId)
-      .containsOnlyOnce(sonarqube.getId(), jdk8.getId())
-      .doesNotContain(cLang.getId());
   }
 
   @Test
@@ -1975,6 +1888,28 @@ public class ComponentDaoTest {
 
     assertThat(result).extracting(ProjectNclocDistributionDto::getName).containsExactly("foo", "bar");
     assertThat(result).extracting(ProjectNclocDistributionDto::getNcloc).containsExactly(30L, 10L);
+  }
+
+  @Test
+  public void existAnyOfComponentsWithQualifiers() {
+    ComponentDto projectDto = db.components().insertComponent(newPrivateProjectDto(db.getDefaultOrganization()));
+
+    ComponentDto view = db.components().insertComponent(newView(db.getDefaultOrganization()));
+    ComponentDto subview = db.components().insertComponent(newSubView(view));
+
+    ComponentDto app = db.components().insertComponent(newApplication(db.getDefaultOrganization()));
+
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), emptyList(), newHashSet(APP, VIEW, SUBVIEW))).isFalse();
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), singletonList("not-existing-component"), newHashSet(APP, VIEW, SUBVIEW))).isFalse();
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), singletonList(projectDto.getKey()), newHashSet(APP, VIEW, SUBVIEW))).isFalse();
+
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), singletonList(projectDto.getKey()), newHashSet(PROJECT))).isTrue();
+
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), singletonList(view.getKey()), newHashSet(APP, VIEW, SUBVIEW))).isTrue();
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), singletonList(subview.getKey()), newHashSet(APP, VIEW, SUBVIEW))).isTrue();
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), singletonList(app.getKey()), newHashSet(APP, VIEW, SUBVIEW))).isTrue();
+
+    assertThat(underTest.existAnyOfComponentsWithQualifiers(db.getSession(), newHashSet(projectDto.getKey(), view.getKey()), newHashSet(APP, VIEW, SUBVIEW))).isTrue();
   }
 
   private boolean privateFlagOfUuid(String uuid) {

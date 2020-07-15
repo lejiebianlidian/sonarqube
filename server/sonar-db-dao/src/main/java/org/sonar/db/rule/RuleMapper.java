@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Set;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.session.ResultHandler;
-import org.sonar.db.es.RuleExtensionId;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.rules.RuleQuery;
+import org.sonar.db.es.RuleExtensionId;
 
 public interface RuleMapper {
 
@@ -35,13 +35,13 @@ public interface RuleMapper {
 
   void selectEnabled(ResultHandler<RuleDefinitionDto> resultHandler);
 
-  RuleDto selectById(@Param("organizationUuid") String organizationUuid, @Param("id") long id);
+  RuleDto selectByUuid(@Param("organizationUuid") String organizationUuid, @Param("uuid") String uuid);
 
-  RuleDefinitionDto selectDefinitionById(long id);
+  RuleDefinitionDto selectDefinitionByUuid(String uuid);
 
-  List<RuleDto> selectByIds(@Param("organizationUuid") String organizationUuid, @Param("ids") List<Integer> ids);
+  List<RuleDto> selectByUuids(@Param("organizationUuid") String organizationUuid, @Param("uuids") List<String> uuids);
 
-  List<RuleDefinitionDto> selectDefinitionByIds(@Param("ids") List<Integer> ids);
+  List<RuleDefinitionDto> selectDefinitionByUuids(@Param("uuids") List<String> uuids);
 
   RuleDto selectByKey(@Param("organizationUuid") String organizationUuid, @Param("ruleKey") RuleKey ruleKey);
 
@@ -55,7 +55,7 @@ public interface RuleMapper {
 
   void scrollIndexingRules(ResultHandler<RuleForIndexingDto> handler);
 
-  List<RuleForIndexingDto> selectIndexingRulesByIds(@Param("ruleIds") List<Integer> ruleIds);
+  List<RuleForIndexingDto> selectIndexingRulesByUuids(@Param("ruleUuids") List<String> ruleUuids);
 
   void scrollIndexingRuleExtensions(ResultHandler<RuleExtensionForIndexingDto> handler);
 
@@ -75,7 +75,7 @@ public interface RuleMapper {
 
   void updateMetadata(RuleMetadataDto ruleMetadataDto);
 
-  List<RuleParamDto> selectParamsByRuleIds(@Param("ruleIds") List<Integer> ruleIds);
+  List<RuleParamDto> selectParamsByRuleUuids(@Param("ruleUuids") List<String> ruleUuids);
 
   List<RuleParamDto> selectParamsByRuleKey(RuleKey ruleKey);
 
@@ -85,7 +85,7 @@ public interface RuleMapper {
 
   void updateParameter(RuleParamDto param);
 
-  void deleteParameter(Integer paramId);
+  void deleteParameter(String paramUuid);
 
   Set<DeprecatedRuleKeyDto> selectAllDeprecatedRuleKeys();
 

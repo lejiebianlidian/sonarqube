@@ -44,13 +44,13 @@ public class PermissionIndexerTester {
 
   public PermissionIndexerTester allowOnlyUser(ComponentDto project, UserDto user) {
     IndexPermissions dto = new IndexPermissions(project.uuid(), project.qualifier())
-      .addUserId(user.getId());
+      .addUserUuid(user.getUuid());
     return allow(dto);
   }
 
   public PermissionIndexerTester allowOnlyGroup(ComponentDto project, GroupDto group) {
     IndexPermissions dto = new IndexPermissions(project.uuid(), project.qualifier())
-      .addGroupId(group.getId());
+      .addGroupUuid(group.getUuid());
     return allow(dto);
   }
 

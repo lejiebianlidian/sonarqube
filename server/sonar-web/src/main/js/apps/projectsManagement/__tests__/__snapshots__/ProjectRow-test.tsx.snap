@@ -30,6 +30,7 @@ exports[`renders 1`] = `
       }
     >
       <QualifierIcon
+        className="little-spacer-right"
         qualifier="TRK"
       />
       <Tooltip
@@ -45,13 +46,8 @@ exports[`renders 1`] = `
   <td
     className="thin nowrap"
   >
-    <Connect(PrivacyBadge)
+    <PrivacyBadgeContainer
       qualifier="TRK"
-      tooltipProps={
-        Object {
-          "projectKey": "project",
-        }
-      }
       visibility="private"
     />
   </td>
@@ -100,7 +96,103 @@ exports[`renders 1`] = `
 </tr>
 `;
 
-exports[`renders 2`] = `
+exports[`renders: portfolio 1`] = `
+<tr
+  data-project-key="project"
+>
+  <td
+    className="thin"
+  >
+    <Checkbox
+      checked={true}
+      onCheck={[Function]}
+      thirdState={false}
+    />
+  </td>
+  <td
+    className="nowrap hide-overflow project-row-text-cell"
+  >
+    <Link
+      className="link-with-icon"
+      onlyActiveOnIndex={false}
+      style={Object {}}
+      to={
+        Object {
+          "pathname": "/portfolio",
+          "query": Object {
+            "id": "project",
+          },
+        }
+      }
+    >
+      <QualifierIcon
+        className="little-spacer-right"
+        qualifier="VW"
+      />
+      <Tooltip
+        overlay="Project"
+        placement="left"
+      >
+        <span>
+          Project
+        </span>
+      </Tooltip>
+    </Link>
+  </td>
+  <td
+    className="thin nowrap"
+  >
+    <PrivacyBadgeContainer
+      qualifier="VW"
+      visibility="private"
+    />
+  </td>
+  <td
+    className="nowrap hide-overflow project-row-text-cell"
+  >
+    <Tooltip
+      overlay="project"
+      placement="left"
+    >
+      <span
+        className="note"
+      >
+        project
+      </span>
+    </Tooltip>
+  </td>
+  <td
+    className="thin nowrap text-right"
+  >
+    <span
+      className="note"
+    >
+      —
+    </span>
+  </td>
+  <td
+    className="thin nowrap"
+  >
+    <ProjectRowActions
+      currentUser={
+        Object {
+          "login": "foo",
+        }
+      }
+      project={
+        Object {
+          "key": "project",
+          "name": "Project",
+          "qualifier": "VW",
+          "visibility": "private",
+        }
+      }
+    />
+  </td>
+</tr>
+`;
+
+exports[`renders: with lastAnalysisDate 1`] = `
 <tr
   data-project-key="project"
 >
@@ -130,6 +222,7 @@ exports[`renders 2`] = `
       }
     >
       <QualifierIcon
+        className="little-spacer-right"
         qualifier="TRK"
       />
       <Tooltip
@@ -145,13 +238,8 @@ exports[`renders 2`] = `
   <td
     className="thin nowrap"
   >
-    <Connect(PrivacyBadge)
+    <PrivacyBadgeContainer
       qualifier="TRK"
-      tooltipProps={
-        Object {
-          "projectKey": "project",
-        }
-      }
       visibility="private"
     />
   </td>

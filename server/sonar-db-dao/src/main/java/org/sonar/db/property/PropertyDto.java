@@ -29,10 +29,20 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class PropertyDto {
   private static final int MAX_KEY_LENGTH = 512;
 
+  private String uuid;
   private String key;
   private String value;
-  private Long resourceId;
-  private Integer userId;
+  private String componentUuid;
+  private String userUuid;
+
+  String getUuid() {
+    return uuid;
+  }
+
+  PropertyDto setUuid(String uuid) {
+    this.uuid = uuid;
+    return this;
+  }
 
   public String getKey() {
     return key;
@@ -54,22 +64,22 @@ public class PropertyDto {
   }
 
   @CheckForNull
-  public Long getResourceId() {
-    return resourceId;
+  public String getComponentUuid() {
+    return componentUuid;
   }
 
-  public PropertyDto setResourceId(@Nullable Long resourceId) {
-    this.resourceId = resourceId;
+  public PropertyDto setComponentUuid(@Nullable String componentUuid) {
+    this.componentUuid = componentUuid;
     return this;
   }
 
   @CheckForNull
-  public Integer getUserId() {
-    return userId;
+  public String getUserUuid() {
+    return userUuid;
   }
 
-  public PropertyDto setUserId(@Nullable Integer userId) {
-    this.userId = userId;
+  public PropertyDto setUserUuid(@Nullable String userUuid) {
+    this.userUuid = userUuid;
     return this;
   }
 
@@ -83,14 +93,14 @@ public class PropertyDto {
     }
     PropertyDto other = (PropertyDto) obj;
     return Objects.equals(this.key, other.key)
-      && Objects.equals(this.userId, other.userId)
-      && Objects.equals(this.resourceId, other.resourceId)
+      && Objects.equals(this.userUuid, other.userUuid)
+      && Objects.equals(this.componentUuid, other.componentUuid)
       && Objects.equals(this.value, other.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.key, this.value, this.resourceId, this.userId);
+    return Objects.hash(this.key, this.value, this.componentUuid, this.userUuid);
   }
 
   @Override
@@ -98,8 +108,8 @@ public class PropertyDto {
     return MoreObjects.toStringHelper(this)
       .addValue(this.key)
       .addValue(this.value)
-      .addValue(this.resourceId)
-      .addValue(this.userId)
+      .addValue(this.componentUuid)
+      .addValue(this.userUuid)
       .toString();
   }
 }

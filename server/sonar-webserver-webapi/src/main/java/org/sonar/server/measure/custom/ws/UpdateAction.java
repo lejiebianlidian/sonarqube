@@ -20,11 +20,13 @@
 package org.sonar.server.measure.custom.ws;
 
 import javax.annotation.Nullable;
+import org.sonar.api.server.ws.Change;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.System2;
 import org.sonar.api.utils.text.JsonWriter;
+import org.sonar.core.util.Uuids;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.ComponentDto;
@@ -33,8 +35,8 @@ import org.sonar.db.metric.MetricDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.user.UserSession;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.sonar.server.measure.custom.ws.CustomMeasureValidator.checkPermissions;
 import static org.sonar.server.measure.custom.ws.CustomMeasureValueDescription.measureValueDescription;
@@ -67,12 +69,14 @@ public class UpdateAction implements CustomMeasuresWsAction {
         "Requires 'Administer System' permission or 'Administer' permission on the project.")
       .setHandler(this)
       .setSince("5.2")
-      .setDeprecatedSince("7.4");
+      .setDeprecatedSince("7.4")
+      .setChangelog(
+        new Change("8.4", "Param 'id' data type changes from integer to string."));
 
     action.createParam(PARAM_ID)
       .setRequired(true)
       .setDescription("id")
-      .setExampleValue("42");
+      .setExampleValue(Uuids.UUID_EXAMPLE_01);
 
     action.createParam(PARAM_VALUE)
       .setExampleValue("true")
@@ -84,17 +88,17 @@ public class UpdateAction implements CustomMeasuresWsAction {
 
   @Override
   public void handle(Request request, Response response) throws Exception {
-    int id = request.mandatoryParamAsInt(PARAM_ID);
+    String uuid = request.mandatoryParam(PARAM_ID);
     String value = request.param(PARAM_VALUE);
     String description = request.param(PARAM_DESCRIPTION);
     checkParameters(value, description);
 
     try (DbSession dbSession = dbClient.openSession(true)) {
-      CustomMeasureDto customMeasure = dbClient.customMeasureDao().selectById(dbSession, id);
-      checkArgument(customMeasure != null, "Custom measure with id '%s' does not exist", id);
-      int customMetricId = customMeasure.getMetricId();
-      MetricDto metric = dbClient.metricDao().selectById(dbSession, customMetricId);
-      checkState(metric != null, "Metric with id '%s' does not exist", customMetricId);
+      CustomMeasureDto customMeasure = dbClient.customMeasureDao().selectByUuid(dbSession, uuid)
+        .orElseThrow(() -> new IllegalArgumentException(format("Custom measure with id '%s' does not exist", uuid)));
+      String customMetricUuid = customMeasure.getMetricUuid();
+      MetricDto metric = dbClient.metricDao().selectByUuid(dbSession, customMetricUuid);
+      checkState(metric != null, "Metric with uuid '%s' does not exist", customMetricUuid);
       ComponentDto component = dbClient.componentDao().selectOrFailByUuid(dbSession, customMeasure.getComponentUuid());
       checkPermissions(userSession, component);
       String userUuid = requireNonNull(userSession.getUuid(), "User uuid should not be null");
