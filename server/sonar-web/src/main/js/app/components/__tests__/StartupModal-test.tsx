@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -130,7 +130,6 @@ function getWrapper(props: Partial<StartupModal['props']> = {}) {
       currentUser={LOGGED_IN_USER}
       location={{ pathname: 'foo/bar' }}
       router={{ push: jest.fn() }}
-      skipOnboarding={jest.fn()}
       {...props}>
       <div />
     </StartupModal>

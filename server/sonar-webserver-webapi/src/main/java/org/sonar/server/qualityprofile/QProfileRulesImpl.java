@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ public class QProfileRulesImpl implements QProfileRules {
   public List<ActiveRuleChange> deleteRule(DbSession dbSession, RuleDefinitionDto rule) {
     List<ActiveRuleChange> changes = new ArrayList<>();
     List<String> activeRuleUuids = new ArrayList<>();
-    db.activeRuleDao().selectByRuleUuidOfAllOrganizations(dbSession, rule.getUuid()).forEach(ar -> {
+    db.activeRuleDao().selectByRuleUuid(dbSession, rule.getUuid()).forEach(ar -> {
       activeRuleUuids.add(ar.getUuid());
       changes.add(new ActiveRuleChange(ActiveRuleChange.Type.DEACTIVATED, ar, rule));
     });

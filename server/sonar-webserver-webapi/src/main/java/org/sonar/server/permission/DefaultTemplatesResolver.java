@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ package org.sonar.server.permission;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import org.sonar.db.organization.DefaultTemplates;
+import org.sonar.db.DbSession;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
@@ -39,7 +39,7 @@ public interface DefaultTemplatesResolver {
    *       when it is non {@code null}, otherwise it is {@link DefaultTemplates#projectUuid}</li>
    * </ul>
    */
-  ResolvedDefaultTemplates resolve(DefaultTemplates defaultTemplates);
+  ResolvedDefaultTemplates resolve(DbSession dbSession);
 
   @Immutable
   final class ResolvedDefaultTemplates {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ import { Link } from 'react-router';
 import Checkbox from 'sonar-ui-common/components/controls/Checkbox';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
-import DateTooltipFormatter from 'sonar-ui-common/components/intl/DateTooltipFormatter';
+import DateFormatter from 'sonar-ui-common/components/intl/DateFormatter';
 import { Project } from '../../api/components';
 import PrivacyBadgeContainer from '../../components/common/PrivacyBadgeContainer';
 import { getComponentOverviewUrl } from '../../helpers/urls';
@@ -32,7 +32,6 @@ import ProjectRowActions from './ProjectRowActions';
 interface Props {
   currentUser: Pick<T.LoggedInUser, 'login'>;
   onProjectCheck: (project: Project, checked: boolean) => void;
-  organization: string | undefined;
   project: Project;
   selected: boolean;
 }
@@ -43,7 +42,7 @@ export default class ProjectRow extends React.PureComponent<Props> {
   };
 
   render() {
-    const { organization, project, selected } = this.props;
+    const { project, selected } = this.props;
 
     return (
       <tr data-project-key={project.key}>
@@ -75,18 +74,14 @@ export default class ProjectRow extends React.PureComponent<Props> {
 
         <td className="thin nowrap text-right">
           {project.lastAnalysisDate ? (
-            <DateTooltipFormatter date={project.lastAnalysisDate} />
+            <DateFormatter date={project.lastAnalysisDate} />
           ) : (
             <span className="note">—</span>
           )}
         </td>
 
         <td className="thin nowrap">
-          <ProjectRowActions
-            currentUser={this.props.currentUser}
-            organization={organization}
-            project={project}
-          />
+          <ProjectRowActions currentUser={this.props.currentUser} project={project} />
         </td>
       </tr>
     );

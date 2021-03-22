@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,14 @@
 package org.sonar.server.platform.platformlevel;
 
 import java.util.List;
+import org.sonar.alm.client.TimeoutConfigurationImpl;
+import org.sonar.alm.client.azure.AzureDevOpsHttpClient;
+import org.sonar.alm.client.bitbucket.bitbucketcloud.BitbucketCloudRestClient;
+import org.sonar.alm.client.bitbucketserver.BitbucketServerRestClient;
+import org.sonar.alm.client.github.GithubApplicationClientImpl;
+import org.sonar.alm.client.github.GithubApplicationHttpClientImpl;
+import org.sonar.alm.client.github.security.GithubAppSecurityImpl;
+import org.sonar.alm.client.gitlab.GitlabHttpClient;
 import org.sonar.api.profiles.AnnotationProfileParser;
 import org.sonar.api.profiles.XMLProfileParser;
 import org.sonar.api.profiles.XMLProfileSerializer;
@@ -39,8 +47,14 @@ import org.sonar.core.component.DefaultResourceTypes;
 import org.sonar.core.extension.CoreExtensionsInstaller;
 import org.sonar.core.platform.ComponentContainer;
 import org.sonar.core.platform.PlatformEditionProvider;
+import org.sonar.server.almintegration.ws.AlmIntegrationsWSModule;
+import org.sonar.server.almintegration.ws.ImportHelper;
 import org.sonar.server.almsettings.MultipleAlmFeatureProvider;
+import org.sonar.server.almsettings.ws.AlmSettingsWsModule;
 import org.sonar.server.authentication.AuthenticationModule;
+import org.sonar.server.authentication.DefaultAdminCredentialsVerifierImpl;
+import org.sonar.server.authentication.DefaultAdminCredentialsVerifierNotificationHandler;
+import org.sonar.server.authentication.DefaultAdminCredentialsVerifierNotificationTemplate;
 import org.sonar.server.authentication.LogOAuthWarning;
 import org.sonar.server.authentication.ws.AuthenticationWsModule;
 import org.sonar.server.badge.ws.ProjectBadgesWsModule;
@@ -59,6 +73,7 @@ import org.sonar.server.component.index.ComponentIndexDefinition;
 import org.sonar.server.component.index.ComponentIndexer;
 import org.sonar.server.component.ws.ComponentViewerJsonWriter;
 import org.sonar.server.component.ws.ComponentsWsModule;
+import org.sonar.server.developers.ws.DevelopersWsModule;
 import org.sonar.server.duplication.ws.DuplicationsParser;
 import org.sonar.server.duplication.ws.DuplicationsWs;
 import org.sonar.server.duplication.ws.ShowResponseBuilder;
@@ -103,14 +118,11 @@ import org.sonar.server.measure.live.LiveMeasureModule;
 import org.sonar.server.measure.ws.MeasuresWsModule;
 import org.sonar.server.metric.CoreCustomMetrics;
 import org.sonar.server.metric.DefaultMetricFinder;
+import org.sonar.server.metric.UnanalyzedLanguageMetrics;
 import org.sonar.server.metric.ws.MetricsWsModule;
 import org.sonar.server.newcodeperiod.ws.NewCodePeriodsWsModule;
 import org.sonar.server.notification.NotificationModule;
 import org.sonar.server.notification.ws.NotificationWsModule;
-import org.sonar.server.organization.BillingValidationsProxyImpl;
-import org.sonar.server.organization.OrganizationUpdaterImpl;
-import org.sonar.server.organization.OrganizationValidationImpl;
-import org.sonar.server.organization.ws.OrganizationsWsModule;
 import org.sonar.server.permission.DefaultTemplatesResolverImpl;
 import org.sonar.server.permission.GroupPermissionChanger;
 import org.sonar.server.permission.PermissionTemplateService;
@@ -118,11 +130,11 @@ import org.sonar.server.permission.PermissionUpdater;
 import org.sonar.server.permission.UserPermissionChanger;
 import org.sonar.server.permission.index.PermissionIndexer;
 import org.sonar.server.permission.ws.PermissionsWsModule;
-import org.sonar.server.platform.BackendCleanup;
 import org.sonar.server.platform.ClusterVerification;
 import org.sonar.server.platform.PersistentSettings;
 import org.sonar.server.platform.SystemInfoWriterModule;
 import org.sonar.server.platform.WebCoreExtensionsInstaller;
+import org.sonar.server.platform.web.SonarLintConnectionFilter;
 import org.sonar.server.platform.web.WebServiceFilter;
 import org.sonar.server.platform.web.WebServiceReroutingFilter;
 import org.sonar.server.platform.web.requestid.HttpRequestIdModule;
@@ -198,7 +210,6 @@ import org.sonar.server.ui.PageRepository;
 import org.sonar.server.ui.WebAnalyticsLoaderImpl;
 import org.sonar.server.ui.ws.NavigationWsModule;
 import org.sonar.server.updatecenter.UpdateCenterModule;
-import org.sonar.server.updatecenter.ws.UpdateCenterWsModule;
 import org.sonar.server.user.NewUserNotifier;
 import org.sonar.server.user.SecurityRealmFactory;
 import org.sonar.server.user.UserSessionFactoryImpl;
@@ -207,7 +218,6 @@ import org.sonar.server.user.index.UserIndex;
 import org.sonar.server.user.index.UserIndexDefinition;
 import org.sonar.server.user.index.UserIndexer;
 import org.sonar.server.user.ws.UsersWsModule;
-import org.sonar.server.usergroups.DefaultGroupCreatorImpl;
 import org.sonar.server.usergroups.DefaultGroupFinder;
 import org.sonar.server.usergroups.ws.UserGroupsModule;
 import org.sonar.server.usertoken.UserTokenModule;
@@ -248,14 +258,13 @@ public class PlatformLevel4 extends PlatformLevel {
       ClusterVerification.class,
       LogServerId.class,
       LogOAuthWarning.class,
-      PluginDownloader.class,
       PluginUninstaller.class,
+      PluginDownloader.class,
       PageRepository.class,
       ResourceTypes.class,
       DefaultResourceTypes.get(),
       SettingsChangeNotifier.class,
       ServerWs.class,
-      BackendCleanup.class,
       IndexDefinitions.class,
       WebAnalyticsLoaderImpl.class,
 
@@ -264,13 +273,6 @@ public class PlatformLevel4 extends PlatformLevel {
 
       // update center
       UpdateCenterModule.class,
-      UpdateCenterWsModule.class,
-
-      // organizations
-      OrganizationValidationImpl.class,
-      OrganizationUpdaterImpl.class,
-      OrganizationsWsModule.class,
-      BillingValidationsProxyImpl.class,
 
       // quality profile
       BuiltInQProfileDefinitionsBridge.class,
@@ -329,6 +331,7 @@ public class PlatformLevel4 extends PlatformLevel {
       CustomMeasuresWsModule.class,
       CoreCustomMetrics.class,
       DefaultMetricFinder.class,
+      UnanalyzedLanguageMetrics.class,
 
       QualityGateModule.class,
       ProjectsInWarningModule.class,
@@ -337,6 +340,7 @@ public class PlatformLevel4 extends PlatformLevel {
       // web services
       WebServiceEngine.class,
       WebServicesWsModule.class,
+      SonarLintConnectionFilter.class,
       WebServiceFilter.class,
       WebServiceReroutingFilter.class,
 
@@ -351,6 +355,9 @@ public class PlatformLevel4 extends PlatformLevel {
       GitLabModule.class,
       LdapModule.class,
       SamlModule.class,
+      DefaultAdminCredentialsVerifierImpl.class,
+      DefaultAdminCredentialsVerifierNotificationTemplate.class,
+      DefaultAdminCredentialsVerifierNotificationHandler.class,
 
       // users
       UserSessionFactoryImpl.class,
@@ -366,7 +373,6 @@ public class PlatformLevel4 extends PlatformLevel {
 
       // groups
       UserGroupsModule.class,
-      DefaultGroupCreatorImpl.class,
       DefaultGroupFinder.class,
 
       // permissions
@@ -395,6 +401,8 @@ public class PlatformLevel4 extends PlatformLevel {
       ComponentIndexer.class,
       LiveMeasureModule.class,
       ComponentViewerJsonWriter.class,
+
+      DevelopersWsModule.class,
 
       FavoriteModule.class,
       FavoriteWsModule.class,
@@ -488,6 +496,21 @@ public class PlatformLevel4 extends PlatformLevel {
       UninstallAction.class,
       CancelAllAction.class,
       PluginsWs.class,
+
+      // ALM integrations
+      TimeoutConfigurationImpl.class,
+      ImportHelper.class,
+      GithubAppSecurityImpl.class,
+      GithubApplicationClientImpl.class,
+      GithubApplicationHttpClientImpl.class,
+      BitbucketServerRestClient.class,
+      BitbucketCloudRestClient.class,
+      GitlabHttpClient.class,
+      AzureDevOpsHttpClient.class,
+      AlmIntegrationsWSModule.class,
+
+      // ALM settings
+      AlmSettingsWsModule.class,
 
       // Branch
       BranchFeatureProxyImpl.class,

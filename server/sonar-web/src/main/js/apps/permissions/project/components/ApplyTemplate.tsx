@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,13 +23,14 @@ import Select from 'sonar-ui-common/components/controls/Select';
 import SimpleModal from 'sonar-ui-common/components/controls/SimpleModal';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { applyTemplateToProject, getPermissionTemplates } from '../../../../api/permissions';
 
 interface Props {
   onApply?: () => void;
   onClose: () => void;
-  organization: string | undefined;
   project: { key: string; name: string };
 }
 
@@ -54,7 +55,7 @@ export default class ApplyTemplate extends React.PureComponent<Props, State> {
   }
 
   fetchPermissionTemplates = () => {
-    getPermissionTemplates(this.props.organization).then(
+    getPermissionTemplates().then(
       ({ permissionTemplates }) => {
         if (this.mounted) {
           this.setState({ loading: false, permissionTemplates });
@@ -71,7 +72,6 @@ export default class ApplyTemplate extends React.PureComponent<Props, State> {
   handleSubmit = () => {
     if (this.state.permissionTemplate) {
       return applyTemplateToProject({
-        organization: this.props.organization,
         projectKey: this.props.project.key,
         templateId: this.state.permissionTemplate
       }).then(() => {
@@ -110,32 +110,33 @@ export default class ApplyTemplate extends React.PureComponent<Props, State> {
             </header>
 
             <div className="modal-body">
-              {this.state.done ? (
+              {this.state.done && (
                 <Alert variant="success">{translate('projects_role.apply_template.success')}</Alert>
-              ) : (
+              )}
+
+              {this.state.loading && <i className="spinner" />}
+
+              {!this.state.done && !this.state.loading && (
                 <>
-                  {this.state.loading ? (
-                    <i className="spinner" />
-                  ) : (
-                    <div className="modal-field">
-                      <label htmlFor="project-permissions-template">
-                        {translate('template')}
-                        <em className="mandatory">*</em>
-                      </label>
-                      {this.state.permissionTemplates && (
-                        <Select
-                          clearable={false}
-                          id="project-permissions-template"
-                          onChange={this.handlePermissionTemplateChange}
-                          options={this.state.permissionTemplates.map(permissionTemplate => ({
-                            label: permissionTemplate.name,
-                            value: permissionTemplate.id
-                          }))}
-                          value={this.state.permissionTemplate}
-                        />
-                      )}
-                    </div>
-                  )}
+                  <MandatoryFieldsExplanation className="modal-field" />
+                  <div className="modal-field">
+                    <label htmlFor="project-permissions-template">
+                      {translate('template')}
+                      <MandatoryFieldMarker />
+                    </label>
+                    {this.state.permissionTemplates && (
+                      <Select
+                        clearable={false}
+                        id="project-permissions-template"
+                        onChange={this.handlePermissionTemplateChange}
+                        options={this.state.permissionTemplates.map(permissionTemplate => ({
+                          label: permissionTemplate.name,
+                          value: permissionTemplate.id
+                        }))}
+                        value={this.state.permissionTemplate}
+                      />
+                    )}
+                  </div>
                 </>
               )}
             </div>

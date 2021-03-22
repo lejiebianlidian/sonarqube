@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 package org.sonar.api.config;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,6 +50,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.sonar.api.PropertyType.BOOLEAN;
 import static org.sonar.api.PropertyType.FLOAT;
 import static org.sonar.api.PropertyType.INTEGER;
+import static org.sonar.api.PropertyType.JSON;
 import static org.sonar.api.PropertyType.LONG;
 import static org.sonar.api.PropertyType.PROPERTY_SET;
 import static org.sonar.api.PropertyType.REGULAR_EXPRESSION;
@@ -510,11 +512,15 @@ public final class PropertyDefinition {
     }
 
     private static void addQualifiers(List<String> target, String first, String... rest) {
-      Stream.concat(Stream.of(first), stream(rest)).peek(PropertyDefinition.Builder::validateQualifier).forEach(target::add);
+      List<String> qualifiers = new ArrayList<>();
+      qualifiers.add(first);
+      qualifiers.addAll(Arrays.asList(rest));
+      addQualifiers(target, qualifiers);
     }
 
     private static void addQualifiers(List<String> target, List<String> qualifiers) {
-      qualifiers.stream().peek(PropertyDefinition.Builder::validateQualifier).forEach(target::add);
+      qualifiers.forEach(PropertyDefinition.Builder::validateQualifier);
+      target.addAll(qualifiers);
     }
 
     private static void validateQualifier(@Nullable String qualifier) {
@@ -594,6 +600,7 @@ public final class PropertyDefinition {
       fixType(key, type);
       checkArgument(onQualifiers.isEmpty() || onlyOnQualifiers.isEmpty(), "Cannot define both onQualifiers and onlyOnQualifiers");
       checkArgument(!hidden || (onQualifiers.isEmpty() && onlyOnQualifiers.isEmpty()), "Cannot be hidden and defining qualifiers on which to display");
+      checkArgument(!JSON.equals(type) || !multiValues, "Multivalues are not allowed to be defined for JSON-type property.");
       if (hidden) {
         global = false;
       }

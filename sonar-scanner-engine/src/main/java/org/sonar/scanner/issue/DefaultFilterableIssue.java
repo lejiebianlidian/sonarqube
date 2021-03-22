@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ public class DefaultFilterableIssue implements FilterableIssue {
 
   @Override
   public Double gap() {
-    return rawIssue.getGap() != 0 ? rawIssue.getGap() : null;
+    return Double.compare(rawIssue.getGap(), 0D) != 0 ? rawIssue.getGap() : null;
   }
 
   @Override

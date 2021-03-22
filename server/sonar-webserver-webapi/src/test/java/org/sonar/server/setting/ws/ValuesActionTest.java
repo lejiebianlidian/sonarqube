@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -41,15 +41,12 @@ import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.property.PropertyDbTester;
 import org.sonar.process.ProcessProperties;
 import org.sonar.server.component.TestComponentFinder;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ws.TestRequest;
 import org.sonar.server.ws.WsActionTester;
@@ -68,7 +65,7 @@ import static org.sonar.api.web.UserRole.CODEVIEWER;
 import static org.sonar.api.web.UserRole.USER;
 import static org.sonar.core.permission.GlobalPermissions.SCAN_EXECUTION;
 import static org.sonar.db.component.ComponentTesting.newModuleDto;
-import static org.sonar.db.permission.OrganizationPermission.SCAN;
+import static org.sonar.db.permission.GlobalPermission.SCAN;
 import static org.sonar.db.property.PropertyTesting.newComponentPropertyDto;
 import static org.sonar.db.property.PropertyTesting.newGlobalPropertyDto;
 import static org.sonar.process.ProcessProperties.Property.SONARCLOUD_ENABLED;
@@ -90,13 +87,12 @@ public class ValuesActionTest {
   private PropertyDbTester propertyDb = new PropertyDbTester(db);
   private ComponentDbTester componentDb = new ComponentDbTester(db);
   private PropertyDefinitions definitions = new PropertyDefinitions(System2.INSTANCE);
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-  private SettingsWsSupport support = new SettingsWsSupport(defaultOrganizationProvider, userSession);
+  private SettingsWsSupport support = new SettingsWsSupport(userSession);
   private ComponentDto project;
 
   @Before
   public void setUp() {
-    project = componentDb.insertComponent(ComponentTesting.newPrivateProjectDto(db.organizations().insert()));
+    project = componentDb.insertComponent(ComponentTesting.newPrivateProjectDto());
   }
 
   @Test
@@ -522,7 +518,7 @@ public class ValuesActionTest {
 
   @Test
   public void return_global_secured_settings_when_not_authenticated_but_with_scan_permission() {
-    userSession.anonymous().addPermission(SCAN, db.getDefaultOrganization());
+    userSession.anonymous().addPermission(SCAN);
     definitions.addComponents(asList(
       PropertyDefinition.builder("foo").build(),
       PropertyDefinition.builder("secret.secured").build()));
@@ -748,8 +744,7 @@ public class ValuesActionTest {
 
   @Test
   public void fail_when_using_branch_db_key() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+    ComponentDto project = db.components().insertPrivateProject();
     userSession.logIn().addProjectPermission(UserRole.USER, project);
     ComponentDto branch = db.components().insertProjectBranch(project);
 
@@ -801,15 +796,15 @@ public class ValuesActionTest {
     ValuesWsResponse response = executeRequest(tester, null, securedDef.key(), standardDef.key());
     assertThat(response.getSettingsList()).extracting(Settings.Setting::getValue).containsExactly("standardValue");
 
-    // organization administrator but not system administrator
+    // only scan global permission
     userSession.logIn()
-      .addPermission(OrganizationPermission.SCAN, db.getDefaultOrganization());
+      .addPermission(GlobalPermission.SCAN);
     response = executeRequest(tester, null, securedDef.key(), standardDef.key());
     assertThat(response.getSettingsList()).extracting(Settings.Setting::getValue).containsExactly("standardValue");
 
-    // organization administrator
+    // global administrator
     userSession.logIn()
-      .addPermission(OrganizationPermission.ADMINISTER, db.getDefaultOrganization());
+      .addPermission(GlobalPermission.ADMINISTER);
     response = executeRequest(tester, null, securedDef.key(), standardDef.key());
     assertThat(response.getSettingsList()).extracting(Settings.Setting::getValue).containsExactly("standardValue");
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,8 +50,8 @@ public class LoadQualityGateStep implements ComputationStep {
   public void execute(ComputationStep.Context context) {
     Optional<QualityGate> qualityGate = getProjectQualityGate();
     if (!qualityGate.isPresent()) {
-      // No QG defined for the project, let's retrieve the QG on the organization
-      qualityGate = Optional.of(getOrganizationDefaultQualityGate());
+      // No QG defined for the project, let's retrieve the default QG
+      qualityGate = Optional.of(getDefaultQualityGate());
     }
 
     if (analysisMetadataHolder.isPullRequest()) {
@@ -71,8 +71,8 @@ public class LoadQualityGateStep implements ComputationStep {
     return qualityGateService.findQualityGate(project);
   }
 
-  private QualityGate getOrganizationDefaultQualityGate() {
-    return qualityGateService.findDefaultQualityGate(analysisMetadataHolder.getOrganization());
+  private QualityGate getDefaultQualityGate() {
+    return qualityGateService.findDefaultQualityGate();
   }
 
   @Override

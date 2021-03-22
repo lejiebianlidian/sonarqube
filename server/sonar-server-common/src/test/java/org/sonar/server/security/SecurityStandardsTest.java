@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -65,6 +65,14 @@ public class SecurityStandardsTest {
 
     assertThat(securityStandards.getStandards()).isEmpty();
     assertThat(securityStandards.getSansTop25()).isEmpty();
+  }
+
+  @Test
+  public void fromSecurityStandards_from_empty_set_has_no_CweTop25_standard() {
+    SecurityStandards securityStandards = fromSecurityStandards(emptySet());
+
+    assertThat(securityStandards.getStandards()).isEmpty();
+    assertThat(securityStandards.getCweTop25()).isEmpty();
   }
 
   @Test

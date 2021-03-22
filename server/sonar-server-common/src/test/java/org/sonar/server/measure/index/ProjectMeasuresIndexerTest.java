@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.resources.Qualifiers;
@@ -34,7 +35,6 @@ import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.SnapshotDto;
 import org.sonar.db.es.EsQueueDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.IndexingResult;
@@ -50,6 +50,7 @@ import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termsQuery;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
+import static org.sonar.server.es.EsClient.prepareSearch;
 import static org.sonar.server.es.IndexType.FIELD_INDEX_TYPE;
 import static org.sonar.server.es.ProjectIndexer.Cause.PROJECT_CREATION;
 import static org.sonar.server.es.ProjectIndexer.Cause.PROJECT_DELETION;
@@ -96,12 +97,23 @@ public class ProjectMeasuresIndexerTest {
 
   @Test
   public void indexOnStartup_indexes_all_projects() {
-    OrganizationDto organization = db.organizations().insert();
-    SnapshotDto project1 = db.components().insertProjectAndSnapshot(newPrivateProjectDto(organization));
-    SnapshotDto project2 = db.components().insertProjectAndSnapshot(newPrivateProjectDto(organization));
-    SnapshotDto project3 = db.components().insertProjectAndSnapshot(newPrivateProjectDto(organization));
+    SnapshotDto project1 = db.components().insertProjectAndSnapshot(newPrivateProjectDto());
+    SnapshotDto project2 = db.components().insertProjectAndSnapshot(newPrivateProjectDto());
+    SnapshotDto project3 = db.components().insertProjectAndSnapshot(newPrivateProjectDto());
 
     underTest.indexOnStartup(emptySet());
+
+    assertThatIndexContainsOnly(project1, project2, project3);
+    assertThatQualifierIs("TRK", project1, project2, project3);
+  }
+
+  @Test
+  public void indexAll_indexes_all_projects() {
+    SnapshotDto project1 = db.components().insertProjectAndSnapshot(newPrivateProjectDto());
+    SnapshotDto project2 = db.components().insertProjectAndSnapshot(newPrivateProjectDto());
+    SnapshotDto project3 = db.components().insertProjectAndSnapshot(newPrivateProjectDto());
+
+    underTest.indexAll();
 
     assertThatIndexContainsOnly(project1, project2, project3);
     assertThatQualifierIs("TRK", project1, project2, project3);
@@ -131,10 +143,9 @@ public class ProjectMeasuresIndexerTest {
 
   @Test
   public void indexOnStartup_indexes_all_applications() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto application1 = db.components().insertPrivateApplication(organization);
-    ComponentDto application2 = db.components().insertPrivateApplication(organization);
-    ComponentDto application3 = db.components().insertPrivateApplication(organization);
+    ComponentDto application1 = db.components().insertPrivateApplication();
+    ComponentDto application2 = db.components().insertPrivateApplication();
+    ComponentDto application3 = db.components().insertPrivateApplication();
 
     underTest.indexOnStartup(emptySet());
 
@@ -144,15 +155,13 @@ public class ProjectMeasuresIndexerTest {
 
   @Test
   public void indexOnStartup_indexes_projects_and_applications() {
-    OrganizationDto organization = db.organizations().insert();
-
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto project2 = db.components().insertPrivateProject();
     ComponentDto project3 = db.components().insertPrivateProject();
 
-    ComponentDto application1 = db.components().insertPrivateApplication(organization);
-    ComponentDto application2 = db.components().insertPrivateApplication(organization);
-    ComponentDto application3 = db.components().insertPrivateApplication(organization);
+    ComponentDto application1 = db.components().insertPrivateApplication();
+    ComponentDto application2 = db.components().insertPrivateApplication();
+    ComponentDto application3 = db.components().insertPrivateApplication();
 
     underTest.indexOnStartup(emptySet());
 
@@ -229,7 +238,7 @@ public class ProjectMeasuresIndexerTest {
     db.getDbClient().purgeDao().deleteProject(db.getSession(), project.uuid());
     IndexingResult result = indexProject(project, PROJECT_DELETION);
 
-    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isZero();
     assertThat(result.getTotal()).isEqualTo(1L);
     assertThat(result.getSuccess()).isEqualTo(1L);
   }
@@ -242,7 +251,7 @@ public class ProjectMeasuresIndexerTest {
 
     underTest.index(db.getSession(), emptyList());
 
-    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isZero();
   }
 
   @Test
@@ -258,7 +267,7 @@ public class ProjectMeasuresIndexerTest {
     result = recover();
     assertThat(result.getTotal()).isEqualTo(1L);
     assertThat(result.getFailures()).isEqualTo(1L);
-    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isZero();
     assertThatEsQueueTableHasSize(1);
 
     es.unlockWrites(TYPE_PROJECT_MEASURES);
@@ -277,7 +286,7 @@ public class ProjectMeasuresIndexerTest {
 
     underTest.indexOnAnalysis(branch.uuid());
 
-    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_PROJECT_MEASURES)).isZero();
   }
 
   private IndexingResult indexProject(ComponentDto project, ProjectIndexer.Cause cause) {
@@ -288,12 +297,13 @@ public class ProjectMeasuresIndexerTest {
   }
 
   private void assertThatProjectHasTag(ComponentDto project, String expectedTag) {
-    SearchRequestBuilder request = es.client()
-      .prepareSearch(TYPE_PROJECT_MEASURES.getMainType())
-      .setQuery(boolQuery()
-        .filter(termQuery(FIELD_INDEX_TYPE, TYPE_PROJECT_MEASURES.getName()))
-        .filter(termQuery(FIELD_TAGS, expectedTag)));
-    assertThat(request.get().getHits().getHits())
+    SearchRequest request = prepareSearch(TYPE_PROJECT_MEASURES.getMainType())
+      .source(new SearchSourceBuilder()
+        .query(boolQuery()
+          .filter(termQuery(FIELD_INDEX_TYPE, TYPE_PROJECT_MEASURES.getName()))
+          .filter(termQuery(FIELD_TAGS, expectedTag))));
+
+    assertThat(es.client().search(request).getHits().getHits())
       .extracting(SearchHit::getId)
       .contains(project.uuid());
   }
@@ -323,13 +333,15 @@ public class ProjectMeasuresIndexerTest {
   }
 
   private void assertThatQualifierIs(String qualifier, String... componentsUuid) {
-    SearchRequestBuilder request = es.client()
-      .prepareSearch(TYPE_PROJECT_MEASURES.getMainType())
-      .setQuery(boolQuery()
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+      .query(boolQuery()
         .filter(termQuery(FIELD_INDEX_TYPE, TYPE_PROJECT_MEASURES.getName()))
         .filter(termQuery(FIELD_QUALIFIER, qualifier))
         .filter(termsQuery(FIELD_UUID, componentsUuid)));
-    assertThat(request.get().getHits().getHits())
+
+    SearchRequest request = prepareSearch(TYPE_PROJECT_MEASURES.getMainType())
+      .source(searchSourceBuilder);
+    assertThat(es.client().search(request).getHits().getHits())
       .extracting(SearchHit::getId)
       .containsExactlyInAnyOrder(componentsUuid);
   }

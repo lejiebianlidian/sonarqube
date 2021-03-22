@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ it('should render multiple instances correctly', () => {
       url: urls[0]
     },
     {
-      alm: AlmKeys.Bitbucket,
+      alm: AlmKeys.BitbucketServer,
       key: 'i3',
       url: urls[1]
     },
@@ -129,20 +129,6 @@ it('should render select options correctly', async () => {
   expect(optionRenderer!(instances[1])).toMatchSnapshot();
 });
 
-it('should render optional fields correctly', () => {
-  expect(
-    shallowRender({
-      formData: {
-        key: 'key'
-      },
-      isChanged: true,
-      isConfigured: false,
-      instances: [{ key: 'key', url: 'http://example.com', alm: AlmKeys.GitLab }],
-      loading: false
-    })
-  ).toMatchSnapshot();
-});
-
 function shallowRender(props: Partial<PRDecorationBindingRendererProps> = {}) {
   return shallow(
     <PRDecorationBindingRenderer
@@ -160,6 +146,7 @@ function shallowRender(props: Partial<PRDecorationBindingRendererProps> = {}) {
       onSubmit={jest.fn()}
       saving={false}
       success={false}
+      monorepoEnabled={false}
       {...props}
     />
   );

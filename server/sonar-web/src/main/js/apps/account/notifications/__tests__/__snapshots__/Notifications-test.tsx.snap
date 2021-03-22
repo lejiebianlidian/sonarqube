@@ -16,7 +16,6 @@ exports[`should render correctly 1`] = `
   </Alert>
   <DeferredSpinner
     loading={true}
-    timeout={100}
   >
     <GlobalNotifications
       addNotification={[MockFunction]}
@@ -47,21 +46,18 @@ exports[`should render correctly 1`] = `
         Array [
           Object {
             "channel": "channel1",
-            "organization": "org",
             "project": "foo",
             "projectName": "Foo",
             "type": "type-global",
           },
           Object {
             "channel": "channel1",
-            "organization": "org",
             "project": "bar",
             "projectName": "Bar",
             "type": "type-common",
           },
           Object {
             "channel": "channel2",
-            "organization": "org",
             "project": "qux",
             "projectName": "Qux",
             "type": "type-common",
@@ -95,7 +91,6 @@ exports[`should render correctly 2`] = `
   </Alert>
   <DeferredSpinner
     loading={false}
-    timeout={100}
   >
     <GlobalNotifications
       addNotification={[MockFunction]}
@@ -126,21 +121,18 @@ exports[`should render correctly 2`] = `
         Array [
           Object {
             "channel": "channel1",
-            "organization": "org",
             "project": "foo",
             "projectName": "Foo",
             "type": "type-global",
           },
           Object {
             "channel": "channel1",
-            "organization": "org",
             "project": "bar",
             "projectName": "Bar",
             "type": "type-common",
           },
           Object {
             "channel": "channel2",
-            "organization": "org",
             "project": "qux",
             "projectName": "Qux",
             "type": "type-common",
@@ -174,7 +166,6 @@ exports[`should render correctly 3`] = `
   </Alert>
   <DeferredSpinner
     loading={false}
-    timeout={100}
   >
     <GlobalNotifications
       addNotification={[MockFunction]}

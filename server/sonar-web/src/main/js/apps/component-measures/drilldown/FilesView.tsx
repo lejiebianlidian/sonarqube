@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ export default class FilesView extends React.PureComponent<Props, State> {
     const { metric } = this.props;
     const focusedMeasure = component.measures.find(measure => measure.metric.key === metric.key);
     if (focusedMeasure && isDiffMetric(metric.key)) {
-      return isPeriodBestValue(focusedMeasure, 1);
+      return isPeriodBestValue(focusedMeasure);
     }
     return Boolean(focusedMeasure && focusedMeasure.bestValue);
   };

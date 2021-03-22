@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ public class SearchActionTest {
   public void search_for_all_users() {
     UserDto user1 = db.users().insertUser();
     UserDto user2 = db.users().insertUser();
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn();
 
     SearchWsResponse response = ws.newRequest()
@@ -87,29 +87,29 @@ public class SearchActionTest {
       .setEmail("user@mail.com")
       .setLocal(true)
       .setScmAccounts(singletonList("user1")));
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     assertThat(ws.newRequest()
       .setParam("q", "user-%_%-")
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin)
-        .containsExactlyInAnyOrder(user.getLogin());
+      .extracting(User::getLogin)
+      .containsExactlyInAnyOrder(user.getLogin());
     assertThat(ws.newRequest()
       .setParam("q", "user@MAIL.com")
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin)
-        .containsExactlyInAnyOrder(user.getLogin());
+      .extracting(User::getLogin)
+      .containsExactlyInAnyOrder(user.getLogin());
     assertThat(ws.newRequest()
       .setParam("q", "user-name")
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin)
-        .containsExactlyInAnyOrder(user.getLogin());
+      .extracting(User::getLogin)
+      .containsExactlyInAnyOrder(user.getLogin());
   }
 
   @Test
   public void return_avatar() {
     UserDto user = db.users().insertUser(u -> u.setEmail("john@doe.com"));
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn();
 
     SearchWsResponse response = ws.newRequest()
@@ -123,7 +123,7 @@ public class SearchActionTest {
   @Test
   public void return_scm_accounts() {
     UserDto user = db.users().insertUser(u -> u.setScmAccounts(asList("john1", "john2")));
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn();
 
     SearchWsResponse response = ws.newRequest()
@@ -139,43 +139,43 @@ public class SearchActionTest {
     UserDto user = db.users().insertUser();
     db.users().insertToken(user);
     db.users().insertToken(user);
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     userSession.logIn().setSystemAdministrator();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::getTokensCount)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), 2));
+      .extracting(User::getLogin, User::getTokensCount)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), 2));
 
     userSession.logIn();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::hasTokensCount)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
+      .extracting(User::getLogin, User::hasTokensCount)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
   }
 
   @Test
   public void return_email_only_when_system_administer() {
     UserDto user = db.users().insertUser();
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     userSession.logIn().setSystemAdministrator();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::getEmail)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), user.getEmail()));
+      .extracting(User::getLogin, User::getEmail)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), user.getEmail()));
 
     userSession.logIn();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::hasEmail)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
+      .extracting(User::getLogin, User::hasEmail)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
   }
 
   @Test
   public void return_user_not_having_email() {
     UserDto user = db.users().insertUser(u -> u.setEmail(null));
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn().setSystemAdministrator();
 
     SearchWsResponse response = ws.newRequest()
@@ -189,30 +189,30 @@ public class SearchActionTest {
   @Test
   public void return_groups_only_when_system_administer() {
     UserDto user = db.users().insertUser();
-    GroupDto group1 = db.users().insertGroup(db.getDefaultOrganization(), "group1");
-    GroupDto group2 = db.users().insertGroup(db.getDefaultOrganization(), "group2");
-    GroupDto group3 = db.users().insertGroup(db.getDefaultOrganization(), "group3");
+    GroupDto group1 = db.users().insertGroup("group1");
+    GroupDto group2 = db.users().insertGroup("group2");
+    GroupDto group3 = db.users().insertGroup("group3");
     db.users().insertMember(group1, user);
     db.users().insertMember(group2, user);
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     userSession.logIn().setSystemAdministrator();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, u -> u.getGroups().getGroupsList())
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), asList(group1.getName(), group2.getName())));
+      .extracting(User::getLogin, u -> u.getGroups().getGroupsList())
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), asList(group1.getName(), group2.getName())));
 
     userSession.logIn();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::hasGroups)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
+      .extracting(User::getLogin, User::hasGroups)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
   }
 
   @Test
   public void return_external_information() {
     UserDto user = db.users().insertUser();
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn().setSystemAdministrator();
 
     SearchWsResponse response = ws.newRequest()
@@ -226,28 +226,28 @@ public class SearchActionTest {
   @Test
   public void return_external_identity_only_when_system_administer() {
     UserDto user = db.users().insertUser();
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     userSession.logIn().setSystemAdministrator();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::getExternalIdentity)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), user.getExternalLogin()));
+      .extracting(User::getLogin, User::getExternalIdentity)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), user.getExternalLogin()));
 
     userSession.logIn();
     assertThat(ws.newRequest()
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::hasExternalIdentity)
-        .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
+      .extracting(User::getLogin, User::hasExternalIdentity)
+      .containsExactlyInAnyOrder(tuple(user.getLogin(), false));
   }
 
   @Test
   public void only_return_login_and_name_when_not_logged() {
     UserDto user = db.users().insertUser();
     db.users().insertToken(user);
-    GroupDto group = db.users().insertGroup(db.getDefaultOrganization());
+    GroupDto group = db.users().insertGroup();
     db.users().insertMember(group, user);
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.anonymous();
 
     SearchWsResponse response = ws.newRequest()
@@ -263,7 +263,7 @@ public class SearchActionTest {
     UserDto userWithLastConnectionDate = db.users().insertUser();
     db.users().updateLastConnectionDate(userWithLastConnectionDate, 10_000_000_000L);
     UserDto userWithoutLastConnectionDate = db.users().insertUser();
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn().setSystemAdministrator();
 
     SearchWsResponse response = ws.newRequest()
@@ -285,30 +285,30 @@ public class SearchActionTest {
     GroupDto group = db.users().insertGroup();
     db.users().insertMember(group, user);
     UserDto otherUser = db.users().insertUser();
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     userSession.logIn(user);
     assertThat(ws.newRequest().setParam("q", user.getLogin())
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::getName, User::getEmail, User::getExternalIdentity, User::getExternalProvider,
-          User::hasScmAccounts, User::hasAvatar, User::hasGroups, User::getTokensCount, User::hasLastConnectionDate)
-        .containsExactlyInAnyOrder(
-          tuple(user.getLogin(), user.getName(), user.getEmail(), user.getExternalLogin(), user.getExternalIdentityProvider(), true, true, true, 2, true));
+      .extracting(User::getLogin, User::getName, User::getEmail, User::getExternalIdentity, User::getExternalProvider,
+        User::hasScmAccounts, User::hasAvatar, User::hasGroups, User::getTokensCount, User::hasLastConnectionDate)
+      .containsExactlyInAnyOrder(
+        tuple(user.getLogin(), user.getName(), user.getEmail(), user.getExternalLogin(), user.getExternalIdentityProvider(), true, true, true, 2, true));
 
     userSession.logIn(otherUser);
     assertThat(ws.newRequest().setParam("q", user.getLogin())
       .executeProtobuf(SearchWsResponse.class).getUsersList())
-        .extracting(User::getLogin, User::getName, User::hasEmail, User::hasExternalIdentity, User::hasExternalProvider,
-          User::hasScmAccounts, User::hasAvatar, User::hasGroups, User::hasTokensCount, User::hasLastConnectionDate)
-        .containsExactlyInAnyOrder(
-          tuple(user.getLogin(), user.getName(), false, false, true, true, true, false, false, false));
+      .extracting(User::getLogin, User::getName, User::hasEmail, User::hasExternalIdentity, User::hasExternalProvider,
+        User::hasScmAccounts, User::hasAvatar, User::hasGroups, User::hasTokensCount, User::hasLastConnectionDate)
+      .containsExactlyInAnyOrder(
+        tuple(user.getLogin(), user.getName(), false, false, true, true, true, false, false, false));
   }
 
   @Test
   public void search_with_paging() {
     userSession.logIn();
     IntStream.rangeClosed(0, 9).forEach(i -> db.users().insertUser(u -> u.setLogin("user-" + i).setName("User " + i)));
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
 
     SearchWsResponse response = ws.newRequest()
       .setParam(Param.PAGE_SIZE, "5")
@@ -355,8 +355,8 @@ public class SearchActionTest {
       .setExternalLogin("sbrandhof@ldap.com")
       .setExternalIdentityProvider("LDAP")
       .setScmAccounts(asList("simon.brandhof", "s.brandhof@company.tld")));
-    GroupDto sonarUsers = db.users().insertGroup(db.getDefaultOrganization(), "sonar-users");
-    GroupDto sonarAdministrators = db.users().insertGroup(db.getDefaultOrganization(), "sonar-administrators");
+    GroupDto sonarUsers = db.users().insertGroup("sonar-users");
+    GroupDto sonarAdministrators = db.users().insertGroup("sonar-administrators");
     db.users().insertMember(sonarUsers, simon);
     db.users().insertMember(sonarUsers, fmallet);
     db.users().insertMember(sonarAdministrators, fmallet);
@@ -364,7 +364,7 @@ public class SearchActionTest {
     db.users().insertToken(simon);
     db.users().insertToken(simon);
     db.users().insertToken(fmallet);
-    userIndexer.indexOnStartup(null);
+    userIndexer.indexAll();
     userSession.logIn().setSystemAdministrator();
 
     String response = ws.newRequest().execute().getInput();

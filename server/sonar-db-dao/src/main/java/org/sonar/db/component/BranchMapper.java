@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ public interface BranchMapper {
   int updateExcludeFromPurge(@Param("uuid") String uuid, @Param("excludeFromPurge") boolean excludeFromPurge,
     @Param("now") long now);
 
-  BranchDto selectByKey(@Param("projectUuid") String projectUuid, @Param("key") String key, @Param("keyType") KeyType keyType);
+  BranchDto selectByKey(@Param("projectUuid") String projectUuid, @Param("key") String key, @Param("branchType") BranchType branchType);
 
   BranchDto selectByUuid(@Param("uuid") String uuid);
 
@@ -68,4 +68,5 @@ public interface BranchMapper {
 
   short doAnyOfComponentsNeedIssueSync(@Param("componentKeys") List<String> components);
 
+  void deleteBranch(@Param("projectUuid") String projectUuid, @Param("branchKey") String branchKey);
 }

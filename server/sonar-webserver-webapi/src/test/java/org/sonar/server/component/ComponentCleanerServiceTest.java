@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ package org.sonar.server.component;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.sonar.api.resources.ResourceType;
 import org.sonar.api.resources.ResourceTypes;
 import org.sonar.api.utils.System2;
@@ -33,7 +32,6 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.component.SnapshotDto;
 import org.sonar.db.issue.IssueDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.webhook.WebhookDto;
@@ -41,6 +39,7 @@ import org.sonar.server.es.TestProjectIndexers;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,24 +48,21 @@ import static org.sonar.server.es.ProjectIndexer.Cause.PROJECT_DELETION;
 
 public class ComponentCleanerServiceTest {
 
-  private System2 system2 = System2.INSTANCE;
+  private final System2 system2 = System2.INSTANCE;
 
   @Rule
-  public DbTester db = DbTester.create(system2);
+  public final DbTester db = DbTester.create(system2);
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  private DbClient dbClient = db.getDbClient();
-  private DbSession dbSession = db.getSession();
-  private TestProjectIndexers projectIndexers = new TestProjectIndexers();
-  private ResourceTypes mockResourceTypes = mock(ResourceTypes.class);
-  private ComponentCleanerService underTest = new ComponentCleanerService(dbClient, mockResourceTypes, projectIndexers);
+  private final DbClient dbClient = db.getDbClient();
+  private final DbSession dbSession = db.getSession();
+  private final TestProjectIndexers projectIndexers = new TestProjectIndexers();
+  private final ResourceTypes mockResourceTypes = mock(ResourceTypes.class);
+  private final ComponentCleanerService underTest = new ComponentCleanerService(dbClient, mockResourceTypes, projectIndexers);
 
   @Test
   public void delete_project_from_db_and_index() {
-    DbData data1 = insertData();
-    DbData data2 = insertData();
+    DbData data1 = insertProjectData();
+    DbData data2 = insertProjectData();
 
     underTest.delete(dbSession, data1.project);
 
@@ -76,9 +72,9 @@ public class ComponentCleanerServiceTest {
 
   @Test
   public void delete_list_of_projects_from_db_and_index() {
-    DbData data1 = insertData();
-    DbData data2 = insertData();
-    DbData data3 = insertData();
+    DbData data1 = insertProjectData();
+    DbData data2 = insertProjectData();
+    DbData data3 = insertProjectData();
 
     underTest.delete(dbSession, asList(data1.project, data2.project));
     dbSession.commit();
@@ -89,10 +85,34 @@ public class ComponentCleanerServiceTest {
   }
 
   @Test
+  public void delete_application_from_db_and_index() {
+    DbData data1 = insertProjectData();
+    DbData data2 = insertProjectData();
+    DbData data3 = insertProjectData();
+    ProjectDto app1 = insertApplication(data2.project);
+    ProjectDto app2 = insertApplication(data3.project);
+
+    underTest.deleteApplication(dbSession, app1);
+    dbSession.commit();
+
+    assertProjectOrAppExists(app1, false);
+    assertProjectOrAppExists(app2, true);
+    assertExists(data1);
+    assertExists(data2);
+    assertExists(data3);
+  }
+
+  private ProjectDto insertApplication(ProjectDto project) {
+    ProjectDto app = db.components().insertPublicApplicationDto();
+    db.components().addApplicationProject(app, project);
+    return app;
+  }
+
+  @Test
   public void delete_branch() {
-    DbData data1 = insertData();
-    DbData data2 = insertData();
-    DbData data3 = insertData();
+    DbData data1 = insertProjectData();
+    DbData data2 = insertProjectData();
+    DbData data3 = insertProjectData();
 
     underTest.deleteBranch(dbSession, data1.branch);
     dbSession.commit();
@@ -104,14 +124,13 @@ public class ComponentCleanerServiceTest {
 
   @Test
   public void delete_webhooks_from_projects() {
-    OrganizationDto organization = db.organizations().insert();
-    ProjectDto project1 = db.components().insertPrivateProjectDto(organization);
+    ProjectDto project1 = db.components().insertPrivateProjectDto();
     WebhookDto webhook1 = db.webhooks().insertWebhook(project1);
     db.webhookDelivery().insert(webhook1);
-    ProjectDto project2 = db.components().insertPrivateProjectDto(organization);
+    ProjectDto project2 = db.components().insertPrivateProjectDto();
     WebhookDto webhook2 = db.webhooks().insertWebhook(project2);
     db.webhookDelivery().insert(webhook2);
-    ProjectDto projectNotToBeDeleted = db.components().insertPrivateProjectDto(organization);
+    ProjectDto projectNotToBeDeleted = db.components().insertPrivateProjectDto();
     WebhookDto webhook3 = db.webhooks().insertWebhook(projectNotToBeDeleted);
     db.webhookDelivery().insert(webhook3);
 
@@ -129,25 +148,24 @@ public class ComponentCleanerServiceTest {
   @Test
   public void fail_with_IAE_if_not_a_project() {
     mockResourceTypeAsValidProject();
-    ComponentDto project = ComponentTesting.newPrivateProjectDto(db.organizations().insert());
-    dbClient.componentDao().insert(dbSession, project);
+    ComponentDto project = ComponentTesting.newPrivateProjectDto();
+    db.components().insertComponent(project);
     ComponentDto file = newFileDto(project, null);
     dbClient.componentDao().insert(dbSession, file);
     dbSession.commit();
 
-    expectedException.expect(IllegalArgumentException.class);
-    underTest.delete(dbSession, file);
+    assertThatThrownBy(() -> underTest.delete(dbSession, file))
+      .isInstanceOf(IllegalArgumentException.class);
   }
 
-  private DbData insertData() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto componentDto = db.components().insertPublicProject(organization);
+  private DbData insertProjectData() {
+    ComponentDto componentDto = db.components().insertPublicProject();
     ProjectDto project = dbClient.projectDao().selectByUuid(dbSession, componentDto.uuid()).get();
     BranchDto branch = dbClient.branchDao().selectByUuid(dbSession, project.getUuid()).get();
-    ComponentDto component = dbClient.componentDao().selectByKey(dbSession, project.getKey()).get();
+
     RuleDefinitionDto rule = db.rules().insert();
-    IssueDto issue = db.issues().insert(rule, project, component);
-    SnapshotDto analysis = db.components().insertSnapshot(component);
+    IssueDto issue = db.issues().insert(rule, project, componentDto);
+    SnapshotDto analysis = db.components().insertSnapshot(componentDto);
     mockResourceTypeAsValidProject();
     return new DbData(project, branch, analysis, issue);
   }
@@ -169,10 +187,15 @@ public class ComponentCleanerServiceTest {
   }
 
   private void assertDataInDb(DbData data, boolean exists) {
-    assertThat(dbClient.componentDao().selectByUuid(dbSession, data.project.getUuid()).isPresent()).isEqualTo(exists);
-    assertThat(dbClient.branchDao().selectByUuid(dbSession, data.branch.getUuid()).isPresent()).isEqualTo(exists);
+    assertProjectOrAppExists(data.project, exists);
     assertThat(dbClient.snapshotDao().selectByUuid(dbSession, data.snapshot.getUuid()).isPresent()).isEqualTo(exists);
     assertThat(dbClient.issueDao().selectByKey(dbSession, data.issue.getKey()).isPresent()).isEqualTo(exists);
+  }
+
+  private void assertProjectOrAppExists(ProjectDto appOrProject, boolean exists) {
+    assertThat(dbClient.projectDao().selectByUuid(dbSession, appOrProject.getUuid()).isPresent()).isEqualTo(exists);
+    assertThat(dbClient.componentDao().selectByUuid(dbSession, appOrProject.getUuid()).isPresent()).isEqualTo(exists);
+    assertThat(dbClient.branchDao().selectByUuid(dbSession, appOrProject.getUuid()).isPresent()).isEqualTo(exists);
   }
 
   private static class DbData {

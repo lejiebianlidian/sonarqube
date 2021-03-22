@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +22,12 @@ package org.sonar.core.permission;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import org.sonar.db.permission.GlobalPermission;
 
 /**
  * Holds the constants representing the various global permissions that can be assigned to users & groups
  *
- * @deprecated replaced by enum {@link org.sonar.db.permission.OrganizationPermission}
+ * @deprecated replaced by enum {@link GlobalPermission}
  */
 @Deprecated
 public final class GlobalPermissions {

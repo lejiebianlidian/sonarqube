@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.SnapshotDto;
 import org.sonar.db.measure.LiveMeasureDto;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.server.component.TestComponentFinder;
 import org.sonar.server.exceptions.BadRequestException;
 import org.sonar.server.exceptions.ForbiddenException;
@@ -69,7 +68,7 @@ public class ComponentActionTest {
   @Rule
   public DbTester db = DbTester.create(System2.INSTANCE);
 
-  private WsActionTester ws = new WsActionTester(new ComponentAction(db.getDbClient(), TestComponentFinder.from(db), userSession));
+  private final WsActionTester ws = new WsActionTester(new ComponentAction(db.getDbClient(), TestComponentFinder.from(db), userSession));
 
   @Test
   public void definition() {
@@ -84,7 +83,7 @@ public class ComponentActionTest {
 
     WebService.Param branch = def.param("branch");
     assertThat(branch.since()).isEqualTo("6.6");
-    assertThat(branch.isInternal()).isTrue();
+    assertThat(branch.isInternal()).isFalse();
     assertThat(branch.isRequired()).isFalse();
   }
 
@@ -98,7 +97,7 @@ public class ComponentActionTest {
 
     assertThat(response.getMetrics().getMetricsCount()).isEqualTo(1);
     assertThat(response.hasPeriod()).isFalse();
-    assertThat(response.getPeriods().getPeriodsCount()).isEqualTo(0);
+    assertThat(response.getPeriods().getPeriodsCount()).isZero();
     assertThat(response.getComponent().getKey()).isEqualTo(project.getDbKey());
   }
 
@@ -226,30 +225,17 @@ public class ComponentActionTest {
   }
 
   @Test
-  public void reference_uuid_in_the_response() {
+  public void reference_key_in_the_response() {
     userSession.logIn().setRoot();
     ComponentDto project = db.components().insertPrivateProject();
-    ComponentDto view = db.components().insertView();
+    ComponentDto view = db.components().insertPrivatePortfolio();
     db.components().insertSnapshot(view);
     ComponentDto projectCopy = db.components().insertComponent(newProjectCopy("project-uuid-copy", project, view));
     MetricDto metric = db.measures().insertMetric(m -> m.setValueType("INT"));
 
     ComponentWsResponse response = newRequest(projectCopy.getKey(), metric.getKey());
 
-    assertThat(response.getComponent().getRefId()).isEqualTo(project.uuid());
     assertThat(response.getComponent().getRefKey()).isEqualTo(project.getKey());
-  }
-
-  @Test
-  public void return_deprecated_id_in_the_response() {
-    ComponentDto project = db.components().insertPrivateProject();
-    userSession.addProjectPermission(UserRole.USER, project);
-    db.components().insertSnapshot(project);
-    MetricDto metric = db.measures().insertMetric(m -> m.setValueType("INT"));
-
-    ComponentWsResponse response = newRequest(project.getKey(), metric.getKey());
-
-    assertThat(response.getComponent().getId()).isEqualTo(project.uuid());
   }
 
   @Test
@@ -396,8 +382,7 @@ public class ComponentActionTest {
 
   @Test
   public void fail_when_using_branch_db_key() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+    ComponentDto project = db.components().insertPrivateProject();
     userSession.logIn().addProjectPermission(UserRole.USER, project);
     ComponentDto branch = db.components().insertProjectBranch(project);
     MetricDto metric = db.measures().insertMetric(m -> m.setValueType("INT"));

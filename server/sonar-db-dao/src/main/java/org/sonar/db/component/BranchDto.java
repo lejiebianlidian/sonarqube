@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,12 +59,6 @@ public class BranchDto {
    * For keyType=PULL_REQUEST, this is the ID of the pull request in some external system, for example 123 in GitHub.
    */
   private String kee;
-
-  /**
-   * Key type, as provided by {@link KeyType}.
-   * Not null.
-   */
-  private KeyType keyType;
 
   /**
    * Branch type, as provided by {@link BranchType}.
@@ -135,11 +129,6 @@ public class BranchDto {
   public BranchDto setKey(String s) {
     checkArgument(s.length() <= KEE_MAX_LENGTH, "Maximum length of branch name or pull request id is %s: %s", KEE_MAX_LENGTH, s);
     setKee(s);
-    return this;
-  }
-
-  BranchDto setKeyType(KeyType keyType) {
-    this.keyType = keyType;
     return this;
   }
 
@@ -239,7 +228,6 @@ public class BranchDto {
       "uuid='" + uuid + '\'' +
       ", projectUuid='" + projectUuid + '\'' +
       ", kee='" + kee + '\'' +
-      ", keyType=" + keyType +
       ", branchType=" + branchType +
       ", mergeBranchUuid='" + mergeBranchUuid + '\'' +
       ", excludeFromPurge=" + excludeFromPurge +

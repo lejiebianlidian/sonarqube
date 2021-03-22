@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,17 +17,26 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockProjectBitbucketBindingGet } from '../../../../helpers/mocks/alm-settings';
+import {
+  mockProjectBitbucketBindingResponse,
+  mockProjectGithubBindingResponse,
+  mockProjectGitLabBindingResponse
+} from '../../../../helpers/mocks/alm-settings';
 import MultiBranchPipelineStep, { MultiBranchPipelineStepProps } from '../MultiBranchPipelineStep';
 import { renderStepContent } from '../test-utils';
 
 it('should render correctly', () => {
   const wrapper = shallowRender();
   expect(wrapper).toMatchSnapshot('Step wrapper');
-  expect(renderStepContent(wrapper)).toMatchSnapshot('content');
+  expect(renderStepContent(wrapper)).toMatchSnapshot('content for bitbucket');
+  expect(
+    renderStepContent(shallowRender({ projectBinding: mockProjectGithubBindingResponse() }))
+  ).toMatchSnapshot('content for github');
+  expect(
+    renderStepContent(shallowRender({ projectBinding: mockProjectGitLabBindingResponse() }))
+  ).toMatchSnapshot('content for gitlab');
 });
 
 function shallowRender(props: Partial<MultiBranchPipelineStepProps> = {}) {
@@ -37,7 +46,7 @@ function shallowRender(props: Partial<MultiBranchPipelineStepProps> = {}) {
       onDone={jest.fn()}
       onOpen={jest.fn()}
       open={true}
-      projectBinding={mockProjectBitbucketBindingGet()}
+      projectBinding={mockProjectBitbucketBindingResponse()}
       {...props}
     />
   );

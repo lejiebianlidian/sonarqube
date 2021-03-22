@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@ package org.sonar.server.component.index;
 import java.util.Arrays;
 import java.util.Collection;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.utils.System2;
@@ -31,7 +32,7 @@ import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentUpdateDto;
 import org.sonar.db.es.EsQueueDto;
-import org.sonar.db.organization.OrganizationDto;
+import org.sonar.server.es.EsClient;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.IndexingResult;
 import org.sonar.server.es.ProjectIndexer;
@@ -82,9 +83,18 @@ public class ComponentIndexerTest {
   }
 
   @Test
+  public void indexOAll_indexes_all_components() {
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+
+    underTest.indexAll();
+
+    assertThatIndexContainsOnly(project1, project2);
+  }
+
+  @Test
   public void map_fields() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+    ComponentDto project = db.components().insertPrivateProject();
 
     underTest.indexOnStartup(emptySet());
 
@@ -94,7 +104,6 @@ public class ComponentIndexerTest {
     assertThat(doc.getKey()).isEqualTo(project.getDbKey());
     assertThat(doc.getProjectUuid()).isEqualTo(project.projectUuid());
     assertThat(doc.getName()).isEqualTo(project.name());
-    assertThat(doc.getOrganization()).isEqualTo(project.getOrganizationUuid());
   }
 
   @Test
@@ -216,7 +225,7 @@ public class ComponentIndexerTest {
     result = recover();
     assertThat(result.getTotal()).isEqualTo(1L);
     assertThat(result.getFailures()).isEqualTo(1L);
-    assertThat(es.countDocuments(TYPE_COMPONENT)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_COMPONENT)).isZero();
 
     es.unlockWrites(TYPE_COMPONENT);
 
@@ -257,9 +266,9 @@ public class ComponentIndexerTest {
 
   private void assertThatComponentHasName(ComponentDto component, String expectedName) {
     SearchHit[] hits = es.client()
-      .prepareSearch(TYPE_COMPONENT.getMainType())
-      .setQuery(matchQuery(SORTABLE_ANALYZER.subField(FIELD_NAME), expectedName))
-      .get()
+      .search(EsClient.prepareSearch(TYPE_COMPONENT.getMainType())
+        .source(new SearchSourceBuilder()
+          .query(matchQuery(SORTABLE_ANALYZER.subField(FIELD_NAME), expectedName))))
       .getHits()
       .getHits();
     assertThat(hits)

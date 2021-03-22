@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,13 +38,13 @@ public class PagingTest {
     assertThat(paging.pageIndex()).isEqualTo(1);
     assertThat(paging.total()).isEqualTo(20);
 
-    assertThat(paging.offset()).isEqualTo(0);
+    assertThat(paging.offset()).isZero();
     assertThat(paging.pages()).isEqualTo(4);
   }
 
   @Test
   public void test_offset() {
-    assertThat(forPageIndex(1).withPageSize(5).andTotal(20).offset()).isEqualTo(0);
+    assertThat(forPageIndex(1).withPageSize(5).andTotal(20).offset()).isZero();
     assertThat(forPageIndex(2).withPageSize(5).andTotal(20).offset()).isEqualTo(5);
   }
 

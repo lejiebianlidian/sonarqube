@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@ import * as React from 'react';
 import { ButtonLink } from 'sonar-ui-common/components/controls/buttons';
 import Toggler from 'sonar-ui-common/components/controls/Toggler';
 import DropdownIcon from 'sonar-ui-common/components/icons/DropdownIcon';
-import { IssueResponse, setIssueSeverity } from '../../../api/issues';
+import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
+import { setIssueSeverity } from '../../../api/issues';
+import { IssueResponse } from '../../../types/issues';
 import SeverityHelper from '../../shared/SeverityHelper';
 import SetSeverityPopup from '../popups/SetSeverityPopup';
 
@@ -61,6 +63,11 @@ export default class IssueSeverity extends React.PureComponent<Props> {
             open={this.props.isOpen && this.props.canSetSeverity}
             overlay={<SetSeverityPopup issue={issue} onSelect={this.setSeverity} />}>
             <ButtonLink
+              aria-label={translateWithParameters(
+                'issue.severity.severity_x_click_to_change',
+                translate('severity', issue.severity)
+              )}
+              aria-expanded={this.props.isOpen}
               className="issue-action issue-action-with-options js-issue-set-severity"
               onClick={this.toggleSetSeverity}>
               <SeverityHelper className="issue-meta-label" severity={issue.severity} />
@@ -69,8 +76,8 @@ export default class IssueSeverity extends React.PureComponent<Props> {
           </Toggler>
         </div>
       );
-    } else {
-      return <SeverityHelper className="issue-meta-label" severity={issue.severity} />;
     }
+
+    return <SeverityHelper className="issue-meta-label" severity={issue.severity} />;
   }
 }

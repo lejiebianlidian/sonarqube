@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ public class MigrationHistoryTableImplTest {
   }
 
   private void verifyTable() {
-    assertThat(dbTester.countRowsOfTable(TABLE_SCHEMA_MIGRATIONS)).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable(TABLE_SCHEMA_MIGRATIONS)).isZero();
     dbTester.assertColumnDefinition(TABLE_SCHEMA_MIGRATIONS, "version", Types.VARCHAR, 255, false);
   }
 }

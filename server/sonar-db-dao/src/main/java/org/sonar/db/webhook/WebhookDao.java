@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,11 +24,7 @@ import java.util.Optional;
 import org.sonar.api.utils.System2;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
-import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class WebhookDao implements Dao {
 
@@ -38,16 +34,16 @@ public class WebhookDao implements Dao {
     this.system2 = system2;
   }
 
+  public List<WebhookDto> selectAll(DbSession dbSession) {
+    return mapper(dbSession).selectAllOrderedByName();
+  }
+
+  public List<WebhookDto> selectGlobalWebhooks(DbSession dbSession) {
+    return mapper(dbSession).selectGlobalWebhooksOrderedByName();
+  }
+
   public Optional<WebhookDto> selectByUuid(DbSession dbSession, String uuid) {
     return Optional.ofNullable(mapper(dbSession).selectByUuid(uuid));
-  }
-
-  public List<WebhookDto> selectByOrganization(DbSession dbSession, OrganizationDto organizationDto) {
-    return mapper(dbSession).selectForOrganizationUuidOrderedByName(organizationDto.getUuid());
-  }
-
-  public List<WebhookDto> selectByOrganizationUuid(DbSession dbSession, String organizationUuid) {
-    return mapper(dbSession).selectForOrganizationUuidOrderedByName(organizationUuid);
   }
 
   public List<WebhookDto> selectByProject(DbSession dbSession, ProjectDto projectDto) {
@@ -55,10 +51,6 @@ public class WebhookDao implements Dao {
   }
 
   public void insert(DbSession dbSession, WebhookDto dto) {
-    checkState(dto.getOrganizationUuid() != null || dto.getProjectUuid() != null,
-      "A webhook can not be created if not linked to an organization or a project.");
-    checkState(dto.getOrganizationUuid() == null || dto.getProjectUuid() == null,
-      "A webhook can not be linked to both an organization and a project.");
     mapper(dbSession).insert(dto.setCreatedAt(system2.now()).setUpdatedAt(system2.now()));
   }
 
@@ -68,10 +60,6 @@ public class WebhookDao implements Dao {
 
   public void delete(DbSession dbSession, String uuid) {
     mapper(dbSession).delete(uuid);
-  }
-
-  public void deleteByOrganization(DbSession dbSession, OrganizationDto organization) {
-    mapper(dbSession).deleteForOrganizationUuid(organization.getUuid());
   }
 
   public void deleteByProject(DbSession dbSession, ProjectDto projectDto) {

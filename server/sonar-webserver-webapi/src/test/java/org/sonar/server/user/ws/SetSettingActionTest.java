@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -125,8 +125,7 @@ public class SetSettingActionTest {
 
     assertThat(definition.param("key").possibleValues()).containsExactlyInAnyOrder(
       "tutorials.jenkins.skipBitbucketPreReqs",
-      "notifications.optOut",
-      "notifications.readDate");
+      "notifications.optOut");
   }
 
 }

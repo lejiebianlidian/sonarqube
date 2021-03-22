@@ -3,9 +3,6 @@ title: SonarScanner
 url: /analysis/scan/sonarscanner/
 ---
 
-<!-- static -->
-<!-- update_center:scannercli -->
-<!-- /static -->
 <update-center updatecenterkey="scannercli"></update-center>
 
 The SonarScanner is the scanner to use when there is no specific scanner for your build system.
@@ -54,8 +51,8 @@ To run SonarScanner from the zip file, follow these steps:
    ```
 If you need more debug information, you can add one of the following to your command line: `-X`, `--verbose`, or `-Dsonar.verbose=true`.
 
-1. Run the following command from the project base directory to launch the analysis:  
-`sonar-scanner`
+1. Run the following command from the project base directory to launch analysis and pass your [authentication token](/user-guide/user-token/):  
+`sonar-scanner -Dsonar.login=myAuthenticationToken`
 
 ## Running SonarScanner from the Docker image
 To scan using the SonarScanner Docker image, use the following command:
@@ -64,9 +61,13 @@ To scan using the SonarScanner Docker image, use the following command:
 docker run \
     --rm \
     -e SONAR_HOST_URL="http://${SONARQUBE_URL}" \
+    -e SONAR_LOGIN="myAuthenticationToken" \
     -v "${YOUR_REPO}:/usr/src" \
     sonarsource/sonar-scanner-cli
 ```
+
+## Scanning C, C++, or ObjectiveC Projects
+Scanning projects that contain C, C++, or ObjectiveC code requires some additional analysis steps. You can find full details on the [C/C++/Objective-C](/analysis/languages/cfamily/) language page.
 
 ## Sample Projects
 To help you get started, simple project samples are available for most languages on GitHub. They can be [browsed](https://github.com/SonarSource/sonar-scanning-examples) or [downloaded](https://github.com/SonarSource/sonar-scanning-examples/archive/master.zip). You'll find them filed under sonarqube-scanner/src.
@@ -113,7 +114,7 @@ The following sections offer advanced configuration options when running the Son
 |     sonarsource/sonar-scanner-cli
 | ```
 | [[warning]]
-| |When running the container as a non-root user you have to make sure the user has read and write access to the directories you are mounting (like your source code or scanner cache directory), otherwise you may encounter permission related problems.  
+| |When running the container as a non-root user you have to make sure the user has read and write access to the directories you are mounting (like your source code or scanner cache directory), otherwise you may encounter permission-related problems.  
 
 [[collapse]]
 | ## Caching scanner files
@@ -164,6 +165,19 @@ The following sections offer advanced configuration options when running the Son
 |     -v `pwd`/cacerts:/opt/java/openjdk/lib/security/cacerts \
 |     sonarsource/sonar-scanner-cli
 | ```
+|
+| Alternatively, you can create your own container that includes the modified `cacerts` file. Create a `Dockerfile` with the following contents:
+|
+| ```
+| FROM sonarsource/sonar-scanner-cli
+| COPY cacerts /opt/java/openjdk/lib/security/cacerts
+| ```
+|
+| Then, assuming both the `cacerts` and `Dockerfile` are in the current directory, create the new image with a command such as:
+| ```
+| docker build --tag our-custom/sonar-scanner-cli .
+| ```
+|
 
 ## Troubleshooting
 **Java heap space error or java.lang.OutOfMemoryError**  
@@ -171,7 +185,7 @@ Increase the memory via the `SONAR_SCANNER_OPTS` environment variable when runni
 ```
 export SONAR_SCANNER_OPTS="-Xmx512m"
 ```
-On Windows environments, avoid the double-quotes, since they get misinterpreted and combine the two parameters into a single one.
+In Windows environments, avoid the double-quotes, since they get misinterpreted and combine the two parameters into a single one.
 ```
 set SONAR_SCANNER_OPTS=-Xmx512m
 ```
@@ -180,5 +194,4 @@ set SONAR_SCANNER_OPTS=-Xmx512m
 Upgrade the version of Java being used for analysis or use one of the native package (that embed its own Java runtime).
 
 **Property missing: `sonar.cs.analyzer.projectOutPaths'. No protobuf files will be loaded for this project.**  
-Scanner CLI is not able to analyze .NET projects. Please, use the Scanner for MSBuild. If you are running Scanner for MSBuild, ensure that you are not hitting a known limitation.
-
+Scanner CLI is not able to analyze .NET projects. Please, use the SonarScanner for .NET. If you are running the SonarScanner for .NET, ensure that you are not hitting a known limitation.

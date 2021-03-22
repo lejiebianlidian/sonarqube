@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,8 @@ public class AllFiltersTest {
     FilterScope filterScope = mock(FilterScope.class);
     RequestFiltersComputer.AllFilters allFilters = RequestFiltersComputer.newAllFilters();
 
-    assertThatThrownBy(() -> allFilters.addFilter(null, filterScope, boolQuery()))
+    BoolQueryBuilder boolQuery = boolQuery();
+    assertThatThrownBy(() -> allFilters.addFilter(null, filterScope, boolQuery))
       .isInstanceOf(NullPointerException.class)
       .hasMessage("name can't be null");
   }
@@ -62,7 +63,8 @@ public class AllFiltersTest {
     String name = randomAlphabetic(12);
     RequestFiltersComputer.AllFilters allFilters = RequestFiltersComputer.newAllFilters();
 
-    assertThatThrownBy(() -> allFilters.addFilter(name, null, boolQuery()))
+    BoolQueryBuilder boolQuery = boolQuery();
+    assertThatThrownBy(() -> allFilters.addFilter(name, null, boolQuery))
       .isInstanceOf(NullPointerException.class)
       .hasMessage("filterScope can't be null");
   }

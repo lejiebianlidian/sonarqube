@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.web.ServletFilter;
 import org.sonar.core.util.stream.MoreCollectors;
@@ -51,9 +50,8 @@ public class WebServiceFilter extends ServletFilter {
   private final WebServiceEngine webServiceEngine;
   private final Set<String> includeUrls;
   private final Set<String> excludeUrls;
-  private final SonarRuntime runtime;
 
-  public WebServiceFilter(WebServiceEngine webServiceEngine, SonarRuntime runtime) {
+  public WebServiceFilter(WebServiceEngine webServiceEngine) {
     this.webServiceEngine = webServiceEngine;
     this.includeUrls = concat(
       Stream.of("/api/*"),
@@ -67,7 +65,6 @@ public class WebServiceFilter extends ServletFilter {
         .filter(action -> action.handler() instanceof ServletFilterHandler)
         .map(toPath()))
           .collect(MoreCollectors.toSet());
-    this.runtime = runtime;
   }
 
   @Override
@@ -84,7 +81,6 @@ public class WebServiceFilter extends ServletFilter {
     HttpServletResponse response = (HttpServletResponse) servletResponse;
     ServletRequest wsRequest = new ServletRequest(request);
     ServletResponse wsResponse = new ServletResponse(response);
-    wsResponse.setHeader("Sonar-Version", runtime.getApiVersion().toString());
     webServiceEngine.execute(wsRequest, wsResponse);
   }
 

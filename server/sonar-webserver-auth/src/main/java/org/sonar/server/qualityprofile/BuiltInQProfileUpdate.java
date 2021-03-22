@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ import org.sonar.db.qualityprofile.RulesProfileDto;
 
 public interface BuiltInQProfileUpdate {
   /**
-   * Persist an existing built-in profile and associate it to all existing organizations.
+   * Persist an existing built-in profile.
    * Db session is committed and Elasticsearch indices are updated.
    */
   List<ActiveRuleChange> update(DbSession dbSession, BuiltInQProfile builtInQProfile, RulesProfileDto ruleProfile);

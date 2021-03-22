@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 package org.sonar.db.user;
 
+import java.util.Set;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 
@@ -29,16 +30,16 @@ public class UserGroupDao implements Dao {
     return dto;
   }
 
+  public Set<String> selectUserUuidsInGroup(DbSession session, String groupUuid) {
+    return mapper(session).selectUserUuidsInGroup(groupUuid);
+  }
+
   public void delete(DbSession session, String groupUuid, String userUuid) {
     mapper(session).delete(groupUuid, userUuid);
   }
 
   public void deleteByGroupUuid(DbSession session, String groupUuid) {
     mapper(session).deleteByGroupUuid(groupUuid);
-  }
-
-  public void deleteByOrganizationAndUser(DbSession dbSession, String organizationUuid, String userUuid) {
-    mapper(dbSession).deleteByOrganizationAndUser(organizationUuid, userUuid);
   }
 
   public void deleteByUserUuid(DbSession dbSession, String userUuid) {

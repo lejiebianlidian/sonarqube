@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -208,7 +208,7 @@ public class NotificationMediumTest {
     Settings settings = new MapSettings().setProperty("sonar.notifications.delay", 1L);
 
     service = new NotificationService(dbClient);
-    assertThat(service.getDispatchers()).hasSize(0);
+    assertThat(service.getDispatchers()).isEmpty();
   }
 
   @Test

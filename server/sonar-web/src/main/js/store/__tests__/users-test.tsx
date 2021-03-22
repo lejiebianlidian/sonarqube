@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-/* eslint-disable sonarjs/no-duplicate-string */
+
 import { mockCurrentUser, mockLoggedInUser, mockUser } from '../../helpers/testMocks';
 import reducer, {
   getCurrentUser,
@@ -27,7 +27,6 @@ import reducer, {
   receiveCurrentUser,
   setCurrentUserSettingAction,
   setHomePageAction,
-  skipOnboardingAction,
   State
 } from '../users';
 
@@ -38,16 +37,6 @@ describe('reducer and actions', () => {
     const currentUser = mockCurrentUser();
     const newState = reducer(initialState, receiveCurrentUser(currentUser));
     expect(newState).toEqual(createState({ currentUser }));
-  });
-
-  it('should allow to skip the onboarding tutorials', () => {
-    const currentUser = mockLoggedInUser({ showOnboardingTutorial: true });
-    const initialState: State = createState({ currentUser });
-
-    const newState = reducer(initialState, skipOnboardingAction());
-    expect(newState).toEqual(
-      createState({ currentUser: { ...currentUser, showOnboardingTutorial: false } })
-    );
   });
 
   it('should allow to set the homepage', () => {

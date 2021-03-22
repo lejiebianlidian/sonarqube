@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -61,13 +61,12 @@ import static org.sonar.core.util.FileUtils.deleteQuietly;
 import static org.sonar.scanner.scan.branch.BranchType.PULL_REQUEST;
 
 public class ReportPublisher implements Startable {
-
+  private static final int DEFAULT_WRITE_TIMEOUT = 30_000;
   private static final Logger LOG = Loggers.get(ReportPublisher.class);
   private static final String CHARACTERISTIC = "characteristic";
   private static final String DASHBOARD = "dashboard";
   private static final String BRANCH = "branch";
   private static final String ID = "id";
-  private static final String RESOLVED = "resolved";
 
   private final DefaultScannerWsClient wsClient;
   private final AnalysisContextReportPublisher contextPublisher;
@@ -185,7 +184,6 @@ public class ReportPublisher implements Startable {
     PostRequest.Part filePart = new PostRequest.Part(MediaTypes.ZIP, report);
     PostRequest post = new PostRequest("api/ce/submit")
       .setMediaType(MediaTypes.PROTOBUF)
-      .setParam("organization", properties.organizationKey().orElse(null))
       .setParam("projectKey", moduleHierarchy.root().key())
       .setParam("projectName", moduleHierarchy.root().getOriginalName())
       .setPart("report", filePart);
@@ -202,6 +200,7 @@ public class ReportPublisher implements Startable {
 
     WsResponse response;
     try {
+      post.setWriteTimeOutInMs(DEFAULT_WRITE_TIMEOUT);
       response = wsClient.call(post).failIfNotSuccessful();
     } catch (HttpException e) {
       throw MessageException.of(String.format("Failed to upload report - %s", DefaultScannerWsClient.createErrorMessage(e)));
@@ -220,7 +219,6 @@ public class ReportPublisher implements Startable {
   void prepareAndDumpMetadata(String taskId) {
     Map<String, String> metadata = new LinkedHashMap<>();
 
-    properties.organizationKey().ifPresent(org -> metadata.put("organization", org));
     metadata.put("projectKey", moduleHierarchy.root().key());
     metadata.put("serverUrl", server.getPublicRootUrl());
     metadata.put("serverVersion", server.getVersion());

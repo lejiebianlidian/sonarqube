@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,21 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import * as React from 'react';
 import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router';
-import { ClearButton } from 'sonar-ui-common/components/controls/buttons';
 import { Alert, AlertProps } from 'sonar-ui-common/components/ui/Alert';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
-import { BackgroundTaskTypes, STATUSES } from '../../../apps/background-tasks/constants';
 import { IndexationNotificationType } from '../../../types/indexation';
+import { TaskStatuses, TaskTypes } from '../../../types/tasks';
 
 export interface IndexationNotificationRendererProps {
   type: IndexationNotificationType;
   percentCompleted: number;
   isSystemAdmin: boolean;
-  onDismissCompletedNotification: VoidFunction;
 }
 
 const NOTIFICATION_VARIANTS: { [key in IndexationNotificationType]: AlertProps['variant'] } = {
@@ -63,17 +60,8 @@ export default function IndexationNotificationRenderer(props: IndexationNotifica
   );
 }
 
-function renderCompletedBanner(props: IndexationNotificationRendererProps) {
-  return (
-    <>
-      <span className="spacer-right">{translate('indexation.completed')}</span>
-      <ClearButton
-        className="button-tiny"
-        title={translate('dismiss')}
-        onClick={props.onDismissCompletedNotification}
-      />
-    </>
-  );
+function renderCompletedBanner(_props: IndexationNotificationRendererProps) {
+  return <span className="spacer-right">{translate('indexation.completed')}</span>;
 }
 
 function renderCompletedWithFailureBanner(props: IndexationNotificationRendererProps) {
@@ -153,8 +141,8 @@ function renderBackgroundTasksPageLink(hasError: boolean, text: string) {
       to={{
         pathname: '/admin/background_tasks',
         query: {
-          taskType: BackgroundTaskTypes.IssueSync,
-          status: hasError ? STATUSES.FAILED : undefined
+          taskType: TaskTypes.IssueSync,
+          status: hasError ? TaskStatuses.Failed : undefined
         }
       }}>
       {text}

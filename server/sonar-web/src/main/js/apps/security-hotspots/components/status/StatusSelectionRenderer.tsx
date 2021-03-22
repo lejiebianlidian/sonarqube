@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import * as React from 'react';
 import { SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import Radio from 'sonar-ui-common/components/controls/Radio';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import MarkdownTips from '../../../../components/common/MarkdownTips';
+import FormattingTips from '../../../../components/common/FormattingTips';
 import { HotspotStatusOption } from '../../../../types/security-hotspots';
 import StatusDescription from './StatusDescription';
 
@@ -76,7 +75,7 @@ export default function StatusSelectionRenderer(props: StatusSelectionRendererPr
           rows={4}
           value={comment}
         />
-        <MarkdownTips />
+        <FormattingTips />
 
         <div className="big-spacer-top display-flex-justify-end display-flex-center">
           <SubmitButton disabled={submitDisabled || loading} onClick={props.onSubmit}>

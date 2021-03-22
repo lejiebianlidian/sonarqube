@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,24 +44,6 @@ it('saves last selection', () => {
   expect(save).toBeCalledWith('sonarqube.projects.default', 'favorite');
   click(wrapper.find('#all-projects'));
   expect(save).toBeCalledWith('sonarqube.projects.default', 'all');
-});
-
-it('handles organization', () => {
-  expect(
-    shallow(
-      <FavoriteFilter currentUser={currentUser} organization={{ key: 'org' }} query={query} />
-    )
-  ).toMatchSnapshot();
-});
-
-it('does not save last selection with organization', () => {
-  const wrapper = shallow(
-    <FavoriteFilter currentUser={currentUser} organization={{ key: 'org' }} query={query} />
-  );
-  click(wrapper.find('#favorite-projects'));
-  expect(save).not.toBeCalled();
-  click(wrapper.find('#all-projects'));
-  expect(save).not.toBeCalled();
 });
 
 it('does not render for anonymous', () => {

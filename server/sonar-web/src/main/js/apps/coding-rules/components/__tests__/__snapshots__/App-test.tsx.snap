@@ -10,7 +10,6 @@ exports[`renderBulkButton should show bulk change button when everything is fine
       },
     }
   }
-  organization="foo"
   query={
     Object {
       "activation": undefined,
@@ -66,6 +65,7 @@ exports[`should render correctly: loaded (ScreenPositionHelper) 1`] = `
       <SearchBox
         className="spacer-bottom"
         id="coding-rules-search"
+        maxLength={200}
         minLength={2}
         onChange={[Function]}
         placeholder="search.search_for_rules"
@@ -73,7 +73,6 @@ exports[`should render correctly: loaded (ScreenPositionHelper) 1`] = `
       />
       <FacetsList
         facets={Object {}}
-        hideProfileFacet={false}
         onFacetToggle={[Function]}
         onFilterChange={[Function]}
         openFacets={
@@ -86,7 +85,6 @@ exports[`should render correctly: loaded (ScreenPositionHelper) 1`] = `
             "types": true,
           }
         }
-        organization="foo"
         query={
           Object {
             "activation": undefined,
@@ -166,7 +164,6 @@ exports[`should render correctly: loaded 1`] = `
                   },
                 }
               }
-              organization="foo"
               query={
                 Object {
                   "activation": undefined,
@@ -219,7 +216,6 @@ exports[`should render correctly: loaded 1`] = `
           onDeactivate={[Function]}
           onFilterChange={[Function]}
           onOpen={[Function]}
-          organization="foo"
           rule={
             Object {
               "key": "javascript:S1067",
@@ -248,7 +244,6 @@ exports[`should render correctly: loaded 1`] = `
           onDeactivate={[Function]}
           onFilterChange={[Function]}
           onOpen={[Function]}
-          organization="foo"
           rule={
             Object {
               "key": "javascript:S1067",
@@ -362,6 +357,7 @@ exports[`should render correctly: open rule (ScreenPositionHelper) 1`] = `
       <SearchBox
         className="spacer-bottom"
         id="coding-rules-search"
+        maxLength={200}
         minLength={2}
         onChange={[Function]}
         placeholder="search.search_for_rules"
@@ -369,7 +365,6 @@ exports[`should render correctly: open rule (ScreenPositionHelper) 1`] = `
       />
       <FacetsList
         facets={Object {}}
-        hideProfileFacet={false}
         onFacetToggle={[Function]}
         onFilterChange={[Function]}
         openFacets={
@@ -382,7 +377,6 @@ exports[`should render correctly: open rule (ScreenPositionHelper) 1`] = `
             "types": true,
           }
         }
-        organization="foo"
         query={
           Object {
             "activation": undefined,
@@ -484,12 +478,10 @@ exports[`should render correctly: open rule 1`] = `
         <RuleDetails
           allowCustomRules={true}
           canWrite={true}
-          hideQualityProfiles={false}
           onActivate={[Function]}
           onDeactivate={[Function]}
           onDelete={[Function]}
           onFilterChange={[Function]}
-          organization="foo"
           referencedProfiles={Object {}}
           referencedRepositories={Object {}}
           ruleKey="javascript:S1067"
@@ -558,12 +550,10 @@ exports[`should render correctly: using permalink 1`] = `
         <RuleDetails
           allowCustomRules={true}
           canWrite={true}
-          hideQualityProfiles={false}
           onActivate={[Function]}
           onDeactivate={[Function]}
           onDelete={[Function]}
           onFilterChange={[Function]}
-          organization="foo"
           referencedProfiles={Object {}}
           referencedRepositories={Object {}}
           ruleKey="javascript:S1067"

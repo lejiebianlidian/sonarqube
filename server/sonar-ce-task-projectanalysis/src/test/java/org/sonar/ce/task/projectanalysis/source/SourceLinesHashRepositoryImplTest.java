@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -233,8 +233,8 @@ public class SourceLinesHashRepositoryImplTest {
 
     for (int i = 0; i < expectedLines.size(); i++) {
       assertThat(actualLines.get(i))
-        .isEqualTo(expectedLines.get(i))
-        .withFailMessage("Line hash is different for line %d", i);
+        .withFailMessage("Line hash is different for line %d", i)
+        .isEqualTo(expectedLines.get(i));
     }
   }
 }

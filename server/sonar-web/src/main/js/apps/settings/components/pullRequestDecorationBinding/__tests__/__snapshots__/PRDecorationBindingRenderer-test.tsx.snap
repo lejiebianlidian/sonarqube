@@ -19,6 +19,9 @@ exports[`should display action state correctly 1`] = `
   <form
     onSubmit={[Function]}
   >
+    <MandatoryFieldsExplanation
+      className="form-field"
+    />
     <div
       className="form-field"
     >
@@ -26,11 +29,9 @@ exports[`should display action state correctly 1`] = `
         htmlFor="name"
       >
         settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
+        <MandatoryFieldMarker
+          className="spacer-right"
+        />
       </label>
       <Select
         autosize={true}
@@ -66,7 +67,6 @@ exports[`should display action state correctly 1`] = `
       <DeferredSpinner
         className="spacer-right"
         loading={true}
-        timeout={100}
       />
     </div>
   </form>
@@ -92,6 +92,9 @@ exports[`should display action state correctly 2`] = `
   <form
     onSubmit={[Function]}
   >
+    <MandatoryFieldsExplanation
+      className="form-field"
+    />
     <div
       className="form-field"
     >
@@ -99,11 +102,9 @@ exports[`should display action state correctly 2`] = `
         htmlFor="name"
       >
         settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
+        <MandatoryFieldMarker
+          className="spacer-right"
+        />
       </label>
       <Select
         autosize={true}
@@ -139,7 +140,6 @@ exports[`should display action state correctly 2`] = `
       <DeferredSpinner
         className="spacer-right"
         loading={false}
-        timeout={100}
       />
       <span
         className="text-success"
@@ -173,6 +173,9 @@ exports[`should display action state correctly 3`] = `
   <form
     onSubmit={[Function]}
   >
+    <MandatoryFieldsExplanation
+      className="form-field"
+    />
     <div
       className="form-field"
     >
@@ -180,11 +183,9 @@ exports[`should display action state correctly 3`] = `
         htmlFor="name"
       >
         settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
+        <MandatoryFieldMarker
+          className="spacer-right"
+        />
       </label>
       <Select
         autosize={true}
@@ -220,18 +221,13 @@ exports[`should display action state correctly 3`] = `
       <DeferredSpinner
         className="spacer-right"
         loading={false}
-        timeout={100}
       />
     </div>
   </form>
 </div>
 `;
 
-exports[`should render correctly 1`] = `
-<DeferredSpinner
-  timeout={100}
-/>
-`;
+exports[`should render correctly 1`] = `<DeferredSpinner />`;
 
 exports[`should render correctly 2`] = `
 <div>
@@ -277,6 +273,9 @@ exports[`should render multiple instances correctly 1`] = `
   <form
     onSubmit={[Function]}
   >
+    <MandatoryFieldsExplanation
+      className="form-field"
+    />
     <div
       className="form-field"
     >
@@ -284,11 +283,9 @@ exports[`should render multiple instances correctly 1`] = `
         htmlFor="name"
       >
         settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
+        <MandatoryFieldMarker
+          className="spacer-right"
+        />
       </label>
       <Select
         autosize={true}
@@ -338,7 +335,6 @@ exports[`should render multiple instances correctly 1`] = `
       <DeferredSpinner
         className="spacer-right"
         loading={false}
-        timeout={100}
       />
     </div>
   </form>
@@ -364,6 +360,9 @@ exports[`should render multiple instances correctly 2`] = `
   <form
     onSubmit={[Function]}
   >
+    <MandatoryFieldsExplanation
+      className="form-field"
+    />
     <div
       className="form-field"
     >
@@ -371,11 +370,9 @@ exports[`should render multiple instances correctly 2`] = `
         htmlFor="name"
       >
         settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
+        <MandatoryFieldMarker
+          className="spacer-right"
+        />
       </label>
       <Select
         autosize={true}
@@ -419,79 +416,23 @@ exports[`should render multiple instances correctly 2`] = `
         valueRenderer={[Function]}
       />
     </div>
-    <div
-      className="form-field"
-    >
-      <label
-        className="display-flex-center"
-        htmlFor="github.repository"
-      >
-        settings.pr_decoration.binding.form.github.repository
-        <em
-          className="mandatory"
-        >
-          *
-        </em>
-        <HelpTooltip
-          className="spacer-left"
-          overlay={
-            <FormattedMessage
-              defaultMessage="settings.pr_decoration.binding.form.github.repository.help"
-              id="settings.pr_decoration.binding.form.github.repository.help"
-              values={
-                Object {
-                  "example": "SonarSource/sonarqube",
-                }
-              }
-            />
-          }
-          placement="right"
-        />
-      </label>
-      <input
-        className="input-super-large"
-        id="github.repository"
-        maxLength={256}
-        name="github.repository"
-        onChange={[Function]}
-        type="text"
-        value="account/repo"
-      />
-    </div>
-    <div
-      className="form-field"
-    >
-      <label
-        className="display-flex-center"
-        htmlFor="github.summary_comment_setting"
-      >
-        settings.pr_decoration.binding.form.github.summary_comment_setting
-        <HelpTooltip
-          className="spacer-left"
-          overlay={
-            <FormattedMessage
-              defaultMessage="settings.pr_decoration.binding.form.github.summary_comment_setting.help"
-              id="settings.pr_decoration.binding.form.github.summary_comment_setting.help"
-              values={Object {}}
-            />
-          }
-          placement="right"
-        />
-      </label>
-      <InputForBoolean
-        isDefault={true}
-        name="github.summary_comment_setting"
-        onChange={[Function]}
-        value={true}
-      />
-    </div>
+    <AlmSpecificForm
+      alm="github"
+      formData={
+        Object {
+          "key": "i1",
+          "repository": "account/repo",
+        }
+      }
+      monorepoEnabled={false}
+      onFieldChange={[MockFunction]}
+    />
     <div
       className="display-flex-center"
     >
       <DeferredSpinner
         className="spacer-right"
         loading={false}
-        timeout={100}
       />
       <Button
         className="spacer-right"
@@ -503,119 +444,6 @@ exports[`should render multiple instances correctly 2`] = `
           reset_verb
         </span>
       </Button>
-    </div>
-  </form>
-</div>
-`;
-
-exports[`should render optional fields correctly 1`] = `
-<div>
-  <header
-    className="page-header"
-  >
-    <h1
-      className="page-title"
-    >
-      settings.pr_decoration.binding.title
-    </h1>
-  </header>
-  <div
-    className="markdown small spacer-top big-spacer-bottom"
-  >
-    settings.pr_decoration.binding.description
-  </div>
-  <form
-    onSubmit={[Function]}
-  >
-    <div
-      className="form-field"
-    >
-      <label
-        htmlFor="name"
-      >
-        settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
-      </label>
-      <Select
-        autosize={true}
-        className="abs-width-400"
-        clearable={false}
-        id="name"
-        menuContainerStyle={
-          Object {
-            "maxWidth": "210%",
-            "width": "auto",
-          }
-        }
-        onChange={[Function]}
-        optionRenderer={[Function]}
-        options={
-          Array [
-            Object {
-              "alm": "gitlab",
-              "key": "key",
-              "url": "http://example.com",
-            },
-          ]
-        }
-        searchable={false}
-        value="key"
-        valueKey="key"
-        valueRenderer={[Function]}
-      />
-    </div>
-    <div
-      className="form-field"
-    >
-      <label
-        className="display-flex-center"
-        htmlFor="gitlab.repository"
-      >
-        settings.pr_decoration.binding.form.gitlab.repository
-        <HelpTooltip
-          className="spacer-left"
-          overlay={
-            <FormattedMessage
-              defaultMessage="settings.pr_decoration.binding.form.gitlab.repository.help"
-              id="settings.pr_decoration.binding.form.gitlab.repository.help"
-              values={Object {}}
-            />
-          }
-          placement="right"
-        />
-      </label>
-      <input
-        className="input-super-large"
-        id="gitlab.repository"
-        maxLength={256}
-        name="gitlab.repository"
-        onChange={[Function]}
-        type="text"
-        value=""
-      />
-    </div>
-    <div
-      className="display-flex-center"
-    >
-      <DeferredSpinner
-        className="spacer-right"
-        loading={false}
-        timeout={100}
-      />
-      <SubmitButton
-        className="spacer-right button-success"
-        disabled={true}
-      >
-        <span
-          data-test="project-settings__alm-save"
-        >
-          save
-        </span>
-      </SubmitButton>
     </div>
   </form>
 </div>
@@ -660,6 +488,9 @@ exports[`should render single instance correctly 1`] = `
   <form
     onSubmit={[Function]}
   >
+    <MandatoryFieldsExplanation
+      className="form-field"
+    />
     <div
       className="form-field"
     >
@@ -667,11 +498,9 @@ exports[`should render single instance correctly 1`] = `
         htmlFor="name"
       >
         settings.pr_decoration.binding.form.name
-        <em
-          className="mandatory spacer-right"
-        >
-          *
-        </em>
+        <MandatoryFieldMarker
+          className="spacer-right"
+        />
       </label>
       <Select
         autosize={true}
@@ -707,7 +536,6 @@ exports[`should render single instance correctly 1`] = `
       <DeferredSpinner
         className="spacer-right"
         loading={false}
-        timeout={100}
       />
     </div>
   </form>

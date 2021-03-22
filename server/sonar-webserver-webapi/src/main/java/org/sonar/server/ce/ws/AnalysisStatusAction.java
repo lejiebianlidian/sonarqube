@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -110,9 +110,7 @@ public class AnalysisStatusAction implements CeWsAction {
 
   private AnalysisStatusWsResponse.Component formatComponent(DbSession dbSession, ProjectDto project, @Nullable CeActivityDto lastActivity,
     @Nullable String branchKey, @Nullable String pullRequestKey) {
-
     AnalysisStatusWsResponse.Component.Builder builder = AnalysisStatusWsResponse.Component.newBuilder()
-      .setOrganization(getOrganizationKey(dbSession, project))
       .setKey(project.getKey())
       .setName(project.getName());
 
@@ -122,22 +120,26 @@ public class AnalysisStatusAction implements CeWsAction {
       builder.setPullRequest(pullRequestKey);
     }
 
-    if (lastActivity != null) {
-      List<String> warnings = dbClient.ceTaskMessageDao().selectByTask(dbSession, lastActivity.getUuid()).stream()
-        .map(CeTaskMessageDto::getMessage)
-        .collect(Collectors.toList());
-
-      builder.addAllWarnings(warnings);
+    if (lastActivity == null) {
+      return builder.build();
     }
 
-    return builder.build();
-  }
+    List<CeTaskMessageDto> warnings;
+    String userUuid = userSession.getUuid();
+    if (userUuid != null) {
+      warnings = dbClient.ceTaskMessageDao().selectNonDismissedByUserAndTask(dbSession, lastActivity.getUuid(), userUuid);
+    } else {
+      warnings = dbClient.ceTaskMessageDao().selectByTask(dbSession, lastActivity.getUuid());
+    }
 
-  private String getOrganizationKey(DbSession dbSession, ProjectDto project) {
-    String organizationUuid = project.getOrganizationUuid();
-    return dbClient.organizationDao().selectByUuid(dbSession, organizationUuid)
-      .orElseThrow(() -> new IllegalStateException("Unknown organization: " + organizationUuid))
-      .getKey();
+    List<AnalysisStatusWsResponse.Warning> result = warnings.stream().map(dto -> AnalysisStatusWsResponse.Warning.newBuilder()
+      .setKey(dto.getUuid())
+      .setMessage(dto.getMessage())
+      .setDismissable(dto.getType().isDismissible())
+      .build())
+      .collect(Collectors.toList());
+    builder.addAllWarnings(result);
+    return builder.build();
   }
 
 }

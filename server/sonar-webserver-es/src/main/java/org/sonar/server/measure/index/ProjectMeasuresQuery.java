@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@ public class ProjectMeasuresQuery {
 
   private List<MetricCriterion> metricCriteria = new ArrayList<>();
   private Metric.Level qualityGateStatus = null;
-  private String organizationUuid = null;
   private Set<String> projectUuids = null;
   private Set<String> languages = null;
   private Set<String> tags = null;
@@ -66,15 +65,6 @@ public class ProjectMeasuresQuery {
 
   public Optional<Metric.Level> getQualityGateStatus() {
     return Optional.ofNullable(qualityGateStatus);
-  }
-
-  public ProjectMeasuresQuery setOrganizationUuid(@Nullable String organizationUuid) {
-    this.organizationUuid = organizationUuid;
-    return this;
-  }
-
-  public Optional<String> getOrganizationUuid() {
-    return Optional.ofNullable(organizationUuid);
   }
 
   public ProjectMeasuresQuery setProjectUuids(@Nullable Set<String> projectUuids) {

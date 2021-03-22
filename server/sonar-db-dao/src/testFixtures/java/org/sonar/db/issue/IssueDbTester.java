@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@ import org.sonar.core.issue.FieldDiffs;
 import org.sonar.core.util.Uuids;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.user.UserDto;
@@ -66,9 +65,9 @@ public class IssueDbTester {
    * Inserts an issue or a security hotspot.
    */
   @SafeVarargs
-  public final IssueDto insert(OrganizationDto organizationDto, Consumer<IssueDto>... populators) {
+  public final IssueDto insert(Consumer<IssueDto>... populators) {
     RuleDefinitionDto rule = db.rules().insert();
-    ComponentDto project = db.components().insertPublicProject(organizationDto);
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project));
     IssueDto issue = newIssue(rule, project, file);
     stream(populators).forEach(p -> p.accept(issue));
@@ -121,21 +120,13 @@ public class IssueDbTester {
 
   /**
    * Inserts an issue.
-   */
-  @SafeVarargs
-  public final IssueDto insertIssue(Consumer<IssueDto>... populateIssueDto) {
-    return insertIssue(db.getDefaultOrganization(), populateIssueDto);
-  }
-
-  /**
-   * Inserts an issue.
    *
    * @throws AssertionError if rule is not Security Hotspot
    */
   @SafeVarargs
-  public final IssueDto insertIssue(OrganizationDto organizationDto, Consumer<IssueDto>... populators) {
+  public final IssueDto insertIssue(Consumer<IssueDto>... populators) {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
-    ComponentDto project = db.components().insertPrivateProject(organizationDto);
+    ComponentDto project = db.components().insertPrivateProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project));
     IssueDto issue = newIssue(rule, project, file)
       .setType(RULE_TYPES_EXCEPT_HOTSPOTS[new Random().nextInt(RULE_TYPES_EXCEPT_HOTSPOTS.length)]);
@@ -190,17 +181,9 @@ public class IssueDbTester {
    * Inserts a Security Hotspot.
    */
   @SafeVarargs
-  public final IssueDto insertHotspot(Consumer<IssueDto>... populateIssueDto) {
-    return insertHotspot(db.getDefaultOrganization(), populateIssueDto);
-  }
-
-  /**
-   * Inserts a Security Hotspot.
-   */
-  @SafeVarargs
-  public final IssueDto insertHotspot(OrganizationDto organizationDto, Consumer<IssueDto>... populators) {
+  public final IssueDto insertHotspot(Consumer<IssueDto>... populators) {
     RuleDefinitionDto rule = db.rules().insertHotspotRule();
-    ComponentDto project = db.components().insertPrivateProject(organizationDto);
+    ComponentDto project = db.components().insertPrivateProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project));
     IssueDto issue = newIssue(rule, project, file)
       .setType(SECURITY_HOTSPOT)
@@ -224,14 +207,14 @@ public class IssueDbTester {
   }
 
   public IssueChangeDto insertComment(IssueDto issueDto, @Nullable UserDto user, String text) {
-    IssueChangeDto issueChangeDto = IssueChangeDto.of(DefaultIssueComment.create(issueDto.getKey(), user == null ? null : user.getUuid(), text));
+    IssueChangeDto issueChangeDto = IssueChangeDto.of(DefaultIssueComment.create(issueDto.getKey(), user == null ? null : user.getUuid(), text), issueDto.getProjectUuid());
     issueChangeDto.setUuid(Uuids.create());
     return insertChange(issueChangeDto);
   }
 
   public void insertFieldDiffs(IssueDto issueDto, FieldDiffs... diffs) {
-    Arrays.stream(diffs).forEach(diff -> db.getDbClient().issueChangeDao().insert(db.getSession(), IssueChangeDto.of(issueDto.getKey(), diff)
-    .setUuid(Uuids.createFast())));
+    Arrays.stream(diffs).forEach(diff -> db.getDbClient().issueChangeDao().insert(db.getSession(), IssueChangeDto.of(issueDto.getKey(), diff, issueDto.getProjectUuid())
+      .setUuid(Uuids.createFast())));
     db.commit();
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,25 +28,20 @@ import org.sonar.api.server.ws.WebService;
 import org.sonar.api.server.ws.WebService.Param;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.organization.OrganizationTesting;
 import org.sonar.db.qualityprofile.QProfileDto;
 import org.sonar.db.qualityprofile.QualityProfileTesting;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.exceptions.UnauthorizedException;
 import org.sonar.server.language.LanguageTesting;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ws.TestResponse;
 import org.sonar.server.ws.WsActionTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.db.permission.OrganizationPermission.ADMINISTER_QUALITY_PROFILES;
+import static org.sonar.db.permission.GlobalPermission.ADMINISTER_QUALITY_PROFILES;
 import static org.sonarqube.ws.client.qualityprofile.QualityProfileWsParameters.PARAM_KEY;
 import static org.sonarqube.ws.client.qualityprofile.QualityProfileWsParameters.PARAM_LANGUAGE;
-import static org.sonarqube.ws.client.qualityprofile.QualityProfileWsParameters.PARAM_ORGANIZATION;
 import static org.sonarqube.ws.client.qualityprofile.QualityProfileWsParameters.PARAM_QUALITY_PROFILE;
 
 public class SetDefaultActionTest {
@@ -61,14 +56,12 @@ public class SetDefaultActionTest {
   @Rule
   public UserSessionRule userSessionRule = UserSessionRule.standalone();
 
-  private DefaultOrganizationProvider defaultOrganizationProvider;
   private DbClient dbClient;
   private QProfileWsSupport wsSupport;
 
   private SetDefaultAction underTest;
   private WsActionTester ws;
 
-  private OrganizationDto organization;
   /** Single, default quality profile for language xoo1 */
   private QProfileDto xoo1Profile;
   /** Parent quality profile for language xoo2 (not a default) */
@@ -78,24 +71,13 @@ public class SetDefaultActionTest {
 
   @Before
   public void setUp() {
-    defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
     dbClient = db.getDbClient();
-    wsSupport = new QProfileWsSupport(dbClient, userSessionRule, defaultOrganizationProvider);
-    organization = OrganizationTesting.newOrganizationDto();
-    db.organizations().insert(organization);
+    wsSupport = new QProfileWsSupport(dbClient, userSessionRule);
     underTest = new SetDefaultAction(LanguageTesting.newLanguages(XOO_1_KEY, XOO_2_KEY), dbClient, userSessionRule, wsSupport);
 
-    String organizationUuid = organization.getUuid();
-    xoo1Profile = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organizationUuid)
-      .setLanguage(XOO_1_KEY);
-    xoo2Profile = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organizationUuid)
-      .setLanguage(XOO_2_KEY);
-    xoo2Profile2 = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organizationUuid)
-      .setLanguage(XOO_2_KEY)
-      .setParentKee(xoo2Profile.getKee());
+    xoo1Profile = QualityProfileTesting.newQualityProfileDto().setLanguage(XOO_1_KEY);
+    xoo2Profile = QualityProfileTesting.newQualityProfileDto().setLanguage(XOO_2_KEY);
+    xoo2Profile2 = QualityProfileTesting.newQualityProfileDto().setLanguage(XOO_2_KEY).setParentKee(xoo2Profile.getKee());
     dbClient.qualityProfileDao().insert(db.getSession(), xoo1Profile, xoo2Profile, xoo2Profile2);
     db.commit();
     db.qualityProfiles().setAsDefault(xoo1Profile, xoo2Profile2);
@@ -109,64 +91,26 @@ public class SetDefaultActionTest {
 
     assertThat(definition).isNotNull();
     assertThat(definition.isPost()).isTrue();
-    assertThat(definition.params()).extracting(Param::key).containsExactlyInAnyOrder("qualityProfile", "language", "organization");
-    assertThat(definition.param("organization").since()).isEqualTo("6.4");
+    assertThat(definition.params()).extracting(Param::key).containsExactlyInAnyOrder("qualityProfile", "language");
   }
 
   @Test
   public void set_default_profile_using_language_and_name() {
     logInAsQProfileAdministrator();
 
-    checkDefaultProfile(organization, XOO_1_KEY, xoo1Profile.getKee());
-    checkDefaultProfile(organization, XOO_2_KEY, xoo2Profile2.getKee());
+    checkDefaultProfile(XOO_1_KEY, xoo1Profile.getKee());
+    checkDefaultProfile(XOO_2_KEY, xoo2Profile2.getKee());
 
     TestResponse response = ws.newRequest().setMethod("POST")
       .setParam("language", xoo2Profile.getLanguage())
       .setParam("qualityProfile", xoo2Profile.getName())
-      .setParam("organization", organization.getKey())
       .execute();
 
     assertThat(response.getInput()).isEmpty();
 
-    checkDefaultProfile(organization, XOO_1_KEY, xoo1Profile.getKee());
-    checkDefaultProfile(organization, XOO_2_KEY, xoo2Profile.getKee());
-  }
+    checkDefaultProfile(XOO_1_KEY, xoo1Profile.getKee());
+    checkDefaultProfile(XOO_2_KEY, xoo2Profile.getKee());
 
-  @Test
-  public void should_not_change_other_organizations() {
-    OrganizationDto organization1 = db.organizations().insert();
-    OrganizationDto organization2 = db.organizations().insert();
-
-    userSessionRule
-      .logIn()
-      .addPermission(ADMINISTER_QUALITY_PROFILES, organization1.getUuid());
-
-    QProfileDto profileOrg1Old = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organization1.getUuid())
-      .setLanguage(XOO_1_KEY);
-    QProfileDto profileOrg1New = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organization1.getUuid())
-      .setLanguage(XOO_1_KEY);
-    QProfileDto profileOrg2 = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organization2.getUuid())
-      .setLanguage(XOO_1_KEY);
-    db.qualityProfiles().insert(profileOrg1Old, profileOrg1New, profileOrg2);
-    db.qualityProfiles().setAsDefault(profileOrg1Old, profileOrg2);
-
-    checkDefaultProfile(organization1, XOO_1_KEY, profileOrg1Old.getKee());
-    checkDefaultProfile(organization2, XOO_1_KEY, profileOrg2.getKee());
-
-    TestResponse response = ws.newRequest().setMethod("POST")
-      .setParam("language", profileOrg1New.getLanguage())
-      .setParam("qualityProfile", profileOrg1New.getName())
-      .setParam("organization", organization1.getKey())
-      .execute();
-
-    assertThat(response.getInput()).isEmpty();
-    assertThat(response.getStatus()).isEqualTo(204);
-
-    checkDefaultProfile(organization1, XOO_1_KEY, profileOrg1New.getKee());
-    checkDefaultProfile(organization2, XOO_1_KEY, profileOrg2.getKee());
   }
 
   @Test
@@ -181,8 +125,8 @@ public class SetDefaultActionTest {
       Fail.failBecauseExceptionWasNotThrown(NotFoundException.class);
     } catch (NotFoundException nfe) {
       assertThat(nfe).hasMessage("Quality Profile for language 'xoo2' and name 'Unknown' does not exist");
-      checkDefaultProfile(organization, XOO_1_KEY, xoo1Profile.getKee());
-      checkDefaultProfile(organization, XOO_2_KEY, xoo2Profile2.getKee());
+      checkDefaultProfile(XOO_1_KEY, xoo1Profile.getKee());
+      checkDefaultProfile(XOO_2_KEY, xoo2Profile2.getKee());
     }
   }
 
@@ -194,7 +138,6 @@ public class SetDefaultActionTest {
     expectedException.expectMessage("Insufficient privileges");
 
     ws.newRequest().setMethod("POST")
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .setParam(PARAM_QUALITY_PROFILE, xoo2Profile.getName())
       .setParam(PARAM_LANGUAGE, xoo2Profile.getLanguage())
       .execute();
@@ -213,10 +156,10 @@ public class SetDefaultActionTest {
   private void logInAsQProfileAdministrator() {
     userSessionRule
       .logIn()
-      .addPermission(ADMINISTER_QUALITY_PROFILES, organization.getUuid());
+      .addPermission(ADMINISTER_QUALITY_PROFILES);
   }
 
-  private void checkDefaultProfile(OrganizationDto organization, String language, String key) {
-    assertThat(dbClient.qualityProfileDao().selectDefaultProfile(db.getSession(), organization, language).getKee()).isEqualTo(key);
+  private void checkDefaultProfile(String language, String key) {
+    assertThat(dbClient.qualityProfileDao().selectDefaultProfile(db.getSession(), language).getKee()).isEqualTo(key);
   }
 }

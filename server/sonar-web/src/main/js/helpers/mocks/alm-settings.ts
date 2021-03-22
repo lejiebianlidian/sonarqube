@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +19,19 @@
  */
 import {
   AlmKeys,
+  AlmSettingsBindingStatus,
+  AlmSettingsBindingStatusType,
   AlmSettingsInstance,
   AzureBindingDefinition,
   BitbucketBindingDefinition,
+  BitbucketCloudBindingDefinition,
   GithubBindingDefinition,
   GitlabBindingDefinition,
   ProjectAlmBindingResponse,
-  ProjectBitbucketBindingResponse
+  ProjectAzureBindingResponse,
+  ProjectBitbucketBindingResponse,
+  ProjectGitHubBindingResponse,
+  ProjectGitLabBindingResponse
 } from '../../types/alm-settings';
 
 export function mockAlmSettingsInstance(
@@ -55,6 +61,18 @@ export function mockBitbucketBindingDefinition(
     key: 'key',
     personalAccessToken: 'asdf1234',
     url: 'http://bbs.enterprise.com',
+    ...overrides
+  };
+}
+
+export function mockBitbucketCloudBindingDefinition(
+  overrides: Partial<BitbucketCloudBindingDefinition> = {}
+): BitbucketCloudBindingDefinition {
+  return {
+    key: 'key',
+    clientId: 'client1',
+    clientSecret: '**clientsecret**',
+    workspace: 'workspace',
     ...overrides
   };
 }
@@ -93,14 +111,65 @@ export function mockProjectAlmBindingResponse(
   };
 }
 
-export function mockProjectBitbucketBindingGet(
+export function mockProjectBitbucketBindingResponse(
   overrides: Partial<ProjectBitbucketBindingResponse> = {}
 ): ProjectBitbucketBindingResponse {
   return {
-    alm: AlmKeys.Bitbucket,
+    alm: AlmKeys.BitbucketServer,
     key: 'foo',
     repository: 'PROJECT_KEY',
     slug: 'repo-slug',
+    monorepo: true,
+    ...overrides
+  };
+}
+
+export function mockProjectGithubBindingResponse(
+  overrides: Partial<ProjectGitHubBindingResponse> = {}
+): ProjectGitHubBindingResponse {
+  return {
+    alm: AlmKeys.GitHub,
+    key: 'foo',
+    repository: 'PROJECT_KEY',
+    monorepo: true,
+    ...overrides
+  };
+}
+
+export function mockProjectGitLabBindingResponse(
+  overrides: Partial<ProjectGitLabBindingResponse> = {}
+): ProjectGitLabBindingResponse {
+  return {
+    alm: AlmKeys.GitLab,
+    key: 'foo',
+    repository: 'PROJECT_KEY',
+    url: 'https://gitlab.com/api/v4',
+    monorepo: true,
+    ...overrides
+  };
+}
+
+export function mockProjectAzureBindingResponse(
+  overrides: Partial<ProjectAzureBindingResponse> = {}
+): ProjectAzureBindingResponse {
+  return {
+    alm: AlmKeys.Azure,
+    key: 'foo',
+    slug: 'PROJECT_NAME',
+    repository: 'REPOSITORY_NAME',
+    url: 'https://ado.my_company.com/mycollection',
+    monorepo: false,
+    ...overrides
+  };
+}
+
+export function mockAlmSettingsBindingStatus(
+  overrides: Partial<AlmSettingsBindingStatus>
+): AlmSettingsBindingStatus {
+  return {
+    alertSuccess: false,
+    failureMessage: '',
+    type: AlmSettingsBindingStatusType.Validating,
     ...overrides
   };
 }

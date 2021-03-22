@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ import { isLoggedIn } from '../../../helpers/users';
 import { BranchLike } from '../../../types/branch-like';
 import { Hotspot } from '../../../types/security-hotspots';
 import Assignee from './assignee/Assignee';
+import HotspotOpenInIdeButton from './HotspotOpenInIdeButton';
 import HotspotReviewHistoryAndComments from './HotspotReviewHistoryAndComments';
 import HotspotSnippetContainer from './HotspotSnippetContainer';
 import './HotspotViewer.css';
@@ -48,7 +49,7 @@ export interface HotspotViewerRendererProps {
   commentTextRef: React.RefObject<HTMLTextAreaElement>;
   onOpenComment: () => void;
   onCloseComment: () => void;
-  onUpdateHotspot: () => Promise<void>;
+  onUpdateHotspot: (statusUpdate?: boolean) => Promise<void>;
   securityCategories: T.StandardSecurityCategories;
 }
 
@@ -73,18 +74,26 @@ export function HotspotViewerRenderer(props: HotspotViewerRendererProps) {
   );
 
   return (
-    <DeferredSpinner loading={loading}>
+    <DeferredSpinner className="big-spacer-left big-spacer-top" loading={loading}>
       {hotspot && (
         <div className="big-padded hotspot-content">
           <div className="huge-spacer-bottom display-flex-space-between">
             <strong className="big big-spacer-right">{hotspot.message}</strong>
             <div className="display-flex-row flex-0">
               {isLoggedIn(currentUser) && (
-                <div className="dropdown spacer-right flex-1-0-auto">
-                  <Button onClick={props.onOpenComment}>
-                    {translate('hotspots.comment.open')}
-                  </Button>
-                </div>
+                <>
+                  <div className="dropdown spacer-right flex-1-0-auto">
+                    <Button className="it__hs-add-comment" onClick={props.onOpenComment}>
+                      {translate('hotspots.comment.open')}
+                    </Button>
+                  </div>
+                  <div className="dropdown spacer-right flex-1-0-auto">
+                    <HotspotOpenInIdeButton
+                      hotspotKey={hotspot.key}
+                      projectKey={hotspot.project.key}
+                    />
+                  </div>
+                </>
               )}
               <ClipboardButton className="flex-1-0-auto" copyValue={permalink}>
                 <LinkIcon className="spacer-right" />
@@ -111,7 +120,7 @@ export function HotspotViewerRenderer(props: HotspotViewerRendererProps) {
                   {translate('risk_exposure', hotspot.rule.vulnerabilityProbability)}
                 </div>
               </div>
-              <div className="display-flex-center">
+              <div className="display-flex-center it__hs-assignee">
                 <span className="big-spacer-right">{translate('assignee')}</span>
                 <div>
                   <Assignee hotspot={hotspot} onAssigneeChange={props.onUpdateHotspot} />
@@ -119,7 +128,7 @@ export function HotspotViewerRenderer(props: HotspotViewerRendererProps) {
               </div>
             </div>
             <div className="huge-spacer-left">
-              <Status hotspot={hotspot} onStatusChange={props.onUpdateHotspot} />
+              <Status hotspot={hotspot} onStatusChange={() => props.onUpdateHotspot(true)} />
             </div>
           </div>
 

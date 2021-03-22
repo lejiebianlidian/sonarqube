@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ public class HotspotRuleDescription {
   }
 
   public static HotspotRuleDescription from(RuleDefinitionDto dto) {
-    String description = dto.getDescription();
+    String description = dto.isCustomRule() ? RuleDescriptionFormatter.getDescriptionAsHtml(dto) : dto.getDescription();
     return from(description);
   }
 
@@ -111,12 +111,12 @@ public class HotspotRuleDescription {
       if (endIndex == -1) {
         endIndex = description.length();
       }
-      return new String[] {
+      return new String[]{
         description.substring(0, beginningIndex) + description.substring(endIndex),
         description.substring(beginningIndex, endIndex)
       };
     } else {
-      return new String[] {description, ""};
+      return new String[]{description, ""};
     }
 
   }

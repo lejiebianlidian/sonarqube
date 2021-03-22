@@ -15,7 +15,6 @@ exports[`should render correctly 1`] = `
         },
       ]
     }
-    organization="foo"
   />
   <div
     className="boxed-group boxed-group-inner quality-profiles-table"
@@ -36,9 +35,15 @@ exports[`should render correctly 1`] = `
             className="text-right nowrap"
           >
             quality_profiles.list.projects
-            <DocTooltip
+            <HelpTooltip
               className="table-cell-doc"
-              doc={Promise {}}
+              overlay={
+                <div
+                  className="big-padded-top big-padded-bottom"
+                >
+                  quality_profiles.list.projects.help
+                </div>
+              }
             />
           </th>
           <th
@@ -64,7 +69,6 @@ exports[`should render correctly 1`] = `
       <tbody>
         <Memo(ProfilesListRow)
           key="key"
-          organization="foo"
           profile={
             Object {
               "activeDeprecatedRuleCount": 2,
@@ -78,7 +82,6 @@ exports[`should render correctly 1`] = `
               "language": "css",
               "languageName": "CSS",
               "name": "name",
-              "organization": "foo",
               "projectCount": 3,
             }
           }
@@ -106,9 +109,15 @@ exports[`should render correctly 1`] = `
             className="text-right nowrap"
           >
             quality_profiles.list.projects
-            <DocTooltip
+            <HelpTooltip
               className="table-cell-doc"
-              doc={Promise {}}
+              overlay={
+                <div
+                  className="big-padded-top big-padded-bottom"
+                >
+                  quality_profiles.list.projects.help
+                </div>
+              }
             />
           </th>
           <th
@@ -134,7 +143,6 @@ exports[`should render correctly 1`] = `
       <tbody>
         <Memo(ProfilesListRow)
           key="key"
-          organization="foo"
           profile={
             Object {
               "activeDeprecatedRuleCount": 2,
@@ -148,7 +156,6 @@ exports[`should render correctly 1`] = `
               "language": "js",
               "languageName": "JavaScript",
               "name": "name",
-              "organization": "foo",
               "projectCount": 3,
             }
           }
@@ -176,7 +183,6 @@ exports[`should render correctly 2`] = `
         },
       ]
     }
-    organization="foo"
   />
   <div
     className="boxed-group boxed-group-inner quality-profiles-table"
@@ -197,9 +203,15 @@ exports[`should render correctly 2`] = `
             className="text-right nowrap"
           >
             quality_profiles.list.projects
-            <DocTooltip
+            <HelpTooltip
               className="table-cell-doc"
-              doc={Promise {}}
+              overlay={
+                <div
+                  className="big-padded-top big-padded-bottom"
+                >
+                  quality_profiles.list.projects.help
+                </div>
+              }
             />
           </th>
           <th
@@ -225,7 +237,6 @@ exports[`should render correctly 2`] = `
       <tbody>
         <Memo(ProfilesListRow)
           key="key"
-          organization="foo"
           profile={
             Object {
               "activeDeprecatedRuleCount": 2,
@@ -239,7 +250,6 @@ exports[`should render correctly 2`] = `
               "language": "css",
               "languageName": "CSS",
               "name": "name",
-              "organization": "foo",
               "projectCount": 3,
             }
           }
@@ -267,7 +277,6 @@ exports[`should render correctly 3`] = `
         },
       ]
     }
-    organization="foo"
   />
   <Alert
     className="spacer-top"

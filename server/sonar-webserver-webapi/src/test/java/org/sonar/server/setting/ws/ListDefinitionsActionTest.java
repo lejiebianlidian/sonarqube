@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,12 +36,9 @@ import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.server.component.TestComponentFinder;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ws.TestRequest;
 import org.sonar.server.ws.WsActionTester;
@@ -58,8 +55,8 @@ import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.api.web.UserRole.ADMIN;
 import static org.sonar.api.web.UserRole.CODEVIEWER;
 import static org.sonar.api.web.UserRole.USER;
-import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
-import static org.sonar.db.permission.OrganizationPermission.SCAN;
+import static org.sonar.db.permission.GlobalPermission.ADMINISTER;
+import static org.sonar.db.permission.GlobalPermission.SCAN;
 import static org.sonarqube.ws.MediaTypes.JSON;
 import static org.sonarqube.ws.Settings.Definition.CategoryOneOfCase.CATEGORYONEOF_NOT_SET;
 import static org.sonarqube.ws.Settings.Definition.DefaultValueOneOfCase.DEFAULTVALUEONEOF_NOT_SET;
@@ -86,14 +83,13 @@ public class ListDefinitionsActionTest {
   private ComponentDbTester componentDb = new ComponentDbTester(db);
   private ComponentDto project;
   private PropertyDefinitions propertyDefinitions = new PropertyDefinitions(System2.INSTANCE);
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-  private SettingsWsSupport support = new SettingsWsSupport(defaultOrganizationProvider, userSession);
+  private SettingsWsSupport support = new SettingsWsSupport(userSession);
   private WsActionTester ws = new WsActionTester(
     new ListDefinitionsAction(dbClient, TestComponentFinder.from(db), userSession, propertyDefinitions, support));
 
   @Before
   public void setUp() {
-    project = componentDb.insertComponent(ComponentTesting.newPrivateProjectDto(db.organizations().insert()));
+    project = componentDb.insertComponent(ComponentTesting.newPrivateProjectDto());
   }
 
   @Test
@@ -193,6 +189,21 @@ public class ListDefinitionsActionTest {
     Definition definition = result.getDefinitions(0);
     assertThat(definition.getType()).isEqualTo(SINGLE_SELECT_LIST);
     assertThat(definition.getOptionsList()).containsExactly("one", "two");
+  }
+
+  @Test
+  public void return_JSON_property() {
+    logIn();
+    propertyDefinitions.addComponent(PropertyDefinition
+        .builder("foo")
+        .type(PropertyType.JSON)
+        .build());
+
+    ListDefinitionsWsResponse result = executeRequest();
+
+    assertThat(result.getDefinitionsList()).hasSize(1);
+    Definition definition = result.getDefinitions(0);
+    assertThat(definition.getType()).isEqualTo(Settings.Type.JSON);
   }
 
   @Test
@@ -308,7 +319,7 @@ public class ListDefinitionsActionTest {
 
   @Test
   public void does_not_return_hidden_properties() {
-    logInAsAdmin(db.getDefaultOrganization());
+    logInAsAdmin();
     propertyDefinitions.addComponent(PropertyDefinition.builder("foo").hidden().build());
 
     ListDefinitionsWsResponse result = executeRequest();
@@ -318,7 +329,7 @@ public class ListDefinitionsActionTest {
 
   @Test
   public void return_license_type() {
-    logInAsAdmin(db.getDefaultOrganization());
+    logInAsAdmin();
     propertyDefinitions.addComponents(asList(
       PropertyDefinition.builder("plugin.license.secured").type(PropertyType.LICENSE).build(),
       PropertyDefinition.builder("commercial.plugin").type(PropertyType.LICENSE).build()));
@@ -342,7 +353,7 @@ public class ListDefinitionsActionTest {
 
   @Test
   public void return_secured_settings_when_not_authenticated_but_with_scan_permission() {
-    userSession.anonymous().addPermission(SCAN, db.getDefaultOrganization());
+    userSession.anonymous().addPermission(SCAN);
     propertyDefinitions.addComponents(asList(
       PropertyDefinition.builder("foo").build(),
       PropertyDefinition.builder("secret.secured").build()));
@@ -354,7 +365,7 @@ public class ListDefinitionsActionTest {
 
   @Test
   public void return_secured_settings_when_system_admin() {
-    logInAsAdmin(db.getDefaultOrganization());
+    logInAsAdmin();
     propertyDefinitions.addComponents(asList(
       PropertyDefinition.builder("foo").build(),
       PropertyDefinition.builder("secret.secured").build()));
@@ -477,8 +488,8 @@ public class ListDefinitionsActionTest {
     userSession.logIn().addProjectPermission(USER, project);
   }
 
-  private void logInAsAdmin(OrganizationDto org) {
-    userSession.logIn().addPermission(ADMINISTER, org);
+  private void logInAsAdmin() {
+    userSession.logIn().addPermission(ADMINISTER);
   }
 
   private void logInAsProjectAdmin() {

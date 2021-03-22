@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@ public class ProjectDto {
   private String tags;
   private long createdAt;
   private long updatedAt;
-  private String organizationUuid;
 
   public ProjectDto() {
     // nothing to do here
@@ -128,15 +127,6 @@ public class ProjectDto {
     return this;
   }
 
-  public String getOrganizationUuid() {
-    return organizationUuid;
-  }
-
-  public ProjectDto setOrganizationUuid(String organizationUuid) {
-    this.organizationUuid = organizationUuid;
-    return this;
-  }
-
   public String getName() {
     return name;
   }
@@ -181,4 +171,5 @@ public class ProjectDto {
   public int hashCode() {
     return uuid != null ? uuid.hashCode() : 0;
   }
+
 }

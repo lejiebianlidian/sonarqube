@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,33 +25,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.sonar.scanner.ci.CiConfiguration;
 import org.sonar.scanner.config.DefaultConfiguration;
 import org.sonar.scanner.protocol.output.ScannerReport;
 import org.sonar.scanner.protocol.output.ScannerReportWriter;
 import org.sonar.scanner.repository.ContextPropertiesCache;
+import org.sonar.scanner.scm.ScmConfiguration;
 
-import static java.util.Collections.emptyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ContextPropertiesPublisherTest {
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  private ScannerReportWriter writer = mock(ScannerReportWriter.class);
-  private ContextPropertiesCache cache = new ContextPropertiesCache();
-  private DefaultConfiguration config = mock(DefaultConfiguration.class);
-  private Map<String, String> props = new HashMap<>();
-  private ContextPropertiesPublisher underTest = new ContextPropertiesPublisher(cache, config);
+  private final ScannerReportWriter writer = mock(ScannerReportWriter.class);
+  private final ContextPropertiesCache cache = new ContextPropertiesCache();
+  private final DefaultConfiguration config = mock(DefaultConfiguration.class);
+  private final Map<String, String> props = new HashMap<>();
+  private final ScmConfiguration scmConfiguration = mock(ScmConfiguration.class);
+  private final CiConfiguration ciConfiguration = mock(CiConfiguration.class);
+  private final ContextPropertiesPublisher underTest = new ContextPropertiesPublisher(cache, config, scmConfiguration, ciConfiguration);
 
   @Before
   public void prepareMock() {
     when(config.getProperties()).thenReturn(props);
+    when(ciConfiguration.getCiName()).thenReturn("undetected");
   }
 
   @Test
@@ -63,15 +62,10 @@ public class ContextPropertiesPublisherTest {
 
     List<ScannerReport.ContextProperty> expected = Arrays.asList(
       newContextProperty("foo1", "bar1"),
-      newContextProperty("foo2", "bar2"));
+      newContextProperty("foo2", "bar2"),
+      newContextProperty("sonar.analysis.detectedscm", "undetected"),
+      newContextProperty("sonar.analysis.detectedci", "undetected"));
     expectWritten(expected);
-  }
-
-  @Test
-  public void publish_writes_no_properties_to_report() {
-    underTest.publish(writer);
-
-    expectWritten(emptyList());
   }
 
   @Test
@@ -84,7 +78,9 @@ public class ContextPropertiesPublisherTest {
 
     List<ScannerReport.ContextProperty> expected = Arrays.asList(
       newContextProperty("sonar.analysis.revision", "ab45b3"),
-      newContextProperty("sonar.analysis.build.number", "B123"));
+      newContextProperty("sonar.analysis.build.number", "B123"),
+      newContextProperty("sonar.analysis.detectedscm", "undetected"),
+      newContextProperty("sonar.analysis.detectedci", "undetected"));
     expectWritten(expected);
   }
 

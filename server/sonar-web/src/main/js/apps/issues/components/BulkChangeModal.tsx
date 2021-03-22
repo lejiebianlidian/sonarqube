@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { bulkChangeIssues, searchIssueTags } from '../../../api/issues';
 import throwGlobalError from '../../../app/utils/throwGlobalError';
-import MarkdownTips from '../../../components/common/MarkdownTips';
+import FormattingTips from '../../../components/common/FormattingTips';
 import SeverityHelper from '../../../components/shared/SeverityHelper';
 import Avatar from '../../../components/ui/Avatar';
 import { isLoggedIn, isUserActive } from '../../../helpers/users';
@@ -56,7 +56,6 @@ interface Props {
   fetchIssues: (x: {}) => Promise<{ issues: T.Issue[]; paging: T.Paging }>;
   onClose: () => void;
   onDone: () => void;
-  organization: { key: string } | undefined;
 }
 
 interface FormFields {
@@ -64,7 +63,6 @@ interface FormFields {
   assignee?: AssigneeOption;
   comment?: string;
   notifications?: boolean;
-  organization?: string;
   removeTags?: Array<{ label: string; value: string }>;
   severity?: string;
   transition?: string;
@@ -94,20 +92,13 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    let organization = props.component && props.component.organization;
-    if (props.organization && !organization) {
-      organization = props.organization.key;
-    }
-    this.state = { initialTags: [], issues: [], loading: true, submitting: false, organization };
+    this.state = { initialTags: [], issues: [], loading: true, submitting: false };
   }
 
   componentDidMount() {
     this.mounted = true;
 
-    Promise.all([
-      this.loadIssues(),
-      searchIssueTags({ organization: this.state.organization })
-    ]).then(
+    Promise.all([this.loadIssues(), searchIssueTags({})]).then(
       ([{ issues, paging }, tags]) => {
         if (this.mounted) {
           if (issues.length > MAX_PAGE_SIZE) {
@@ -160,7 +151,7 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
   };
 
   handleAssigneeSearch = (query: string) => {
-    return searchAssignees(query, this.state.organization).then(({ results }) =>
+    return searchAssignees(query).then(({ results }) =>
       results.map(r => {
         const userInfo = r.name || r.login;
 
@@ -178,7 +169,7 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
   };
 
   handleTagsSearch = (query: string) => {
-    return searchIssueTags({ organization: this.state.organization, q: query }).then(tags =>
+    return searchIssueTags({ q: query }).then(tags =>
       tags.map(tag => ({ label: tag, value: tag }))
     );
   };
@@ -476,7 +467,7 @@ export default class BulkChangeModal extends React.PureComponent<Props, State> {
           rows={4}
           value={this.state.comment || ''}
         />
-        <MarkdownTips className="modal-field-descriptor text-right" />
+        <FormattingTips className="modal-field-descriptor text-right" />
       </div>
     );
   };

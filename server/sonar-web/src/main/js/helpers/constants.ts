@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,14 +18,21 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { colors } from '../app/theme';
+import { AlmKeys } from '../types/alm-settings';
+import { ComponentQualifier } from '../types/component';
+import { IssueScope, IssueType } from '../types/issues';
 
 export const SEVERITIES = ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'INFO'];
 export const STATUSES = ['OPEN', 'REOPENED', 'CONFIRMED', 'RESOLVED', 'CLOSED'];
 export const ISSUE_TYPES: T.IssueType[] = [
-  'BUG',
-  'VULNERABILITY',
-  'CODE_SMELL',
-  'SECURITY_HOTSPOT'
+  IssueType.Bug,
+  IssueType.Vulnerability,
+  IssueType.CodeSmell,
+  IssueType.SecurityHotspot
+];
+export const SOURCE_SCOPES = [
+  { scope: IssueScope.Main, qualifier: ComponentQualifier.File },
+  { scope: IssueScope.Test, qualifier: ComponentQualifier.TestFile }
 ];
 export const RULE_TYPES: T.RuleType[] = ['BUG', 'VULNERABILITY', 'CODE_SMELL', 'SECURITY_HOTSPOT'];
 export const RULE_STATUSES = ['READY', 'BETA', 'DEPRECATED'];
@@ -55,3 +62,18 @@ export const RATING_COLORS = [
 ];
 
 export const PROJECT_KEY_MAX_LEN = 400;
+
+export const ALM_DOCUMENTATION_PATHS = {
+  [AlmKeys.Azure]: '/documentation/analysis/azuredevops-integration/',
+  [AlmKeys.BitbucketServer]: '/documentation/analysis/bitbucket-integration/',
+  [AlmKeys.BitbucketCloud]: '/documentation/analysis/bitbucket-cloud-integration/',
+  [AlmKeys.GitHub]: '/documentation/analysis/github-integration/',
+  [AlmKeys.GitLab]: '/documentation/analysis/gitlab-integration/'
+};
+
+export const IMPORT_COMPATIBLE_ALMS = [
+  AlmKeys.Azure,
+  AlmKeys.BitbucketServer,
+  AlmKeys.GitHub,
+  AlmKeys.GitLab
+];

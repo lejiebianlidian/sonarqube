@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ import org.sonar.server.platform.db.migration.step.DdlChange;
 import static org.sonar.server.platform.db.migration.def.VarcharColumnDef.newVarcharColumnDefBuilder;
 
 public abstract class AddUuidColumnToTable extends DdlChange {
+
   private static final VarcharColumnDef uuidColumnDefinition = newVarcharColumnDefBuilder()
     .setColumnName("uuid")
     .setIsNullable(true)
@@ -36,7 +37,7 @@ public abstract class AddUuidColumnToTable extends DdlChange {
     .build();
   private String tableName;
 
-  public AddUuidColumnToTable(Database db, String tableName) {
+  protected AddUuidColumnToTable(Database db, String tableName) {
     super(db);
     this.tableName = tableName;
   }

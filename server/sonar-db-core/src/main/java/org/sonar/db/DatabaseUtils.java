@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -348,6 +348,30 @@ public class DatabaseUtils {
       return Optional.empty();
     } catch (SQLException e) {
       throw wrapSqlException(e, "Can not check that table %s exists", tableName);
+    }
+  }
+
+  public static boolean tableColumnExists(Connection connection, String tableName, String columnName) {
+    try {
+      return columnExists(connection, tableName.toLowerCase(Locale.US), columnName)
+        || columnExists(connection, tableName.toUpperCase(Locale.US), columnName);
+    } catch (SQLException e) {
+      throw wrapSqlException(e, "Can not check that column %s exists", columnName);
+    }
+  }
+
+  private static boolean columnExists(Connection connection, String tableName, String columnName) throws SQLException {
+    String schema = getSchema(connection);
+    try (ResultSet rs = connection.getMetaData().getColumns(connection.getCatalog(), schema, tableName, null)) {
+      while (rs.next()) {
+        for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+          String name = rs.getString(i);
+          if (columnName.equalsIgnoreCase(name)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 

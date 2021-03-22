@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.CheckForNull;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.user.GroupDto;
 import org.sonar.server.exceptions.UnauthorizedException;
@@ -55,6 +54,12 @@ public class ThreadLocalUserSession implements UserSession {
 
   public boolean hasSession() {
     return DELEGATE.get() != null;
+  }
+
+  @Override
+  @CheckForNull
+  public Long getLastSonarlintConnectionDate() {
+    return get().getLastSonarlintConnectionDate();
   }
 
   @Override
@@ -112,13 +117,18 @@ public class ThreadLocalUserSession implements UserSession {
   }
 
   @Override
-  public boolean hasPermission(OrganizationPermission permission, String organizationUuid) {
-    return get().hasPermission(permission, organizationUuid);
+  public boolean shouldResetPassword() {
+    return get().shouldResetPassword();
   }
 
   @Override
-  public UserSession checkPermission(OrganizationPermission permission, String organizationUuid) {
-    get().checkPermission(permission, organizationUuid);
+  public boolean hasPermission(GlobalPermission permission) {
+    return get().hasPermission(permission);
+  }
+
+  @Override
+  public UserSession checkPermission(GlobalPermission permission) {
+    get().checkPermission(permission);
     return this;
   }
 
@@ -167,17 +177,6 @@ public class ThreadLocalUserSession implements UserSession {
   }
 
   @Override
-  public UserSession checkPermission(OrganizationPermission permission, OrganizationDto organization) {
-    get().checkPermission(permission, organization);
-    return this;
-  }
-
-  @Override
-  public boolean hasPermission(OrganizationPermission permission, OrganizationDto organization) {
-    return get().hasPermission(permission, organization);
-  }
-
-  @Override
   public List<ComponentDto> keepAuthorizedComponents(String permission, Collection<ComponentDto> components) {
     return get().keepAuthorizedComponents(permission, components);
   }
@@ -185,16 +184,5 @@ public class ThreadLocalUserSession implements UserSession {
   @Override
   public List<ProjectDto> keepAuthorizedProjects(String permission, Collection<ProjectDto> projects) {
     return get().keepAuthorizedProjects(permission, projects);
-  }
-
-  @Override
-  public boolean hasMembership(OrganizationDto organizationDto) {
-    return get().hasMembership(organizationDto);
-  }
-
-  @Override
-  public UserSession checkMembership(OrganizationDto organization) {
-    get().checkMembership(organization);
-    return this;
   }
 }

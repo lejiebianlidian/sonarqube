@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.measure.custom.CustomMeasureDto;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.component.TestComponentFinder;
 import org.sonar.server.es.EsTester;
@@ -67,7 +66,7 @@ public class CreateActionTest {
   @Rule
   public EsTester es = EsTester.create();
 
-  private WsActionTester ws = new WsActionTester(
+  private final WsActionTester ws = new WsActionTester(
     new CreateAction(db.getDbClient(), userSession, System2.INSTANCE, new CustomMeasureValidator(newFullTypeValidations()),
       new CustomMeasureJsonWriter(new UserJsonWriter(userSession)), TestComponentFinder.from(db)));
 
@@ -76,9 +75,9 @@ public class CreateActionTest {
     Action wsDef = ws.getDef();
 
     assertThat(wsDef.deprecatedSince()).isEqualTo("7.4");
-    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.isInternal()).isFalse();
     assertThat(wsDef.since()).isEqualTo("5.2");
-    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.isPost()).isTrue();
     assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription).containsOnly(
       tuple("8.4", "Param 'metricId' data type changes from integer to string."));
   }
@@ -111,7 +110,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "42")
       .execute();
 
@@ -129,7 +128,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "custom-measure-free-text")
       .execute();
 
@@ -165,7 +164,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_KEY, project.getKey())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
 
@@ -183,7 +182,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "4.2")
       .execute();
 
@@ -201,7 +200,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "253")
       .execute();
 
@@ -219,7 +218,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, Metric.Level.ERROR.name())
       .execute();
 
@@ -237,7 +236,7 @@ public class CreateActionTest {
 
     String response = ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "custom-measure-free-text")
       .execute()
@@ -284,14 +283,13 @@ public class CreateActionTest {
   @Test
   public void create_custom_measure_on_a_view() {
     MetricDto metric = db.measures().insertMetric(m -> m.setUserManaged(true).setValueType(BOOL.name()));
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto view = db.components().insertPrivatePortfolio(organization);
+    ComponentDto view = db.components().insertPrivatePortfolio();
     UserDto user = db.users().insertUser();
     userSession.logIn(user).addProjectPermission(ADMIN, view);
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, view.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "true")
       .execute();
@@ -304,15 +302,14 @@ public class CreateActionTest {
   @Test
   public void create_custom_measure_on_a_sub_view() {
     MetricDto metric = db.measures().insertMetric(m -> m.setUserManaged(true).setValueType(BOOL.name()));
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto view = db.components().insertPrivatePortfolio(organization);
+    ComponentDto view = db.components().insertPrivatePortfolio();
     ComponentDto subView = db.components().insertSubView(view);
     UserDto user = db.users().insertUser();
     userSession.logIn(user).addProjectPermission(ADMIN, view);
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, subView.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_DESCRIPTION, "custom-measure-description")
       .setParam(CreateAction.PARAM_VALUE, "true")
       .execute();
@@ -334,7 +331,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_METRIC_ID, "whatever-id")
-      .setParam(CreateAction.PARAM_VALUE, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_VALUE, metric.getUuid())
       .execute();
   }
 
@@ -351,7 +348,7 @@ public class CreateActionTest {
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
       .setParam(CreateAction.PARAM_PROJECT_KEY, project.getKey())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -368,7 +365,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_KEY, "another-project-key")
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -385,7 +382,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, "another-project-uuid")
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -417,7 +414,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_METRIC_KEY, metric.getKey())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
@@ -469,7 +466,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -486,7 +483,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "non-correct-boolean-value")
       .execute();
   }
@@ -502,7 +499,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, project.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }
@@ -520,7 +517,7 @@ public class CreateActionTest {
 
     ws.newRequest()
       .setParam(CreateAction.PARAM_PROJECT_ID, directory.uuid())
-      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid().toString())
+      .setParam(CreateAction.PARAM_METRIC_ID, metric.getUuid())
       .setParam(CreateAction.PARAM_VALUE, "whatever-value")
       .execute();
   }

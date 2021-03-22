@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 
 public class GroupPermissionDto {
   private String uuid;
-  private String organizationUuid;
   private String groupUuid;
   private String componentUuid;
   private String role;
@@ -39,15 +38,6 @@ public class GroupPermissionDto {
 
   public String getGroupUuid() {
     return groupUuid;
-  }
-
-  public String getOrganizationUuid() {
-    return organizationUuid;
-  }
-
-  public GroupPermissionDto setOrganizationUuid(String s) {
-    this.organizationUuid = s;
-    return this;
   }
 
   /**

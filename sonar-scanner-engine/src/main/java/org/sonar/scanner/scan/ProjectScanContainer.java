@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,11 +44,13 @@ import org.sonar.scanner.bootstrap.ExtensionMatcher;
 import org.sonar.scanner.bootstrap.GlobalAnalysisMode;
 import org.sonar.scanner.bootstrap.MetricProvider;
 import org.sonar.scanner.bootstrap.PostJobExtensionDictionnary;
-import org.sonar.scanner.bootstrap.ProcessedScannerProperties;
 import org.sonar.scanner.ci.CiConfigurationProvider;
 import org.sonar.scanner.ci.vendors.AppVeyor;
+import org.sonar.scanner.ci.vendors.AwsCodeBuild;
 import org.sonar.scanner.ci.vendors.AzureDevops;
+import org.sonar.scanner.ci.vendors.Bamboo;
 import org.sonar.scanner.ci.vendors.BitbucketPipelines;
+import org.sonar.scanner.ci.vendors.Bitrise;
 import org.sonar.scanner.ci.vendors.Buildkite;
 import org.sonar.scanner.ci.vendors.CircleCi;
 import org.sonar.scanner.ci.vendors.CirrusCi;
@@ -131,6 +133,8 @@ import org.sonar.scanner.sensor.ProjectSensorContext;
 import org.sonar.scanner.sensor.ProjectSensorExtensionDictionnary;
 import org.sonar.scanner.sensor.ProjectSensorOptimizer;
 import org.sonar.scanner.sensor.ProjectSensorsExecutor;
+import org.sonar.scm.git.GitScmSupport;
+import org.sonar.scm.svn.SvnScmSupport;
 
 import static org.sonar.api.batch.InstantiationStrategy.PER_BATCH;
 import static org.sonar.core.extension.CoreExtensionsInstaller.noExtensionFilter;
@@ -157,8 +161,6 @@ public class ProjectScanContainer extends ComponentContainer {
 
   private void addScannerComponents() {
     add(
-      new ExternalProjectKeyAndOrganizationProvider(),
-      ProcessedScannerProperties.class,
       ScanProperties.class,
       ProjectReactorBuilder.class,
       WorkDirectoriesInitializer.class,
@@ -287,8 +289,11 @@ public class ProjectScanContainer extends ComponentContainer {
       // CI
       new CiConfigurationProvider(),
       AppVeyor.class,
+      AwsCodeBuild.class,
       AzureDevops.class,
+      Bamboo.class,
       BitbucketPipelines.class,
+      Bitrise.class,
       Buildkite.class,
       CircleCi.class,
       CirrusCi.class,
@@ -300,6 +305,9 @@ public class ProjectScanContainer extends ComponentContainer {
       TravisCi.class,
 
       AnalysisObservers.class);
+
+    add(GitScmSupport.getObjects());
+    add(SvnScmSupport.getObjects());
 
     addIfMissing(DefaultProjectSettingsLoader.class, ProjectSettingsLoader.class);
     addIfMissing(DefaultRulesLoader.class, RulesLoader.class);
@@ -331,7 +339,6 @@ public class ProjectScanContainer extends ComponentContainer {
     ScanProperties properties = getComponentByType(ScanProperties.class);
     properties.validate();
 
-    properties.organizationKey().ifPresent(k -> LOG.info("Organization key: {}", k));
     properties.get("sonar.branch").ifPresent(deprecatedBranch -> {
       throw MessageException.of("The 'sonar.branch' parameter is no longer supported. You should stop using it. " +
         "Branch analysis is available in Developer Edition and above. See https://redirect.sonarsource.com/editions/developer.html for more information.");

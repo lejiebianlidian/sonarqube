@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ import { translate } from 'sonar-ui-common/helpers/l10n';
 import PageCounter from '../../../components/common/PageCounter';
 
 interface Props {
-  className?: string;
   current: number | undefined;
   total: number;
 }

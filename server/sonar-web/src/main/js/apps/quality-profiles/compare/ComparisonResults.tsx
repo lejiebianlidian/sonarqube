@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import ComparisonResultActivation from './ComparisonResultActivation';
 type Params = T.Dict<string>;
 
 interface Props extends CompareResponse {
-  organization?: string;
   leftProfile: Profile;
   refresh: () => Promise<void>;
   rightProfile?: Profile;
@@ -42,9 +41,7 @@ export default class ComparisonResults extends React.PureComponent<Props> {
     return (
       <div>
         <SeverityIcon severity={severity} />{' '}
-        <Link to={getRulesUrl({ rule_key: rule.key, open: rule.key }, this.props.organization)}>
-          {rule.name}
-        </Link>
+        <Link to={getRulesUrl({ rule_key: rule.key, open: rule.key })}>{rule.name}</Link>
       </div>
     );
   }
@@ -94,7 +91,6 @@ export default class ComparisonResults extends React.PureComponent<Props> {
                 <ComparisonResultActivation
                   key={rule.key}
                   onDone={this.props.refresh}
-                  organization={this.props.organization || undefined}
                   profile={this.props.rightProfile}
                   ruleKey={rule.key}>
                   <ChevronRightIcon />
@@ -131,7 +127,6 @@ export default class ComparisonResults extends React.PureComponent<Props> {
               <ComparisonResultActivation
                 key={rule.key}
                 onDone={this.props.refresh}
-                organization={this.props.organization || undefined}
                 profile={this.props.leftProfile}
                 ruleKey={rule.key}>
                 <ChevronLeftIcon />

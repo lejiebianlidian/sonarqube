@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,20 +31,12 @@ import CreateProjectForm from '../CreateProjectForm';
 
 const createProject = require('../../../api/components').createProject as jest.Mock<any>;
 
-const organization: T.Organization = {
-  actions: { admin: true },
-  key: 'org',
-  name: 'org',
-  projectVisibility: 'public'
-};
-
 it('creates project', async () => {
   const wrapper = shallow(
     <CreateProjectForm
+      defaultProjectVisibility="public"
       onClose={jest.fn()}
-      onOrganizationUpgrade={jest.fn()}
       onProjectCreated={jest.fn()}
-      organization={organization}
     />
   );
   (wrapper.instance() as CreateProjectForm).mounted = true;
@@ -63,7 +55,6 @@ it('creates project', async () => {
   submit(wrapper.find('form'));
   expect(createProject).toBeCalledWith({
     name: 'name',
-    organization: 'org',
     project: 'key',
     visibility: 'private'
   });

@@ -3,7 +3,7 @@ title: Overview
 url: /analysis/languages/overview/
 ---
 
-SonarQube allows to analyze different languages depending on the Edition you are running.
+SonarQube provides analysis of different languages depending on the edition you're running.
 
 | Language                             | Community Edition      | Developer Edition      | Enterprise Edition and Data Center Edtion |
 | ------------------------------------ | ---------------------- | ---------------------- | ----------------------------------------- |
@@ -28,11 +28,11 @@ SonarQube allows to analyze different languages depending on the Edition you are
 | [Ruby](/analysis/languages/ruby/)             | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
 | [Scala](/analysis/languages/scala/)           | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
 | [Swift](/analysis/languages/swift/)           |                        | ![](/images/check.svg) | ![](/images/check.svg)                    |
-| [TypeScript](/analysis/languages/typescript/) | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
+| [TypeScript](/analysis/languages/javascript/) | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
 | [TSQL](/analysis/languages/tsql/)             |                        | ![](/images/check.svg) | ![](/images/check.svg)                    |
 | [VB.NET](/analysis/languages/vbnet/)          | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
 | [VB6](/analysis/languages/vb6/)               |                        |                        | ![](/images/check.svg)                    |
 | [HTML](/analysis/languages/html/)             | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
 | [XML](/analysis/languages/xml/)               | ![](/images/check.svg) | ![](/images/check.svg) | ![](/images/check.svg)                    |
 
-In this section you will find the documentation related to language analyzers made and supported by SonarSource.
+In this section, you'll find documentation related to languages supported by SonarSource.

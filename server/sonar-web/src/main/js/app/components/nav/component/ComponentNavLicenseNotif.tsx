@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,10 +24,11 @@ import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n
 import { isValidLicense } from '../../../../api/marketplace';
 import { withAppState } from '../../../../components/hoc/withAppState';
 import { ComponentQualifier } from '../../../../types/component';
+import { Task } from '../../../../types/tasks';
 
 interface Props {
   appState: Pick<T.AppState, 'canAdmin'>;
-  currentTask?: T.Task;
+  currentTask?: Task;
 }
 
 interface State {

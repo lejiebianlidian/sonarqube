@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,20 +25,13 @@ import { getRulesUrl } from '../../../helpers/urls';
 
 interface Props {
   count: number | null;
-  organization: string | null;
   qprofile: string;
   total: number | null;
 }
 
 export default function ProfileRulesRowTotal(props: Props) {
-  const activeRulesUrl = getRulesUrl(
-    { qprofile: props.qprofile, activation: 'true' },
-    props.organization
-  );
-  const inactiveRulesUrl = getRulesUrl(
-    { qprofile: props.qprofile, activation: 'false' },
-    props.organization
-  );
+  const activeRulesUrl = getRulesUrl({ qprofile: props.qprofile, activation: 'true' });
+  const inactiveRulesUrl = getRulesUrl({ qprofile: props.qprofile, activation: 'false' });
   let inactiveCount = null;
   if (props.count != null && props.total != null) {
     inactiveCount = props.total - props.count;

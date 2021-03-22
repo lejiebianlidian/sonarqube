@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,14 +28,6 @@ declare namespace T {
 
   export interface AlmApplication extends IdentityProvider {
     installationUrl: string;
-  }
-
-  export interface AlmOrganization extends OrganizationBase {
-    almUrl: string;
-    key: string;
-    personal: boolean;
-    privateRepos: number;
-    publicRepos: number;
   }
 
   export interface AlmRepository {
@@ -96,12 +88,11 @@ declare namespace T {
     authorizationError?: boolean;
     branchesEnabled?: boolean;
     canAdmin?: boolean;
-    defaultOrganization: string;
     edition: 'community' | 'developer' | 'enterprise' | 'datacenter' | undefined;
     globalPages?: Extension[];
+    instanceUsesDefaultAdminCredentials?: boolean;
     multipleAlmEnabled?: boolean;
     needIssueSync?: boolean;
-    organizationsEnabled?: boolean;
     productionDatabase: boolean;
     qualifiers: string[];
     settings: T.Dict<string>;
@@ -167,7 +158,6 @@ declare namespace T {
     key: string;
     match?: string;
     name: string;
-    organization?: string;
     path?: string;
     project?: string;
     qualifier: string;
@@ -212,7 +202,6 @@ declare namespace T {
   export interface CurrentUser {
     isLoggedIn: boolean;
     permissions?: { global: string[] };
-    showOnboardingTutorial?: boolean;
   }
 
   export interface CurrentUserSetting {
@@ -296,7 +285,6 @@ declare namespace T {
     | { type: 'ISSUES' }
     | { type: 'MY_ISSUES' }
     | { type: 'MY_PROJECTS' }
-    | { type: 'ORGANIZATION'; organization: string }
     | { type: 'PORTFOLIO'; component: string }
     | { type: 'PORTFOLIOS' }
     | { type: 'PROJECT'; branch: string | undefined; component: string }
@@ -307,7 +295,6 @@ declare namespace T {
     | 'ISSUES'
     | 'MY_ISSUES'
     | 'MY_PROJECTS'
-    | 'ORGANIZATION'
     | 'PORTFOLIO'
     | 'PORTFOLIOS'
     | 'PROJECT'
@@ -344,15 +331,14 @@ declare namespace T {
     fromHotspot: boolean;
     line?: number;
     message: string;
-    organization: string;
     project: string;
     projectName: string;
-    projectOrganization: string;
     projectKey: string;
     pullRequest?: string;
     resolution?: string;
     rule: string;
     ruleName: string;
+    ruleStatus?: string;
     secondaryLocations: FlowLocation[];
     severity: string;
     status: string;
@@ -405,7 +391,6 @@ declare namespace T {
 
   export interface LightComponent {
     key: string;
-    organization: string;
     qualifier: string;
   }
 
@@ -436,7 +421,6 @@ declare namespace T {
     homepage?: HomePage;
     isLoggedIn: true;
     local?: boolean;
-    personalOrganization?: string;
     scmAccounts: string[];
     settings?: CurrentUserSetting[];
   }
@@ -452,7 +436,7 @@ declare namespace T {
 
   interface MeasureIntern {
     bestValue?: boolean;
-    periods?: PeriodMeasure[];
+    period?: PeriodMeasure;
     value?: string;
   }
 
@@ -510,7 +494,6 @@ declare namespace T {
 
   export interface Notification {
     channel: string;
-    organization?: string;
     project?: string;
     projectName?: string;
     type: string;
@@ -520,39 +503,6 @@ declare namespace T {
     project: string;
     projectName: string;
   }
-
-  export interface OrganizationActions {
-    admin?: boolean;
-    delete?: boolean;
-    provision?: boolean;
-    executeAnalysis?: boolean;
-  }
-
-  export interface Organization extends OrganizationBase {
-    actions?: OrganizationActions;
-    alm?: { key: string; membersSync: boolean; personal: boolean; url: string };
-    adminPages?: Extension[];
-    canUpdateProjectsVisibilityToPrivate?: boolean;
-    isDefault?: boolean;
-    key: string;
-    pages?: Extension[];
-    projectVisibility?: Visibility;
-    subscription?: OrganizationSubscription;
-  }
-
-  export interface OrganizationBase {
-    avatar?: string;
-    description?: string;
-    key?: string;
-    name: string;
-    url?: string;
-  }
-
-  export interface OrganizationMember extends UserActive {
-    groupCount?: number;
-  }
-
-  export type OrganizationSubscription = 'FREE' | 'PAID' | 'SONARQUBE';
 
   export interface Paging {
     pageIndex: number;
@@ -723,54 +673,6 @@ declare namespace T {
 
   export type RuleType = 'BUG' | 'VULNERABILITY' | 'CODE_SMELL' | 'SECURITY_HOTSPOT' | 'UNKNOWN';
 
-  export type Setting = SettingValue & { definition: SettingDefinition };
-
-  export type SettingType =
-    | 'STRING'
-    | 'TEXT'
-    | 'PASSWORD'
-    | 'BOOLEAN'
-    | 'FLOAT'
-    | 'INTEGER'
-    | 'LICENSE'
-    | 'LONG'
-    | 'SINGLE_SELECT_LIST'
-    | 'PROPERTY_SET';
-
-  export interface SettingDefinition {
-    description?: string;
-    key: string;
-    multiValues?: boolean;
-    name?: string;
-    options: string[];
-    type?: SettingType;
-  }
-
-  export interface SettingFieldDefinition extends SettingDefinition {
-    description: string;
-    name: string;
-  }
-
-  export interface SettingCategoryDefinition extends SettingDefinition {
-    category: string;
-    defaultValue?: string;
-    deprecatedKey?: string;
-    fields: SettingFieldDefinition[];
-    multiValues?: boolean;
-    subCategory: string;
-  }
-
-  export interface SettingValue {
-    fieldValues?: Array<T.Dict<string>>;
-    inherited?: boolean;
-    key: string;
-    parentFieldValues?: Array<T.Dict<string>>;
-    parentValue?: string;
-    parentValues?: string[];
-    value?: string;
-    values?: string[];
-  }
-
   export interface Snippet {
     start: number;
     end: number;
@@ -823,12 +725,6 @@ declare namespace T {
   }
 
   export type StandardSecurityCategories = T.Dict<{ title: string; description?: string }>;
-
-  export type Standards = {
-    [key in StandardType]: T.Dict<{ title: string; description?: string }>;
-  };
-
-  export type StandardType = 'owaspTop10' | 'sansTop25' | 'cwe' | 'sonarsourceSecurity';
 
   export type Status = 'ERROR' | 'OK';
 
@@ -916,34 +812,6 @@ declare namespace T {
     | 'RESTARTING'
     | 'DB_MIGRATION_NEEDED'
     | 'DB_MIGRATION_RUNNING';
-
-  export interface Task {
-    analysisId?: string;
-    branch?: string;
-    componentKey?: string;
-    componentName?: string;
-    componentQualifier?: string;
-    errorMessage?: string;
-    errorStacktrace?: string;
-    errorType?: string;
-    executedAt?: string;
-    executionTimeMs?: number;
-    hasErrorStacktrace?: boolean;
-    hasScannerContext?: boolean;
-    id: string;
-    logs?: boolean;
-    organization: string;
-    pullRequest?: string;
-    pullRequestTitle?: string;
-    scannerContext?: string;
-    startedAt?: string;
-    status: string;
-    submittedAt: string;
-    submitterLogin?: string;
-    type: string;
-    warningCount?: number;
-    warnings?: string[];
-  }
 
   export interface TestCase {
     coveredLines: number;

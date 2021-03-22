@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
+import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.Scopes;
 import org.sonar.api.rules.RuleType;
 import org.sonar.db.DatabaseUtils;
@@ -73,14 +74,14 @@ class IssueIteratorForSingleChunk implements IssueIterator {
     "c.module_uuid_path",
     "c.path",
     "c.scope",
-    "c.organization_uuid",
     "c.project_uuid",
     "c.main_branch_project_uuid",
 
     // column 21
     "i.tags",
     "i.issue_type",
-    "r.security_standards"
+    "r.security_standards",
+    "c.qualifier"
   };
 
   private static final String SQL_ALL = "select " + StringUtils.join(FIELDS, ",") + " from issues i " +
@@ -213,9 +214,8 @@ class IssueIteratorForSingleChunk implements IssueIterator {
       String filePath = extractFilePath(rs.getString(16), scope);
       doc.setFilePath(filePath);
       doc.setDirectoryPath(extractDirPath(doc.filePath(), scope));
-      doc.setOrganizationUuid(rs.getString(18));
-      String branchUuid = rs.getString(19);
-      String mainBranchProjectUuid = DatabaseUtils.getString(rs, 20);
+      String branchUuid = rs.getString(18);
+      String mainBranchProjectUuid = DatabaseUtils.getString(rs, 19);
       doc.setBranchUuid(branchUuid);
       if (mainBranchProjectUuid == null) {
         doc.setProjectUuid(branchUuid);
@@ -224,17 +224,19 @@ class IssueIteratorForSingleChunk implements IssueIterator {
         doc.setProjectUuid(mainBranchProjectUuid);
         doc.setIsMainBranch(false);
       }
-      String tags = rs.getString(21);
+      String tags = rs.getString(20);
       doc.setTags(IssueIteratorForSingleChunk.TAGS_SPLITTER.splitToList(tags == null ? "" : tags));
-      doc.setType(RuleType.valueOf(rs.getInt(22)));
+      doc.setType(RuleType.valueOf(rs.getInt(21)));
 
-      SecurityStandards securityStandards = fromSecurityStandards(deserializeSecurityStandardsString(rs.getString(23)));
+      SecurityStandards securityStandards = fromSecurityStandards(deserializeSecurityStandardsString(rs.getString(22)));
       SecurityStandards.SQCategory sqCategory = securityStandards.getSqCategory();
       doc.setOwaspTop10(securityStandards.getOwaspTop10());
       doc.setCwe(securityStandards.getCwe());
       doc.setSansTop25(securityStandards.getSansTop25());
       doc.setSonarSourceSecurityCategory(sqCategory);
       doc.setVulnerabilityProbability(sqCategory.getVulnerability());
+
+      doc.setScope(Qualifiers.UNIT_TEST_FILE.equals(rs.getString(23)) ? IssueScope.TEST : IssueScope.MAIN);
       return doc;
     }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -82,6 +82,13 @@ public class PermissionIndexer implements ProjectIndexer {
     List<IndexPermissions> authorizations = getAllAuthorizations();
     Stream<AuthorizationScope> scopes = getScopes(uninitializedIndexTypes);
     index(authorizations, scopes, Size.LARGE);
+  }
+
+  public void indexAll(Set<IndexType> uninitializedIndexTypes) {
+    // TODO do not load everything in memory. Db rows should be scrolled.
+    List<IndexPermissions> authorizations = getAllAuthorizations();
+    Stream<AuthorizationScope> scopes = getScopes(uninitializedIndexTypes);
+    index(authorizations, scopes, Size.REGULAR);
   }
 
   @VisibleForTesting

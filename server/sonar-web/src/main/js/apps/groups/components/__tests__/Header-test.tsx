@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import Header from '../Header';
 
 it('should create new group', () => {
   const onCreate = jest.fn(() => Promise.resolve());
-  const wrapper = shallow(<Header loading={false} onCreate={onCreate} />);
+  const wrapper = shallow(<Header onCreate={onCreate} />);
   expect(wrapper).toMatchSnapshot();
 
   click(wrapper.find('[id="groups-create"]'));

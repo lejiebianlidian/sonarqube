@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,36 +27,41 @@ import { whenLoggedIn } from '../../../components/hoc/whenLoggedIn';
 import { withAppState } from '../../../components/hoc/withAppState';
 import { getProjectUrl } from '../../../helpers/urls';
 import { AlmKeys, AlmSettingsInstance } from '../../../types/alm-settings';
+import AzureProjectCreate from './AzureProjectCreate';
 import BitbucketProjectCreate from './BitbucketProjectCreate';
 import CreateProjectModeSelection from './CreateProjectModeSelection';
 import GitHubProjectCreate from './GitHubProjectCreate';
+import GitlabProjectCreate from './GitlabProjectCreate';
 import ManualProjectCreate from './ManualProjectCreate';
 import './style.css';
 import { CreateProjectModes } from './types';
 
 interface Props extends Pick<WithRouterProps, 'router' | 'location'> {
-  appState: Pick<T.AppState, 'branchesEnabled' | 'canAdmin'>;
+  appState: Pick<T.AppState, 'canAdmin'>;
   currentUser: T.LoggedInUser;
 }
 
 interface State {
+  azureSettings: AlmSettingsInstance[];
   bitbucketSettings: AlmSettingsInstance[];
   githubSettings: AlmSettingsInstance[];
+  gitlabSettings: AlmSettingsInstance[];
   loading: boolean;
 }
 
 export class CreateProjectPage extends React.PureComponent<Props, State> {
   mounted = false;
-  state: State = { bitbucketSettings: [], githubSettings: [], loading: true };
+  state: State = {
+    azureSettings: [],
+    bitbucketSettings: [],
+    githubSettings: [],
+    gitlabSettings: [],
+    loading: true
+  };
 
   componentDidMount() {
-    const {
-      appState: { branchesEnabled }
-    } = this.props;
     this.mounted = true;
-    if (branchesEnabled) {
-      this.fetchAlmBindings();
-    }
+    this.fetchAlmBindings();
   }
 
   componentWillUnmount() {
@@ -69,8 +74,10 @@ export class CreateProjectPage extends React.PureComponent<Props, State> {
       .then(almSettings => {
         if (this.mounted) {
           this.setState({
-            bitbucketSettings: almSettings.filter(s => s.alm === AlmKeys.Bitbucket),
+            azureSettings: almSettings.filter(s => s.alm === AlmKeys.Azure),
+            bitbucketSettings: almSettings.filter(s => s.alm === AlmKeys.BitbucketServer),
             githubSettings: almSettings.filter(s => s.alm === AlmKeys.GitHub),
+            gitlabSettings: almSettings.filter(s => s.alm === AlmKeys.GitLab),
             loading: false
           });
         }
@@ -102,9 +109,27 @@ export class CreateProjectPage extends React.PureComponent<Props, State> {
       location,
       router
     } = this.props;
-    const { bitbucketSettings, githubSettings, loading } = this.state;
+    const {
+      azureSettings,
+      bitbucketSettings,
+      githubSettings,
+      gitlabSettings,
+      loading
+    } = this.state;
 
     switch (mode) {
+      case CreateProjectModes.AzureDevOps: {
+        return (
+          <AzureProjectCreate
+            canAdmin={!!canAdmin}
+            loadingBindings={loading}
+            location={location}
+            onProjectCreate={this.handleProjectCreate}
+            router={router}
+            settings={azureSettings}
+          />
+        );
+      }
       case CreateProjectModes.BitbucketServer: {
         return (
           <BitbucketProjectCreate
@@ -128,15 +153,27 @@ export class CreateProjectPage extends React.PureComponent<Props, State> {
           />
         );
       }
+      case CreateProjectModes.GitLab: {
+        return (
+          <GitlabProjectCreate
+            canAdmin={!!canAdmin}
+            loadingBindings={loading}
+            location={location}
+            onProjectCreate={this.handleProjectCreate}
+            router={router}
+            settings={gitlabSettings}
+          />
+        );
+      }
       case CreateProjectModes.Manual: {
         return <ManualProjectCreate onProjectCreate={this.handleProjectCreate} />;
       }
       default: {
         const almCounts = {
-          [AlmKeys.Azure]: 0,
-          [AlmKeys.Bitbucket]: bitbucketSettings.length,
+          [AlmKeys.Azure]: azureSettings.length,
+          [AlmKeys.BitbucketServer]: bitbucketSettings.length,
           [AlmKeys.GitHub]: githubSettings.length,
-          [AlmKeys.GitLab]: 0
+          [AlmKeys.GitLab]: gitlabSettings.length
         };
         return (
           <CreateProjectModeSelection
@@ -150,10 +187,7 @@ export class CreateProjectPage extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      appState: { branchesEnabled },
-      location
-    } = this.props;
+    const { location } = this.props;
     const mode: CreateProjectModes | undefined = location.query?.mode;
 
     return (
@@ -161,7 +195,7 @@ export class CreateProjectPage extends React.PureComponent<Props, State> {
         <Helmet title={translate('my_account.create_new.TRK')} titleTemplate="%s" />
         <A11ySkipTarget anchor="create_project_main" />
         <div className="page page-limited huge-spacer-bottom position-relative" id="create-project">
-          {this.renderForm(branchesEnabled ? mode : CreateProjectModes.Manual)}
+          {this.renderForm(mode)}
         </div>
       </>
     );

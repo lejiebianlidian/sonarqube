@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ public class TaskDefinitionTest {
     TaskDefinition bar = TaskDefinition.builder().key("bar").taskClass(FooTask.class).description("Bar").build();
 
     assertThat(foo.compareTo(bar)).isGreaterThan(0);
-    assertThat(foo.compareTo(foo)).isEqualTo(0);
+    assertThat(foo).isEqualByComparingTo(foo);
     assertThat(bar.compareTo(foo)).isLessThan(0);
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,9 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.db.DbClient;
@@ -72,8 +73,16 @@ public class ActiveRuleIndexer implements ResilientIndexer {
 
   @Override
   public void indexOnStartup(Set<IndexType> uninitializedIndexTypes) {
+    indexAll(Size.LARGE);
+  }
+
+  public void indexAll() {
+    indexAll(Size.REGULAR);
+  }
+
+  private void indexAll(Size bulkSize) {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      BulkIndexer bulkIndexer = createBulkIndexer(Size.LARGE, IndexingListener.FAIL_ON_ERROR);
+      BulkIndexer bulkIndexer = createBulkIndexer(bulkSize, IndexingListener.FAIL_ON_ERROR);
       bulkIndexer.start();
       dbClient.activeRuleDao().scrollAllForIndexing(dbSession, ar -> bulkIndexer.add(newIndexRequest(ar)));
       bulkIndexer.stop();
@@ -184,8 +193,8 @@ public class ActiveRuleIndexer implements ResilientIndexer {
       RulesProfileDto profile = dbClient.qualityProfileDao().selectRuleProfile(dbSession, ruleProfileUUid);
       if (profile == null) {
         // profile does not exist anymore in db --> related documents must be deleted from index rules/activeRule
-        SearchRequestBuilder search = esClient.prepareSearch(TYPE_ACTIVE_RULE.getMainType())
-          .setQuery(QueryBuilders.boolQuery().must(termQuery(FIELD_ACTIVE_RULE_PROFILE_UUID, ruleProfileUUid)));
+        SearchRequest search = EsClient.prepareSearch(TYPE_ACTIVE_RULE.getMainType())
+          .source(new SearchSourceBuilder().query(QueryBuilders.boolQuery().must(termQuery(FIELD_ACTIVE_RULE_PROFILE_UUID, ruleProfileUUid))));
         profileResult = BulkIndexer.delete(esClient, TYPE_ACTIVE_RULE, search);
 
       } else {

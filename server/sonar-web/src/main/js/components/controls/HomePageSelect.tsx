@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -99,7 +99,6 @@ function isSameHomePage(a: T.HomePage, b: T.HomePage) {
   return (
     a.type === b.type &&
     (a as any).branch === (b as any).branch &&
-    (a as any).component === (b as any).component &&
-    (a as any).organization === (b as any).organization
+    (a as any).component === (b as any).component
   );
 }

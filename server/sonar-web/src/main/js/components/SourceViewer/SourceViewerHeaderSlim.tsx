@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,16 +54,7 @@ export default function SourceViewerHeaderSlim(props: Props) {
     onExpand,
     sourceViewerFile
   } = props;
-  const {
-    measures,
-    path,
-    project,
-    projectName,
-    q,
-    subProject,
-    subProjectName,
-    uuid
-  } = sourceViewerFile;
+  const { measures, path, project, projectName, q, subProject, subProjectName } = sourceViewerFile;
 
   const projectNameLabel = (
     <>
@@ -113,7 +104,7 @@ export default function SourceViewerHeaderSlim(props: Props) {
           <Link
             to={getComponentIssuesUrl(project, {
               ...getBranchLikeQuery(branchLike),
-              fileUuids: uuid,
+              files: path,
               resolved: 'false'
             })}>
             {translate('source_viewer.view_all_issues')}

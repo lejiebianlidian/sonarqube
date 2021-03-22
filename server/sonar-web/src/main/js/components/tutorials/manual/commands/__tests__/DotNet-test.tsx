@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,19 +19,8 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import DotNet, { Props } from '../DotNet';
+import DotNet from '../DotNet';
 
-it('DotNet renders correctly', () => {
-  expect(shallowRender).toMatchSnapshot();
-
-  expect(
-    shallowRender({
-      organization: 'organization',
-      small: true
-    })
-  ).toMatchSnapshot();
+it('Should renders correctly', () => {
+  expect(shallow(<DotNet host="host" projectKey="projectKey" token="token" />)).toMatchSnapshot();
 });
-
-function shallowRender(props: Partial<Props> = {}) {
-  return shallow(<DotNet host="host" projectKey="projectKey" token="token" {...props} />);
-}

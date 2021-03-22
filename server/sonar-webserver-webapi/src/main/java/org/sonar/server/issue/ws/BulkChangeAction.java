@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
 import static org.sonar.core.util.Uuids.UUID_EXAMPLE_02;
 import static org.sonar.core.util.stream.MoreCollectors.toSet;
 import static org.sonar.core.util.stream.MoreCollectors.uniqueIndex;
-import static org.sonar.server.es.SearchOptions.MAX_LIMIT;
+import static org.sonar.server.es.SearchOptions.MAX_PAGE_SIZE;
 import static org.sonar.server.issue.AbstractChangeTagsAction.TAGS_PARAMETER;
 import static org.sonar.server.issue.AssignAction.ASSIGNEE_PARAMETER;
 import static org.sonar.server.issue.CommentAction.COMMENT_KEY;
@@ -128,8 +128,8 @@ public class BulkChangeAction implements IssuesWsAction {
   private final IssuesChangesNotificationSerializer notificationSerializer;
 
   public BulkChangeAction(System2 system2, UserSession userSession, DbClient dbClient, WebIssueStorage issueStorage,
-    NotificationManager notificationService, List<Action> actions,
-    IssueChangePostProcessor issueChangePostProcessor, IssuesChangesNotificationSerializer notificationSerializer) {
+                          NotificationManager notificationService, List<Action> actions,
+                          IssueChangePostProcessor issueChangePostProcessor, IssuesChangesNotificationSerializer notificationSerializer) {
     this.system2 = system2;
     this.userSession = userSession;
     this.dbClient = dbClient;
@@ -143,7 +143,7 @@ public class BulkChangeAction implements IssuesWsAction {
   @Override
   public void define(WebService.NewController context) {
     WebService.NewAction action = context.createAction(ACTION_BULK_CHANGE)
-      .setDescription("Bulk change on issues.<br/>" +
+      .setDescription("Bulk change on issues. Up to 500 issues can be updated. <br/>" +
         "Requires authentication.")
       .setSince("3.7")
       .setChangelog(
@@ -160,34 +160,29 @@ public class BulkChangeAction implements IssuesWsAction {
       .setExampleValue(UUID_EXAMPLE_01 + "," + UUID_EXAMPLE_02);
     action.createParam(PARAM_ASSIGN)
       .setDescription("To assign the list of issues to a specific user (login), or un-assign all the issues")
-      .setExampleValue("john.smith")
-      .setDeprecatedKey("assign.assignee", "6.2");
+      .setExampleValue("john.smith");
     action.createParam(PARAM_SET_SEVERITY)
       .setDescription("To change the severity of the list of issues")
       .setExampleValue(BLOCKER)
-      .setPossibleValues(Severity.ALL)
-      .setDeprecatedKey("set_severity.severity", "6.2");
+      .setPossibleValues(Severity.ALL);
     action.createParam(PARAM_SET_TYPE)
       .setDescription("To change the type of the list of issues")
       .setExampleValue(BUG)
       .setPossibleValues(RuleType.names())
-      .setSince("5.5")
-      .setDeprecatedKey("set_type.type", "6.2");
+      .setSince("5.5");
     action.createParam(PARAM_DO_TRANSITION)
       .setDescription("Transition")
       .setExampleValue(REOPEN)
-      .setPossibleValues(DefaultTransitions.ALL)
-      .setDeprecatedKey("do_transition.transition", "6.2");
+      .setPossibleValues(DefaultTransitions.ALL);
     action.createParam(PARAM_ADD_TAGS)
       .setDescription("Add tags")
-      .setExampleValue("security,java8")
-      .setDeprecatedKey("add_tags.tags", "6.2");
+      .setExampleValue("security,java8");
     action.createParam(PARAM_REMOVE_TAGS)
       .setDescription("Remove tags")
-      .setExampleValue("security,java8")
-      .setDeprecatedKey("remove_tags.tags", "6.2");
+      .setExampleValue("security,java8");
     action.createParam(PARAM_COMMENT)
-      .setDescription("To add a comment to a list of issues")
+      .setDescription("Add a comment. "
+        + "The comment will only be added to issues that are affected either by a change of type or a change of severity as a result of the same WS call.")
       .setExampleValue("Here is my comment");
     action.createParam(PARAM_SEND_NOTIFICATIONS)
       .setSince("4.0")
@@ -356,7 +351,7 @@ public class BulkChangeAction implements IssuesWsAction {
       this.propertiesByActions = toPropertiesByActions(request);
 
       List<String> issueKeys = request.mandatoryParamAsStrings(PARAM_ISSUES);
-      checkArgument(issueKeys.size() <= MAX_LIMIT, "Number of issues is limited to %s", MAX_LIMIT);
+      checkArgument(issueKeys.size() <= MAX_PAGE_SIZE, "Number of issues is limited to %s", MAX_PAGE_SIZE);
       List<IssueDto> allIssues = dbClient.issueDao().selectByKeys(dbSession, issueKeys)
         .stream()
         .filter(issueDto -> SECURITY_HOTSPOT.getDbConstant() != issueDto.getType())
@@ -369,7 +364,7 @@ public class BulkChangeAction implements IssuesWsAction {
       this.issues = getAuthorizedIssues(allIssues);
       this.componentsByUuid = getComponents(dbSession,
         issues.stream().map(DefaultIssue::componentUuid).collect(MoreCollectors.toSet())).stream()
-          .collect(uniqueIndex(ComponentDto::uuid, identity()));
+        .collect(uniqueIndex(ComponentDto::uuid, identity()));
       this.rulesByKey = dbClient.ruleDao().selectDefinitionByKeys(dbSession,
         issues.stream().map(DefaultIssue::ruleKey).collect(MoreCollectors.toSet())).stream()
         .collect(uniqueIndex(RuleDefinitionDto::getKey, identity()));

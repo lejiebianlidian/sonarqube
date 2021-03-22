@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,5 @@ import * as React from 'react';
 import Reliability from '../Reliability';
 
 it('renders', () => {
-  expect(
-    shallow(<Reliability displayOrganizations={false} helpText="foobar" projects={[]} />)
-  ).toMatchSnapshot();
+  expect(shallow(<Reliability helpText="foobar" projects={[]} />)).toMatchSnapshot();
 });

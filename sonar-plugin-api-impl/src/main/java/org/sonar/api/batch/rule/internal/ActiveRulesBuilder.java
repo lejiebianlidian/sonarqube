@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ package org.sonar.api.batch.rule.internal;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.rule.RuleKey;
 
 /**
@@ -42,7 +41,7 @@ public class ActiveRulesBuilder {
     return this;
   }
 
-  public ActiveRules build() {
+  public DefaultActiveRules build() {
     return new DefaultActiveRules(map.values());
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,13 @@ public class BaseRequestTest {
     assertThat(underTest.getParams()).isEmpty();
     assertThat(underTest.getMediaType()).isEqualTo(MediaTypes.JSON);
     assertThat(underTest.getPath()).isEqualTo("api/foo");
+    assertThat(underTest.getWriteTimeOutInMs()).isEmpty();
+  }
+
+  @Test
+  public void set_write_timeout() {
+    underTest.setWriteTimeOutInMs(30_000);
+    assertThat(underTest.getWriteTimeOutInMs()).hasValue(30_000);
   }
 
   @Test

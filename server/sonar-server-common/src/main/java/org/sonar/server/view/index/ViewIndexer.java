@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.elasticsearch.action.admin.indices.cache.clear.ClearIndicesCacheRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.DbClient;
@@ -61,12 +62,20 @@ public class ViewIndexer implements ResilientIndexer {
 
   @Override
   public void indexOnStartup(Set<IndexType> uninitializedIndexTypes) {
+    indexAll(Size.LARGE);
+  }
+
+  public void indexAll() {
+    indexAll(Size.REGULAR);
+  }
+
+  private void indexAll(Size bulkSize) {
     try (DbSession dbSession = dbClient.openSession(false)) {
       Map<String, String> viewAndProjectViewUuidMap = new HashMap<>();
       for (UuidWithProjectUuidDto uuidWithProjectUuidDto : dbClient.componentDao().selectAllViewsAndSubViews(dbSession)) {
         viewAndProjectViewUuidMap.put(uuidWithProjectUuidDto.getUuid(), uuidWithProjectUuidDto.getProjectUuid());
       }
-      index(dbSession, viewAndProjectViewUuidMap, false, Size.LARGE);
+      index(dbSession, viewAndProjectViewUuidMap, false, bulkSize);
     }
   }
 
@@ -128,9 +137,7 @@ public class ViewIndexer implements ResilientIndexer {
 
   private void clearLookupCache(String viewUuid) {
     try {
-      esClient.prepareClearCache()
-        .setQueryCache(true)
-        .get();
+      esClient.clearCache(new ClearIndicesCacheRequest().queryCache(true));
     } catch (Exception e) {
       throw new IllegalStateException(String.format("Unable to clear lookup cache of view '%s'", viewUuid), e);
     }

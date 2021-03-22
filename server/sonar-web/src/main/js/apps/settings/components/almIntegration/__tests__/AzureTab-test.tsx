@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,10 +29,13 @@ it('should render correctly', () => {
 function shallowRender(props: Partial<AzureTabProps> = {}) {
   return shallow(
     <AzureTab
+      branchesEnabled={true}
       definitions={[mockAzureBindingDefinition()]}
+      definitionStatus={{}}
       loadingAlmDefinitions={false}
       loadingProjectCount={false}
       multipleAlmEnabled={true}
+      onCheck={jest.fn()}
       onDelete={jest.fn()}
       onUpdateDefinitions={jest.fn()}
       {...props}

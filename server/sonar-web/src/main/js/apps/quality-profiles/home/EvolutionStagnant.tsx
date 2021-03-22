@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import { Profile } from '../types';
 import { isStagnant } from '../utils';
 
 interface Props {
-  organization: string | null;
   profiles: Profile[];
 }
 
@@ -51,8 +50,7 @@ export default function EvolutionStagnant(props: Props) {
               <ProfileLink
                 className="link-no-underline"
                 language={profile.language}
-                name={profile.name}
-                organization={props.organization}>
+                name={profile.name}>
                 {profile.name}
               </ProfileLink>
             </div>

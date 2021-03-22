@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ import * as React from 'react';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import ReadMore from './ReadMore';
 
-const link = 'https://redirect.sonarsource.com/doc/issues.html';
+const link = '/documentation/user-guide/issues/';
 
 export default function AboutCleanCode() {
   return (

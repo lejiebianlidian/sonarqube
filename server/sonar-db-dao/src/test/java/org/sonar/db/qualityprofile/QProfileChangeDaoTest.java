@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -92,8 +92,8 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void selectByQuery_returns_changes_ordered_by_descending_date() {
-    QProfileDto profile1 = db.qualityProfiles().insert(db.getDefaultOrganization());
-    QProfileDto profile2 = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile1 = db.qualityProfiles().insert();
+    QProfileDto profile2 = db.qualityProfiles().insert();
 
     QProfileChangeDto change1OnP1 = insertChange(profile1, "ACTIVATED", null, null);
     QProfileChangeDto change2OnP1 = insertChange(profile1, "ACTIVATED", null, null);
@@ -107,7 +107,7 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void selectByQuery_supports_pagination_of_changes() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile = db.qualityProfiles().insert();
     QProfileChangeDto change1 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change2 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change3 = insertChange(profile, "ACTIVATED", null, null);
@@ -124,7 +124,7 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void selectByQuery_returns_changes_after_given_date() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile = db.qualityProfiles().insert();
     QProfileChangeDto change1 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change2 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change3 = insertChange(profile, "ACTIVATED", null, null);
@@ -139,7 +139,7 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void selectByQuery_returns_changes_before_given_date() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile = db.qualityProfiles().insert();
     QProfileChangeDto change1 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change2 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change3 = insertChange(profile, "ACTIVATED", null, null);
@@ -154,7 +154,7 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void selectByQuery_returns_changes_in_a_range_of_dates() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile = db.qualityProfiles().insert();
     QProfileChangeDto change1 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change2 = insertChange(profile, "ACTIVATED", null, null);
     QProfileChangeDto change3 = insertChange(profile, "ACTIVATED", null, null);
@@ -171,7 +171,7 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void test_selectByQuery_mapping() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile = db.qualityProfiles().insert();
     QProfileChangeDto inserted = insertChange(profile, "ACTIVATED", "theLogin", "theData");
 
     List<QProfileChangeDto> result = underTest.selectByQuery(dbSession, new QProfileChangeQuery(profile.getKee()));
@@ -188,8 +188,8 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void countByQuery() {
-    QProfileDto profile1 = db.qualityProfiles().insert(db.getDefaultOrganization());
-    QProfileDto profile2 = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile1 = db.qualityProfiles().insert();
+    QProfileDto profile2 = db.qualityProfiles().insert();
     long start = system2.now();
     insertChange(profile1, "ACTIVATED", null, null);
     insertChange(profile1, "ACTIVATED", null, null);
@@ -198,11 +198,11 @@ public class QProfileChangeDaoTest {
 
     assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery(profile1.getKee()))).isEqualTo(2);
     assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery(profile2.getKee()))).isEqualTo(1);
-    assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery("does_not_exist"))).isEqualTo(0);
+    assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery("does_not_exist"))).isZero();
 
     QProfileChangeQuery query = new QProfileChangeQuery(profile1.getKee());
     query.setToExcluded(start);
-    assertThat(underTest.countByQuery(dbSession, query)).isEqualTo(0);
+    assertThat(underTest.countByQuery(dbSession, query)).isZero();
 
     QProfileChangeQuery query2 = new QProfileChangeQuery(profile1.getKee());
     query2.setToExcluded(end);
@@ -211,21 +211,21 @@ public class QProfileChangeDaoTest {
 
   @Test
   public void deleteByRulesProfileUuids() {
-    QProfileDto profile1 = db.qualityProfiles().insert(db.getDefaultOrganization());
-    QProfileDto profile2 = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile1 = db.qualityProfiles().insert();
+    QProfileDto profile2 = db.qualityProfiles().insert();
     insertChange(profile1, "ACTIVATED", null, null);
     insertChange(profile1, "ACTIVATED", null, null);
     insertChange(profile2, "ACTIVATED", null, null);
 
     underTest.deleteByRulesProfileUuids(dbSession, asList(profile1.getRulesProfileUuid()));
 
-    assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery(profile1.getKee()))).isEqualTo(0);
+    assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery(profile1.getKee()))).isZero();
     assertThat(underTest.countByQuery(dbSession, new QProfileChangeQuery(profile2.getKee()))).isEqualTo(1);
   }
 
   @Test
   public void deleteByProfileKeys_does_nothing_if_row_with_specified_key_does_not_exist() {
-    QProfileDto profile1 = db.qualityProfiles().insert(db.getDefaultOrganization());
+    QProfileDto profile1 = db.qualityProfiles().insert();
     insertChange(profile1.getRulesProfileUuid(), "ACTIVATED", null, null);
 
     underTest.deleteByRulesProfileUuids(dbSession, asList("does not exist"));

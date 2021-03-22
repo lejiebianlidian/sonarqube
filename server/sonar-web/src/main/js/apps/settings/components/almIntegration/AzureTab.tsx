@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,43 +18,68 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { FormattedMessage } from 'react-intl';
+import { Link } from 'react-router';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { createAzureConfiguration, updateAzureConfiguration } from '../../../../api/alm-settings';
-import { AlmKeys, AzureBindingDefinition } from '../../../../types/alm-settings';
+import { ALM_DOCUMENTATION_PATHS } from '../../../../helpers/constants';
+import {
+  AlmKeys,
+  AlmSettingsBindingStatus,
+  AzureBindingDefinition
+} from '../../../../types/alm-settings';
 import AlmTab from './AlmTab';
 import AzureForm from './AzureForm';
 
 export interface AzureTabProps {
+  branchesEnabled: boolean;
   definitions: AzureBindingDefinition[];
+  definitionStatus: T.Dict<AlmSettingsBindingStatus>;
   loadingAlmDefinitions: boolean;
   loadingProjectCount: boolean;
   multipleAlmEnabled: boolean;
+  onCheck: (definitionKey: string) => void;
   onDelete: (definitionKey: string) => void;
   onUpdateDefinitions: () => void;
 }
 
 export default function AzureTab(props: AzureTabProps) {
-  const { multipleAlmEnabled, definitions, loadingAlmDefinitions, loadingProjectCount } = props;
+  const {
+    branchesEnabled,
+    multipleAlmEnabled,
+    definitions,
+    definitionStatus,
+    loadingAlmDefinitions,
+    loadingProjectCount
+  } = props;
 
   return (
     <div className="bordered">
       <AlmTab
         alm={AlmKeys.Azure}
+        branchesEnabled={branchesEnabled}
         createConfiguration={createAzureConfiguration}
-        defaultBinding={{ key: '', personalAccessToken: '' }}
+        defaultBinding={{ key: '', personalAccessToken: '', url: '' }}
         definitions={definitions}
-        features={[
-          {
-            name: translate('settings.almintegration.feature.pr_decoration.title'),
-            active: definitions.length > 0,
-            description: translate('settings.almintegration.feature.pr_decoration.description'),
-            inactiveReason: translate('settings.almintegration.feature.need_at_least_1_binding')
-          }
-        ]}
+        definitionStatus={definitionStatus}
         form={childProps => <AzureForm {...childProps} />}
+        help={
+          <FormattedMessage
+            defaultMessage={translate(`settings.almintegration.azure.info`)}
+            id="settings.almintegration.azure.info"
+            values={{
+              link: (
+                <Link target="_blank" to={ALM_DOCUMENTATION_PATHS[AlmKeys.Azure]}>
+                  {translate('learn_more')}
+                </Link>
+              )
+            }}
+          />
+        }
         loadingAlmDefinitions={loadingAlmDefinitions}
         loadingProjectCount={loadingProjectCount}
         multipleAlmEnabled={multipleAlmEnabled}
+        onCheck={props.onCheck}
         onDelete={props.onDelete}
         onUpdateDefinitions={props.onUpdateDefinitions}
         updateConfiguration={updateAzureConfiguration}

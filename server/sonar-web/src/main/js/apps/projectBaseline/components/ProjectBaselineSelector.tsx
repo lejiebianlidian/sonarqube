@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ import BranchAnalysisList from './BranchAnalysisList';
 
 export interface ProjectBaselineSelectorProps {
   analysis?: string;
+  branch: Branch;
   branchList: Branch[];
   branchesEnabled?: boolean;
   component: string;
@@ -82,6 +83,7 @@ function branchToOption(b: Branch) {
 export default function ProjectBaselineSelector(props: ProjectBaselineSelectorProps) {
   const {
     analysis,
+    branch,
     branchList,
     branchesEnabled,
     component,
@@ -163,7 +165,7 @@ export default function ProjectBaselineSelector(props: ProjectBaselineSelectorPr
         {selected === 'SPECIFIC_ANALYSIS' && (
           <BranchAnalysisList
             analysis={analysis || ''}
-            branch="master"
+            branch={branch.name}
             component={component}
             onSelectAnalysis={props.onSelectAnalysis}
           />

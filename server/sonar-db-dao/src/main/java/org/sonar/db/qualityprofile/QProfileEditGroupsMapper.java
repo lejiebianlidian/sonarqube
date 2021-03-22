@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ public interface QProfileEditGroupsMapper {
 
   List<GroupMembershipDto> selectByQuery(@Param("query") SearchGroupsQuery query, @Param("pagination") Pagination pagination);
 
-  List<String> selectQProfileUuidsByOrganizationAndGroups(@Param("organizationUuid") String organizationUuid, @Param("groupUuids") List<String> groupUuids);
+  List<String> selectQProfileUuidsByGroups(@Param("groupUuids") List<String> groupUuids);
 
   void insert(@Param("dto") QProfileEditGroupsDto dto, @Param("now") long now);
 

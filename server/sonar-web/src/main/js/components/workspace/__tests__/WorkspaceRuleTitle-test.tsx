@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +22,11 @@ import * as React from 'react';
 import WorkspaceRuleTitle from '../WorkspaceRuleTitle';
 
 it('should render rule', () => {
-  const rule = { key: 'foo', organization: 'org' };
+  const rule = { key: 'foo' };
   expect(shallow(<WorkspaceRuleTitle rule={rule} />)).toMatchSnapshot();
 });
 
 it('should render loaded rule', () => {
-  const rule = { key: 'foo', name: 'Foo', organization: 'org' };
+  const rule = { key: 'foo', name: 'Foo' };
   expect(shallow(<WorkspaceRuleTitle rule={rule} />)).toMatchSnapshot();
 });

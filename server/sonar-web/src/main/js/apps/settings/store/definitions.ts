@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 import { keyBy, sortBy, uniqBy } from 'lodash';
 import { ActionType } from '../../../store/utils/actions';
+import { SettingCategoryDefinition } from '../../../types/settings';
 import { DEFAULT_CATEGORY, getCategoryName } from '../utils';
 
 const enum Actions {
@@ -27,9 +28,9 @@ const enum Actions {
 
 type Action = ActionType<typeof receiveDefinitions, Actions.ReceiveDefinitions>;
 
-export type State = T.Dict<T.SettingCategoryDefinition>;
+export type State = T.Dict<SettingCategoryDefinition>;
 
-export function receiveDefinitions(definitions: T.SettingCategoryDefinition[]) {
+export function receiveDefinitions(definitions: SettingCategoryDefinition[]) {
   return { type: Actions.ReceiveDefinitions, definitions };
 }
 

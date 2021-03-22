@@ -5,11 +5,9 @@ url: /analysis/analysis-parameters/
 
 Project analysis settings can be configured in multiple places. Here is the hierarchy:
 
-<!-- sonarqube -->
 * Global properties, defined in the UI, apply to all projects (From the top bar, go to **[Administration > Configuration > General Settings](/#sonarqube-admin#/admin/settings)**)
-<!-- /sonarqube -->
 * Project properties, defined in the UI, override global property values (At a project level, go to **Project Settings > General Settings**)
-* Project analysis parameters, defined in a project analysis configuration file or an analyzer configuration file, override the ones defined in the UI
+* Project analysis parameters, defined in a project analysis configuration file or scanner configuration file, override the ones defined in the UI
 * Analysis / Command line parameters, defined when launching an analysis (with `-D` on the command line), override project analysis parameters
 
 Note that only parameters set through the UI are stored in the database.
@@ -41,13 +39,14 @@ Key | Description | Default
 `sonar.projectVersion` | The project version. | `<version>` for Maven projects, otherwise "not provided"
 
 ### Authentication
-If the "Anyone" pseudo-group does not have permission to perform analyses, you'll need to supply the credentials of a user with Execute Analysis permission for the analysis to run under.
+By default, user authentication is required to prevent anonymous users from browsing and analyzing projects on your instance, and you need to pass these parameters when running analyses. Authentication is enforced in the global Security(/instance-administration/security/) settings.
 
+When authentication is required or the "Anyone" pseudo-group does not have permission to perform analyses, you'll need to supply the credentials of a user with Execute Analysis permissions for the analysis to run under.
 
 Key | Description | Default
 ---|----|---
-`sonar.login` | The login or authentication token of a {instance} user with Execute Analysis permission on the project. |
-`sonar.password` | The password that goes with the `sonar.login` username. This should be left blank if an authentication token is being used. |
+`sonar.login` | The [authentication token](/user-guide/user-token/) or login of a SonarQube user with Execute Analysis permission on the project. |
+`sonar.password` | If you're using an authentication token, leave this blank. If you're using a login, this is the password that goes with your `sonar.login` username. |
 
 ### Web Services
 Key | Description | Default
@@ -69,8 +68,8 @@ Key | Description | Default
 `sonar.projectDate` | Assign a date to the analysis. This parameter is only useful when you need to retroactively create the history of a not-analyzed-before project. The format is `yyyy-MM-dd`, for example: 2010-12-01. Since you cannot perform an analysis dated prior to the most recent one in the database, you must analyze recreate your project history in chronological order, oldest first. ![](/images/exclamation.svg) Note: You may need to adjust your housekeeping settings if you wish to create a long-running history. | Current date
 `sonar.projectBaseDir` | Use this property when you need analysis to take place in a directory other than the one from which it was launched. E.G. analysis begins from `jenkins/jobs/myjob/workspace` but the files to be analyzed are in `ftpdrop/cobol/project1`. The path may be relative or absolute. Specify not the the source directory, but some parent of the source directory. The value specified here becomes the new "analysis directory", and other paths are then specified as though the analysis were starting from the specified value of `sonar.projectBaseDir`. Note that the analysis process will need write permissions in this directory; it is where the `sonar.working.directory` will be created. |
 `sonar.working.directory` | Set the working directory for an analysis triggered with the SonarScanner or the SonarScanner for Ant (versions greater than 2.0). This property is not compatible with the SonarScanner for MSBuild. Path must be relative, and unique for each project. ![](/images/exclamation.svg) Beware: the specified folder is deleted before each analysis. | `.scannerwork`
-`sonar.scm.provider` | This property can be used to explicitly tell {instance} which SCM plugin should be used to grab SCM data on the project (in case auto-detection does not work). The value of this property is always lowercase and depends on the plugin (ex. "tfvc" for the TFVC plugin). Check the documentation page of each plugin for more. |  
-`sonar.scm.forceReloadAll` | By default, blame information is only retrieved for changed files. Set this property to `true` to load blame information for all files. This can be useful is you feel that some SCM data is outdated but {instance} does not get the latest information from the SCM engine. | 
+`sonar.scm.provider` | This property can be used to explicitly tell SonarQube which SCM you're using on the project (in case auto-detection doesn't work). The value of this property is always lowercase and depends on the SCM (ex. "git" if you're using Git). Check the [SCM integration](/analysis/scm-integration/) documentation for more. |  
+`sonar.scm.forceReloadAll` | By default, blame information is only retrieved for changed files. Set this property to `true` to load blame information for all files. This can be useful is you feel that some SCM data is outdated but SonarQube does not get the latest information from the SCM engine. | 
 `sonar.scm.exclusions.disabled`| For supported engines, files ignored by the SCM, i.e. files listed in `.gitignore`, will automatically be ignored by analysis too. Set this property to `true` to disable that feature. SCM exclusions are always disabled if `sonar.scm.disabled` is set to `true`. |
 `sonar.scm.revision`| Overrides the revision, for instance the Git sha1, displayed in analysis results. By default value is provided by the CI environment or guessed by the checked-out sources.| 
 `sonar.buildString`| The string passed with this property will be stored with the analysis and available in the results of `api/project_analyses/search`, thus allowing you to later identify a specific analysis and obtain its ID for use with `api/project_analyses/set_baseline`. | |
@@ -92,7 +91,12 @@ Key | Description | Default
 `sonar.scanner.dumpToFile` | Outputs to the specified file the full list of properties passed to the scanner API as a means to debug analysis. |  
 `sonar.scanner.metadataFilePath` | Set the location where the scanner writes the `report-task.txt` file containing among other things the `ceTaskId`. | value of `sonar.working.directory`
 
-<!-- sonarqube -->
+### Quality Gate 
+Key | Description | Default
+---|----|---
+`sonar.qualitygate.wait` | Forces the analysis step to poll the SonarQube instance and wait for the Quality Gate status. If there are no other options, you can use this to fail a pipeline build when the Quality Gate is failing. See the [CI Integration](/analysis/branch-pr-analysis-overview/) page for more information. | 
+`sonar.qualitygate.timeout` | Sets the amount of time (in seconds) that the scanner should wait for a report to be processed. | 300
+
 ### Deprecated
 [[danger]]
 | These parameters are listed for completeness, but are deprecated and should not be used in new analyses.
@@ -100,4 +104,3 @@ Key | Description | Default
 Key | Description
 ---|----|--- 
 `sonar.links.scm_dev` **![](/images/cross.svg)Deprecated since SQ 7.1** | Developer connection. | `<scm><developerConnection>` for Maven projects
-<!-- /sonarqube -->

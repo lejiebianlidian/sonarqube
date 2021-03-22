@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,6 @@ public class SearchRequest {
   private List<String> languages;
   private List<String> moduleUuids;
   private String onComponentOnly;
-  private String organization;
   private List<String> owaspTop10;
   private String p;
   private List<String> projects;
@@ -399,19 +398,6 @@ public class SearchRequest {
 
   public String getOnComponentOnly() {
     return onComponentOnly;
-  }
-
-  /**
-   * This is part of the internal API.
-   * Example value: "my-org"
-   */
-  public SearchRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
   }
 
   /**

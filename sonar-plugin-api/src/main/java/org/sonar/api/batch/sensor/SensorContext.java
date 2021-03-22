@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ import org.sonar.api.utils.Version;
 
 /**
  * See {@link Sensor#execute(SensorContext)}
- * In order to write unit tests you can use SensorContextTester
+ * In order to write unit tests you can use SensorContextTester, available in sonar-plugin-api-impl
  * @since 5.1
  */
 public interface SensorContext {

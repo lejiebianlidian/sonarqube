@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 /**
  * Support of https://azure.microsoft.com/en-us/services/devops/
- *
+ * <p>
  * Environment variables: https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables
  */
 public class AzureDevops implements CiVendor {
@@ -55,6 +55,6 @@ public class AzureDevops implements CiVendor {
     if (isBlank(revision)) {
       revision = system.envVariable("BUILD_SOURCEVERSION");
     }
-    return new CiConfigurationImpl(revision);
+    return new CiConfigurationImpl(revision, getName());
   }
 }

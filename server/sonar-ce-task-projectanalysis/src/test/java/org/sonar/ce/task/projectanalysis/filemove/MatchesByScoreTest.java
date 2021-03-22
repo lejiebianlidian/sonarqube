@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ public class MatchesByScoreTest {
     ScoreMatrix scoreMatrix1 = new ScoreMatrix(doesNotMatterRemovedFiles, doesNotMatterNewFiles, doesNotMatterScores, MIN_REQUIRED_SCORE - 1);
     MatchesByScore matchesByScore = MatchesByScore.create(scoreMatrix1);
 
-    assertThat(matchesByScore.getSize()).isEqualTo(0);
+    assertThat(matchesByScore.getSize()).isZero();
     assertThat(matchesByScore).isEmpty();
 
     ScoreMatrix scoreMatrix2 = new ScoreMatrix(doesNotMatterRemovedFiles, doesNotMatterNewFiles, doesNotMatterScores, MIN_REQUIRED_SCORE - 5);

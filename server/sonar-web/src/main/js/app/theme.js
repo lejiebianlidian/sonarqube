@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ module.exports = {
     orange: '#ed7d20',
     red: '#d4333f',
     purple: '#9139d4',
+    white: '#ffffff',
 
     gray94: '#efefef',
     gray80: '#cdcdcd',
@@ -44,6 +45,7 @@ module.exports = {
 
     transparentWhite: 'rgba(255,255,255,0.62)',
     transparentGray: 'rgba(200, 200, 200, 0.5)',
+    transparentBlack: 'rgba(0, 0, 0, 0.25)',
 
     disableGrayText: '#bbb',
     disableGrayBorder: '#ddd',
@@ -59,8 +61,8 @@ module.exports = {
     rowHoverHighlight: '#ecf6fe',
 
     // fonts
-    baseFontColor: '#444',
-    secondFontColor: '#777',
+    baseFontColor: '#333',
+    secondFontColor: '#666',
 
     // forms
     mandatoryFieldColor: '#a4030f',
@@ -107,6 +109,7 @@ module.exports = {
     // badge
     badgeBlueBackground: '#2E7CB5',
     badgeBlueColor: '#FFFFFF',
+    badgeRedBackgroundOnIssue: '#EEC8C8',
 
     // alm
     azure: '#0078d7',
@@ -173,8 +176,7 @@ module.exports = {
   fonts: {
     baseFontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
     systemFontFamily: "-apple-system,'BlinkMacSystemFont','Helvetica','Arial',sans-serif",
-    sonarcloudFontFamily:
-      "Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+    sourceCodeFontFamily: "Consolas, 'Ubuntu Mono', 'Liberation Mono', Menlo, Courier, monospace"
   },
 
   // z-index
@@ -192,8 +194,11 @@ module.exports = {
     // ui elements
     pageMainZIndex: '50',
     pageSideZIndex: '51',
+    pageHeaderZIndex: '55',
 
     globalBannerZIndex: '60',
+
+    contextbarZIndex: '420',
 
     tooltipZIndex: '8000',
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,10 +23,8 @@ import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import InstanceMessage from '../../components/common/InstanceMessage';
 import { getEdition } from '../../helpers/editions';
-import { isSonarCloud } from '../../helpers/system';
 import { EditionKey } from '../../types/editions';
 import GlobalFooterBranding from './GlobalFooterBranding';
-import GlobalFooterSonarCloud from './GlobalFooterSonarCloud';
 
 interface Props {
   hideLoggedInInfo?: boolean;
@@ -41,10 +39,6 @@ export default function GlobalFooter({
   sonarqubeEdition,
   sonarqubeVersion
 }: Props) {
-  if (isSonarCloud()) {
-    return <GlobalFooterSonarCloud />;
-  }
-
   const currentEdition = sonarqubeEdition && getEdition(sonarqubeEdition);
 
   return (
@@ -70,21 +64,29 @@ export default function GlobalFooter({
           </li>
         )}
         <li className="page-footer-menu-item">
-          <a href="http://www.gnu.org/licenses/lgpl-3.0.txt">{translate('footer.license')}</a>
+          <a
+            href="https://www.gnu.org/licenses/lgpl-3.0.txt"
+            rel="noopener noreferrer"
+            target="_blank">
+            {translate('footer.license')}
+          </a>
         </li>
         <li className="page-footer-menu-item">
-          <a href="http://www.sonarqube.org">{translate('footer.community')}</a>
+          <a
+            href="https://community.sonarsource.com/c/help/sq"
+            rel="noopener noreferrer"
+            target="_blank">
+            {translate('footer.community')}
+          </a>
         </li>
         <li className="page-footer-menu-item">
           <Link to="/documentation">{translate('footer.documentation')}</Link>
         </li>
         <li className="page-footer-menu-item">
-          <a href="https://redirect.sonarsource.com/doc/community.html">
-            {translate('footer.support')}
-          </a>
-        </li>
-        <li className="page-footer-menu-item">
-          <a href="https://redirect.sonarsource.com/doc/plugin-library.html">
+          <a
+            href="https://redirect.sonarsource.com/doc/plugin-library.html"
+            rel="noopener noreferrer"
+            target="_blank">
             {translate('footer.plugins')}
           </a>
         </li>

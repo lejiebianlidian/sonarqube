@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -71,10 +71,11 @@ public class CeTaskMessagesImpl implements CeTaskMessages {
 
   public void insert(DbSession dbSession, Message message) {
     dbClient.ceTaskMessageDao().insert(dbSession, new CeTaskMessageDto()
-    .setUuid(uuidFactory.create())
-    .setTaskUuid(ceTask.getUuid())
-    .setMessage(message.getText())
-    .setCreatedAt(message.getTimestamp()));
+      .setUuid(uuidFactory.create())
+      .setTaskUuid(ceTask.getUuid())
+      .setMessage(message.getText())
+      .setType(message.getType())
+      .setCreatedAt(message.getTimestamp()));
   }
 
   private static void checkMessage(Message message) {

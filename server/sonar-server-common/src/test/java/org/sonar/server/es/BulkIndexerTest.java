@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,13 +20,17 @@
 package org.sonar.server.es;
 
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsRequest;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.impl.utils.TestSystem2;
@@ -58,7 +62,7 @@ public class BulkIndexerTest {
     indexer.start();
     indexer.stop();
 
-    assertThat(count()).isEqualTo(0);
+    assertThat(count()).isZero();
   }
 
   @Test
@@ -69,7 +73,7 @@ public class BulkIndexerTest {
     indexer.add(newIndexRequest(78));
 
     // request is not sent yet
-    assertThat(count()).isEqualTo(0);
+    assertThat(count()).isZero();
 
     // send remaining requests
     indexer.stop();
@@ -85,7 +89,7 @@ public class BulkIndexerTest {
     indexer.start();
 
     // replicas are temporarily disabled
-    assertThat(replicas()).isEqualTo(0);
+    assertThat(replicas()).isZero();
 
     for (int i = 0; i < 10; i++) {
       indexer.add(newIndexRequest(i));
@@ -94,7 +98,7 @@ public class BulkIndexerTest {
 
     assertThat(result.isSuccess()).isTrue();
     assertThat(result.getSuccess()).isEqualTo(10);
-    assertThat(result.getFailures()).isEqualTo(0);
+    assertThat(result.getFailures()).isZero();
     assertThat(result.getTotal()).isEqualTo(10);
     assertThat(count()).isEqualTo(10);
     // replicas are re-enabled
@@ -112,8 +116,8 @@ public class BulkIndexerTest {
     es.putDocuments(TYPE_FAKE, docs);
     assertThat(count()).isEqualTo(max);
 
-    SearchRequestBuilder req = es.client().prepareSearch(TYPE_FAKE)
-      .setQuery(QueryBuilders.rangeQuery(FakeIndexDefinition.INT_FIELD).gte(removeFrom));
+    SearchRequest req = EsClient.prepareSearch(TYPE_FAKE)
+      .source(new SearchSourceBuilder().query(QueryBuilders.rangeQuery(FakeIndexDefinition.INT_FIELD).gte(removeFrom)));
     BulkIndexer.delete(es.client(), TYPE_FAKE, req);
 
     assertThat(count()).isEqualTo(removeFrom);
@@ -197,9 +201,13 @@ public class BulkIndexerTest {
   }
 
   private int replicas() {
-    GetSettingsResponse settingsResp = es.client().nativeClient().admin().indices()
-      .prepareGetSettings(INDEX).get();
-    return Integer.parseInt(settingsResp.getSetting(INDEX, IndexMetaData.SETTING_NUMBER_OF_REPLICAS));
+    try {
+      GetSettingsResponse settingsResp = es.client().nativeClient().indices()
+          .getSettings(new GetSettingsRequest().indices(INDEX), RequestOptions.DEFAULT);
+      return Integer.parseInt(settingsResp.getSetting(INDEX, IndexMetadata.SETTING_NUMBER_OF_REPLICAS));
+    } catch (IOException e) {
+      throw new IllegalStateException("Could not get index settings", e);
+    }
   }
 
   private IndexRequest newIndexRequest(int intField) {

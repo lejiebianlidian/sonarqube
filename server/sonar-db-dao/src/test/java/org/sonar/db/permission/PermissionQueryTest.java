@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.db.component.ComponentTesting.newPublicProjectDto;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 
 public class PermissionQueryTest {
 
@@ -36,17 +34,14 @@ public class PermissionQueryTest {
 
   @Test
   public void create_query() {
-    OrganizationDto organization = newOrganizationDto();
-    ComponentDto project= newPublicProjectDto(organization);
+    ComponentDto project = newPublicProjectDto();
     PermissionQuery query = PermissionQuery.builder()
       .setComponent(project)
-      .setOrganizationUuid("ORGANIZATION_UUID")
       .setPermission("user")
       .setSearchQuery("sonar")
       .build();
 
     assertThat(query.getComponentUuid()).isEqualTo(project.uuid());
-    assertThat(query.getOrganizationUuid()).isEqualTo("ORGANIZATION_UUID");
     assertThat(query.getPermission()).isEqualTo("user");
     assertThat(query.getSearchQuery()).isEqualTo("sonar");
   }
@@ -54,7 +49,6 @@ public class PermissionQueryTest {
   @Test
   public void create_query_with_pagination() {
     PermissionQuery query = PermissionQuery.builder()
-      .setOrganizationUuid("ORGANIZATION_UUID")
       .setPageSize(10)
       .setPageIndex(5)
       .build();
@@ -66,19 +60,10 @@ public class PermissionQueryTest {
   @Test
   public void create_query_with_default_pagination() {
     PermissionQuery query = PermissionQuery.builder()
-      .setOrganizationUuid("ORGANIZATION_UUID")
       .build();
 
-    assertThat(query.getPageOffset()).isEqualTo(0);
+    assertThat(query.getPageOffset()).isZero();
     assertThat(query.getPageSize()).isEqualTo(20);
-  }
-
-  @Test
-  public void fail_when_no_organization() {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage("Organization UUID cannot be null");
-
-    PermissionQuery.builder().setOrganizationUuid(null).build();
   }
 
   @Test
@@ -87,7 +72,6 @@ public class PermissionQueryTest {
     expectedException.expectMessage("Search query should contains at least 3 characters");
 
     PermissionQuery.builder()
-      .setOrganizationUuid("ORGANIZATION_UUID")
       .setSearchQuery("so")
       .build();
   }

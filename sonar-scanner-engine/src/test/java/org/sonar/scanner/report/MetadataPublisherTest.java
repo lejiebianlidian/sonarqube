@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -53,9 +53,9 @@ import org.sonar.scanner.protocol.output.ScannerReportWriter;
 import org.sonar.scanner.repository.ForkDateSupplier;
 import org.sonar.scanner.rule.QProfile;
 import org.sonar.scanner.rule.QualityProfiles;
-import org.sonar.scanner.scan.ScanProperties;
 import org.sonar.scanner.scan.branch.BranchConfiguration;
 import org.sonar.scanner.scan.branch.BranchType;
+import org.sonar.scanner.scan.filesystem.InputComponentStore;
 import org.sonar.scanner.scm.ScmConfiguration;
 import org.sonar.scanner.scm.ScmRevision;
 
@@ -73,19 +73,17 @@ public class MetadataPublisherTest {
   @Rule
   public TemporaryFolder temp = new TemporaryFolder();
 
-  private DefaultInputModule rootModule;
   private MetadataPublisher underTest;
-  private ScanProperties properties = mock(ScanProperties.class);
-  private QualityProfiles qProfiles = mock(QualityProfiles.class);
-  private ProjectInfo projectInfo = mock(ProjectInfo.class);
-  private CpdSettings cpdSettings = mock(CpdSettings.class);
-  private InputModuleHierarchy inputModuleHierarchy;
-  private ForkDateSupplier forkDateSupplier = mock(ForkDateSupplier.class);
-  private ScannerPluginRepository pluginRepository = mock(ScannerPluginRepository.class);
+  private final QualityProfiles qProfiles = mock(QualityProfiles.class);
+  private final ProjectInfo projectInfo = mock(ProjectInfo.class);
+  private final CpdSettings cpdSettings = mock(CpdSettings.class);
+  private final ForkDateSupplier forkDateSupplier = mock(ForkDateSupplier.class);
+  private final ScannerPluginRepository pluginRepository = mock(ScannerPluginRepository.class);
   private BranchConfiguration branches;
   private ScmConfiguration scmConfiguration;
-  private ScmProvider scmProvider = mock(ScmProvider.class);
-  private ScmRevision scmRevision = mock(ScmRevision.class);
+  private final ScmProvider scmProvider = mock(ScmProvider.class);
+  private final ScmRevision scmRevision = mock(ScmRevision.class);
+  private final InputComponentStore componentStore = mock(InputComponentStore.class);
 
   @Before
   public void prepare() throws IOException {
@@ -101,11 +99,11 @@ public class MetadataPublisherTest {
     Path rootBaseDir = temp.newFolder().toPath();
     Path moduleBaseDir = rootBaseDir.resolve("moduleDir");
     Files.createDirectory(moduleBaseDir);
-    rootModule = new DefaultInputModule(def
+    DefaultInputModule rootModule = new DefaultInputModule(def
       .setBaseDir(rootBaseDir.toFile())
       .setKey("root")
       .setWorkDir(temp.newFolder()), TestInputFileBuilder.nextBatchId());
-    inputModuleHierarchy = mock(InputModuleHierarchy.class);
+    InputModuleHierarchy inputModuleHierarchy = mock(InputModuleHierarchy.class);
     when(inputModuleHierarchy.root()).thenReturn(rootModule);
     DefaultInputModule child = new DefaultInputModule(ProjectDefinition.create()
       .setKey("module")
@@ -117,8 +115,8 @@ public class MetadataPublisherTest {
     branches = mock(BranchConfiguration.class);
     scmConfiguration = mock(ScmConfiguration.class);
     when(scmConfiguration.provider()).thenReturn(scmProvider);
-    underTest = new MetadataPublisher(projectInfo, inputModuleHierarchy, properties, qProfiles, cpdSettings,
-      pluginRepository, branches, scmRevision, forkDateSupplier, scmConfiguration);
+    underTest = new MetadataPublisher(projectInfo, inputModuleHierarchy, qProfiles, cpdSettings,
+      pluginRepository, branches, scmRevision, forkDateSupplier, componentStore, scmConfiguration);
   }
 
   @Test
@@ -141,6 +139,7 @@ public class MetadataPublisherTest {
     assertThat(metadata.getProjectKey()).isEqualTo("root");
     assertThat(metadata.getModulesProjectRelativePathByKeyMap()).containsOnly(entry("module", "modulePath"), entry("root", ""));
     assertThat(metadata.getProjectVersion()).isEmpty();
+    assertThat(metadata.getNotAnalyzedFilesByLanguageCount()).isZero();
     assertThat(metadata.getQprofilesPerLanguageMap()).containsOnly(entry("java", org.sonar.scanner.protocol.output.ScannerReport.Metadata.QProfile.newBuilder()
       .setKey("q1")
       .setName("Q1")
@@ -148,9 +147,9 @@ public class MetadataPublisherTest {
       .setRulesUpdatedAt(date.getTime())
       .build()));
     assertThat(metadata.getPluginsByKey()).containsOnly(entry("java", org.sonar.scanner.protocol.output.ScannerReport.Metadata.Plugin.newBuilder()
-        .setKey("java")
-        .setUpdatedAt(12345)
-        .build()),
+      .setKey("java")
+      .setUpdatedAt(12345)
+      .build()),
       entry("php", org.sonar.scanner.protocol.output.ScannerReport.Metadata.Plugin.newBuilder()
         .setKey("php")
         .setUpdatedAt(45678)
@@ -158,8 +157,8 @@ public class MetadataPublisherTest {
   }
 
   @Test
-  public void write_project_organization() throws Exception {
-    when(properties.organizationKey()).thenReturn(Optional.of("SonarSource"));
+  public void write_not_analysed_file_counts() throws Exception {
+    when(componentStore.getNotAnalysedFilesByLanguage()).thenReturn(ImmutableMap.of("c", 10, "cpp", 20));
 
     File outputDir = temp.newFolder();
     ScannerReportWriter writer = new ScannerReportWriter(outputDir);
@@ -168,14 +167,13 @@ public class MetadataPublisherTest {
 
     ScannerReportReader reader = new ScannerReportReader(outputDir);
     ScannerReport.Metadata metadata = reader.readMetadata();
-    assertThat(metadata.getOrganizationKey()).isEqualTo("SonarSource");
+    assertThat(metadata.getNotAnalyzedFilesByLanguageMap()).contains(entry("c", 10), entry("cpp", 20));
   }
 
   @Test
   @UseDataProvider("projectVersions")
   public void write_project_version(@Nullable String projectVersion, String expected) throws Exception {
     when(projectInfo.getProjectVersion()).thenReturn(Optional.ofNullable(projectVersion));
-    when(properties.organizationKey()).thenReturn(Optional.of("SonarSource"));
 
     File outputDir = temp.newFolder();
     ScannerReportWriter writer = new ScannerReportWriter(outputDir);
@@ -202,7 +200,6 @@ public class MetadataPublisherTest {
   @UseDataProvider("buildStrings")
   public void write_buildString(@Nullable String buildString, String expected) throws Exception {
     when(projectInfo.getBuildString()).thenReturn(Optional.ofNullable(buildString));
-    when(properties.organizationKey()).thenReturn(Optional.of("SonarSource"));
 
     File outputDir = temp.newFolder();
     ScannerReportWriter writer = new ScannerReportWriter(outputDir);

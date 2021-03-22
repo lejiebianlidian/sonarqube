@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ import { ThemeProvider } from 'sonar-ui-common/components/theme';
 import getHistory from 'sonar-ui-common/helpers/getHistory';
 import aboutRoutes from '../../apps/about/routes';
 import accountRoutes from '../../apps/account/routes';
+import applicationConsoleRoutes from '../../apps/application-console/routes';
 import backgroundTasksRoutes from '../../apps/background-tasks/routes';
 import codeRoutes from '../../apps/code/routes';
 import codingRulesRoutes from '../../apps/coding-rules/routes';
@@ -38,14 +39,10 @@ import componentMeasuresRoutes from '../../apps/component-measures/routes';
 import customMeasuresRoutes from '../../apps/custom-measures/routes';
 import customMetricsRoutes from '../../apps/custom-metrics/routes';
 import documentationRoutes from '../../apps/documentation/routes';
-import Explore from '../../apps/explore/Explore';
-import ExploreIssues from '../../apps/explore/ExploreIssues';
-import ExploreProjects from '../../apps/explore/ExploreProjects';
 import groupsRoutes from '../../apps/groups/routes';
 import Issues from '../../apps/issues/components/AppContainer';
 import { maintenanceRoutes, setupRoutes } from '../../apps/maintenance/routes';
 import marketplaceRoutes from '../../apps/marketplace/routes';
-import organizationsRoutes from '../../apps/organizations/routes';
 import overviewRoutes from '../../apps/overview/routes';
 import permissionTemplatesRoutes from '../../apps/permission-templates/routes';
 import { globalPermissionsRoutes, projectPermissionsRoutes } from '../../apps/permissions/routes';
@@ -62,6 +59,7 @@ import qualityProfilesRoutes from '../../apps/quality-profiles/routes';
 import sessionsRoutes from '../../apps/sessions/routes';
 import settingsRoutes from '../../apps/settings/routes';
 import systemRoutes from '../../apps/system/routes';
+import tutorialsRoutes from '../../apps/tutorials/routes';
 import usersRoutes from '../../apps/users/routes';
 import webAPIRoutes from '../../apps/web-api/routes';
 import webhooksRoutes from '../../apps/webhooks/routes';
@@ -145,6 +143,7 @@ function renderRedirects() {
       <Redirect from="/view" to="/portfolio" />
       <Redirect from="/users" to="/admin/users" />
       <Redirect from="/onboarding" to="/projects/create" />
+      <Redirect from="markdown/help" to="formatting/help" />
     </>
   );
 }
@@ -191,6 +190,7 @@ function renderComponentRoutes() {
         path="project/quality_profiles"
         childRoutes={projectQualityProfilesRoutes}
       />
+      <RouteWithChildRoutes path="tutorials" childRoutes={tutorialsRoutes} />
       <Route component={lazyLoadComponent(() => import('../components/ProjectAdminContainer'))}>
         <RouteWithChildRoutes path="custom_measures" childRoutes={customMeasuresRoutes} />
         <Route
@@ -204,6 +204,7 @@ function renderComponentRoutes() {
         <RouteWithChildRoutes path="project/branches" childRoutes={projectBranchesRoutes} />
         <RouteWithChildRoutes path="project/settings" childRoutes={settingsRoutes} />
         <RouteWithChildRoutes path="project_roles" childRoutes={projectPermissionsRoutes} />
+        <RouteWithChildRoutes path="application/console" childRoutes={applicationConsoleRoutes} />
         <RouteWithChildRoutes path="project/webhooks" childRoutes={webhooksRoutes} />
         <Route
           path="project/deletion"
@@ -265,8 +266,8 @@ export default function startReactApp(
               {renderRedirects()}
 
               <Route
-                path="markdown/help"
-                component={lazyLoadComponent(() => import('../components/MarkdownHelp'))}
+                path="formatting/help"
+                component={lazyLoadComponent(() => import('../components/FormattingHelp'))}
               />
 
               <Route component={lazyLoadComponent(() => import('../components/SimpleContainer'))}>
@@ -292,10 +293,6 @@ export default function startReactApp(
                     <RouteWithChildRoutes path="account" childRoutes={accountRoutes} />
                     <RouteWithChildRoutes path="coding_rules" childRoutes={codingRulesRoutes} />
                     <RouteWithChildRoutes path="documentation" childRoutes={documentationRoutes} />
-                    <Route path="explore" component={Explore}>
-                      <Route path="issues" component={ExploreIssues} />
-                      <Route path="projects" component={ExploreProjects} />
-                    </Route>
                     <Route
                       path="extension/:pluginKey/:extensionKey"
                       component={lazyLoadComponent(() =>
@@ -306,7 +303,6 @@ export default function startReactApp(
                       path="issues"
                       component={withIndexationGuard(Issues, PageContext.Issues)}
                     />
-                    <RouteWithChildRoutes path="organizations" childRoutes={organizationsRoutes} />
                     <RouteWithChildRoutes path="projects" childRoutes={projectsRoutes} />
                     <RouteWithChildRoutes path="quality_gates" childRoutes={qualityGatesRoutes} />
                     <Route
@@ -322,6 +318,20 @@ export default function startReactApp(
 
                     {renderAdminRoutes()}
                   </Route>
+                  <Route
+                    // We don't want this route to have any menu.
+                    // That is why we can not have it under the accountRoutes
+                    path="account/reset_password"
+                    component={lazyLoadComponent(() => import('../components/ResetPassword'))}
+                  />
+                  <Route
+                    // We don't want this route to have any menu. This is why we define it here
+                    // rather than under the admin routes.
+                    path="admin/change_admin_password"
+                    component={lazyLoadComponent(() =>
+                      import('../../apps/change-admin-password/ChangeAdminPasswordApp')
+                    )}
+                  />
                   <Route
                     path="not_found"
                     component={lazyLoadComponent(() => import('../components/NotFound'))}

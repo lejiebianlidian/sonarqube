@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +20,9 @@
 package org.sonar.server.qualityprofile;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -88,7 +88,7 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
 
     changes.forEach(change -> dbClient.qProfileChangeDao().insert(batchDbSession, change.toDto(null)));
 
-    associateToOrganizations(dbSession, batchDbSession, builtInQProfile, ruleProfile);
+    createDefaultAndOrgQProfiles(dbSession, batchDbSession, builtInQProfile, ruleProfile);
 
     // TODO batch statements should be executed through dbSession
     batchDbSession.commit();
@@ -96,30 +96,21 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
     activeRuleIndexer.commitAndIndex(dbSession, changes);
   }
 
-  private void associateToOrganizations(DbSession dbSession, DbSession batchDbSession, BuiltInQProfile builtIn, RulesProfileDto rulesProfileDto) {
-    List<String> orgUuids = dbClient.organizationDao().selectAllUuids(dbSession);
-    Set<String> orgUuidsWithoutDefault = dbClient.defaultQProfileDao().selectUuidsOfOrganizationsWithoutDefaultProfile(dbSession, builtIn.getLanguage());
+  private void createDefaultAndOrgQProfiles(DbSession dbSession, DbSession batchDbSession, BuiltInQProfile builtIn, RulesProfileDto rulesProfileDto) {
+    Optional<String> qProfileUuid = dbClient.defaultQProfileDao().selectDefaultQProfileUuid(dbSession, builtIn.getLanguage());
 
-    List<DefaultQProfileDto> defaults = new ArrayList<>();
-    orgUuids.forEach(orgUuid -> {
-      OrgQProfileDto dto = new OrgQProfileDto()
-        .setOrganizationUuid(orgUuid)
-        .setRulesProfileUuid(rulesProfileDto.getUuid())
-        .setUuid(uuidFactory.create());
+    OrgQProfileDto dto = new OrgQProfileDto()
+      .setRulesProfileUuid(rulesProfileDto.getUuid())
+      .setUuid(uuidFactory.create());
 
-      if (builtIn.isDefault() && orgUuidsWithoutDefault.contains(orgUuid)) {
-        // rows of table default_qprofiles must be inserted after
-        // in order to benefit from batch SQL inserts
-        defaults.add(new DefaultQProfileDto()
-          .setQProfileUuid(dto.getUuid())
-          .setOrganizationUuid(orgUuid)
-          .setLanguage(builtIn.getLanguage()));
-      }
+    if (builtIn.isDefault() && !qProfileUuid.isPresent()) {
+      DefaultQProfileDto defaultQProfileDto = new DefaultQProfileDto()
+        .setQProfileUuid(dto.getUuid())
+        .setLanguage(builtIn.getLanguage());
+      dbClient.defaultQProfileDao().insertOrUpdate(dbSession, defaultQProfileDto);
+    }
 
-      dbClient.qualityProfileDao().insert(batchDbSession, dto);
-    });
-
-    defaults.forEach(defaultQProfileDto -> dbClient.defaultQProfileDao().insertOrUpdate(dbSession, defaultQProfileDto));
+    dbClient.qualityProfileDao().insert(batchDbSession, dto);
   }
 
   private void initRuleRepository(DbSession dbSession) {
@@ -166,15 +157,14 @@ public class BuiltInQProfileInsertImpl implements BuiltInQProfileInsert {
     Map<String, String> valuesByParamKey = activeRule.getParams()
       .stream()
       .collect(MoreCollectors.uniqueIndex(BuiltInQualityProfilesDefinition.OverriddenParam::key, BuiltInQualityProfilesDefinition.OverriddenParam::overriddenValue));
-    return ruleRepository.getRuleParams(activeRule.getRuleKey())
+    List<ActiveRuleParamDto> rules = ruleRepository.getRuleParams(activeRule.getRuleKey())
       .stream()
-      .map(param -> {
-        String activeRuleValue = valuesByParamKey.get(param.getName());
-        return createParamDto(param, activeRuleValue == null ? param.getDefaultValue() : activeRuleValue);
-      })
+      .map(param -> createParamDto(param, Optional.ofNullable(valuesByParamKey.get(param.getName())).orElse(param.getDefaultValue())))
       .filter(Objects::nonNull)
-      .peek(paramDto -> dbClient.activeRuleDao().insertParam(session, activeRuleDto, paramDto))
-      .collect(MoreCollectors.toList());
+      .collect(Collectors.toList());
+
+    rules.forEach(paramDto -> dbClient.activeRuleDao().insertParam(session, activeRuleDto, paramDto));
+    return rules;
   }
 
   @CheckForNull

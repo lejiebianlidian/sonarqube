@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,9 @@ public interface GroupMembershipMapper {
 
   List<GroupUserCount> countUsersByGroup(@Param("groupUuids") List<String> groupUuids);
 
-  List<LoginGroup> selectGroupsByLogins(@Param("logins") List<String> logins);
+  List<LoginGroupCount> countGroupsByUsers(@Param("logins") List<String> logins);
 
-  List<LoginGroup> selectGroupsByLoginsAndOrganization(@Param("logins") List<String> logins, @Param("organizationUuid") String organizationUuid);
+  List<LoginGroup> selectGroupsByLogins(@Param("logins") List<String> logins);
 
   List<String> selectGroupUuidsByUserUuid(@Param("userUuid") String userUuid);
 }

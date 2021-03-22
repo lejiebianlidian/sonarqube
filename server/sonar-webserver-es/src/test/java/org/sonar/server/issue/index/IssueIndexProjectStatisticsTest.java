@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.sonar.api.issue.Issue;
 import org.sonar.api.utils.System2;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.permission.index.IndexPermissions;
 import org.sonar.server.permission.index.PermissionIndexerTester;
@@ -46,7 +45,6 @@ import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.db.component.ComponentTesting.newBranchDto;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
 import static org.sonar.db.component.ComponentTesting.newBranchComponent;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 import static org.sonar.server.issue.IssueDocTesting.newDoc;
 
 public class IssueIndexProjectStatisticsTest {
@@ -76,8 +74,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_returns_something() {
-    OrganizationDto organization = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(organization);
+    ComponentDto project = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(newDoc("issue1", project).setAssigneeUuid(userUuid).setFuncCreationDate(new Date(from + 1L)));
@@ -89,8 +86,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_does_not_return_results_if_assignee_does_not_match() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String user1Uuid = randomAlphanumeric(40);
     String user2Uuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
@@ -103,8 +99,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_returns_results_if_assignee_matches() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String user1Uuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(newDoc("issue1", project).setAssigneeUuid(user1Uuid).setFuncCreationDate(new Date(from + 1L)));
@@ -116,8 +111,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_returns_results_if_functional_date_is_strictly_after_from_date() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(newDoc("issue1", project).setAssigneeUuid(userUuid).setFuncCreationDate(new Date(from + 1L)));
@@ -129,8 +123,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_does_not_return_results_if_functional_date_is_same_as_from_date() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(newDoc("issue1", project).setAssigneeUuid(userUuid).setFuncCreationDate(new Date(from)));
@@ -142,8 +135,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_does_not_return_resolved_issues() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(
@@ -159,8 +151,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_does_not_return_results_if_functional_date_is_before_from_date() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(newDoc("issue1", project).setAssigneeUuid(userUuid).setFuncCreationDate(new Date(from - 1000L)));
@@ -172,8 +163,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_returns_issue_count() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org1);
+    ComponentDto project = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(
@@ -188,10 +178,9 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_returns_issue_count_for_multiple_projects() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project1 = newPrivateProjectDto(org1);
-    ComponentDto project2 = newPrivateProjectDto(org1);
-    ComponentDto project3 = newPrivateProjectDto(org1);
+    ComponentDto project1 = newPrivateProjectDto();
+    ComponentDto project2 = newPrivateProjectDto();
+    ComponentDto project3 = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;
     indexIssues(
@@ -216,10 +205,9 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_returns_max_date_for_multiple_projects() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto project1 = newPrivateProjectDto(org1);
-    ComponentDto project2 = newPrivateProjectDto(org1);
-    ComponentDto project3 = newPrivateProjectDto(org1);
+    ComponentDto project1 = newPrivateProjectDto();
+    ComponentDto project2 = newPrivateProjectDto();
+    ComponentDto project3 = newPrivateProjectDto();
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_000L;
     indexIssues(
@@ -244,8 +232,7 @@ public class IssueIndexProjectStatisticsTest {
 
   @Test
   public void searchProjectStatistics_return_branch_issues() {
-    OrganizationDto organization = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(organization);
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto branch = newBranchComponent(project, newBranchDto(project).setKey("branch"));
     String userUuid = randomAlphanumeric(40);
     long from = 1_111_234_567_890L;

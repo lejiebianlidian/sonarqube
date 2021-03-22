@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -129,9 +129,5 @@ public class RuleKeyTest {
 
     assertThat(ab).isGreaterThan(aa);
     assertThat(aa).isLessThan(ab);
-    assertThat(aa).isNotEqualTo(ab);
-    assertThat(ab).isNotEqualTo(aa);
-    assertThat(aa).isEqualTo(aa);
-    assertThat(ab).isEqualTo(ab);
   }
 }

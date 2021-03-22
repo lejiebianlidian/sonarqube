@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +19,50 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { copyQualityGate } from '../../../../api/quality-gates';
 import { mockQualityGate } from '../../../../helpers/mocks/quality-gates';
-import CopyQualityGateForm from '../CopyQualityGateForm';
+import { mockRouter } from '../../../../helpers/testMocks';
+import { CopyQualityGateForm } from '../CopyQualityGateForm';
+
+jest.mock('../../../../api/quality-gates', () => ({
+  copyQualityGate: jest.fn().mockResolvedValue({})
+}));
 
 it('should render correctly', () => {
-  expect(
-    shallow(
-      <CopyQualityGateForm onClose={jest.fn()} onCopy={jest.fn()} qualityGate={mockQualityGate()} />
-    )
-  ).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot();
 });
+
+it('should handle copy', async () => {
+  const onCopy = jest.fn();
+  const router = mockRouter();
+  const qualityGate = mockQualityGate();
+  const wrapper = shallowRender({ onCopy, qualityGate, router });
+
+  const name = 'name';
+  wrapper.setState({ name });
+
+  await wrapper.instance().handleCopy();
+
+  expect(copyQualityGate).toBeCalledWith({ id: qualityGate.id, name });
+  expect(onCopy).toBeCalled();
+  expect(router.push).toBeCalled();
+
+  jest.clearAllMocks();
+
+  wrapper.setState({ name: '' });
+  await wrapper.instance().handleCopy();
+
+  expect(copyQualityGate).not.toBeCalled();
+});
+
+function shallowRender(overrides: Partial<CopyQualityGateForm['props']> = {}) {
+  return shallow<CopyQualityGateForm>(
+    <CopyQualityGateForm
+      onClose={jest.fn()}
+      onCopy={jest.fn()}
+      qualityGate={mockQualityGate()}
+      router={mockRouter()}
+      {...overrides}
+    />
+  );
+}

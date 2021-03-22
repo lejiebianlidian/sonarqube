@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.Scopes;
 import org.sonar.core.util.Uuids;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -121,40 +120,24 @@ public class ComponentTesting {
     return newModuleDto(Uuids.createFast(), subProjectOrProject);
   }
 
-  public static ComponentDto newPrivateProjectDto(OrganizationDto organizationDto) {
-    return newProjectDto(organizationDto.getUuid(), Uuids.createFast(), true);
+  public static ComponentDto newPrivateProjectDto() {
+    return newProjectDto(Uuids.createFast(), true);
   }
 
-  public static ProjectDto createPrivateProjectDto(OrganizationDto organizationDto) {
-    return createProjectDto(organizationDto.getUuid(), Uuids.createFast(), true);
+  public static ComponentDto newPrivateProjectDto(String uuid) {
+    return newProjectDto(uuid, true);
   }
 
-  public static ComponentDto newPrivateProjectDto(OrganizationDto organizationDto, String uuid) {
-    return newProjectDto(organizationDto.getUuid(), uuid, true);
+  public static ComponentDto newPublicProjectDto() {
+    return newProjectDto(Uuids.createFast(), false);
   }
 
-  public static ComponentDto newPublicProjectDto(OrganizationDto organizationDto) {
-    return newProjectDto(organizationDto.getUuid(), Uuids.createFast(), false);
+  public static ComponentDto newPublicProjectDto(String uuid) {
+    return newProjectDto(uuid, false);
   }
 
-  public static ComponentDto newPublicProjectDto(OrganizationDto organizationDto, String uuid) {
-    return newProjectDto(organizationDto.getUuid(), uuid, false);
-  }
-
-  private static ProjectDto createProjectDto(String organizationUuid, String uuid, boolean isPrivate) {
-    return new ProjectDto()
-      .setOrganizationUuid(organizationUuid)
-      .setUuid(uuid)
-      .setKey("KEY_" + uuid)
-      .setQualifier(Qualifiers.PROJECT)
-      .setName("NAME_" + uuid)
-      .setDescription("DESCRIPTION_" + uuid)
-      .setPrivate(isPrivate);
-  }
-
-  private static ComponentDto newProjectDto(String organizationUuid, String uuid, boolean isPrivate) {
+  private static ComponentDto newProjectDto(String uuid, boolean isPrivate) {
     return new ComponentDto()
-      .setOrganizationUuid(organizationUuid)
       .setUuid(uuid)
       .setUuidPath(UUID_PATH_OF_ROOT)
       .setProjectUuid(uuid)
@@ -172,32 +155,20 @@ public class ComponentTesting {
       .setPrivate(isPrivate);
   }
 
-  public static ComponentDto newView(OrganizationDto organizationDto) {
-    return newView(organizationDto.getUuid(), Uuids.createFast());
+  public static ComponentDto newView() {
+    return newView(Uuids.createFast());
   }
 
-  public static ComponentDto newView(OrganizationDto organizationDto, String uuid) {
-    return newPrivateProjectDto(organizationDto, uuid)
+  public static ComponentDto newView(String uuid) {
+    return newPrivateProjectDto(uuid)
       .setUuid(uuid)
       .setScope(Scopes.PROJECT)
       .setQualifier(Qualifiers.VIEW)
       .setPrivate(false);
   }
 
-  private static ComponentDto newView(String organizationUuid, String uuid) {
-    return newProjectDto(organizationUuid, uuid, false)
-      .setUuid(uuid)
-      .setScope(Scopes.PROJECT)
-      .setQualifier(Qualifiers.VIEW);
-  }
-
-  public static ComponentDto newApplication(OrganizationDto organizationDto) {
-    return newApplication(organizationDto.getUuid());
-  }
-
-  public static ComponentDto newApplication(String organizationUuid) {
-    return newView(organizationUuid, Uuids.createFast())
-      .setQualifier(Qualifiers.APP);
+  public static ComponentDto newApplication() {
+    return newView(Uuids.createFast()).setQualifier(Qualifiers.APP);
   }
 
   public static ComponentDto newProjectCopy(ComponentDto project, ComponentDto view) {
@@ -221,7 +192,6 @@ public class ComponentTesting {
       "private flag inconsistent between moduleOrProject (%s) and parent (%s)",
       moduleOrProject.isPrivate(), parent.isPrivate());
     return new ComponentDto()
-      .setOrganizationUuid(parent.getOrganizationUuid())
       .setUuid(uuid)
       .setUuidPath(formatUuidPathFromParent(parent))
       .setProjectUuid(moduleOrProject.projectUuid())
@@ -266,7 +236,6 @@ public class ComponentTesting {
     String uuid = branchDto.getUuid();
     return new ComponentDto()
       .setUuid(uuid)
-      .setOrganizationUuid(project.getOrganizationUuid())
       .setUuidPath(UUID_PATH_OF_ROOT)
       .setProjectUuid(uuid)
       .setModuleUuidPath(UUID_PATH_SEPARATOR + uuid + UUID_PATH_SEPARATOR)
@@ -278,13 +247,12 @@ public class ComponentTesting {
       .setLongName(project.getName())
       .setDescription(project.getDescription())
       .setScope(Scopes.PROJECT)
-      .setQualifier(Qualifiers.PROJECT)
+      .setQualifier(project.getQualifier())
       .setPath(null)
       .setLanguage(null)
       .setEnabled(true)
       .setPrivate(project.isPrivate());
   }
-
 
   public static ComponentDto newBranchComponent(ComponentDto project, BranchDto branchDto) {
     checkArgument(project.qualifier().equals(Qualifiers.PROJECT) || project.qualifier().equals(Qualifiers.APP));
@@ -294,7 +262,6 @@ public class ComponentTesting {
     String uuid = branchDto.getUuid();
     return new ComponentDto()
       .setUuid(uuid)
-      .setOrganizationUuid(project.getOrganizationUuid())
       .setUuidPath(UUID_PATH_OF_ROOT)
       .setProjectUuid(uuid)
       .setModuleUuidPath(UUID_PATH_SEPARATOR + uuid + UUID_PATH_SEPARATOR)

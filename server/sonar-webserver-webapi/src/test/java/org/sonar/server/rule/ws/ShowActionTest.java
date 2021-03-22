@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,14 +22,12 @@ package org.sonar.server.rule.ws;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.sonar.api.resources.Languages;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.rule.Severity;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualityprofile.ActiveRuleDto;
 import org.sonar.db.qualityprofile.ActiveRuleParamDto;
 import org.sonar.db.qualityprofile.QProfileDto;
@@ -38,8 +36,6 @@ import org.sonar.db.rule.RuleDto;
 import org.sonar.db.rule.RuleMetadataDto;
 import org.sonar.db.rule.RuleParamDto;
 import org.sonar.db.user.UserDto;
-import org.sonar.server.exceptions.NotFoundException;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.text.MacroInterpreter;
 import org.sonar.server.ws.WsActionTester;
@@ -54,7 +50,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.sonar.db.organization.OrganizationDto.Subscription.PAID;
 import static org.sonar.db.rule.RuleDto.Format.MARKDOWN;
 import static org.sonar.db.rule.RuleTesting.newCustomRule;
 import static org.sonar.db.rule.RuleTesting.newTemplateRule;
@@ -62,7 +57,6 @@ import static org.sonar.db.rule.RuleTesting.setTags;
 import static org.sonar.server.language.LanguageTesting.newLanguage;
 import static org.sonar.server.rule.ws.ShowAction.PARAM_ACTIVES;
 import static org.sonar.server.rule.ws.ShowAction.PARAM_KEY;
-import static org.sonar.server.rule.ws.ShowAction.PARAM_ORGANIZATION;
 import static org.sonarqube.ws.Common.RuleType.UNKNOWN;
 import static org.sonarqube.ws.Common.RuleType.VULNERABILITY;
 
@@ -74,16 +68,13 @@ public class ShowActionTest {
   public UserSessionRule userSession = UserSessionRule.standalone();
   @org.junit.Rule
   public DbTester db = DbTester.create();
-  @org.junit.Rule
-  public ExpectedException thrown = ExpectedException.none();
 
-  private MacroInterpreter macroInterpreter = mock(MacroInterpreter.class);
-  private Languages languages = new Languages(newLanguage("xoo", "Xoo"));
-
-  private WsActionTester ws = new WsActionTester(
+  private final MacroInterpreter macroInterpreter = mock(MacroInterpreter.class);
+  private final Languages languages = new Languages(newLanguage("xoo", "Xoo"));
+  private final WsActionTester ws = new WsActionTester(
     new ShowAction(db.getDbClient(), new RuleMapper(languages, macroInterpreter),
       new ActiveRuleCompleter(db.getDbClient(), languages),
-      new RuleWsSupport(db.getDbClient(), userSession, TestDefaultOrganizationProvider.from(db))));
+      new RuleWsSupport(db.getDbClient(), userSession)));
 
   @Before
   public void before() {
@@ -115,7 +106,7 @@ public class ShowActionTest {
     assertThat(resultRule.getRepo()).isEqualTo(rule.getRepositoryKey());
     assertThat(resultRule.getName()).isEqualTo(rule.getName());
     assertThat(resultRule.getSeverity()).isEqualTo(rule.getSeverityString());
-    assertThat(resultRule.getStatus().toString()).isEqualTo(rule.getStatus().toString());
+    assertThat(resultRule.getStatus()).hasToString(rule.getStatus().toString());
     assertThat(resultRule.getInternalKey()).isEqualTo(rule.getConfigKey());
     assertThat(resultRule.getIsTemplate()).isEqualTo(rule.isTemplate());
     assertThat(resultRule.getLang()).isEqualTo(rule.getLanguage());
@@ -125,27 +116,12 @@ public class ShowActionTest {
   }
 
   @Test
-  public void show_rule_tags_in_default_organization() {
+  public void show_rule_tags() {
     RuleDefinitionDto rule = db.rules().insert();
-    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(rule, db.getDefaultOrganization(), setTags("tag1", "tag2"), m -> m.setNoteData(null).setNoteUserUuid(null));
+    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(rule, setTags("tag1", "tag2"), m -> m.setNoteData(null).setNoteUserUuid(null));
 
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, rule.getKey().toString())
-      .executeProtobuf(ShowResponse.class);
-
-    assertThat(result.getRule().getTags().getTagsList())
-      .containsExactly(metadata.getTags().toArray(new String[0]));
-  }
-
-  @Test
-  public void show_rule_tags_in_specific_organization() {
-    RuleDefinitionDto rule = db.rules().insert();
-    OrganizationDto organization = db.organizations().insert();
-    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(rule, organization, setTags("tag1", "tag2"), m -> m.setNoteData(null).setNoteUserUuid(null));
-
-    ShowResponse result = ws.newRequest()
-      .setParam(PARAM_KEY, rule.getKey().toString())
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     assertThat(result.getRule().getTags().getTagsList())
@@ -156,12 +132,10 @@ public class ShowActionTest {
   public void show_rule_with_note_login() {
     RuleDefinitionDto rule = db.rules().insert();
     UserDto user = db.users().insertUser();
-    OrganizationDto organization = db.organizations().insert();
-    db.rules().insertOrUpdateMetadata(rule, user, organization);
+    db.rules().insertOrUpdateMetadata(rule, user);
 
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, rule.getKey().toString())
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     assertThat(result.getRule().getNoteLogin()).isEqualTo(user.getLogin());
@@ -188,6 +162,7 @@ public class ShowActionTest {
     assertThat(resultRule.getRemFnGapMultiplier()).isEqualTo("5d");
     assertThat(resultRule.getRemFnBaseEffort()).isEqualTo("10h");
     assertThat(resultRule.getRemFnOverloaded()).isFalse();
+    assertThat(resultRule.hasDeprecatedKeys()).isFalse();
   }
 
   @Test
@@ -196,7 +171,7 @@ public class ShowActionTest {
       .setDefRemediationFunction(null)
       .setDefRemediationGapMultiplier(null)
       .setDefRemediationBaseEffort(null));
-    db.rules().insertOrUpdateMetadata(rule, db.getDefaultOrganization(),
+    db.rules().insertOrUpdateMetadata(rule,
       m -> m.setNoteData(null).setNoteUserUuid(null),
       m -> m
         .setRemediationFunction("LINEAR_OFFSET")
@@ -215,6 +190,7 @@ public class ShowActionTest {
     assertThat(resultRule.getRemFnGapMultiplier()).isEqualTo("5d");
     assertThat(resultRule.getRemFnBaseEffort()).isEqualTo("10h");
     assertThat(resultRule.getRemFnOverloaded()).isTrue();
+    assertThat(resultRule.hasDeprecatedKeys()).isFalse();
   }
 
   @Test
@@ -223,7 +199,7 @@ public class ShowActionTest {
       .setDefRemediationFunction("LINEAR_OFFSET")
       .setDefRemediationGapMultiplier("5d")
       .setDefRemediationBaseEffort("10h"));
-    db.rules().insertOrUpdateMetadata(rule, db.getDefaultOrganization(), m -> m.setNoteData(null).setNoteUserUuid(null),
+    db.rules().insertOrUpdateMetadata(rule, m -> m.setNoteData(null).setNoteUserUuid(null),
       m -> m
         .setRemediationFunction("CONSTANT_ISSUE")
         .setRemediationGapMultiplier(null)
@@ -242,6 +218,7 @@ public class ShowActionTest {
     assertThat(resultRule.hasRemFnGapMultiplier()).isFalse();
     assertThat(resultRule.getRemFnBaseEffort()).isEqualTo("15h");
     assertThat(resultRule.getRemFnOverloaded()).isTrue();
+    assertThat(resultRule.hasDeprecatedKeys()).isFalse();
   }
 
   @Test
@@ -250,7 +227,7 @@ public class ShowActionTest {
       .setDefRemediationFunction(null)
       .setDefRemediationGapMultiplier(null)
       .setDefRemediationBaseEffort(null));
-    db.rules().insertOrUpdateMetadata(rule, db.getDefaultOrganization(), m -> m.setNoteData(null).setNoteUserUuid(null),
+    db.rules().insertOrUpdateMetadata(rule, m -> m.setNoteData(null).setNoteUserUuid(null),
       m -> m
         .setRemediationFunction(null)
         .setRemediationGapMultiplier(null)
@@ -268,6 +245,7 @@ public class ShowActionTest {
     assertThat(resultRule.hasRemFnGapMultiplier()).isFalse();
     assertThat(resultRule.hasRemFnBaseEffort()).isFalse();
     assertThat(resultRule.getRemFnOverloaded()).isFalse();
+    assertThat(resultRule.hasDeprecatedKeys()).isFalse();
   }
 
   @Test
@@ -277,7 +255,7 @@ public class ShowActionTest {
       .setDefRemediationGapMultiplier("5d")
       .setDefRemediationBaseEffort("10h")
       .setGapDescription("gap desc"));
-    db.rules().insertOrUpdateMetadata(rule, db.getDefaultOrganization(), m -> m.setNoteData(null).setNoteUserUuid(null),
+    db.rules().insertOrUpdateMetadata(rule, m -> m.setNoteData(null).setNoteUserUuid(null),
       m -> m
         .setRemediationFunction("CONSTANT_ISSUE")
         .setRemediationGapMultiplier(null)
@@ -296,6 +274,7 @@ public class ShowActionTest {
     assertThat(resultRule.hasDebtRemFnCoeff()).isFalse();
     assertThat(resultRule.getDebtRemFnOffset()).isEqualTo("15h");
     assertThat(resultRule.getDebtOverloaded()).isTrue();
+    assertThat(resultRule.hasDeprecatedKeys()).isFalse();
   }
 
   @Test
@@ -335,11 +314,10 @@ public class ShowActionTest {
 
   @Test
   public void show_adhoc_rule() {
-    OrganizationDto organization = db.organizations().insert();
     RuleDefinitionDto externalRule = db.rules().insert(r -> r
       .setIsExternal(true)
       .setIsAdHoc(true));
-    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(externalRule, organization, m -> m
+    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(externalRule, m -> m
       .setAdHocName("adhoc name")
       .setAdHocDescription("<div>desc</div>")
       .setAdHocSeverity(Severity.BLOCKER)
@@ -350,7 +328,6 @@ public class ShowActionTest {
 
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, externalRule.getKey().toString())
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     Rule resultRule = result.getRule();
@@ -361,7 +338,6 @@ public class ShowActionTest {
 
   @Test
   public void ignore_predefined_info_on_adhoc_rule() {
-    OrganizationDto organization = db.organizations().insert();
     RuleDefinitionDto externalRule = db.rules().insert(r -> r
       .setIsExternal(true)
       .setIsAdHoc(true)
@@ -369,7 +345,7 @@ public class ShowActionTest {
       .setDescription("<div>predefined desc</div>")
       .setSeverity(Severity.BLOCKER)
       .setType(RuleType.VULNERABILITY));
-    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(externalRule, organization, m -> m
+    RuleMetadataDto metadata = db.rules().insertOrUpdateMetadata(externalRule, m -> m
       .setAdHocName("adhoc name")
       .setAdHocDescription("<div>adhoc desc</div>")
       .setAdHocSeverity(Severity.MAJOR)
@@ -380,7 +356,6 @@ public class ShowActionTest {
 
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, externalRule.getKey().toString())
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     Rule resultRule = result.getRule();
@@ -391,7 +366,6 @@ public class ShowActionTest {
 
   @Test
   public void adhoc_info_are_empty_when_no_metadata() {
-    OrganizationDto organization = db.organizations().insert();
     RuleDefinitionDto externalRule = db.rules().insert(r -> r
       .setIsExternal(true)
       .setIsAdHoc(true)
@@ -403,7 +377,6 @@ public class ShowActionTest {
 
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, externalRule.getKey().toString())
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     Rule resultRule = result.getRule();
@@ -414,11 +387,10 @@ public class ShowActionTest {
 
   @Test
   public void show_rule_with_activation() {
-    OrganizationDto organization = db.organizations().insert();
     RuleDefinitionDto rule = db.rules().insert();
     RuleParamDto ruleParam = db.rules().insertRuleParam(rule, p -> p.setType("STRING").setDescription("Reg *exp*").setDefaultValue(".*"));
-    RuleMetadataDto ruleMetadata = db.rules().insertOrUpdateMetadata(rule, organization, m -> m.setNoteData(null).setNoteUserUuid(null));
-    QProfileDto qProfile = db.qualityProfiles().insert(organization);
+    db.rules().insertOrUpdateMetadata(rule, m -> m.setNoteData(null).setNoteUserUuid(null));
+    QProfileDto qProfile = db.qualityProfiles().insert();
     ActiveRuleDto activeRule = db.qualityProfiles().activateRule(qProfile, rule);
     db.getDbClient().activeRuleDao().insertParam(db.getSession(), activeRule, new ActiveRuleParamDto()
       .setRulesParameterUuid(ruleParam.getUuid())
@@ -429,7 +401,6 @@ public class ShowActionTest {
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, rule.getKey().toString())
       .setParam(PARAM_ACTIVES, "true")
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     List<Rules.Active> actives = result.getActivesList();
@@ -443,64 +414,17 @@ public class ShowActionTest {
 
   @Test
   public void show_rule_without_activation() {
-    OrganizationDto organization = db.organizations().insert();
     RuleDefinitionDto rule = db.rules().insert();
-    RuleMetadataDto ruleMetadata = db.rules().insertOrUpdateMetadata(rule, organization, m -> m.setNoteData(null).setNoteUserUuid(null));
-    QProfileDto qProfile = db.qualityProfiles().insert(organization);
-    ActiveRuleDto activeRule = db.qualityProfiles().activateRule(qProfile, rule);
+    db.rules().insertOrUpdateMetadata(rule, m -> m.setNoteData(null).setNoteUserUuid(null));
+    QProfileDto qProfile = db.qualityProfiles().insert();
+    db.qualityProfiles().activateRule(qProfile, rule);
 
     ShowResponse result = ws.newRequest()
       .setParam(PARAM_KEY, rule.getKey().toString())
       .setParam(PARAM_ACTIVES, "false")
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
       .executeProtobuf(ShowResponse.class);
 
     assertThat(result.getActivesList()).isEmpty();
-  }
-
-  @Test
-  public void active_rules_are_returned_when_member_of_paid_organization() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(PAID));
-    RuleDefinitionDto rule = db.rules().insert();
-    QProfileDto qProfile = db.qualityProfiles().insert(organization);
-    ActiveRuleDto activeRule = db.qualityProfiles().activateRule(qProfile, rule);
-    userSession.logIn(db.users().insertUser()).addMembership(organization);
-
-    ShowResponse result = ws.newRequest()
-      .setParam(PARAM_KEY, rule.getKey().toString())
-      .setParam(PARAM_ACTIVES, "true")
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .executeProtobuf(ShowResponse.class);
-
-    assertThat(result.getActivesList()).isNotEmpty();
-  }
-
-  @Test
-  public void active_rules_are_not_returned_when_not_member_of_paid_organization() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(PAID));
-    RuleDefinitionDto rule = db.rules().insert();
-    QProfileDto qProfile = db.qualityProfiles().insert(organization);
-    ActiveRuleDto activeRule = db.qualityProfiles().activateRule(qProfile, rule);
-
-    ShowResponse result = ws.newRequest()
-      .setParam(PARAM_KEY, rule.getKey().toString())
-      .setParam(PARAM_ACTIVES, "true")
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .executeProtobuf(ShowResponse.class);
-
-    assertThat(result.getActivesList()).isEmpty();
-  }
-
-  @Test
-  public void throw_NotFoundException_if_organization_cannot_be_found() {
-    RuleDefinitionDto rule = db.rules().insert();
-
-    thrown.expect(NotFoundException.class);
-
-    ws.newRequest()
-      .setParam("key", rule.getKey().toString())
-      .setParam("organization", "foo")
-      .execute();
   }
 
   @Test
@@ -515,8 +439,7 @@ public class ShowActionTest {
       .extracting(WebService.Param::key, WebService.Param::isRequired)
       .containsExactlyInAnyOrder(
         tuple("key", true),
-        tuple("actives", false),
-        tuple("organization", false));
+        tuple("actives", false));
   }
 
 }

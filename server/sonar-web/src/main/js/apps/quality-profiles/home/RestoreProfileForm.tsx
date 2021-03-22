@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,13 +21,14 @@ import * as React from 'react';
 import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { restoreQualityProfile } from '../../../api/quality-profiles';
 
 interface Props {
   onClose: () => void;
   onRestore: () => void;
-  organization: string | null;
 }
 
 interface State {
@@ -55,9 +56,6 @@ export default class RestoreProfileForm extends React.PureComponent<Props, State
     this.setState({ loading: true });
 
     const data = new FormData(event.currentTarget);
-    if (this.props.organization) {
-      data.append('organization', this.props.organization);
-    }
 
     restoreQualityProfile(data).then(
       (response: any) => {
@@ -116,13 +114,16 @@ export default class RestoreProfileForm extends React.PureComponent<Props, State
             {profile != null && ruleSuccesses != null ? (
               this.renderAlert(profile, ruleFailures, ruleSuccesses)
             ) : (
-              <div className="modal-field">
-                <label htmlFor="restore-profile-backup">
-                  {translate('backup')}
-                  <em className="mandatory">*</em>
-                </label>
-                <input id="restore-profile-backup" name="backup" required={true} type="file" />
-              </div>
+              <>
+                <MandatoryFieldsExplanation className="modal-field" />
+                <div className="modal-field">
+                  <label htmlFor="restore-profile-backup">
+                    {translate('backup')}
+                    <MandatoryFieldMarker />
+                  </label>
+                  <input id="restore-profile-backup" name="backup" required={true} type="file" />
+                </div>
+              </>
             )}
           </div>
 

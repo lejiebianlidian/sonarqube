@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@ package org.sonar.core.platform;
 
 import java.util.Collection;
 import org.sonar.api.Plugin;
-import org.sonar.api.scanner.ScannerSide;
 import org.sonar.api.ce.ComputeEngineSide;
+import org.sonar.api.scanner.ScannerSide;
 import org.sonar.api.server.ServerSide;
 
 /**
@@ -44,6 +44,8 @@ public interface PluginRepository {
    * @return the instance of {@link Plugin} for the given plugin key. Never return null.
    */
   Plugin getPluginInstance(String key);
+
+  Collection<Plugin> getPluginInstances();
 
   boolean hasPlugin(String key);
 }

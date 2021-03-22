@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { get, remove, save } from 'sonar-ui-common/helpers/storage';
 import { getIndexationStatus } from '../../../../api/ce';
 import { IndexationStatus } from '../../../../types/indexation';
@@ -65,7 +64,7 @@ it('should properly start & stop polling for indexation status', async () => {
 });
 
 it('should properly handle the flag to show the completed banner', () => {
-  IndexationNotificationHelper.markInProgressNotificationAsDisplayed();
+  IndexationNotificationHelper.markCompletedNotificationAsToDisplay();
 
   expect(save).toHaveBeenCalledWith(expect.any(String), 'true');
 
@@ -75,7 +74,7 @@ it('should properly handle the flag to show the completed banner', () => {
   expect(shouldDisplay).toBe(true);
   expect(get).toHaveBeenCalled();
 
-  IndexationNotificationHelper.markCompletedNotificationAsDismissed();
+  IndexationNotificationHelper.markCompletedNotificationAsDisplayed();
 
   expect(remove).toHaveBeenCalled();
 

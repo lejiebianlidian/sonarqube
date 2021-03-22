@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,25 +25,17 @@ import org.junit.rules.ExpectedException;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.qualitygate.QGateWithOrgDto;
 import org.sonar.db.qualitygate.QualityGateDto;
-import org.sonar.db.user.UserDto;
 import org.sonar.server.component.TestComponentFinder;
-import org.sonar.server.exceptions.ForbiddenException;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.qualitygate.QualityGateFinder;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ws.WsActionTester;
 import org.sonarqube.ws.Qualitygates.ListWsResponse.QualityGate;
 
-import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.tuple;
-import static org.sonar.db.organization.OrganizationDto.Subscription.PAID;
-import static org.sonar.db.permission.OrganizationPermission.ADMINISTER_QUALITY_GATES;
-import static org.sonar.db.permission.OrganizationPermission.ADMINISTER_QUALITY_PROFILES;
+import static org.sonar.db.permission.GlobalPermission.ADMINISTER_QUALITY_GATES;
+import static org.sonar.db.permission.GlobalPermission.ADMINISTER_QUALITY_PROFILES;
 import static org.sonar.test.JsonAssert.assertJson;
 import static org.sonarqube.ws.Qualitygates.ListWsResponse;
 
@@ -56,22 +48,19 @@ public class ListActionTest {
   @Rule
   public DbTester db = DbTester.create();
 
-  private DbClient dbClient = db.getDbClient();
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-  private QualityGateFinder qualityGateFinder = new QualityGateFinder(dbClient);
+  private final DbClient dbClient = db.getDbClient();
+  private final QualityGateFinder qualityGateFinder = new QualityGateFinder(dbClient);
 
-  private WsActionTester ws = new WsActionTester(new ListAction(db.getDbClient(),
-    new QualityGatesWsSupport(dbClient, userSession, defaultOrganizationProvider, TestComponentFinder.from(db)), qualityGateFinder));
+  private final WsActionTester ws = new WsActionTester(new ListAction(db.getDbClient(),
+    new QualityGatesWsSupport(dbClient, userSession, TestComponentFinder.from(db)), qualityGateFinder));
 
   @Test
   public void list_quality_gates() {
-    OrganizationDto organization = db.organizations().insert();
-    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(organization);
-    QualityGateDto otherQualityGate = db.qualityGates().insertQualityGate(organization);
-    db.qualityGates().setDefaultQualityGate(organization, defaultQualityGate);
+    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate();
+    QualityGateDto otherQualityGate = db.qualityGates().insertQualityGate();
+    db.qualityGates().setDefaultQualityGate(defaultQualityGate);
 
     ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
       .executeProtobuf(ListWsResponse.class);
 
     assertThat(response.getQualitygatesList())
@@ -82,30 +71,12 @@ public class ListActionTest {
   }
 
   @Test
-  public void default_organization_is_used_when_no_organization_parameter() {
-    QGateWithOrgDto qualityGate = db.qualityGates().insertQualityGate(db.getDefaultOrganization());
-    db.qualityGates().setDefaultQualityGate(db.getDefaultOrganization(), qualityGate);
-
-    OrganizationDto otherOrganization = db.organizations().insert();
-    QGateWithOrgDto otherQualityGate = db.qualityGates().insertQualityGate(otherOrganization);
-    db.qualityGates().setDefaultQualityGate(otherOrganization, otherQualityGate);
-
-    ListWsResponse response = ws.newRequest().executeProtobuf(ListWsResponse.class);
-
-    assertThat(response.getQualitygatesList())
-      .extracting(QualityGate::getId)
-      .containsExactly(qualityGate.getUuid());
-  }
-
-  @Test
   public void test_built_in_flag() {
-    OrganizationDto organization = db.organizations().insert();
-    QualityGateDto qualityGate1 = db.qualityGates().insertQualityGate(organization, qualityGate -> qualityGate.setBuiltIn(true));
-    QualityGateDto qualityGate2 = db.qualityGates().insertQualityGate(organization, qualityGate -> qualityGate.setBuiltIn(false));
-    db.qualityGates().setDefaultQualityGate(organization, qualityGate1);
+    QualityGateDto qualityGate1 = db.qualityGates().insertQualityGate(qualityGate -> qualityGate.setBuiltIn(true));
+    QualityGateDto qualityGate2 = db.qualityGates().insertQualityGate(qualityGate -> qualityGate.setBuiltIn(false));
+    db.qualityGates().setDefaultQualityGate(qualityGate1);
 
     ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
       .executeProtobuf(ListWsResponse.class);
 
     assertThat(response.getQualitygatesList())
@@ -117,12 +88,10 @@ public class ListActionTest {
 
   @Test
   public void test_deprecated_default_field() {
-    OrganizationDto organization = db.organizations().insert();
-    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(organization);
-    db.qualityGates().setDefaultQualityGate(organization, defaultQualityGate);
+    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate();
+    db.qualityGates().setDefaultQualityGate(defaultQualityGate);
 
     ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
       .executeProtobuf(ListWsResponse.class);
 
     assertThat(response.getDefault()).isEqualTo(defaultQualityGate.getUuid());
@@ -130,29 +99,24 @@ public class ListActionTest {
 
   @Test
   public void no_default_quality_gate() {
-    OrganizationDto organization = db.organizations().insert();
-    QualityGateDto qualityGate = db.qualityGates().insertQualityGate(organization);
+    QualityGateDto qualityGate = db.qualityGates().insertQualityGate();
 
     expectedException.expect(IllegalStateException.class);
 
     ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
       .executeProtobuf(ListWsResponse.class);
 
   }
 
   @Test
   public void actions_with_quality_gate_administer_permission() {
-    OrganizationDto organization = db.organizations().insert();
-    userSession.logIn("john").addPermission(ADMINISTER_QUALITY_GATES, organization);
-    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(organization, qg -> qg.setName("Default").setBuiltIn(false));
-    QualityGateDto builtInQualityGate = db.qualityGates().insertQualityGate(organization, qg -> qg.setName("Sonar way").setBuiltIn(true));
-    QualityGateDto otherQualityGate = db.qualityGates().insertQualityGate(organization, qg -> qg.setName("Sonar way - Without Coverage").setBuiltIn(false));
-    db.qualityGates().setDefaultQualityGate(organization, defaultQualityGate);
+    userSession.logIn("john").addPermission(ADMINISTER_QUALITY_GATES);
+    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(qg -> qg.setName("Default").setBuiltIn(false));
+    QualityGateDto builtInQualityGate = db.qualityGates().insertQualityGate(qg -> qg.setName("Sonar way").setBuiltIn(true));
+    QualityGateDto otherQualityGate = db.qualityGates().insertQualityGate(qg -> qg.setName("Sonar way - Without Coverage").setBuiltIn(false));
+    db.qualityGates().setDefaultQualityGate(defaultQualityGate);
 
-    ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
-      .executeProtobuf(ListWsResponse.class);
+    ListWsResponse response = ws.newRequest().executeProtobuf(ListWsResponse.class);
 
     assertThat(response.getActions())
       .extracting(ListWsResponse.RootActions::getCreate)
@@ -169,15 +133,12 @@ public class ListActionTest {
 
   @Test
   public void actions_without_quality_gate_administer_permission() {
-    OrganizationDto organization = db.organizations().insert();
-    userSession.logIn("john").addPermission(ADMINISTER_QUALITY_PROFILES, organization);
-    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(organization, qg -> qg.setName("Sonar way").setBuiltIn(true));
-    QualityGateDto otherQualityGate = db.qualityGates().insertQualityGate(organization, qg -> qg.setName("Sonar way - Without Coverage").setBuiltIn(false));
-    db.qualityGates().setDefaultQualityGate(organization, defaultQualityGate);
+    userSession.logIn("john").addPermission(ADMINISTER_QUALITY_PROFILES);
+    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(qg -> qg.setName("Sonar way").setBuiltIn(true));
+    QualityGateDto otherQualityGate = db.qualityGates().insertQualityGate(qg -> qg.setName("Sonar way - Without Coverage").setBuiltIn(false));
+    db.qualityGates().setDefaultQualityGate(defaultQualityGate);
 
-    ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
-      .executeProtobuf(ListWsResponse.class);
+    ListWsResponse response = ws.newRequest().executeProtobuf(ListWsResponse.class);
 
     assertThat(response.getActions())
       .extracting(ListWsResponse.RootActions::getCreate)
@@ -192,47 +153,13 @@ public class ListActionTest {
   }
 
   @Test
-  public void list_quality_gates_on_paid_organization() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(PAID));
-    QualityGateDto qualityGate = db.qualityGates().insertQualityGate(organization);
-    db.qualityGates().setDefaultQualityGate(organization, qualityGate);
-    UserDto user = db.users().insertUser();
-    userSession.logIn(user).addMembership(organization);
-
-    ListWsResponse response = ws.newRequest()
-      .setParam("organization", organization.getKey())
-      .executeProtobuf(ListWsResponse.class);
-
-    assertThat(response.getQualitygatesList())
-      .extracting(QualityGate::getName)
-      .containsExactlyInAnyOrder(qualityGate.getName());
-  }
-
-  @Test
-  public void fail_on_paid_organization_when_not_member() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(PAID));
-    QGateWithOrgDto qualityGate = db.qualityGates().insertQualityGate(organization);
-
-    expectedException.expect(ForbiddenException.class);
-    expectedException.expectMessage(format("You're not member of organization '%s'", organization.getKey()));
-
-    ws.newRequest()
-      .setParam("organization", organization.getKey())
-      .execute();
-  }
-
-  @Test
   public void json_example() {
-    OrganizationDto organization = db.organizations().insert();
-    userSession.logIn("admin").addPermission(ADMINISTER_QUALITY_GATES, organization);
-    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(organization, qualityGate -> qualityGate.setName("Sonar way").setBuiltIn(true));
-    db.qualityGates().insertQualityGate(organization, qualityGate -> qualityGate.setName("Sonar way - Without Coverage").setBuiltIn(false));
-    db.qualityGates().setDefaultQualityGate(organization, defaultQualityGate);
+    userSession.logIn("admin").addPermission(ADMINISTER_QUALITY_GATES);
+    QualityGateDto defaultQualityGate = db.qualityGates().insertQualityGate(qualityGate -> qualityGate.setName("Sonar way").setBuiltIn(true));
+    db.qualityGates().insertQualityGate(qualityGate -> qualityGate.setName("Sonar way - Without Coverage").setBuiltIn(false));
+    db.qualityGates().setDefaultQualityGate(defaultQualityGate);
 
-    String response = ws.newRequest()
-      .setParam("organization", organization.getKey())
-      .execute()
-      .getInput();
+    String response = ws.newRequest().execute().getInput();
 
     assertJson(response).ignoreFields("id", "default")
       .isSimilarTo(getClass().getResource("list-example.json"));
@@ -246,8 +173,7 @@ public class ListActionTest {
     assertThat(action.isPost()).isFalse();
     assertThat(action.isInternal()).isFalse();
     assertThat(action.changelog()).isNotEmpty();
-    assertThat(action.params()).extracting(WebService.Param::key, WebService.Param::isRequired)
-      .containsExactlyInAnyOrder(tuple("organization", false));
+    assertThat(action.params()).extracting(WebService.Param::key, WebService.Param::isRequired).isEmpty();
   }
 
 }

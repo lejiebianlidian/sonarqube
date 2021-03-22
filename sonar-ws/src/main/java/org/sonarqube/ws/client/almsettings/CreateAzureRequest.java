@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,12 +31,20 @@ public class CreateAzureRequest {
 
   private String key;
   private String personalAccessToken;
+  private String url;
 
-  /**
-   * This is a mandatory parameter.
-   */
   public CreateAzureRequest setKey(String key) {
     this.key = key;
+    return this;
+  }
+
+  public CreateAzureRequest setPersonalAccessToken(String personalAccessToken) {
+    this.personalAccessToken = personalAccessToken;
+    return this;
+  }
+
+  public CreateAzureRequest setUrl(String url) {
+    this.url = url;
     return this;
   }
 
@@ -44,16 +52,12 @@ public class CreateAzureRequest {
     return key;
   }
 
-  /**
-   * This is a mandatory parameter.
-   */
-  public CreateAzureRequest setPersonalAccessToken(String personalAccessToken) {
-    this.personalAccessToken = personalAccessToken;
-    return this;
-  }
-
   public String getPersonalAccessToken() {
     return personalAccessToken;
+  }
+
+  public String getUrl() {
+    return url;
   }
 
 }

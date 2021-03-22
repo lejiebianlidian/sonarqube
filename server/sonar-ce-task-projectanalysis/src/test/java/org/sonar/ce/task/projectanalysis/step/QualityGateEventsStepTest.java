@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -152,12 +152,12 @@ public class QualityGateEventsStepTest {
 
   @Test
   public void event_created_if_base_ALERT_STATUS_has_no_alertStatus_and_raw_is_ERROR() {
-    verify_event_created_if_no_base_ALERT_STATUS_measure(ERROR, "Red");
+    verify_event_created_if_no_base_ALERT_STATUS_measure(ERROR, "Failed");
   }
 
   @Test
   public void event_created_if_base_ALERT_STATUS_has_invalid_alertStatus_and_raw_is_ERROR() {
-    verify_event_created_if_no_base_ALERT_STATUS_measure(ERROR, "Red");
+    verify_event_created_if_no_base_ALERT_STATUS_measure(ERROR, "Failed");
   }
 
   private void verify_event_created_if_no_base_ALERT_STATUS_measure(Measure.Level rawAlterStatus, String expectedLabel) {
@@ -211,8 +211,8 @@ public class QualityGateEventsStepTest {
 
   @Test
   public void event_created_if_base_ALERT_STATUS_measure_exists_and_status_has_changed() {
-    verify_event_created_if_base_ALERT_STATUS_measure_exists_and_status_has_changed(OK, ERROR_QUALITY_GATE_STATUS, "Red (was Green)");
-    verify_event_created_if_base_ALERT_STATUS_measure_exists_and_status_has_changed(ERROR, OK_QUALITY_GATE_STATUS, "Green (was Red)");
+    verify_event_created_if_base_ALERT_STATUS_measure_exists_and_status_has_changed(OK, ERROR_QUALITY_GATE_STATUS, "Failed");
+    verify_event_created_if_base_ALERT_STATUS_measure_exists_and_status_has_changed(ERROR, OK_QUALITY_GATE_STATUS, "Passed");
   }
 
   private void verify_event_created_if_base_ALERT_STATUS_measure_exists_and_status_has_changed(Measure.Level previousAlertStatus,
@@ -265,7 +265,7 @@ public class QualityGateEventsStepTest {
     assertThat(notification.getFieldValue("projectKey")).isEqualTo(PROJECT_COMPONENT.getKey());
     assertThat(notification.getFieldValue("projectName")).isEqualTo(PROJECT_COMPONENT.getName());
     assertThat(notification.getFieldValue("projectVersion")).isEqualTo(PROJECT_COMPONENT.getProjectAttributes().getProjectVersion());
-    assertThat(notification.getFieldValue("branch")).isEqualTo(null);
+    assertThat(notification.getFieldValue("branch")).isNull();
 
     reset(measureRepository, eventRepository, notificationService);
   }

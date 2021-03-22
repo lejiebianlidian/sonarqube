@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,21 +22,6 @@ import * as React from 'react';
 import Radio from 'sonar-ui-common/components/controls/Radio';
 import { click } from 'sonar-ui-common/helpers/testUtils';
 import ChangeDefaultVisibilityForm from '../ChangeDefaultVisibilityForm';
-
-const organization: T.Organization = {
-  canUpdateProjectsVisibilityToPrivate: true,
-  key: 'org',
-  name: 'org',
-  projectVisibility: 'public'
-};
-
-it('renders disabled', () => {
-  expect(
-    shallowRender({
-      organization: { ...organization, canUpdateProjectsVisibilityToPrivate: false }
-    })
-  ).toMatchSnapshot();
-});
 
 it('closes', () => {
   const onClose = jest.fn();
@@ -64,9 +49,9 @@ it('changes visibility', () => {
 function shallowRender(props: Partial<ChangeDefaultVisibilityForm['props']> = {}) {
   return shallow(
     <ChangeDefaultVisibilityForm
+      defaultVisibility="public"
       onClose={jest.fn()}
       onConfirm={jest.fn()}
-      organization={organization}
       {...props}
     />
   );

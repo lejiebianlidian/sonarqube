@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ import { mockComponentMeasure, mockRouter } from '../../../../helpers/testMocks'
 import MeasureContent from '../MeasureContent';
 
 jest.mock('../../../../api/components', () => {
-  const { mockComponentMeasure } = require.requireActual('../../../../helpers/testMocks');
+  const { mockComponentMeasure } = jest.requireActual('../../../../helpers/testMocks');
   return {
     getComponentTree: jest.fn().mockResolvedValue({
       paging: { pageIndex: 1, pageSize: 500, total: 2 },

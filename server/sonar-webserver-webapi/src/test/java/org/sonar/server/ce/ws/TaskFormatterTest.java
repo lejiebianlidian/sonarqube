@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,14 +27,13 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.sonar.api.utils.DateUtils;
 import org.sonar.api.utils.System2;
+import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.ce.CeActivityDto;
 import org.sonar.db.ce.CeQueueDto;
 import org.sonar.db.ce.CeTaskTypes;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.UserDto;
 import org.sonarqube.ws.Ce;
 
@@ -42,6 +41,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -51,13 +51,11 @@ public class TaskFormatterTest {
 
   @Rule
   public DbTester db = DbTester.create(System2.INSTANCE);
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
-  private int warningCount = new Random().nextInt(10);
+  private final int warningCount = new Random().nextInt(10);
 
-  private System2 system2 = mock(System2.class);
-  private TaskFormatter underTest = new TaskFormatter(db.getDbClient(), system2);
+  private final System2 system2 = mock(System2.class);
+  private final TaskFormatter underTest = new TaskFormatter(db.getDbClient(), system2);
 
   @Test
   public void formatQueue_without_component() {
@@ -72,7 +70,6 @@ public class TaskFormatterTest {
     assertThat(wsTask.getType()).isEqualTo("TYPE");
     assertThat(wsTask.getId()).isEqualTo("UUID");
     assertThat(wsTask.getStatus()).isEqualTo(Ce.TaskStatus.PENDING);
-    assertThat(wsTask.getLogs()).isFalse();
     assertThat(wsTask.getSubmittedAt()).isEqualTo(DateUtils.formatDateTime(new Date(1_450_000_000_000L)));
     assertThat(wsTask.hasScannerContext()).isFalse();
 
@@ -89,8 +86,7 @@ public class TaskFormatterTest {
   @Test
   public void formatQueue_with_component_and_other_fields() {
     String uuid = "COMPONENT_UUID";
-    OrganizationDto organizationDto = db.organizations().insert();
-    db.components().insertPrivateProject(organizationDto, (t) -> t.setUuid(uuid).setDbKey("COMPONENT_KEY").setName("Component Name"));
+    db.components().insertPrivateProject((t) -> t.setUuid(uuid).setDbKey("COMPONENT_KEY").setName("Component Name"));
     UserDto user = db.users().insertUser();
 
     CeQueueDto dto = new CeQueueDto();
@@ -113,7 +109,6 @@ public class TaskFormatterTest {
     assertThat(wsTask.getComponentName()).isEqualTo("Component Name");
     assertThat(wsTask.getComponentQualifier()).isEqualTo("TRK");
     assertThat(wsTask.getStatus()).isEqualTo(Ce.TaskStatus.IN_PROGRESS);
-    assertThat(wsTask.getLogs()).isFalse();
     assertThat(wsTask.getSubmitterLogin()).isEqualTo(user.getLogin());
     assertThat(wsTask.hasExecutionTimeMs()).isTrue();
     assertThat(wsTask.hasExecutedAt()).isFalse();
@@ -178,9 +173,9 @@ public class TaskFormatterTest {
     UserDto user = db.users().insertUser();
     CeActivityDto dto = newActivity("UUID", "COMPONENT_UUID", CeActivityDto.Status.FAILED, user);
 
-    expectedException.expect(NullPointerException.class);
-
-    underTest.formatActivity(db.getSession(), dto, "foo", null);
+    DbSession dbSession = db.getSession();
+    assertThatThrownBy(() -> underTest.formatActivity(dbSession, dto, "foo", null))
+      .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -197,7 +192,6 @@ public class TaskFormatterTest {
     assertThat(wsTask.getSubmitterLogin()).isEqualTo(user.getLogin());
     assertThat(wsTask.getExecutionTimeMs()).isEqualTo(500L);
     assertThat(wsTask.getAnalysisId()).isEqualTo("U1");
-    assertThat(wsTask.getLogs()).isFalse();
     assertThat(wsTask.hasScannerContext()).isFalse();
     assertThat(wsTask.getWarningCount()).isEqualTo(warningCount);
     assertThat(wsTask.getWarningsList()).isEmpty();

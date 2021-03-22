@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@ import { highlightTerm } from 'sonar-ui-common/helpers/search';
 import ListStyleFacet from '../../../components/facet/ListStyleFacet';
 import Avatar from '../../../components/ui/Avatar';
 import { isUserActive } from '../../../helpers/users';
-import { Facet, Query, searchAssignees } from '../utils';
+import { Facet } from '../../../types/issues';
+import { Query, searchAssignees } from '../utils';
 
 interface Props {
   assigned: boolean;
@@ -34,7 +35,6 @@ interface Props {
   onChange: (changes: Partial<Query>) => void;
   onToggle: (property: string) => void;
   open: boolean;
-  organization: string | undefined;
   query: Query;
   stats: T.Dict<number> | undefined;
   referencedUsers: T.Dict<T.UserBase>;
@@ -42,7 +42,7 @@ interface Props {
 
 export default class AssigneeFacet extends React.PureComponent<Props> {
   handleSearch = (query: string, page?: number) => {
-    return searchAssignees(query, this.props.organization, page);
+    return searchAssignees(query, page);
   };
 
   handleItemClick = (itemValue: string, multiple: boolean) => {

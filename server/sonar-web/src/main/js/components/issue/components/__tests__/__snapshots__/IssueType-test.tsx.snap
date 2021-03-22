@@ -28,12 +28,14 @@ exports[`should open the popup when the button is clicked 2`] = `
     }
   >
     <ButtonLink
+      aria-expanded={true}
+      aria-label="issue.type.type_x_click_to_change.issue.type.BUG"
       className="issue-action issue-action-with-options js-issue-set-type"
       onClick={[Function]}
     >
       <IssueTypeIcon
         className="little-spacer-right"
-        fill="#444"
+        fill="#333"
         query="BUG"
       />
       issue.type.BUG
@@ -64,12 +66,14 @@ exports[`should render with the action 1`] = `
     }
   >
     <ButtonLink
+      aria-expanded={false}
+      aria-label="issue.type.type_x_click_to_change.issue.type.BUG"
       className="issue-action issue-action-with-options js-issue-set-type"
       onClick={[Function]}
     >
       <IssueTypeIcon
         className="little-spacer-right"
-        fill="#444"
+        fill="#333"
         query="BUG"
       />
       issue.type.BUG

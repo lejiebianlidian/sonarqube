@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.es.EsQueueDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualityprofile.ActiveRuleDto;
 import org.sonar.db.qualityprofile.QProfileDto;
 import org.sonar.db.rule.RuleDefinitionDto;
@@ -63,9 +62,8 @@ public class ActiveRuleIndexerTest {
   public void before() {
     rule1 = db.rules().insert();
     rule2 = db.rules().insert();
-    OrganizationDto org = db.organizations().insert();
-    profile1 = db.qualityProfiles().insert(org);
-    profile2 = db.qualityProfiles().insert(org);
+    profile1 = db.qualityProfiles().insert();
+    profile2 = db.qualityProfiles().insert();
   }
 
   @Test
@@ -92,6 +90,18 @@ public class ActiveRuleIndexerTest {
   }
 
   @Test
+  public void indexAll_indexes_all_data() {
+    ActiveRuleDto activeRule = db.qualityProfiles().activateRule(profile1, rule1);
+
+    underTest.indexAll();
+
+    List<ActiveRuleDoc> docs = es.getDocuments(TYPE_ACTIVE_RULE, ActiveRuleDoc.class);
+    assertThat(docs).hasSize(1);
+    verify(docs.get(0), profile1, activeRule);
+    assertThatEsQueueTableIsEmpty();
+  }
+
+  @Test
   public void test_commitAndIndex() {
     ActiveRuleDto ar1 = db.qualityProfiles().activateRule(profile1, rule1);
     ActiveRuleDto ar2 = db.qualityProfiles().activateRule(profile2, rule1);
@@ -109,7 +119,7 @@ public class ActiveRuleIndexerTest {
 
     underTest.commitAndIndex(db.getSession(), Collections.emptyList());
 
-    assertThat(es.countDocuments(TYPE_ACTIVE_RULE)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_ACTIVE_RULE)).isZero();
     assertThatEsQueueTableIsEmpty();
   }
 
@@ -134,7 +144,7 @@ public class ActiveRuleIndexerTest {
     db.getDbClient().activeRuleDao().delete(db.getSession(), ar.getKey());
     commitAndIndex(rule1, ar);
 
-    assertThat(es.countDocuments(TYPE_ACTIVE_RULE)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_ACTIVE_RULE)).isZero();
     assertThatEsQueueTableIsEmpty();
   }
 
@@ -146,7 +156,7 @@ public class ActiveRuleIndexerTest {
     underTest.index(db.getSession(), singletonList(item));
 
     assertThatEsQueueTableIsEmpty();
-    assertThat(es.countDocuments(TYPE_ACTIVE_RULE)).isEqualTo(0);
+    assertThat(es.countDocuments(TYPE_ACTIVE_RULE)).isZero();
   }
 
   @Test
@@ -174,7 +184,7 @@ public class ActiveRuleIndexerTest {
   }
 
   private void assertThatEsQueueTableIsEmpty() {
-    assertThat(db.countRowsOfTable(db.getSession(), "es_queue")).isEqualTo(0);
+    assertThat(db.countRowsOfTable(db.getSession(), "es_queue")).isZero();
   }
 
   private void assertThatEsQueueContainsExactly(EsQueueDto expected) {

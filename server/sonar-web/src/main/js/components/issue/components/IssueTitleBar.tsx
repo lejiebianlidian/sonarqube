@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ import { formatMeasure } from 'sonar-ui-common/helpers/measures';
 import { getBranchLikeQuery } from '../../../helpers/branch-like';
 import { getComponentIssuesUrl } from '../../../helpers/urls';
 import { BranchLike } from '../../../types/branch-like';
+import { RuleStatus } from '../../../types/rules';
 import LocationIndex from '../../common/LocationIndex';
 import { WorkspaceContext } from '../../workspace/context';
 import IssueChangelog from './IssueChangelog';
@@ -83,31 +84,31 @@ export default function IssueTitleBar(props: IssueTitleBarProps) {
             manualVulnerability={issue.fromHotspot && issue.type === 'VULNERABILITY'}
             message={issue.message}
             onOpenRule={openRule}
-            organization={issue.organization}
             ruleKey={issue.rule}
+            ruleStatus={issue.ruleStatus as RuleStatus | undefined}
           />
         )}
       </WorkspaceContext.Consumer>
 
       <div className="issue-row-meta">
-        <ul className="issue-meta-list">
-          <li className="issue-meta">
+        <div className="issue-meta-list">
+          <div className="issue-meta">
             <IssueChangelog
               creationDate={issue.creationDate}
               isOpen={props.currentPopup === 'changelog'}
               issue={issue}
               togglePopup={props.togglePopup}
             />
-          </li>
+          </div>
           {issue.textRange != null && (
-            <li className="issue-meta">
+            <div className="issue-meta">
               <span className="issue-meta-label" title={translate('line_number')}>
                 L{issue.textRange.endLine}
               </span>
-            </li>
+            </div>
           )}
           {displayLocations && (
-            <li className="issue-meta">
+            <div className="issue-meta">
               {props.displayLocationsLink ? (
                 <Link target="_blank" to={issueUrl}>
                   {locationsBadge}
@@ -115,9 +116,9 @@ export default function IssueTitleBar(props: IssueTitleBarProps) {
               ) : (
                 locationsBadge
               )}
-            </li>
+            </div>
           )}
-          <li className="issue-meta">
+          <div className="issue-meta">
             <Link
               className="js-issue-permalink link-no-underline"
               target="_blank"
@@ -125,18 +126,18 @@ export default function IssueTitleBar(props: IssueTitleBarProps) {
               to={issueUrl}>
               <LinkIcon />
             </Link>
-          </li>
+          </div>
           {hasSimilarIssuesFilter && (
-            <li className="issue-meta">
+            <div className="issue-meta">
               <SimilarIssuesFilter
                 isOpen={props.currentPopup === 'similarIssues'}
                 issue={issue}
                 onFilter={props.onFilter}
                 togglePopup={props.togglePopup}
               />
-            </li>
+            </div>
           )}
-        </ul>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,26 +47,17 @@ export interface PageSidebarProps {
   facets?: Facets;
   onClearAll: () => void;
   onQueryChange: (change: T.RawQuery) => void;
-  organization?: { key: string };
   query: T.RawQuery;
   view: string;
   visualization: string;
 }
 
 export default function PageSidebar(props: PageSidebarProps) {
-  const {
-    applicationsEnabled,
-    facets,
-    onQueryChange,
-    query,
-    organization,
-    view,
-    visualization
-  } = props;
+  const { applicationsEnabled, facets, onQueryChange, query, view, visualization } = props;
   const isFiltered = hasFilterParams(query);
   const isLeakView = view === 'leak';
   const maxFacetValue = getMaxFacetValue(facets);
-  const facetProps = { onQueryChange, maxFacetValue, organization };
+  const facetProps = { onQueryChange, maxFacetValue };
 
   let linkQuery: T.RawQuery | undefined = undefined;
   if (view !== 'overall') {
@@ -79,12 +70,12 @@ export default function PageSidebar(props: PageSidebarProps) {
 
   return (
     <div>
-      <FavoriteFilterContainer organization={organization} query={linkQuery} />
+      <FavoriteFilterContainer query={linkQuery} />
 
       <div className="projects-facets-header clearfix">
         {isFiltered && <ClearAll onClearAll={props.onClearAll} />}
 
-        <h3>{translate('filters')}</h3>
+        <h2 className="h3">{translate('filters')}</h2>
       </div>
       <QualityGateFilter {...facetProps} facet={getFacet(facets, 'gate')} value={query.gate} />
       {!isLeakView && (
@@ -140,7 +131,7 @@ export default function PageSidebar(props: PageSidebarProps) {
             {...facetProps}
             className="leak-facet-box"
             facet={getFacet(facets, 'new_security_review_rating')}
-            property="new_security_review_rating"
+            property="new_security_review"
             value={query.new_security_review_rating}
           />
           <NewMaintainabilityFilter

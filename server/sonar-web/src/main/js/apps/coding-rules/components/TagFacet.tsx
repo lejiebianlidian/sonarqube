@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,13 +27,9 @@ import { colors } from '../../../app/theme';
 import ListStyleFacet from '../../../components/facet/ListStyleFacet';
 import { BasicProps } from './Facet';
 
-interface Props extends BasicProps {
-  organization: string | undefined;
-}
-
-export default class TagFacet extends React.PureComponent<Props> {
+export default class TagFacet extends React.PureComponent<BasicProps> {
   handleSearch = (query: string) => {
-    return getRuleTags({ organization: this.props.organization, ps: 50, q: query }).then(tags => ({
+    return getRuleTags({ ps: 50, q: query }).then(tags => ({
       paging: { pageIndex: 1, pageSize: tags.length, total: tags.length },
       results: tags
     }));

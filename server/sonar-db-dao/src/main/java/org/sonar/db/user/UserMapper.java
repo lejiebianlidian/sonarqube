@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,11 @@ public interface UserMapper {
   @CheckForNull
   UserDto selectByExternalLoginAndIdentityProvider(@Param("externalLogin") String externalLogin, @Param("externalIdentityProvider") String externalExternalIdentityProvider);
 
+  List<String> selectExternalIdentityProviders();
+
   void scrollAll(ResultHandler<UserDto> handler);
+
+  void updateSonarlintLastConnectionDate(@Param("login") String login, @Param("now") long now);
 
   /**
    * Count actives users which are root and which login is not the specified one.
@@ -80,4 +84,6 @@ public interface UserMapper {
   void clearHomepages(@Param("homepageType") String type, @Param("homepageParameter") String value, @Param("now") long now);
 
   void clearHomepage(@Param("login") String login, @Param("now") long now);
+
+  long countActiveSonarlintUsers(@Param("sinceDate") long sinceDate);
 }

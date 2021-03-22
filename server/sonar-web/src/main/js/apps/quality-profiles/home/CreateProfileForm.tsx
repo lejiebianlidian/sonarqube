@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,19 +22,23 @@ import * as React from 'react';
 import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import Select from 'sonar-ui-common/components/controls/Select';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate } from 'sonar-ui-common/helpers/l10n';
+import { parseAsOptionalString } from 'sonar-ui-common/helpers/query';
 import {
   changeProfileParent,
   createQualityProfile,
   getImporters
 } from '../../../api/quality-profiles';
+import { Location } from '../../../components/hoc/withRouter';
 import { Profile } from '../types';
 
 interface Props {
   languages: Array<{ key: string; name: string }>;
+  location: Location;
   onClose: () => void;
   onCreate: Function;
-  organization: string | null;
   profiles: Profile[];
 }
 
@@ -93,9 +97,6 @@ export default class CreateProfileForm extends React.PureComponent<Props, State>
     this.setState({ loading: true });
 
     const data = new FormData(event.currentTarget);
-    if (this.props.organization) {
-      data.append('organization', this.props.organization);
-    }
 
     try {
       const { profile } = await createQualityProfile(data);
@@ -115,10 +116,11 @@ export default class CreateProfileForm extends React.PureComponent<Props, State>
 
   render() {
     const header = translate('quality_profiles.new_profile');
+    const languageQueryFilter = parseAsOptionalString(this.props.location.query.language);
     const languages = sortBy(this.props.languages, 'name');
     let profiles: Array<{ label: string; value: string }> = [];
 
-    const selectedLanguage = this.state.language || languages[0].key;
+    const selectedLanguage = this.state.language || languageQueryFilter || languages[0].key;
     const importers = this.state.importers.filter(importer =>
       importer.languages.includes(selectedLanguage)
     );
@@ -149,10 +151,11 @@ export default class CreateProfileForm extends React.PureComponent<Props, State>
             </div>
           ) : (
             <div className="modal-body">
+              <MandatoryFieldsExplanation className="modal-field" />
               <div className="modal-field">
                 <label htmlFor="create-profile-name">
                   {translate('name')}
-                  <em className="mandatory">*</em>
+                  <MandatoryFieldMarker />
                 </label>
                 <input
                   autoFocus={true}
@@ -169,16 +172,16 @@ export default class CreateProfileForm extends React.PureComponent<Props, State>
               <div className="modal-field">
                 <label htmlFor="create-profile-language">
                   {translate('language')}
-                  <em className="mandatory">*</em>
+                  <MandatoryFieldMarker />
                 </label>
                 <Select
                   clearable={false}
                   id="create-profile-language"
                   name="language"
                   onChange={this.handleLanguageChange}
-                  options={languages.map(language => ({
-                    label: language.name,
-                    value: language.key
+                  options={languages.map(l => ({
+                    label: l.name,
+                    value: l.key
                   }))}
                   value={selectedLanguage}
                 />

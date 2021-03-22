@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ interface Props {
   onOpen?: () => void;
   onQueryChange: (change: T.RawQuery) => void;
   options: Array<{ label: string; value: string }>;
-  organization?: { key: string };
   property: string;
   query: T.Dict<any>;
 }

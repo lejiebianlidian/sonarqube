@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +18,10 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { Actions, getExporters, searchQualityProfiles } from '../../../api/quality-profiles';
 import Suggestions from '../../../app/components/embed-docs-modal/Suggestions';
-import OrganizationHelmet from '../../../components/common/OrganizationHelmet';
 import '../styles.css';
 import { Exporter, Profile } from '../types';
 import { sortProfiles } from '../utils';
@@ -29,7 +29,6 @@ import { sortProfiles } from '../utils';
 interface Props {
   children: React.ReactElement<any>;
   languages: T.Languages;
-  organization: { name: string; key: string } | undefined;
 }
 
 interface State {
@@ -53,9 +52,7 @@ export default class App extends React.PureComponent<Props, State> {
   }
 
   fetchProfiles() {
-    const { organization } = this.props;
-    const data = organization ? { organization: organization.key } : {};
-    return searchQualityProfiles(data);
+    return searchQualityProfiles();
   }
 
   loadData() {
@@ -92,7 +89,6 @@ export default class App extends React.PureComponent<Props, State> {
     if (this.state.loading) {
       return <i className="spinner" />;
     }
-    const { organization } = this.props;
     const finalLanguages = Object.values(this.props.languages);
 
     return React.cloneElement(this.props.children, {
@@ -100,8 +96,7 @@ export default class App extends React.PureComponent<Props, State> {
       profiles: this.state.profiles || [],
       languages: finalLanguages,
       exporters: this.state.exporters,
-      updateProfiles: this.updateProfiles,
-      organization: organization ? organization.key : null
+      updateProfiles: this.updateProfiles
     });
   }
 
@@ -109,10 +104,7 @@ export default class App extends React.PureComponent<Props, State> {
     return (
       <div className="page page-limited">
         <Suggestions suggestions="quality_profiles" />
-        <OrganizationHelmet
-          organization={this.props.organization}
-          title={translate('quality_profiles.page')}
-        />
+        <Helmet defer={false} title={translate('quality_profiles.page')} />
 
         {this.renderChild()}
       </div>

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,9 +28,11 @@ public interface WebhookMapper {
   @CheckForNull
   WebhookDto selectByUuid(@Param("webhookUuid") String webhookUuid);
 
-  List<WebhookDto> selectForProjectUuidOrderedByName(@Param("projectUuid") String projectUuid);
+  List<WebhookDto> selectAllOrderedByName();
 
-  List<WebhookDto> selectForOrganizationUuidOrderedByName(@Param("organizationUuid") String organizationUuid);
+  List<WebhookDto> selectGlobalWebhooksOrderedByName();
+
+  List<WebhookDto> selectForProjectUuidOrderedByName(@Param("projectUuid") String projectUuid);
 
   void insert(WebhookDto dto);
 
@@ -38,7 +40,5 @@ public interface WebhookMapper {
 
   void delete(@Param("uuid") String uuid);
 
-  void deleteForOrganizationUuid(@Param("organizationUuid") String organizationUuid);
-
-  void deleteForProjectUuid(@Param("projectUuid") String organizationUuid);
+  void deleteForProjectUuid(@Param("projectUuid") String projectUuid);
 }

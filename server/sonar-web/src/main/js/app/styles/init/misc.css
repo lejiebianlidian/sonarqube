@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,15 @@ th.hide-overflow {
   visibility: hidden !important;
 }
 
+.a11y-hidden {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .invisible {
   visibility: hidden;
 }
@@ -54,6 +63,10 @@ th.hide-overflow {
 
 .nudged-down {
   margin-top: 1px;
+}
+
+.null-spacer-top {
+  margin-top: 0 !important;
 }
 
 .spacer {
@@ -179,9 +192,16 @@ th.hide-overflow {
 .big-padded-top {
   padding-top: calc(2 * var(--gridSize));
 }
+.big-padded-bottom {
+  padding-bottom: calc(2 * var(--gridSize));
+}
 
 .big-padded-right {
   padding-right: calc(2 * var(--gridSize));
+}
+
+.big-padded-left {
+  padding-left: calc(2 * var(--gridSize));
 }
 
 .huge-padded-top {
@@ -341,6 +361,10 @@ th.huge-spacer-right {
   width: 600px !important;
 }
 
+.abs-height-50 {
+  height: 50px !important;
+}
+
 .abs-height-100 {
   height: 100% !important;
 }
@@ -427,7 +451,12 @@ th.huge-spacer-right {
 
 .display-flex-start {
   display: flex !important;
-  align-items: flex-start;
+  align-items: flex-start !important;
+}
+
+.display-flex-end {
+  display: flex !important;
+  align-items: flex-end;
 }
 
 .display-flex-wrap {
@@ -579,4 +608,12 @@ th.huge-spacer-right {
   background-color: var(--leakPrimaryColor);
   border: 1px solid var(--leakSecondaryColor);
   padding: 4px 6px;
+}
+
+.break-word {
+  word-break: break-word;
+}
+
+.no-margin-bottom {
+  margin-bottom: 0 !important;
 }

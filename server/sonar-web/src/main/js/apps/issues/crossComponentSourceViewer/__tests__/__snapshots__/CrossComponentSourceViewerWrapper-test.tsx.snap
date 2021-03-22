@@ -17,9 +17,7 @@ exports[`should handle duplication popup 1`] = `
 
 exports[`should render correctly 1`] = `
 <div>
-  <DeferredSpinner
-    timeout={100}
-  />
+  <DeferredSpinner />
 </div>
 `;
 
@@ -49,6 +47,7 @@ exports[`should render correctly 2`] = `
   >
     <ComponentSourceSnippetGroupViewer
       duplicationsByLine={Object {}}
+      isLastOccurenceOfPrimaryComponent={true}
       issue={
         Object {
           "actions": Array [],
@@ -112,11 +111,9 @@ exports[`should render correctly 2`] = `
           "key": "1",
           "line": 25,
           "message": "Reduce the number of conditional operators (4) used in the expression",
-          "organization": "myorg",
           "project": "myproject",
           "projectKey": "foo",
           "projectName": "Foo",
-          "projectOrganization": "org",
           "rule": "javascript:S1067",
           "ruleName": "foo",
           "secondaryLocations": Array [

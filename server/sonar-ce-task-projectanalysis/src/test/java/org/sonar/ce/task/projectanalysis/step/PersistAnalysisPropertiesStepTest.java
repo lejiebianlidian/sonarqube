@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -110,7 +110,7 @@ public class PersistAnalysisPropertiesStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(dbTester.countRowsOfTable("analysis_properties")).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable("analysis_properties")).isZero();
   }
 
   @Test
@@ -121,7 +121,7 @@ public class PersistAnalysisPropertiesStepTest {
 
     underTest.execute(new TestComputationStepContext());
 
-    assertThat(dbTester.countRowsOfTable("analysis_properties")).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable("analysis_properties")).isZero();
   }
 
   @Test

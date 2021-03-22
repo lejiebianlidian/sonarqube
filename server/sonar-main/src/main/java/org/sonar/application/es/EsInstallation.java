@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,11 +20,12 @@
 package org.sonar.application.es;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 import org.sonar.application.command.EsJvmOptions;
+import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.process.Props;
 
 import static org.sonar.process.ProcessProperties.Property.PATH_DATA;
@@ -49,9 +50,8 @@ public class EsInstallation {
   private EsJvmOptions esJvmOptions;
   private EsYmlSettings esYmlSettings;
   private Properties log4j2Properties;
-  private String clusterName;
   private String host;
-  private int port;
+  private int httpPort;
 
   public EsInstallation(Props props) {
     File sqHomeDir = props.nonNullValueAsFile(PATH_HOME.getKey());
@@ -65,12 +65,14 @@ public class EsInstallation {
 
   private static List<File> buildOutdatedSearchDirs(Props props) {
     String dataPath = props.nonNullValue(PATH_DATA.getKey());
-    return Arrays.asList(new File(dataPath, "es"), new File(dataPath, "es5"));
+    return Stream.of("es", "es5", "es6")
+      .map(t -> new File(dataPath, t))
+      .collect(MoreCollectors.toList());
   }
 
   private static File buildDataDir(Props props) {
     String dataPath = props.nonNullValue(PATH_DATA.getKey());
-    return new File(dataPath, "es6");
+    return new File(dataPath, "es7");
   }
 
   private static File buildLogPath(Props props) {
@@ -149,15 +151,6 @@ public class EsInstallation {
     return this;
   }
 
-  public String getClusterName() {
-    return clusterName;
-  }
-
-  public EsInstallation setClusterName(String clusterName) {
-    this.clusterName = clusterName;
-    return this;
-  }
-
   public String getHost() {
     return host;
   }
@@ -167,12 +160,12 @@ public class EsInstallation {
     return this;
   }
 
-  public int getPort() {
-    return port;
+  public int getHttpPort() {
+    return httpPort;
   }
 
-  public EsInstallation setPort(int port) {
-    this.port = port;
+  public EsInstallation setHttpPort(int httpPort) {
+    this.httpPort = httpPort;
     return this;
   }
 }

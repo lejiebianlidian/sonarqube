@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,17 +33,12 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.platform.NewUserHandler;
 import org.sonar.api.server.ServerSide;
-import org.sonar.api.utils.System2;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.organization.OrganizationMemberDto;
 import org.sonar.db.user.GroupDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.db.user.UserGroupDto;
-import org.sonar.db.user.UserPropertyDto;
 import org.sonar.server.authentication.CredentialsLocalAuthentication;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.OrganizationFlags;
 import org.sonar.server.user.index.UserIndexer;
 import org.sonar.server.usergroups.DefaultGroupFinder;
 import org.sonar.server.util.Validation;
@@ -63,8 +58,6 @@ import static org.sonar.server.exceptions.BadRequestException.checkRequest;
 @ServerSide
 public class UserUpdater {
 
-  public static final String NOTIFICATIONS_READ_DATE = "notifications.readDate";
-
   private static final String SQ_AUTHORITY = "sonarqube";
 
   private static final String LOGIN_PARAM = "Login";
@@ -80,22 +73,15 @@ public class UserUpdater {
   private final NewUserNotifier newUserNotifier;
   private final DbClient dbClient;
   private final UserIndexer userIndexer;
-  private final DefaultOrganizationProvider defaultOrganizationProvider;
-  private final OrganizationFlags organizationFlags;
   private final DefaultGroupFinder defaultGroupFinder;
   private final Configuration config;
   private final CredentialsLocalAuthentication localAuthentication;
-  private final System2 system2;
 
-  public UserUpdater(System2 system2, NewUserNotifier newUserNotifier, DbClient dbClient, UserIndexer userIndexer, OrganizationFlags organizationFlags,
-    DefaultOrganizationProvider defaultOrganizationProvider, DefaultGroupFinder defaultGroupFinder, Configuration config,
+  public UserUpdater(NewUserNotifier newUserNotifier, DbClient dbClient, UserIndexer userIndexer, DefaultGroupFinder defaultGroupFinder, Configuration config,
     CredentialsLocalAuthentication localAuthentication) {
-    this.system2 = system2;
     this.newUserNotifier = newUserNotifier;
     this.dbClient = dbClient;
     this.userIndexer = userIndexer;
-    this.organizationFlags = organizationFlags;
-    this.defaultOrganizationProvider = defaultOrganizationProvider;
     this.defaultGroupFinder = defaultGroupFinder;
     this.config = config;
     this.localAuthentication = localAuthentication;
@@ -129,12 +115,7 @@ public class UserUpdater {
     setOnboarded(reactivatedUser);
     updateDto(dbSession, updateUser, reactivatedUser);
     updateUser(dbSession, reactivatedUser);
-    boolean isOrganizationEnabled = organizationFlags.isEnabled(dbSession);
-    if (isOrganizationEnabled) {
-      setNotificationsReadDate(dbSession, reactivatedUser);
-    } else {
-      addUserToDefaultOrganizationAndDefaultGroup(dbSession, reactivatedUser);
-    }
+    addUserToDefaultGroup(dbSession, reactivatedUser);
   }
 
   public void updateAndCommit(DbSession dbSession, UserDto dto, UpdateUser updateUser, Consumer<UserDto> beforeCommit, UserDto... otherUsersToIndex) {
@@ -267,6 +248,7 @@ public class UserUpdater {
     String password = updateUser.password();
     if (updateUser.isPasswordChanged() && validatePasswords(password, messages) && checkPasswordChangeAllowed(userDto, messages)) {
       localAuthentication.storeHashPassword(userDto, password);
+      userDto.setResetPassword(false);
       return true;
     }
     return false;
@@ -429,13 +411,7 @@ public class UserUpdater {
   private UserDto saveUser(DbSession dbSession, UserDto userDto) {
     userDto.setActive(true);
     UserDto res = dbClient.userDao().insert(dbSession, userDto);
-    boolean isOrganizationEnabled = organizationFlags.isEnabled(dbSession);
-    if (isOrganizationEnabled) {
-      setNotificationsReadDate(dbSession, userDto);
-    } else {
-      addUserToDefaultOrganizationAndDefaultGroup(dbSession, userDto);
-    }
-
+    addUserToDefaultGroup(dbSession, userDto);
     return res;
   }
 
@@ -456,30 +432,16 @@ public class UserUpdater {
     return userGroups.stream().anyMatch(group -> defaultGroup.getUuid().equals(group.getUuid()));
   }
 
-  private void addUserToDefaultOrganizationAndDefaultGroup(DbSession dbSession, UserDto userDto) {
-    addUserToDefaultOrganization(dbSession, userDto);
+  private void addUserToDefaultGroup(DbSession dbSession, UserDto userDto) {
     addDefaultGroup(dbSession, userDto);
   }
 
-  private void addUserToDefaultOrganization(DbSession dbSession, UserDto userDto) {
-    String defOrgUuid = defaultOrganizationProvider.get().getUuid();
-    dbClient.organizationMemberDao().insert(dbSession, new OrganizationMemberDto().setOrganizationUuid(defOrgUuid).setUserUuid(userDto.getUuid()));
-  }
-
   private void addDefaultGroup(DbSession dbSession, UserDto userDto) {
-    String defOrgUuid = defaultOrganizationProvider.get().getUuid();
     List<GroupDto> userGroups = dbClient.groupDao().selectByUserLogin(dbSession, userDto.getLogin());
-    GroupDto defaultGroup = defaultGroupFinder.findDefaultGroup(dbSession, defOrgUuid);
+    GroupDto defaultGroup = defaultGroupFinder.findDefaultGroup(dbSession);
     if (isUserAlreadyMemberOfDefaultGroup(defaultGroup, userGroups)) {
       return;
     }
     dbClient.userGroupDao().insert(dbSession, new UserGroupDto().setUserUuid(userDto.getUuid()).setGroupUuid(defaultGroup.getUuid()));
-  }
-
-  private void setNotificationsReadDate(DbSession dbSession, UserDto user) {
-    dbClient.userPropertiesDao().insertOrUpdate(dbSession, new UserPropertyDto()
-      .setUserUuid(user.getUuid())
-      .setKey(NOTIFICATIONS_READ_DATE)
-      .setValue(Long.toString(system2.now())));
   }
 }

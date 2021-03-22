@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,10 +22,9 @@ package org.sonar.db.webhook;
 import java.util.Optional;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 
+import static org.sonar.db.webhook.WebhookTesting.newGlobalWebhook;
 import static org.sonar.db.webhook.WebhookTesting.newWebhook;
 
 public class WebhookDbTester {
@@ -36,8 +35,8 @@ public class WebhookDbTester {
     this.dbTester = dbTester;
   }
 
-  public WebhookDto insertWebhook(OrganizationDto organizationDto) {
-    return insert(newWebhook(organizationDto));
+  public WebhookDto insertGlobalWebhook() {
+    return insert(newGlobalWebhook());
   }
 
   public WebhookDto insertWebhook(ProjectDto project) {

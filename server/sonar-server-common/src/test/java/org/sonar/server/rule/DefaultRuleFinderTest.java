@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,12 +29,9 @@ import org.sonar.api.utils.System2;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleDto;
 import org.sonar.db.rule.RuleDto.Scope;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +43,6 @@ public class DefaultRuleFinderTest {
 
   private DbClient dbClient = dbTester.getDbClient();
   private DbSession session = dbTester.getSession();
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(dbTester);
 
   private RuleDto rule1 = new RuleDto()
     .setName("Check Header")
@@ -84,7 +80,7 @@ public class DefaultRuleFinderTest {
     .setScope(Scope.MAIN)
     .setStatus(RuleStatus.READY);
 
-  private DefaultRuleFinder underTest = new DefaultRuleFinder(dbClient, defaultOrganizationProvider);
+  private DefaultRuleFinder underTest = new DefaultRuleFinder(dbClient);
 
   @Before
   public void setup() {
@@ -131,8 +127,7 @@ public class DefaultRuleFinderTest {
   public void findByKey_populates_system_tags_but_not_tags() {
     RuleDefinitionDto ruleDefinition = dbTester.rules()
       .insert(t -> t.setSystemTags(ImmutableSet.of(randomAlphanumeric(5), randomAlphanumeric(6))));
-    OrganizationDto organization = dbTester.organizations().insert();
-    dbTester.rules().insertRule(organization);
+    dbTester.rules().insertRule();
 
     Rule rule = underTest.findByKey(ruleDefinition.getKey());
     assertThat(rule.getSystemTags())

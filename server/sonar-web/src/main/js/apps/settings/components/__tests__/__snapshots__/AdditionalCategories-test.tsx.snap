@@ -7,7 +7,6 @@ exports[`should render additional categories component correctly 1`] = `
       "breadcrumbs": Array [],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "TRK",
       "qualityGate": Object {
         "isDefault": true,
@@ -38,7 +37,6 @@ exports[`should render additional categories component correctly 3`] = `
       "breadcrumbs": Array [],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "TRK",
       "qualityGate": Object {
         "isDefault": true,
@@ -61,13 +59,12 @@ exports[`should render additional categories component correctly 3`] = `
 `;
 
 exports[`should render additional categories component correctly 4`] = `
-<Connect(withAppState(AlmIntegration))
+<withRouter(Connect(withAppState(AlmIntegration)))
   component={
     Object {
       "breadcrumbs": Array [],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "TRK",
       "qualityGate": Object {
         "isDefault": true,
@@ -90,13 +87,12 @@ exports[`should render additional categories component correctly 4`] = `
 `;
 
 exports[`should render additional categories component correctly 5`] = `
-<PRDecorationBinding
+<Connect(PRDecorationBinding)
   component={
     Object {
       "breadcrumbs": Array [],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "TRK",
       "qualityGate": Object {
         "isDefault": true,

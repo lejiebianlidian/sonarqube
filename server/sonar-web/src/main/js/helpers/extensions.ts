@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,10 +38,10 @@ export async function getExtensionStart(key: string) {
   }
 
   if (!librariesExposed) {
+    librariesExposed = true;
     // Async import allows to reduce initial vendor bundle size
     const exposeLibraries = (await import('../app/components/extensions/exposeLibraries')).default;
     exposeLibraries();
-    librariesExposed = true;
   }
 
   await installScript(`/static/${key}.js`);

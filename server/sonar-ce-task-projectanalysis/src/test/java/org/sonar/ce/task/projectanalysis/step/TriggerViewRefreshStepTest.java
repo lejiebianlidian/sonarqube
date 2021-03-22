@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ public class TriggerViewRefreshStepTest {
 
   @Test
   public void execute_has_no_effect_if_constructor_with_null_delegate() {
-    TriggerViewRefreshStep underTest = new TriggerViewRefreshStep(analysisMetadataHolder, null);
+    TriggerViewRefreshStep underTest = new TriggerViewRefreshStep(analysisMetadataHolder);
 
     underTest.execute(new TestComputationStepContext());
 
@@ -56,7 +56,7 @@ public class TriggerViewRefreshStepTest {
     TriggerViewRefreshDelegate delegate = mock(TriggerViewRefreshDelegate.class);
     Project project = mock(Project.class);
     when(analysisMetadataHolder.getProject()).thenReturn(project);
-    TriggerViewRefreshStep underTest = new TriggerViewRefreshStep(analysisMetadataHolder, delegate);
+    TriggerViewRefreshStep underTest = new TriggerViewRefreshStep(analysisMetadataHolder, new TriggerViewRefreshDelegate[]{delegate});
 
     underTest.execute(new TestComputationStepContext());
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@ export const PERMISSIONS_ORDER = [
   'admin',
   'scan'
 ];
+
+export const PERMISSION_TEMPLATES_PATH = '/permission_templates';
 
 export function sortPermissions(permissions: T.Permission[]) {
   return sortBy(permissions, p => PERMISSIONS_ORDER.indexOf(p.key));

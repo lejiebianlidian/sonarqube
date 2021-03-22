@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,19 +17,25 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow, ShallowWrapper } from 'enzyme';
 import * as React from 'react';
-import { mockComponent } from '../../../../helpers/testMocks';
+import { mockAppState, mockComponent } from '../../../../helpers/testMocks';
 import RenderOptions from '../../components/RenderOptions';
 import Step from '../../components/Step';
-import JenkinsfileStep, { BuildTools, JenkinsfileStepProps } from '../JenkinsfileStep';
+import { BuildTools } from '../../types';
+import { JenkinsfileStep, JenkinsfileStepProps } from '../JenkinsfileStep';
 import { renderStepContent } from '../test-utils';
 
 it('should render correctly', () => {
   const wrapper = shallowRender();
   expect(wrapper).toMatchSnapshot('Step wrapper');
   expect(renderStepContent(wrapper)).toMatchSnapshot('initial content');
+});
+
+it('should render correctly with no branches', () => {
+  const wrapper = shallowRender({ appState: mockAppState({ branchesEnabled: false }) });
+  selectBuildTool(wrapper, BuildTools.Gradle);
+  expect(renderStepContent(wrapper)).toMatchSnapshot();
 });
 
 it('should render correctly for Maven', () => {
@@ -49,9 +55,9 @@ it('should render correctly for Gradle', () => {
   expect(renderStepContent(wrapper)).toMatchSnapshot();
 });
 
-it('should render correctly for MSBuild', () => {
+it('should render correctly for .NET', () => {
   const wrapper = shallowRender();
-  selectBuildTool(wrapper, BuildTools.MSBuild);
+  selectBuildTool(wrapper, BuildTools.DotNet);
   expect(renderStepContent(wrapper)).toMatchSnapshot();
 });
 
@@ -68,6 +74,11 @@ function selectBuildTool(wrapper: ShallowWrapper<JenkinsfileStepProps>, tool: Bu
 
 function shallowRender(props: Partial<JenkinsfileStepProps> = {}) {
   return shallow<JenkinsfileStepProps>(
-    <JenkinsfileStep component={mockComponent()} open={true} {...props} />
+    <JenkinsfileStep
+      appState={mockAppState({ branchesEnabled: true })}
+      component={mockComponent()}
+      open={true}
+      {...props}
+    />
   );
 }

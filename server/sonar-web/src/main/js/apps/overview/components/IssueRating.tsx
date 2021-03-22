@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@ import { getLeakValue, getRatingTooltip } from '../../../components/measure/util
 import DrilldownLink from '../../../components/shared/DrilldownLink';
 import { findMeasure } from '../../../helpers/measures';
 import { BranchLike } from '../../../types/branch-like';
-import { getIssueRatingMetricKey, getIssueRatingName, IssueType } from '../utils';
+import { IssueType } from '../../../types/issues';
+import { getIssueRatingMetricKey, getIssueRatingName } from '../utils';
 
 export interface IssueRatingProps {
   branchLike?: BranchLike;

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ import GraphsLegendStatic, { GraphsLegendStaticProps } from '../GraphsLegendStat
 
 it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot('default');
-  expect(shallowRender({ showLeakLegend: true })).toMatchSnapshot('with leak legend');
 });
 
 function shallowRender(props: Partial<GraphsLegendStaticProps> = {}) {
@@ -33,7 +32,6 @@ function shallowRender(props: Partial<GraphsLegendStaticProps> = {}) {
         { name: 'bugs', translatedName: 'Bugs' },
         { name: 'code_smells', translatedName: 'Code Smells' }
       ]}
-      showLeakLegend={false}
       {...props}
     />
   );

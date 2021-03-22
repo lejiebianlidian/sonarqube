@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,6 +54,7 @@ public class UserDto {
   private boolean local = true;
   private boolean root = false;
   private boolean onboarded = false;
+  private boolean resetPassword = false;
 
   /**
    * Date of the last time the user has accessed to the server.
@@ -61,6 +62,13 @@ public class UserDto {
    */
   @Nullable
   private Long lastConnectionDate;
+
+  /**
+   * Date of the last time sonarlint connected to sonarqube WSs with this user's authentication.
+   * Can be null when user has never been authenticated, or has not been authenticated since the creation of the column in SonarQube 8.8.
+   */
+  @Nullable
+  private Long lastSonarlintConnectionDate;
 
   private Long createdAt;
   private Long updatedAt;
@@ -261,6 +269,15 @@ public class UserDto {
     return this;
   }
 
+  public boolean isResetPassword() {
+    return resetPassword;
+  }
+
+  public UserDto setResetPassword(boolean resetPassword) {
+    this.resetPassword = resetPassword;
+    return this;
+  }
+
   @CheckForNull
   public Long getLastConnectionDate() {
     return lastConnectionDate;
@@ -270,6 +287,17 @@ public class UserDto {
     this.lastConnectionDate = lastConnectionDate;
     return this;
   }
+
+  @CheckForNull
+  public Long getLastSonarlintConnectionDate() {
+    return lastSonarlintConnectionDate;
+  }
+
+  public UserDto setLastSonarlintConnectionDate(@Nullable Long lastSonarlintConnectionDate) {
+    this.lastSonarlintConnectionDate = lastSonarlintConnectionDate;
+    return this;
+  }
+
 
   public Long getCreatedAt() {
     return createdAt;

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@ package org.sonar.server.platform.db.migration;
 import org.sonar.core.platform.Module;
 import org.sonar.server.platform.db.migration.history.MigrationHistoryImpl;
 import org.sonar.server.platform.db.migration.history.MigrationHistoryMeddler;
+import org.sonar.server.platform.db.migration.sql.DbPrimaryKeyConstraintFinder;
+import org.sonar.server.platform.db.migration.sql.DropPrimaryKeySqlGenerator;
 import org.sonar.server.platform.db.migration.step.MigrationStepRegistryImpl;
 import org.sonar.server.platform.db.migration.step.MigrationStepsProvider;
 import org.sonar.server.platform.db.migration.version.v00.DbVersion00;
@@ -30,8 +32,10 @@ import org.sonar.server.platform.db.migration.version.v81.DbVersion81;
 import org.sonar.server.platform.db.migration.version.v82.DbVersion82;
 import org.sonar.server.platform.db.migration.version.v83.DbVersion83;
 import org.sonar.server.platform.db.migration.version.v84.DbVersion84;
-import org.sonar.server.platform.db.migration.version.v84.util.DropPrimaryKeySqlGenerator;
-import org.sonar.server.platform.db.migration.version.v84.util.SqlHelper;
+import org.sonar.server.platform.db.migration.version.v85.DbVersion85;
+import org.sonar.server.platform.db.migration.version.v86.DbVersion86;
+import org.sonar.server.platform.db.migration.version.v87.DbVersion87;
+import org.sonar.server.platform.db.migration.version.v88.DbVersion88;
 
 public class MigrationConfigurationModule extends Module {
   @Override
@@ -44,6 +48,10 @@ public class MigrationConfigurationModule extends Module {
       DbVersion82.class,
       DbVersion83.class,
       DbVersion84.class,
+      DbVersion85.class,
+      DbVersion86.class,
+      DbVersion87.class,
+      DbVersion88.class,
 
       // migration steps
       MigrationStepRegistryImpl.class,
@@ -53,8 +61,8 @@ public class MigrationConfigurationModule extends Module {
       MigrationHistoryImpl.class,
       MigrationHistoryMeddler.class,
 
-      // Only needed for 8.3
-      SqlHelper.class,
+      // Utility classes
+      DbPrimaryKeyConstraintFinder.class,
       DropPrimaryKeySqlGenerator.class);
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import ProfileLink from '../components/ProfileLink';
 import { Profile } from '../types';
 
 interface Props {
-  organization: string | null;
   profiles: Profile[];
 }
 
@@ -124,8 +123,7 @@ export default class EvolutionDeprecated extends React.PureComponent<Props> {
                 <ProfileLink
                   className="link-no-underline"
                   language={profile.language}
-                  name={profile.name}
-                  organization={this.props.organization}>
+                  name={profile.name}>
                   {profile.name}
                 </ProfileLink>
               </div>
@@ -134,10 +132,7 @@ export default class EvolutionDeprecated extends React.PureComponent<Props> {
                 {', '}
                 <Link
                   className="text-muted"
-                  to={getDeprecatedActiveRulesUrl(
-                    { qprofile: profile.key },
-                    this.props.organization
-                  )}>
+                  to={getDeprecatedActiveRulesUrl({ qprofile: profile.key })}>
                   {translateWithParameters(
                     'quality_profile.x_rules',
                     profile.activeDeprecatedRuleCount

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
  */
 import * as React from 'react';
 import ConfirmModal from 'sonar-ui-common/components/controls/ConfirmModal';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { createQualityGate } from '../../../api/quality-gates';
 import { Router, withRouter } from '../../../components/hoc/withRouter';
@@ -27,7 +29,6 @@ import { getQualityGateUrl } from '../../../helpers/urls';
 interface Props {
   onClose: () => void;
   onCreate: () => Promise<void>;
-  organization?: string;
   router: Pick<Router, 'push'>;
 }
 
@@ -35,28 +36,23 @@ interface State {
   name: string;
 }
 
-class CreateQualityGateForm extends React.PureComponent<Props, State> {
+export class CreateQualityGateForm extends React.PureComponent<Props, State> {
   state: State = { name: '' };
 
   handleNameChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
     this.setState({ name: event.currentTarget.value });
   };
 
-  handleCreate = () => {
-    const { organization } = this.props;
+  handleCreate = async () => {
     const { name } = this.state;
 
-    if (!name) {
-      return undefined;
-    }
+    if (name) {
+      const qualityGate = await createQualityGate({ name });
 
-    return createQualityGate({ name, organization })
-      .then(qualityGate => {
-        return this.props.onCreate().then(() => qualityGate);
-      })
-      .then(qualityGate => {
-        this.props.router.push(getQualityGateUrl(String(qualityGate.id), organization));
-      });
+      await this.props.onCreate();
+
+      this.props.router.push(getQualityGateUrl(String(qualityGate.id)));
+    }
   };
 
   render() {
@@ -69,10 +65,11 @@ class CreateQualityGateForm extends React.PureComponent<Props, State> {
         onClose={this.props.onClose}
         onConfirm={this.handleCreate}
         size="small">
+        <MandatoryFieldsExplanation className="modal-field" />
         <div className="modal-field">
           <label htmlFor="quality-gate-form-name">
             {translate('name')}
-            <em className="mandatory">*</em>
+            <MandatoryFieldMarker />
           </label>
           <input
             autoFocus={true}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,12 +45,7 @@ it('renders', () => {
 it('removes user', async () => {
   const onDelete = jest.fn();
   const wrapper = shallow(
-    <ProfilePermissionsGroup
-      group={group}
-      onDelete={onDelete}
-      organization="org"
-      profile={profile}
-    />
+    <ProfilePermissionsGroup group={group} onDelete={onDelete} profile={profile} />
   );
   (wrapper.instance() as ProfilePermissionsGroup).mounted = true;
   expect(wrapper.find('SimpleModal').exists()).toBe(false);
@@ -62,7 +57,6 @@ it('removes user', async () => {
   expect(removeGroup).toBeCalledWith({
     group: 'lambda',
     language: 'js',
-    organization: 'org',
     qualityProfile: 'Sonar way'
   });
 

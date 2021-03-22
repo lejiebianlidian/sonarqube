@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,10 +50,9 @@ public interface PropertiesMapper {
 
   List<PropertyDto> selectByKeyAndMatchingValue(@Param("key") String key, @Param("value") String value);
 
-  List<String> selectUuidsByOrganizationAndUser(@Param("organizationUuid") String organizationUuid, @Param("userUuid") String userUuid);
+  List<String> selectUuidsByUser(@Param("userUuid") String userUuid);
 
-  List<String> selectIdsByOrganizationAndMatchingLogin(@Param("organizationUuid") String organizationUuid, @Param("login") String login,
-    @Param("propertyKeys") List<String> propertyKeys);
+  List<String> selectIdsByMatchingLogin(@Param("login") String login, @Param("propertyKeys") List<String> propertyKeys);
 
   void insertAsEmpty(@Param("uuid") String uuid, @Param("key") String key, @Nullable @Param("userUuid") String userUuid, @Nullable @Param("componentUuid") String componentUuid,
     @Param("now") long now);
@@ -65,8 +64,6 @@ public interface PropertiesMapper {
     @Param("value") String value, @Param("now") long now);
 
   int delete(@Param("key") String key, @Nullable @Param("userUuid") String userUuid, @Nullable @Param("componentUuid") String componentUuid);
-
-  int deleteById(long id);
 
   int deleteProjectProperty(@Param("key") String key, @Param("componentUuid") String componentUuid);
 

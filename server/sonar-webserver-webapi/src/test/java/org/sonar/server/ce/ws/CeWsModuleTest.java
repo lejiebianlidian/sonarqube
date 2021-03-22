@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,6 @@ public class CeWsModuleTest {
   public void verify_count_of_added_components() {
     ComponentContainer container = new ComponentContainer();
     new CeWsModule().configure(container);
-    assertThat(container.size()).isEqualTo(19 + COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER);
+    assertThat(container.size()).isEqualTo(20 + COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER);
   }
 }

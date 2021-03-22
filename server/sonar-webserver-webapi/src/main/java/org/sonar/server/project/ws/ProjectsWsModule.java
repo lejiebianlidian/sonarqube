@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,24 +19,21 @@
  */
 package org.sonar.server.project.ws;
 
-import org.sonar.api.config.Configuration;
 import org.sonar.core.platform.Module;
-import org.sonar.process.ProcessProperties;
+import org.sonar.server.project.ProjectDefaultVisibility;
 import org.sonar.server.project.ProjectLifeCycleListenersImpl;
 
 public class ProjectsWsModule extends Module {
 
-  private final Configuration configuration;
-
-  public ProjectsWsModule(Configuration configuration) {
-    this.configuration = configuration;
+  public ProjectsWsModule() {
+    // nothing to do
   }
 
   @Override
   protected void configureModule() {
     add(
+      ProjectDefaultVisibility.class,
       ProjectLifeCycleListenersImpl.class,
-      ProjectsWsSupport.class,
       ProjectsWs.class,
       CreateAction.class,
       BulkDeleteAction.class,
@@ -45,11 +42,7 @@ public class ProjectsWsModule extends Module {
       BulkUpdateKeyAction.class,
       SearchMyProjectsAction.class,
       SearchAction.class,
-      UpdateVisibilityAction.class);
-
-    if (!configuration.getBoolean(ProcessProperties.Property.SONARCLOUD_ENABLED.getKey()).orElse(false)) {
-      // Updating default visibility is not available in SonarCloud
-      add(UpdateDefaultVisibilityAction.class);
-    }
+      UpdateVisibilityAction.class,
+      UpdateDefaultVisibilityAction.class);
   }
 }

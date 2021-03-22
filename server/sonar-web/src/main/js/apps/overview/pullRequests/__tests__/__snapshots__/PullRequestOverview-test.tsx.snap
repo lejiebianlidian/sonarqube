@@ -14,12 +14,18 @@ exports[`should render correctly for a failed QG 1`] = `
         className="big-spacer-right"
       >
         <h2
-          className="overview-panel-title spacer-bottom small"
+          className="overview-panel-title spacer-bottom small display-inline-flex-center"
         >
           overview.quality_gate
-          <DocTooltip
-            className="spacer-left"
-            doc={Promise {}}
+          <HelpTooltip
+            className="little-spacer-left"
+            overlay={
+              <div
+                className="big-padded-top big-padded-bottom"
+              >
+                overview.quality_gate.help
+              </div>
+            }
           />
         </h2>
         <Memo(LargeQualityGateBadge)
@@ -28,7 +34,6 @@ exports[`should render correctly for a failed QG 1`] = `
               "breadcrumbs": Array [],
               "key": "my-project",
               "name": "MyProject",
-              "organization": "foo",
               "qualifier": "TRK",
               "qualityGate": Object {
                 "isDefault": true,
@@ -74,7 +79,6 @@ exports[`should render correctly for a failed QG 1`] = `
               "breadcrumbs": Array [],
               "key": "my-project",
               "name": "MyProject",
-              "organization": "foo",
               "qualifier": "TRK",
               "qualityGate": Object {
                 "isDefault": true,
@@ -106,13 +110,11 @@ exports[`should render correctly for a failed QG 1`] = `
                     "name": "new_code_smells",
                     "type": "PERCENT",
                   },
-                  "periods": Array [
-                    Object {
-                      "bestValue": true,
-                      "index": 1,
-                      "value": "1.0",
-                    },
-                  ],
+                  "period": Object {
+                    "bestValue": true,
+                    "index": 1,
+                    "value": "1.0",
+                  },
                   "value": "1.0",
                 },
                 "metric": "new_code_smells",
@@ -157,7 +159,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -185,13 +186,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -202,13 +201,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -219,13 +216,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -236,13 +231,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -270,7 +263,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -298,13 +290,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -315,13 +305,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -332,13 +320,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -349,13 +335,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -388,7 +372,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -416,13 +399,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -433,13 +414,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -450,13 +429,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -467,13 +444,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -501,7 +476,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -529,13 +503,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -546,13 +518,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -563,13 +533,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -580,13 +548,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -619,7 +585,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -647,13 +612,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -664,13 +627,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -681,13 +642,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -698,13 +657,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -732,7 +689,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -760,13 +716,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -777,13 +731,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -794,13 +746,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -811,13 +761,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -850,7 +798,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -878,13 +825,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -895,13 +840,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -912,13 +855,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -929,13 +870,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -963,7 +902,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -991,13 +929,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1008,13 +944,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1025,13 +959,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1042,13 +974,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1081,7 +1011,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1109,13 +1038,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1126,13 +1053,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1143,13 +1068,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1160,13 +1083,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1187,13 +1108,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_bugs",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -1204,13 +1123,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_vulnerabilities",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -1221,13 +1138,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_code_smells",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -1238,13 +1153,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_security_hotspots",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                 ]
@@ -1275,7 +1188,6 @@ exports[`should render correctly for a failed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1303,13 +1215,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1320,13 +1230,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1337,13 +1245,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1354,13 +1260,11 @@ exports[`should render correctly for a failed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1381,13 +1285,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_bugs",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -1398,13 +1300,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_vulnerabilities",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -1415,13 +1315,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_code_smells",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -1432,13 +1330,11 @@ exports[`should render correctly for a failed QG 1`] = `
                       "name": "new_security_hotspots",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                 ]
@@ -1467,12 +1363,18 @@ exports[`should render correctly for a passed QG 1`] = `
         className="big-spacer-right"
       >
         <h2
-          className="overview-panel-title spacer-bottom small"
+          className="overview-panel-title spacer-bottom small display-inline-flex-center"
         >
           overview.quality_gate
-          <DocTooltip
-            className="spacer-left"
-            doc={Promise {}}
+          <HelpTooltip
+            className="little-spacer-left"
+            overlay={
+              <div
+                className="big-padded-top big-padded-bottom"
+              >
+                overview.quality_gate.help
+              </div>
+            }
           />
         </h2>
         <Memo(LargeQualityGateBadge)
@@ -1481,7 +1383,6 @@ exports[`should render correctly for a passed QG 1`] = `
               "breadcrumbs": Array [],
               "key": "my-project",
               "name": "MyProject",
-              "organization": "foo",
               "qualifier": "TRK",
               "qualityGate": Object {
                 "isDefault": true,
@@ -1536,7 +1437,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1564,13 +1464,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1581,13 +1479,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1598,13 +1494,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1615,13 +1509,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1649,7 +1541,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1677,13 +1568,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1694,13 +1583,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1711,13 +1598,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1728,13 +1613,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1767,7 +1650,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1795,13 +1677,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1812,13 +1692,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1829,13 +1707,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1846,13 +1722,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1880,7 +1754,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1908,13 +1781,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1925,13 +1796,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1942,13 +1811,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -1959,13 +1826,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -1998,7 +1863,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2026,13 +1890,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2043,13 +1905,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2060,13 +1920,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2077,13 +1935,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -2111,7 +1967,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2139,13 +1994,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2156,13 +2009,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2173,13 +2024,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2190,13 +2039,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -2229,7 +2076,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2257,13 +2103,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2274,13 +2118,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2291,13 +2133,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2308,13 +2148,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -2342,7 +2180,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2370,13 +2207,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2387,13 +2222,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2404,13 +2237,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2421,13 +2252,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -2460,7 +2289,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2488,13 +2316,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2505,13 +2331,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2522,13 +2346,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2539,13 +2361,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -2566,13 +2386,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_bugs",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -2583,13 +2401,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_vulnerabilities",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -2600,13 +2416,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_code_smells",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -2617,13 +2431,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_security_hotspots",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                 ]
@@ -2654,7 +2466,6 @@ exports[`should render correctly for a passed QG 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2682,13 +2493,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_bugs",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2699,13 +2508,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_vulnerabilities",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2716,13 +2523,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_code_smells",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                     Object {
@@ -2733,13 +2538,11 @@ exports[`should render correctly for a passed QG 1`] = `
                         "name": "new_security_hotspots",
                         "type": "PERCENT",
                       },
-                      "periods": Array [
-                        Object {
-                          "bestValue": true,
-                          "index": 1,
-                          "value": "1.0",
-                        },
-                      ],
+                      "period": Object {
+                        "bestValue": true,
+                        "index": 1,
+                        "value": "1.0",
+                      },
                       "value": "1.0",
                     },
                   ]
@@ -2760,13 +2563,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_bugs",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -2777,13 +2578,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_vulnerabilities",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -2794,13 +2593,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_code_smells",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                   Object {
@@ -2811,13 +2608,11 @@ exports[`should render correctly for a passed QG 1`] = `
                       "name": "new_security_hotspots",
                       "type": "PERCENT",
                     },
-                    "periods": Array [
-                      Object {
-                        "bestValue": true,
-                        "index": 1,
-                        "value": "1.0",
-                      },
-                    ],
+                    "period": Object {
+                      "bestValue": true,
+                      "index": 1,
+                      "value": "1.0",
+                    },
                     "value": "1.0",
                   },
                 ]

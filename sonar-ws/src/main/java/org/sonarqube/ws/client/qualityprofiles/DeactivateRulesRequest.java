@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@ public class DeactivateRulesRequest {
   private List<String> inheritance;
   private String isTemplate;
   private List<String> languages;
-  private String organization;
   private List<String> owaspTop10;
   private String q;
   private String qprofile;
@@ -195,19 +194,6 @@ public class DeactivateRulesRequest {
 
   public List<String> getLanguages() {
     return languages;
-  }
-
-  /**
-   * This is part of the internal API.
-   * Example value: "my-org"
-   */
-  public DeactivateRulesRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
   }
 
   /**

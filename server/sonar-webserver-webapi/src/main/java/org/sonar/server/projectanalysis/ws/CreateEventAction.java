@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -130,12 +130,13 @@ public class CreateEventAction implements ProjectAnalysesWsAction {
 
   private SnapshotDto getAnalysis(DbSession dbSession, CreateEventRequest request) {
     return dbClient.snapshotDao().selectByUuid(dbSession, request.getAnalysis())
-      .orElseThrow(() -> new NotFoundException(format("Analysis '%s' is not found", request.getAnalysis())));
+      .orElseThrow(() -> new NotFoundException(format("Analysis '%s' not found", request.getAnalysis())));
   }
 
   private ProjectDto getProjectOrApplication(DbSession dbSession, SnapshotDto analysis) {
-    return dbClient.projectDao().selectByUuid(dbSession, analysis.getComponentUuid())
-      .orElseThrow(() -> new IllegalStateException(String.format("Project of analysis '%s' is not found", analysis.getUuid())));
+    return dbClient.branchDao().selectByUuid(dbSession, analysis.getComponentUuid())
+      .flatMap(branch -> dbClient.projectDao().selectByUuid(dbSession, branch.getProjectUuid()))
+      .orElseThrow(() -> new IllegalStateException(String.format("Project of analysis '%s' not found", analysis.getUuid())));
   }
 
   private void checkRequest(CreateEventRequest request, ProjectDto project) {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -255,8 +255,7 @@ public class BuiltInQProfileUpdateImplTest {
   public void propagate_activation_to_descendant_profiles() {
     RuleDefinitionDto rule = db.rules().insert(r -> r.setLanguage("xoo"));
 
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(),
-      p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
     QProfileDto childProfile = createChildProfile(profile);
     QProfileDto grandchildProfile = createChildProfile(childProfile);
 
@@ -277,8 +276,7 @@ public class BuiltInQProfileUpdateImplTest {
   public void do_not_load_descendants_if_no_changes() {
     RuleDefinitionDto rule = db.rules().insert(r -> r.setLanguage("xoo"));
 
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(),
-      p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
     QProfileDto childProfile = createChildProfile(profile);
 
     BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
@@ -308,8 +306,7 @@ public class BuiltInQProfileUpdateImplTest {
   public void propagate_deactivation_to_descendant_profiles() {
     RuleDefinitionDto rule = db.rules().insert(r -> r.setLanguage("xoo"));
 
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(),
-      p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
     QProfileDto childProfile = createChildProfile(profile);
     QProfileDto grandChildProfile = createChildProfile(childProfile);
 
@@ -337,7 +334,7 @@ public class BuiltInQProfileUpdateImplTest {
   }
 
   private QProfileDto createChildProfile(QProfileDto parent) {
-    return db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p
+    return db.qualityProfiles().insert(p -> p
       .setLanguage(parent.getLanguage())
       .setParentKee(parent.getKee())
       .setName("Child of " + parent.getName()))
@@ -354,8 +351,6 @@ public class BuiltInQProfileUpdateImplTest {
 
     assertThat(activeRule.getSeverityString()).isEqualTo(expectedSeverity);
     assertThat(activeRule.getInheritance()).isEqualTo(expectedInheritance != null ? expectedInheritance.name() : null);
-    assertThat(activeRule.getCreatedAt()).isNotNull();
-    assertThat(activeRule.getUpdatedAt()).isNotNull();
 
     List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid());
     assertThat(params).hasSize(expectedParams.size());

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ public class ByteCharsetDetectorTest {
     when(validation.isUTF16(any(byte[].class), anyBoolean())).thenReturn(new Result(Validation.MAYBE, null));
     when(validation.isValidWindows1252(any(byte[].class))).thenReturn(Result.INVALID);
 
-    assertThat(charsets.detect(new byte[1])).isEqualTo(null);
+    assertThat(charsets.detect(new byte[1])).isNull();
   }
 
   @Test
@@ -96,7 +96,7 @@ public class ByteCharsetDetectorTest {
     when(validation.isUTF16(any(byte[].class), anyBoolean())).thenReturn(Result.newValid(StandardCharsets.UTF_16));
     when(validation.isValidUTF16(any(byte[].class), anyBoolean())).thenReturn(true);
 
-    assertThat(charsets.detect(new byte[1])).isEqualTo(null);
+    assertThat(charsets.detect(new byte[1])).isNull();
   }
 
   @Test

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ interface Props {
   className?: string;
   modalHeader: string;
   onDone: (severity: string) => Promise<void>;
-  organization: string | undefined;
   profiles: BaseProfile[];
   rule: T.Rule | T.RuleDetails;
 }
@@ -64,7 +63,6 @@ export default class ActivationButton extends React.PureComponent<Props, State> 
             modalHeader={this.props.modalHeader}
             onClose={this.handleCloseModal}
             onDone={this.props.onDone}
-            organization={this.props.organization}
             profiles={this.props.profiles}
             rule={this.props.rule}
           />

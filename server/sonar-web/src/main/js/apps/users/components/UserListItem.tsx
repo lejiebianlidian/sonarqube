@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 import * as React from 'react';
 import { ButtonIcon } from 'sonar-ui-common/components/controls/buttons';
 import BulletListIcon from 'sonar-ui-common/components/icons/BulletListIcon';
-import DateFromNowHourPrecision from 'sonar-ui-common/components/intl/DateFromNowHourPrecision';
+import DateFromNow from 'sonar-ui-common/components/intl/DateFromNow';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import Avatar from '../../../components/ui/Avatar';
 import TokensFormModal from './TokensFormModal';
@@ -33,7 +33,6 @@ interface Props {
   identityProvider?: T.IdentityProvider;
   isCurrentUser: boolean;
   onUpdateUsers: () => void;
-  organizationsEnabled?: boolean;
   updateTokensCount: (login: string, tokensCount: number) => void;
   user: T.User;
 }
@@ -49,7 +48,7 @@ export default class UserListItem extends React.PureComponent<Props, State> {
   handleCloseTokensForm = () => this.setState({ openTokenForm: false });
 
   render() {
-    const { identityProvider, onUpdateUsers, organizationsEnabled, user } = this.props;
+    const { identityProvider, onUpdateUsers, user } = this.props;
 
     return (
       <tr>
@@ -61,13 +60,11 @@ export default class UserListItem extends React.PureComponent<Props, State> {
           <UserScmAccounts scmAccounts={user.scmAccounts || []} />
         </td>
         <td className="thin nowrap text-middle">
-          <DateFromNowHourPrecision date={user.lastConnectionDate} />
+          <DateFromNow date={user.lastConnectionDate} hourPrecision={true} />
         </td>
-        {!organizationsEnabled && (
-          <td className="thin nowrap text-middle">
-            <UserGroups groups={user.groups || []} onUpdateUsers={onUpdateUsers} user={user} />
-          </td>
-        )}
+        <td className="thin nowrap text-middle">
+          <UserGroups groups={user.groups || []} onUpdateUsers={onUpdateUsers} user={user} />
+        </td>
         <td className="thin nowrap text-middle">
           {user.tokensCount}
           <ButtonIcon

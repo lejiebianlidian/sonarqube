@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ it('should render tags', () => {
 it('should search tags', async () => {
   const wrapper = shallowRender();
   wrapper.prop<Function>('onSearch')('sys');
-  expect(getRuleTags).toBeCalledWith({ organization: 'org', ps: 11, q: 'sys' });
+  expect(getRuleTags).toBeCalledWith({ ps: 11, q: 'sys' });
   await new Promise(setImmediate);
   wrapper.update();
   // should not contain system tags
@@ -54,12 +54,6 @@ it('should select & unselect tags', () => {
 
 function shallowRender(props?: Partial<Props>) {
   return shallow(
-    <RuleDetailsTagsPopup
-      organization="org"
-      setTags={jest.fn()}
-      sysTags={['system']}
-      tags={['foo']}
-      {...props}
-    />
+    <RuleDetailsTagsPopup setTags={jest.fn()} sysTags={['system']} tags={['foo']} {...props} />
   );
 }

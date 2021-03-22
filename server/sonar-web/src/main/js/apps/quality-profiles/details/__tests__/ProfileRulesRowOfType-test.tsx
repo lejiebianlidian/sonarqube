@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,47 +23,21 @@ import ProfileRulesRowOfType from '../ProfileRulesRowOfType';
 
 it('should render correctly', () => {
   expect(
-    shallow(
-      <ProfileRulesRowOfType count={3} organization="foo" qprofile="bar" total={10} type="BUG" />
-    )
+    shallow(<ProfileRulesRowOfType count={3} qprofile="bar" total={10} type="BUG" />)
   ).toMatchSnapshot();
 });
 
 it('should render correctly if there is 0 rules', () => {
   expect(
-    shallow(
-      <ProfileRulesRowOfType
-        count={0}
-        organization={null}
-        qprofile="bar"
-        total={0}
-        type="VULNERABILITY"
-      />
-    )
+    shallow(<ProfileRulesRowOfType count={0} qprofile="bar" total={0} type="VULNERABILITY" />)
   ).toMatchSnapshot();
 });
 
 it('should render correctly if there is missing data', () => {
   expect(
-    shallow(
-      <ProfileRulesRowOfType
-        count={5}
-        organization={null}
-        qprofile="bar"
-        total={null}
-        type="VULNERABILITY"
-      />
-    )
+    shallow(<ProfileRulesRowOfType count={5} qprofile="bar" total={null} type="VULNERABILITY" />)
   ).toMatchSnapshot();
   expect(
-    shallow(
-      <ProfileRulesRowOfType
-        count={null}
-        organization={null}
-        qprofile="foo"
-        total={10}
-        type="VULNERABILITY"
-      />
-    )
+    shallow(<ProfileRulesRowOfType count={null} qprofile="foo" total={10} type="VULNERABILITY" />)
   ).toMatchSnapshot();
 });

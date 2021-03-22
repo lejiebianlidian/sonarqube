@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,8 +29,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.user.GroupDto;
 import org.sonar.db.user.UserDto;
@@ -188,23 +187,23 @@ public class UserSessionRule implements TestRule, UserSession {
     return this;
   }
 
+  public UserSessionRule registerProjects(ProjectDto... projectDtos) {
+    ensureAbstractMockUserSession().registerProjects(projectDtos);
+    return this;
+  }
+
   public UserSessionRule addProjectPermission(String projectPermission, ComponentDto... components) {
     ensureAbstractMockUserSession().addProjectPermission(projectPermission, components);
     return this;
   }
 
-  public UserSessionRule addProjectPermission(String projectPermission, ProjectDto projectDto) {
+  public UserSessionRule addProjectPermission(String projectPermission, ProjectDto... projectDto) {
     ensureAbstractMockUserSession().addProjectPermission(projectPermission, projectDto);
     return this;
   }
 
-  public UserSessionRule addPermission(OrganizationPermission permission, String organizationUuid) {
-    ensureAbstractMockUserSession().addPermission(permission, organizationUuid);
-    return this;
-  }
-
-  public UserSessionRule addPermission(OrganizationPermission permission, OrganizationDto organization) {
-    ensureAbstractMockUserSession().addPermission(permission, organization.getUuid());
+  public UserSessionRule addPermission(GlobalPermission permission) {
+    ensureAbstractMockUserSession().addPermission(permission);
     return this;
   }
 
@@ -280,8 +279,19 @@ public class UserSessionRule implements TestRule, UserSession {
   }
 
   @Override
+  @CheckForNull
+  public Long getLastSonarlintConnectionDate() {
+    return currentUserSession.getLastSonarlintConnectionDate();
+  }
+
+  @Override
   public Collection<GroupDto> getGroups() {
     return currentUserSession.getGroups();
+  }
+
+  @Override
+  public boolean shouldResetPassword() {
+    return currentUserSession.shouldResetPassword();
   }
 
   @Override
@@ -316,24 +326,13 @@ public class UserSessionRule implements TestRule, UserSession {
   }
 
   @Override
-  public boolean hasPermission(OrganizationPermission permission, OrganizationDto organization) {
-    return currentUserSession.hasPermission(permission, organization);
+  public boolean hasPermission(GlobalPermission permission) {
+    return currentUserSession.hasPermission(permission);
   }
 
   @Override
-  public boolean hasPermission(OrganizationPermission permission, String organizationUuid) {
-    return currentUserSession.hasPermission(permission, organizationUuid);
-  }
-
-  @Override
-  public UserSession checkPermission(OrganizationPermission permission, OrganizationDto organization) {
-    currentUserSession.checkPermission(permission, organization);
-    return this;
-  }
-
-  @Override
-  public UserSession checkPermission(OrganizationPermission permission, String organizationUuid) {
-    currentUserSession.checkPermission(permission, organizationUuid);
+  public UserSession checkPermission(GlobalPermission permission) {
+    currentUserSession.checkPermission(permission);
     return this;
   }
 
@@ -363,22 +362,6 @@ public class UserSessionRule implements TestRule, UserSession {
   @Override
   public UserSession checkIsSystemAdministrator() {
     currentUserSession.checkIsSystemAdministrator();
-    return this;
-  }
-
-  @Override
-  public boolean hasMembership(OrganizationDto organization) {
-    return currentUserSession.hasMembership(organization);
-  }
-
-  @Override
-  public UserSession checkMembership(OrganizationDto organization) {
-    currentUserSession.checkMembership(organization);
-    return this;
-  }
-
-  public UserSessionRule addMembership(OrganizationDto organization) {
-    ensureAbstractMockUserSession().addOrganizationMembership(organization);
     return this;
   }
 }

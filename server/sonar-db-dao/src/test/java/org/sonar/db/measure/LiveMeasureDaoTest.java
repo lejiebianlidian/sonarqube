@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@ import org.sonar.db.DbTester;
 import org.sonar.db.component.BranchType;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -54,7 +53,7 @@ public class LiveMeasureDaoTest {
   @Rule
   public DbTester db = DbTester.create(System2.INSTANCE);
 
-  private LiveMeasureDao underTest = db.getDbClient().liveMeasureDao();
+  private final LiveMeasureDao underTest = db.getDbClient().liveMeasureDao();
   private MetricDto metric;
 
   @Before
@@ -279,7 +278,7 @@ public class LiveMeasureDaoTest {
   @Test
   public void selectTreeByQuery_with_empty_results() {
     List<LiveMeasureDto> results = new ArrayList<>();
-    underTest.selectTreeByQuery(db.getSession(), newPrivateProjectDto(db.getDefaultOrganization()),
+    underTest.selectTreeByQuery(db.getSession(), newPrivateProjectDto(),
       MeasureTreeQuery.builder().setStrategy(MeasureTreeQuery.Strategy.LEAVES).build(),
       context -> results.add(context.getResultObject()));
 
@@ -303,25 +302,23 @@ public class LiveMeasureDaoTest {
 
   @Test
   public void countNcloc() {
-    OrganizationDto organization = db.organizations().insert();
     MetricDto ncloc = db.measures().insertMetric(m -> m.setKey("ncloc").setValueType(INT.toString()));
     MetricDto lines = db.measures().insertMetric(m -> m.setKey("lines").setValueType(INT.toString()));
 
-    ComponentDto simpleProject = db.components().insertPublicProject(organization);
+    ComponentDto simpleProject = db.components().insertPublicProject();
     db.measures().insertLiveMeasure(simpleProject, ncloc, m -> m.setValue(10d));
 
-    ComponentDto projectWithBiggerBranch = db.components().insertPublicProject(organization);
+    ComponentDto projectWithBiggerBranch = db.components().insertPublicProject();
     ComponentDto bigBranch = db.components().insertProjectBranch(projectWithBiggerBranch, b -> b.setBranchType(BranchType.BRANCH));
     db.measures().insertLiveMeasure(projectWithBiggerBranch, ncloc, m -> m.setValue(100d));
     db.measures().insertLiveMeasure(bigBranch, ncloc, m -> m.setValue(200d));
 
-    ComponentDto projectWithLinesButNoLoc = db.components().insertPublicProject(organization);
+    ComponentDto projectWithLinesButNoLoc = db.components().insertPublicProject();
     db.measures().insertLiveMeasure(projectWithLinesButNoLoc, lines, m -> m.setValue(365d));
     db.measures().insertLiveMeasure(projectWithLinesButNoLoc, ncloc, m -> m.setValue(0d));
 
     SumNclocDbQuery query = SumNclocDbQuery.builder()
       .setOnlyPrivateProjects(false)
-      .setOrganizationUuid(organization.getUuid())
       .build();
     long result = underTest.sumNclocOfBiggestBranch(db.getSession(), query);
 
@@ -334,7 +331,6 @@ public class LiveMeasureDaoTest {
     db.measures().insertMetric(m -> m.setKey("lines").setValueType(INT.toString()));
     SumNclocDbQuery query = SumNclocDbQuery.builder()
       .setOnlyPrivateProjects(false)
-      .setOrganizationUuid(db.getDefaultOrganization().getUuid())
       .build();
     long result = underTest.sumNclocOfBiggestBranch(db.getSession(), query);
 
@@ -343,24 +339,22 @@ public class LiveMeasureDaoTest {
 
   @Test
   public void countNcloc_and_exclude_project() {
-    OrganizationDto organization = db.organizations().insert();
     MetricDto ncloc = db.measures().insertMetric(m -> m.setKey("ncloc").setValueType(INT.toString()));
 
-    ComponentDto simpleProject = db.components().insertPublicProject(organization);
+    ComponentDto simpleProject = db.components().insertPublicProject();
     db.measures().insertLiveMeasure(simpleProject, ncloc, m -> m.setValue(10d));
 
-    ComponentDto projectWithBiggerBranch = db.components().insertPublicProject(organization);
+    ComponentDto projectWithBiggerBranch = db.components().insertPublicProject();
     ComponentDto bigBranch = db.components().insertProjectBranch(projectWithBiggerBranch, b -> b.setBranchType(BranchType.BRANCH));
     db.measures().insertLiveMeasure(projectWithBiggerBranch, ncloc, m -> m.setValue(100d));
     db.measures().insertLiveMeasure(bigBranch, ncloc, m -> m.setValue(200d));
 
-    ComponentDto projectToExclude = db.components().insertPublicProject(organization);
+    ComponentDto projectToExclude = db.components().insertPublicProject();
     ComponentDto projectToExcludeBranch = db.components().insertProjectBranch(projectToExclude, b -> b.setBranchType(BranchType.BRANCH));
     db.measures().insertLiveMeasure(projectToExclude, ncloc, m -> m.setValue(300d));
     db.measures().insertLiveMeasure(projectToExcludeBranch, ncloc, m -> m.setValue(400d));
 
     SumNclocDbQuery query = SumNclocDbQuery.builder()
-      .setOrganizationUuid(organization.getUuid())
       .setProjectUuidToExclude(projectToExclude.uuid())
       .setOnlyPrivateProjects(false)
       .build();
@@ -453,6 +447,21 @@ public class LiveMeasureDaoTest {
   }
 
   @Test
+  public void countProjectsHavingMeasure() {
+    MetricDto metric1 = db.measures().insertMetric();
+    MetricDto metric2 = db.measures().insertMetric();
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+    db.measures().insertLiveMeasure(project1, metric1);
+    db.measures().insertLiveMeasure(project2, metric1);
+    db.measures().insertLiveMeasure(project1, metric2);
+
+    assertThat(underTest.countProjectsHavingMeasure(db.getSession(), metric1.getKey())).isEqualTo(2);
+    assertThat(underTest.countProjectsHavingMeasure(db.getSession(), metric2.getKey())).isEqualTo(1);
+    assertThat(underTest.countProjectsHavingMeasure(db.getSession(), "unknown")).isZero();
+  }
+
+  @Test
   public void upsert_inserts_or_updates_row() {
     if (!db.getDbClient().getDatabase().getDialect().supportsUpsert()) {
       return;
@@ -486,7 +495,7 @@ public class LiveMeasureDaoTest {
 
     // update
     int count = underTest.upsert(db.getSession(), dto);
-    assertThat(count).isEqualTo(0);
+    assertThat(count).isZero();
     verifyPersisted(dto);
     verifyTableSize(1);
   }
@@ -518,7 +527,7 @@ public class LiveMeasureDaoTest {
 
     // update
     int count = underTest.upsert(db.getSession(), dto);
-    assertThat(count).isEqualTo(0);
+    assertThat(count).isZero();
     verifyPersisted(dto);
     verifyTableSize(1);
   }

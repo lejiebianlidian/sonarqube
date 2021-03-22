@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ import org.sonar.server.property.MapInternalProperties;
 import org.sonar.server.util.GlobalLockManager;
 import org.sonar.server.util.GlobalLockManagerImpl;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -64,25 +65,30 @@ public class TelemetryDaemonTest {
     .setServerId("foo")
     .setVersion("bar")
     .setPlugins(Collections.emptyMap())
+    .setAlmIntegrationCountByAlm(Collections.emptyMap())
+    .setExternalAuthenticationProviders(singletonList("github"))
+    .setProjectCountByScm(Collections.emptyMap())
+    .setProjectCountByCi(Collections.emptyMap())
     .setProjectMeasuresStatistics(ProjectMeasuresStatistics.builder()
       .setProjectCount(12)
       .setProjectCountByLanguage(Collections.emptyMap())
       .setNclocByLanguage(Collections.emptyMap())
       .build())
     .setNcloc(42L)
+    .setExternalAuthenticationProviders(Collections.emptyList())
     .setDatabase(new TelemetryData.Database("H2", "11"))
     .setUsingBranches(true)
     .build();
 
-  private TelemetryClient client = mock(TelemetryClient.class);
-  private InternalProperties internalProperties = spy(new MapInternalProperties());
+  private final TelemetryClient client = mock(TelemetryClient.class);
+  private final InternalProperties internalProperties = spy(new MapInternalProperties());
   private final GlobalLockManager lockManager = mock(GlobalLockManagerImpl.class);
-  private TestSystem2 system2 = new TestSystem2().setNow(System.currentTimeMillis());
-  private MapSettings settings = new MapSettings();
+  private final TestSystem2 system2 = new TestSystem2().setNow(System.currentTimeMillis());
+  private final MapSettings settings = new MapSettings();
 
   private final TelemetryDataLoader dataLoader = mock(TelemetryDataLoader.class);
   private final TelemetryDataJsonWriter dataJsonWriter = mock(TelemetryDataJsonWriter.class);
-  private TelemetryDaemon underTest = new TelemetryDaemon(dataLoader, dataJsonWriter, client, settings.asConfig(), internalProperties, lockManager, system2);
+  private final TelemetryDaemon underTest = new TelemetryDaemon(dataLoader, dataJsonWriter, client, settings.asConfig(), internalProperties, lockManager, system2);
 
   @After
   public void tearDown() {
@@ -132,7 +138,7 @@ public class TelemetryDaemonTest {
 
     internalProperties.write("telemetry.lastPing", String.valueOf(sevenDaysAgo));
 
-    verify(client,  timeout(2_000)).upload(anyString());
+    verify(client, timeout(2_000)).upload(anyString());
     verify(dataJsonWriter).writeTelemetryData(any(JsonWriter.class), same(SOME_TELEMETRY_DATA));
   }
 

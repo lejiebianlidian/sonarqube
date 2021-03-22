@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -78,7 +78,6 @@ export default class StatusFacet extends React.PureComponent<Props> {
     return (
       <FacetItem
         active={active}
-        disabled={stat === 0 && !active}
         halfWidth={true}
         key={status}
         name={<StatusHelper resolution={undefined} status={status} />}
@@ -107,9 +106,7 @@ export default class StatusFacet extends React.PureComponent<Props> {
 
         {this.props.open && (
           <>
-            <FacetItemsList title={translate('issues')}>
-              {STATUSES.map(this.renderItem)}
-            </FacetItemsList>
+            <FacetItemsList>{STATUSES.map(this.renderItem)}</FacetItemsList>
             <MultipleSelectionHint options={Object.keys(stats).length} values={statuses.length} />
           </>
         )}

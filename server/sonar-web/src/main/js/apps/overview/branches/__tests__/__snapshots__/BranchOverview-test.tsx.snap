@@ -43,7 +43,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
       "projectName": "Foo",
     }
   }
-  branchLike={
+  branch={
     Object {
       "analysisDate": "2018-01-01",
       "excludedFromPurge": true,
@@ -58,7 +58,6 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "breadcrumbs": Array [],
           "key": "foo",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "APP",
           "qualityGate": Object {
             "isDefault": true,
@@ -78,7 +77,6 @@ exports[`application overview should fetch correctly other branch 1`] = `
       ],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "APP",
       "qualityGate": Object {
         "isDefault": true,
@@ -109,7 +107,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "alert_status",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -120,7 +118,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "quality_gate_details",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -131,7 +129,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "bugs",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -143,13 +141,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_bugs",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -160,7 +156,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "reliability_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -172,13 +168,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_reliability_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -189,7 +183,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "vulnerabilities",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -201,13 +195,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_vulnerabilities",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -218,7 +210,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "security_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -230,13 +222,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_security_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -247,7 +237,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "security_hotspots",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -259,13 +249,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_security_hotspots",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -276,7 +264,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "security_hotspots_reviewed",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -288,13 +276,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_security_hotspots_reviewed",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -305,7 +291,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "security_review_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -317,13 +303,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_security_review_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -334,7 +318,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "code_smells",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -346,13 +330,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_code_smells",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -363,7 +345,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "sqale_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -375,13 +357,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_maintainability_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -392,7 +372,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "sqale_index",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -404,13 +384,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_technical_debt",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -421,7 +399,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "coverage",
           "type": "PERCENT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -433,13 +411,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_coverage",
           "type": "PERCENT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -450,7 +426,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "lines_to_cover",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -462,13 +438,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_lines_to_cover",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -479,7 +453,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "tests",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -490,7 +464,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "duplicated_lines_density",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -502,13 +476,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_duplicated_lines_density",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -519,7 +491,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "duplicated_blocks",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -530,7 +502,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "ncloc",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -541,7 +513,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "ncloc_language_distribution",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -552,7 +524,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "projects",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -563,7 +535,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "lines",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -575,13 +547,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
           "name": "new_lines",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
     ]
@@ -877,7 +847,7 @@ exports[`application overview should fetch correctly other branch 1`] = `
                 "name": "coverage",
                 "type": "PERCENT",
               },
-              "periods": undefined,
+              "period": undefined,
               "value": "1.0",
             },
             "metric": "coverage",
@@ -897,13 +867,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
                 "name": "new_bugs",
                 "type": "INT",
               },
-              "periods": Array [
-                Object {
-                  "bestValue": true,
-                  "index": 1,
-                  "value": "1.0",
-                },
-              ],
+              "period": Object {
+                "bestValue": true,
+                "index": 1,
+                "value": "1.0",
+              },
               "value": "1.0",
             },
             "metric": "new_bugs",
@@ -931,13 +899,11 @@ exports[`application overview should fetch correctly other branch 1`] = `
                 "name": "new_bugs",
                 "type": "INT",
               },
-              "periods": Array [
-                Object {
-                  "bestValue": true,
-                  "index": 1,
-                  "value": "1.0",
-                },
-              ],
+              "period": Object {
+                "bestValue": true,
+                "index": 1,
+                "value": "1.0",
+              },
               "value": "1.0",
             },
             "metric": "new_bugs",
@@ -997,7 +963,7 @@ exports[`application overview should render correctly 1`] = `
       "projectName": "Foo",
     }
   }
-  branchLike={
+  branch={
     Object {
       "analysisDate": "2018-01-01",
       "excludedFromPurge": true,
@@ -1012,7 +978,6 @@ exports[`application overview should render correctly 1`] = `
           "breadcrumbs": Array [],
           "key": "foo",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "APP",
           "qualityGate": Object {
             "isDefault": true,
@@ -1032,7 +997,6 @@ exports[`application overview should render correctly 1`] = `
       ],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "APP",
       "qualityGate": Object {
         "isDefault": true,
@@ -1063,7 +1027,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "alert_status",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1074,7 +1038,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "quality_gate_details",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1085,7 +1049,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "bugs",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1097,13 +1061,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_bugs",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1114,7 +1076,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "reliability_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1126,13 +1088,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_reliability_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1143,7 +1103,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "vulnerabilities",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1155,13 +1115,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_vulnerabilities",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1172,7 +1130,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "security_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1184,13 +1142,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_security_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1201,7 +1157,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "security_hotspots",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1213,13 +1169,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_security_hotspots",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1230,7 +1184,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "security_hotspots_reviewed",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1242,13 +1196,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_security_hotspots_reviewed",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1259,7 +1211,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "security_review_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1271,13 +1223,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_security_review_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1288,7 +1238,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "code_smells",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1300,13 +1250,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_code_smells",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1317,7 +1265,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "sqale_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1329,13 +1277,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_maintainability_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1346,7 +1292,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "sqale_index",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1358,13 +1304,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_technical_debt",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1375,7 +1319,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "coverage",
           "type": "PERCENT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1387,13 +1331,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_coverage",
           "type": "PERCENT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1404,7 +1346,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "lines_to_cover",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1416,13 +1358,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_lines_to_cover",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1433,7 +1373,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "tests",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1444,7 +1384,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "duplicated_lines_density",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1456,13 +1396,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_duplicated_lines_density",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -1473,7 +1411,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "duplicated_blocks",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1484,7 +1422,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "ncloc",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1495,7 +1433,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "ncloc_language_distribution",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1506,7 +1444,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "projects",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1517,7 +1455,7 @@ exports[`application overview should render correctly 1`] = `
           "name": "lines",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -1529,13 +1467,11 @@ exports[`application overview should render correctly 1`] = `
           "name": "new_lines",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
     ]
@@ -1831,7 +1767,7 @@ exports[`application overview should render correctly 1`] = `
                 "name": "coverage",
                 "type": "PERCENT",
               },
-              "periods": undefined,
+              "period": undefined,
               "value": "1.0",
             },
             "metric": "coverage",
@@ -1851,13 +1787,11 @@ exports[`application overview should render correctly 1`] = `
                 "name": "new_bugs",
                 "type": "INT",
               },
-              "periods": Array [
-                Object {
-                  "bestValue": true,
-                  "index": 1,
-                  "value": "1.0",
-                },
-              ],
+              "period": Object {
+                "bestValue": true,
+                "index": 1,
+                "value": "1.0",
+              },
               "value": "1.0",
             },
             "metric": "new_bugs",
@@ -1885,13 +1819,11 @@ exports[`application overview should render correctly 1`] = `
                 "name": "new_bugs",
                 "type": "INT",
               },
-              "periods": Array [
-                Object {
-                  "bestValue": true,
-                  "index": 1,
-                  "value": "1.0",
-                },
-              ],
+              "period": Object {
+                "bestValue": true,
+                "index": 1,
+                "value": "1.0",
+              },
               "value": "1.0",
             },
             "metric": "new_bugs",
@@ -1944,7 +1876,7 @@ exports[`project overview should render correctly 1`] = `
       },
     ]
   }
-  branchLike={
+  branch={
     Object {
       "analysisDate": "2018-01-01",
       "excludedFromPurge": true,
@@ -1959,7 +1891,6 @@ exports[`project overview should render correctly 1`] = `
           "breadcrumbs": Array [],
           "key": "foo",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "TRK",
           "qualityGate": Object {
             "isDefault": true,
@@ -1979,7 +1910,6 @@ exports[`project overview should render correctly 1`] = `
       ],
       "key": "foo",
       "name": "Foo",
-      "organization": "foo",
       "qualifier": "TRK",
       "qualityGate": Object {
         "isDefault": true,
@@ -2010,7 +1940,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "alert_status",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2021,7 +1951,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "quality_gate_details",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2032,7 +1962,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "bugs",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2044,13 +1974,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_bugs",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2061,7 +1989,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "reliability_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2073,13 +2001,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_reliability_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2090,7 +2016,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "vulnerabilities",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2102,13 +2028,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_vulnerabilities",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2119,7 +2043,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "security_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2131,13 +2055,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_security_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2148,7 +2070,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "security_hotspots",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2160,13 +2082,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_security_hotspots",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2177,7 +2097,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "security_hotspots_reviewed",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2189,13 +2109,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_security_hotspots_reviewed",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2206,7 +2124,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "security_review_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2218,13 +2136,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_security_review_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2235,7 +2151,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "code_smells",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2247,13 +2163,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_code_smells",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2264,7 +2178,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "sqale_rating",
           "type": "RATING",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2276,13 +2190,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_maintainability_rating",
           "type": "RATING",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2293,7 +2205,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "sqale_index",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2305,13 +2217,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_technical_debt",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2322,7 +2232,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "coverage",
           "type": "PERCENT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2334,13 +2244,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_coverage",
           "type": "PERCENT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2351,7 +2259,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "lines_to_cover",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2363,13 +2271,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_lines_to_cover",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2380,7 +2286,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "tests",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2391,7 +2297,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "duplicated_lines_density",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2403,13 +2309,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_duplicated_lines_density",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
       Object {
@@ -2420,7 +2324,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "duplicated_blocks",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2431,7 +2335,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "ncloc",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2442,7 +2346,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "ncloc_language_distribution",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2453,7 +2357,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "projects",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2464,7 +2368,7 @@ exports[`project overview should render correctly 1`] = `
           "name": "lines",
           "type": "INT",
         },
-        "periods": undefined,
+        "period": undefined,
         "value": "1.0",
       },
       Object {
@@ -2476,13 +2380,11 @@ exports[`project overview should render correctly 1`] = `
           "name": "new_lines",
           "type": "INT",
         },
-        "periods": Array [
-          Object {
-            "bestValue": true,
-            "index": 1,
-            "value": "1.0",
-          },
-        ],
+        "period": Object {
+          "bestValue": true,
+          "index": 1,
+          "value": "1.0",
+        },
         "value": "1.0",
       },
     ]
@@ -2784,13 +2686,11 @@ exports[`project overview should render correctly 1`] = `
                 "name": "new_bugs",
                 "type": "INT",
               },
-              "periods": Array [
-                Object {
-                  "bestValue": true,
-                  "index": 1,
-                  "value": "1.0",
-                },
-              ],
+              "period": Object {
+                "bestValue": true,
+                "index": 1,
+                "value": "1.0",
+              },
               "value": "1.0",
             },
             "metric": "new_bugs",
@@ -2809,7 +2709,7 @@ exports[`project overview should render correctly 1`] = `
                 "name": "bugs",
                 "type": "INT",
               },
-              "periods": undefined,
+              "period": undefined,
               "value": "1.0",
             },
             "metric": "bugs",

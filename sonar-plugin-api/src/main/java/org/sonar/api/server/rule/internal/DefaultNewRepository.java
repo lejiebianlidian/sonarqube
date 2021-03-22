@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,9 @@ public class DefaultNewRepository implements RulesDefinition.NewRepository {
 
   @Override
   public DefaultNewRepository setName(@Nullable String s) {
-    if (StringUtils.isNotEmpty(s)) {
+    if ("SonarAnalyzer".equals(s)) {
+      this.name = "SonarQube";
+    } else if (StringUtils.isNotEmpty(s)) {
       this.name = s;
     }
     return this;

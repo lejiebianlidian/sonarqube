@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@ it('should show the last element without clickable link', () => {
         component={{
           key: 'foo',
           name: 'Foo',
-          organization: 'foo',
           qualifier: 'TRK'
         }}
         handleSelect={() => {}}
@@ -47,7 +46,6 @@ it('should correctly show a middle element', () => {
         component={{
           key: 'foo',
           name: 'Foo',
-          organization: 'foo',
           qualifier: 'TRK'
         }}
         handleSelect={() => {}}

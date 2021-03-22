@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import java.time.Instant;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.internal.AbstractProjectOrModule;
 import org.sonar.api.batch.fs.internal.DefaultInputModule;
 import org.sonar.api.batch.scm.ScmProvider;
@@ -42,8 +41,8 @@ import org.sonar.scanner.protocol.output.ScannerReportWriter;
 import org.sonar.scanner.repository.ForkDateSupplier;
 import org.sonar.scanner.rule.QProfile;
 import org.sonar.scanner.rule.QualityProfiles;
-import org.sonar.scanner.scan.ScanProperties;
 import org.sonar.scanner.scan.branch.BranchConfiguration;
+import org.sonar.scanner.scan.filesystem.InputComponentStore;
 import org.sonar.scanner.scm.ScmConfiguration;
 import org.sonar.scanner.scm.ScmRevision;
 
@@ -51,7 +50,6 @@ public class MetadataPublisher implements ReportPublisherStep {
 
   private static final Logger LOG = Loggers.get(MetadataPublisher.class);
 
-  private final ScanProperties properties;
   private final QualityProfiles qProfiles;
   private final ProjectInfo projectInfo;
   private final InputModuleHierarchy moduleHierarchy;
@@ -60,27 +58,22 @@ public class MetadataPublisher implements ReportPublisherStep {
   private final BranchConfiguration branchConfiguration;
   private final ScmRevision scmRevision;
   private final ForkDateSupplier forkDateSupplier;
-  @Nullable
+  private final InputComponentStore componentStore;
   private final ScmConfiguration scmConfiguration;
 
-  public MetadataPublisher(ProjectInfo projectInfo, InputModuleHierarchy moduleHierarchy, ScanProperties properties,
-    QualityProfiles qProfiles, CpdSettings cpdSettings, ScannerPluginRepository pluginRepository, BranchConfiguration branchConfiguration,
-    ScmRevision scmRevision, ForkDateSupplier forkDateSupplier, @Nullable ScmConfiguration scmConfiguration) {
+  public MetadataPublisher(ProjectInfo projectInfo, InputModuleHierarchy moduleHierarchy, QualityProfiles qProfiles,
+    CpdSettings cpdSettings, ScannerPluginRepository pluginRepository, BranchConfiguration branchConfiguration,
+    ScmRevision scmRevision, ForkDateSupplier forkDateSupplier, InputComponentStore componentStore, ScmConfiguration scmConfiguration) {
     this.projectInfo = projectInfo;
     this.moduleHierarchy = moduleHierarchy;
-    this.properties = properties;
     this.qProfiles = qProfiles;
     this.cpdSettings = cpdSettings;
     this.pluginRepository = pluginRepository;
     this.branchConfiguration = branchConfiguration;
     this.scmRevision = scmRevision;
     this.forkDateSupplier = forkDateSupplier;
+    this.componentStore = componentStore;
     this.scmConfiguration = scmConfiguration;
-  }
-
-  public MetadataPublisher(ProjectInfo projectInfo, InputModuleHierarchy moduleHierarchy, ScanProperties properties, QualityProfiles qProfiles,
-    CpdSettings cpdSettings, ScannerPluginRepository pluginRepository, BranchConfiguration branchConfiguration, ScmRevision scmRevision, ForkDateSupplier forkDateSupplier) {
-    this(projectInfo, moduleHierarchy, properties, qProfiles, cpdSettings, pluginRepository, branchConfiguration, scmRevision, forkDateSupplier, null);
   }
 
   @Override
@@ -95,14 +88,13 @@ public class MetadataPublisher implements ReportPublisherStep {
     projectInfo.getProjectVersion().ifPresent(builder::setProjectVersion);
     projectInfo.getBuildString().ifPresent(builder::setBuildString);
 
-    properties.organizationKey().ifPresent(builder::setOrganizationKey);
-
     if (branchConfiguration.branchName() != null) {
       addBranchInformation(builder);
     }
 
     addScmInformation(builder);
     addForkPoint(builder);
+    addNotAnalyzedFileCountsByLanguage(builder);
 
     for (QProfile qp : qProfiles.findAll()) {
       builder.putQprofilesPerLanguage(qp.getLanguage(), ScannerReport.Metadata.QProfile.newBuilder()
@@ -142,16 +134,16 @@ public class MetadataPublisher implements ReportPublisherStep {
       }
     }
 
-    if (scmConfiguration != null) {
-      ScmProvider scmProvider = scmConfiguration.provider();
-      if (scmProvider != null) {
-        Path projectBasedir = moduleHierarchy.root().getBaseDir();
-        try {
-          builder.setRelativePathFromScmRoot(toSonarQubePath(scmProvider.relativePathFromScmRoot(projectBasedir)));
-        } catch (UnsupportedOperationException e) {
-          LOG.debug(e.getMessage());
-        }
-      }
+    ScmProvider scmProvider = scmConfiguration.provider();
+    if (scmProvider == null) {
+      return;
+    }
+
+    Path projectBasedir = moduleHierarchy.root().getBaseDir();
+    try {
+      builder.setRelativePathFromScmRoot(toSonarQubePath(scmProvider.relativePathFromScmRoot(projectBasedir)));
+    } catch (UnsupportedOperationException e) {
+      LOG.debug(e.getMessage());
     }
   }
 
@@ -164,6 +156,10 @@ public class MetadataPublisher implements ReportPublisherStep {
     } catch (UnsupportedOperationException e) {
       LOG.debug(e.getMessage());
     }
+  }
+
+  private void addNotAnalyzedFileCountsByLanguage(ScannerReport.Metadata.Builder builder) {
+    builder.putAllNotAnalyzedFilesByLanguage(componentStore.getNotAnalysedFilesByLanguage());
   }
 
   private void addBranchInformation(ScannerReport.Metadata.Builder builder) {

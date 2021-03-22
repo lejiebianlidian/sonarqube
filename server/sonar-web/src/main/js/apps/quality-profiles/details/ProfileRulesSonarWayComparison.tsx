@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,22 +25,18 @@ import { getRulesUrl } from '../../../helpers/urls';
 
 interface Props {
   language: string;
-  organization: string | null;
   profile: string;
   sonarway: string;
   sonarWayMissingRules: number;
 }
 
 export default function ProfileRulesSonarWayComparison(props: Props) {
-  const url = getRulesUrl(
-    {
-      qprofile: props.profile,
-      activation: 'false',
-      compareToProfile: props.sonarway,
-      languages: props.language
-    },
-    props.organization
-  );
+  const url = getRulesUrl({
+    qprofile: props.profile,
+    activation: 'false',
+    compareToProfile: props.sonarway,
+    languages: props.language
+  });
 
   return (
     <div className="quality-profile-rules-sonarway-missing clearfix">

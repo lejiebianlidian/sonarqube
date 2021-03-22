@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ public class DefaultServer extends Server {
   public String getPublicRootUrl() {
     String baseUrl = trimToEmpty(settings.get(CoreProperties.SERVER_BASE_URL).orElse(""));
     if (baseUrl.isEmpty()) {
-      // If server base URL was not configured in Sonar server then is is better to take URL configured on batch side
+      // If server base URL was not configured in Sonar server then it is better to take URL configured on batch side
       baseUrl = client.baseUrl();
     }
     return StringUtils.removeEnd(baseUrl, "/");

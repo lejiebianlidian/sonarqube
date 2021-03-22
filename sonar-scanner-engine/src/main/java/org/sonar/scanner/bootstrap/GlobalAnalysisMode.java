@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ public class GlobalAnalysisMode {
 
   protected boolean mediumTestMode;
 
-  public GlobalAnalysisMode(RawScannerProperties props) {
+  public GlobalAnalysisMode(ScannerProperties props) {
     mediumTestMode = "true".equals(props.property(MEDIUM_TEST_ENABLED));
     if (mediumTestMode) {
       LOG.info("Medium test mode");

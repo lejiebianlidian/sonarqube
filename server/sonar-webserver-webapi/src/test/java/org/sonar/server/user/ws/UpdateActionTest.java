@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,6 @@ import org.sonar.server.authentication.CredentialsLocalAuthentication;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
-import org.sonar.server.organization.TestOrganizationFlags;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.user.NewUserNotifier;
 import org.sonar.server.user.UserUpdater;
@@ -53,8 +50,8 @@ import static org.sonar.db.user.UserTesting.newUserDto;
 
 public class UpdateActionTest {
 
-  private MapSettings settings = new MapSettings();
-  private System2 system2 = new System2();
+  private final MapSettings settings = new MapSettings();
+  private final System2 system2 = new System2();
 
   @Rule
   public DbTester db = DbTester.create(system2);
@@ -65,21 +62,17 @@ public class UpdateActionTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  private DbClient dbClient = db.getDbClient();
-  private DbSession dbSession = db.getSession();
-  private UserIndexer userIndexer = new UserIndexer(dbClient, es.client());
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-  private TestOrganizationFlags organizationFlags = TestOrganizationFlags.standalone();
-  private CredentialsLocalAuthentication localAuthentication = new CredentialsLocalAuthentication(db.getDbClient());
-
-  private WsActionTester ws = new WsActionTester(new UpdateAction(
-    new UserUpdater(system2, mock(NewUserNotifier.class), dbClient, userIndexer, organizationFlags, defaultOrganizationProvider,
-      new DefaultGroupFinder(db.getDbClient()), settings.asConfig(), localAuthentication),
+  private final DbClient dbClient = db.getDbClient();
+  private final DbSession dbSession = db.getSession();
+  private final UserIndexer userIndexer = new UserIndexer(dbClient, es.client());
+  private final CredentialsLocalAuthentication localAuthentication = new CredentialsLocalAuthentication(db.getDbClient());
+  private final WsActionTester ws = new WsActionTester(new UpdateAction(
+    new UserUpdater(mock(NewUserNotifier.class), dbClient, userIndexer, new DefaultGroupFinder(db.getDbClient()), settings.asConfig(), localAuthentication),
     userSession, new UserJsonWriter(userSession), dbClient));
 
   @Before
   public void setUp() {
-    db.users().insertDefaultGroup(db.getDefaultOrganization(), "sonar-users");
+    db.users().insertDefaultGroup();
   }
 
   @Test
@@ -90,7 +83,6 @@ public class UpdateActionTest {
       .setParam("login", "john")
       .setParam("name", "Jon Snow")
       .setParam("email", "jon.snow@thegreatw.all")
-      .setParam("scmAccounts", "jon.snow")
       .execute()
       .assertJson(getClass(), "update_user.json");
   }
@@ -224,34 +216,6 @@ public class UpdateActionTest {
   }
 
   @Test
-  public void update_only_scm_accounts_with_deprecated_scmAccounts_parameter() {
-    createUser();
-
-    ws.newRequest()
-      .setParam("login", "john")
-      .setParam("scmAccounts", "jon.snow")
-      .execute()
-      .assertJson(getClass(), "update_scm_accounts.json");
-
-    UserDto user = dbClient.userDao().selectByLogin(dbSession, "john");
-    assertThat(user.getScmAccountsAsList()).containsOnly("jon.snow");
-  }
-
-  @Test
-  public void update_only_scm_accounts_with_deprecated_scm_accounts_parameter() {
-    createUser();
-
-    ws.newRequest()
-      .setParam("login", "john")
-      .setParam("scm_accounts", "jon.snow")
-      .execute()
-      .assertJson(getClass(), "update_scm_accounts.json");
-
-    UserDto user = dbClient.userDao().selectByLogin(dbSession, "john");
-    assertThat(user.getScmAccountsAsList()).containsOnly("jon.snow");
-  }
-
-  @Test
   public void fail_on_missing_permission() {
     createUser();
     userSession.logIn("polop");
@@ -303,7 +267,7 @@ public class UpdateActionTest {
     WebService.Action action = ws.getDef();
     assertThat(action).isNotNull();
     assertThat(action.isPost()).isTrue();
-    assertThat(action.params()).hasSize(5);
+    assertThat(action.params()).hasSize(4);
   }
 
   private void createUser() {

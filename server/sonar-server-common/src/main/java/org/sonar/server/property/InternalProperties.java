@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,13 +26,6 @@ import javax.annotation.Nullable;
  * Allows to read and write internal properties.
  */
 public interface InternalProperties {
-  /**
-   * The UUID of the default organization.
-   * Can't be null unless SQ is strongly corrupted.
-   */
-  String DEFAULT_ORGANIZATION = "organization.default";
-
-  String ORGANIZATION_ENABLED = "organization.enabled";
 
   String SERVER_ID_CHECKSUM = "server.idChecksum";
 
@@ -52,6 +45,15 @@ public interface InternalProperties {
    * first installation SQ version
    */
   String INSTALLATION_VERSION = "installation.version";
+
+  /**
+   * Default permission templates
+   */
+  String DEFAULT_PROJECT_TEMPLATE = "defaultTemplate.prj";
+  String DEFAULT_PORTFOLIO_TEMPLATE = "defaultTemplate.port";
+  String DEFAULT_APPLICATION_TEMPLATE = "defaultTemplate.app";
+
+  String DEFAULT_ADMIN_CREDENTIAL_USAGE_EMAIL = "default.admin.cred";
 
   /**
    * Read the value of the specified property.

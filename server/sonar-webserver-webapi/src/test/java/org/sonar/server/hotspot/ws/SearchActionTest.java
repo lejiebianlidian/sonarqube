@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 package org.sonar.server.hotspot.ws;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -43,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.api.issue.Issue;
 import org.sonar.api.rules.RuleType;
+import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.System2;
 import org.sonar.api.web.UserRole;
 import org.sonar.db.DbClient;
@@ -51,16 +51,17 @@ import org.sonar.db.component.BranchType;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.issue.IssueDto;
+import org.sonar.db.project.ProjectDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleTesting;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
+import org.sonar.server.issue.index.AsyncIssueIndexing;
 import org.sonar.server.issue.index.IssueIndex;
 import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.permission.index.PermissionIndexer;
 import org.sonar.server.permission.index.WebAuthorizationTypeSupport;
 import org.sonar.server.security.SecurityStandards;
@@ -73,6 +74,7 @@ import org.sonarqube.ws.Hotspots;
 import org.sonarqube.ws.Hotspots.Component;
 import org.sonarqube.ws.Hotspots.SearchWsResponse;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -81,9 +83,7 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -112,26 +112,37 @@ public class SearchActionTest {
   @Rule
   public UserSessionRule userSessionRule = UserSessionRule.standalone();
 
-  private TestSystem2 system2 = new TestSystem2();
-  private DbClient dbClient = dbTester.getDbClient();
-  private TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(dbTester);
-
-  private IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSessionRule, new WebAuthorizationTypeSupport(userSessionRule));
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient), null);
-  private ViewIndexer viewIndexer = new ViewIndexer(dbClient, es.client());
-  private PermissionIndexer permissionIndexer = new PermissionIndexer(dbClient, es.client(), issueIndexer);
-  private HotspotWsResponseFormatter responseFormatter = new HotspotWsResponseFormatter(defaultOrganizationProvider);
-  private IssueIndexSyncProgressChecker issueIndexSyncProgressChecker = mock(IssueIndexSyncProgressChecker.class);
-  private SearchAction underTest = new SearchAction(dbClient, userSessionRule, issueIndex,
+  private final TestSystem2 system2 = new TestSystem2();
+  private final DbClient dbClient = dbTester.getDbClient();
+  private final IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSessionRule, new WebAuthorizationTypeSupport(userSessionRule));
+  private final IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient), mock(AsyncIssueIndexing.class));
+  private final ViewIndexer viewIndexer = new ViewIndexer(dbClient, es.client());
+  private final PermissionIndexer permissionIndexer = new PermissionIndexer(dbClient, es.client(), issueIndexer);
+  private final HotspotWsResponseFormatter responseFormatter = new HotspotWsResponseFormatter();
+  private final IssueIndexSyncProgressChecker issueIndexSyncProgressChecker = mock(IssueIndexSyncProgressChecker.class);
+  private final SearchAction underTest = new SearchAction(dbClient, userSessionRule, issueIndex,
     issueIndexSyncProgressChecker, responseFormatter, system2);
-  private WsActionTester actionTester = new WsActionTester(underTest);
+  private final WsActionTester actionTester = new WsActionTester(underTest);
 
   @Test
   public void verify_ws_def() {
+    WebService.Param onlyMineParam = actionTester.getDef().param("onlyMine");
+    WebService.Param owaspTop10Param = actionTester.getDef().param("owaspTop10");
+    WebService.Param sansTop25Param = actionTester.getDef().param("sansTop25");
+    WebService.Param sonarsourceSecurityParam = actionTester.getDef().param("sonarsourceSecurity");
+
     assertThat(actionTester.getDef().isInternal()).isTrue();
-    assertThat(actionTester.getDef().param("onlyMine").isRequired()).isFalse();
+    assertThat(onlyMineParam).isNotNull();
+    assertThat(onlyMineParam.isRequired()).isFalse();
     assertThat(actionTester.getDef().param("onlyMine").possibleValues())
       .containsExactlyInAnyOrder("yes", "no", "true", "false");
+
+    assertThat(owaspTop10Param).isNotNull();
+    assertThat(owaspTop10Param.isRequired()).isFalse();
+    assertThat(sansTop25Param).isNotNull();
+    assertThat(sansTop25Param.isRequired()).isFalse();
+    assertThat(sonarsourceSecurityParam).isNotNull();
+    assertThat(sonarsourceSecurityParam.isRequired()).isFalse();
   }
 
   @Test
@@ -732,12 +743,12 @@ public class SearchActionTest {
     userSessionRule.registerComponents(project);
     userSessionRule.logIn().addProjectPermission(UserRole.USER, project);
 
-    assertThatThrownBy(() -> actionTester.newRequest()
+    TestRequest request = actionTester.newRequest()
       .setParam("hotspots", IntStream.range(2, 10).mapToObj(String::valueOf).collect(joining(",")))
-      .setParam("onlyMine", "true")
-      .execute())
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Parameter 'onlyMine' can be used with parameter 'projectKey' only");
+      .setParam("onlyMine", "true");
+    assertThatThrownBy(request::execute)
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Parameter 'onlyMine' can be used with parameter 'projectKey' only");
   }
 
   @Test
@@ -746,12 +757,12 @@ public class SearchActionTest {
 
     userSessionRule.anonymous();
 
-    assertThatThrownBy(() -> actionTester.newRequest()
+    TestRequest request = actionTester.newRequest()
       .setParam("projectKey", project.getKey())
-      .setParam("onlyMine", "true")
-      .execute())
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Parameter 'onlyMine' requires user to be logged in");
+      .setParam("onlyMine", "true");
+    assertThatThrownBy(request::execute)
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Parameter 'onlyMine' requires user to be logged in");
   }
 
   @Test
@@ -949,7 +960,7 @@ public class SearchActionTest {
       });
     Stream<Object[]> sqCategoryOTHERS = Stream.of(
       new Object[] {Collections.emptySet(), SQCategory.OTHERS},
-      new Object[] {ImmutableSet.of("foo", "donut", "acme"), SQCategory.OTHERS});
+      new Object[] {of("foo", "donut", "acme"), SQCategory.OTHERS});
     return Stream.concat(allCategoriesButOTHERS, sqCategoryOTHERS).toArray(Object[][]::new);
   }
 
@@ -1003,9 +1014,6 @@ public class SearchActionTest {
       .extracting(SearchWsResponse.Hotspot::getKey)
       .containsOnly(fileHotspot.getKey(), dirHotspot.getKey(), projectHotspot.getKey());
     assertThat(response.getComponentsList()).hasSize(3);
-    assertThat(response.getComponentsList())
-      .extracting(Component::getOrganization)
-      .containsOnly(defaultOrganizationProvider.get().getKey());
     assertThat(response.getComponentsList())
       .extracting(Component::getKey)
       .containsOnly(project.getKey(), directory.getKey(), file.getKey());
@@ -1309,6 +1317,94 @@ public class SearchActionTest {
   }
 
   @Test
+  public void returns_hotspots_with_specified_sonarsourceSecurity_category() {
+    ComponentDto project = dbTester.components().insertPublicProject();
+    userSessionRule.registerComponents(project);
+    indexPermissions();
+    ComponentDto file = dbTester.components().insertComponent(newFileDto(project));
+    RuleDefinitionDto rule1 = newRule(SECURITY_HOTSPOT);
+    RuleDefinitionDto rule2 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("cwe:117", "cwe:190")));
+    RuleDefinitionDto rule3 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("owaspTop10:a1", "cwe:601")));
+    insertHotspot(project, file, rule1);
+    IssueDto hotspot2 = insertHotspot(project, file, rule2);
+    insertHotspot(project, file, rule3);
+    indexIssues();
+
+    SearchWsResponse response = newRequest(project).setParam("sonarsourceSecurity", "log-injection")
+      .executeProtobuf(SearchWsResponse.class);
+
+    assertThat(response.getHotspotsList())
+      .extracting(SearchWsResponse.Hotspot::getKey)
+      .containsExactly(hotspot2.getKey());
+  }
+
+  @Test
+  public void returns_hotspots_with_specified_cwes() {
+    ComponentDto project = dbTester.components().insertPublicProject();
+    userSessionRule.registerComponents(project);
+    indexPermissions();
+    ComponentDto file = dbTester.components().insertComponent(newFileDto(project));
+    RuleDefinitionDto rule1 = newRule(SECURITY_HOTSPOT);
+    RuleDefinitionDto rule2 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("cwe:117", "cwe:190")));
+    RuleDefinitionDto rule3 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("owaspTop10:a1", "cwe:601")));
+    insertHotspot(project, file, rule1);
+    IssueDto hotspot2 = insertHotspot(project, file, rule2);
+    insertHotspot(project, file, rule3);
+    indexIssues();
+
+    SearchWsResponse response = newRequest(project).setParam("cwe", "117,190")
+      .executeProtobuf(SearchWsResponse.class);
+
+    assertThat(response.getHotspotsList())
+      .extracting(SearchWsResponse.Hotspot::getKey)
+      .containsExactly(hotspot2.getKey());
+  }
+
+  @Test
+  public void returns_hotspots_with_specified_owaspTop10_category() {
+    ComponentDto project = dbTester.components().insertPublicProject();
+    userSessionRule.registerComponents(project);
+    indexPermissions();
+    ComponentDto file = dbTester.components().insertComponent(newFileDto(project));
+    RuleDefinitionDto rule1 = newRule(SECURITY_HOTSPOT);
+    RuleDefinitionDto rule2 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("cwe:117", "cwe:190")));
+    RuleDefinitionDto rule3 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("owaspTop10:a1", "cwe:601")));
+    insertHotspot(project, file, rule1);
+    insertHotspot(project, file, rule2);
+    IssueDto hotspot3 = insertHotspot(project, file, rule3);
+    indexIssues();
+
+    SearchWsResponse response = newRequest(project).setParam("owaspTop10", "a1")
+      .executeProtobuf(SearchWsResponse.class);
+
+    assertThat(response.getHotspotsList())
+      .extracting(SearchWsResponse.Hotspot::getKey)
+      .containsExactly(hotspot3.getKey());
+  }
+
+  @Test
+  public void returns_hotspots_with_specified_sansTop25_category() {
+    ComponentDto project = dbTester.components().insertPublicProject();
+    userSessionRule.registerComponents(project);
+    indexPermissions();
+    ComponentDto file = dbTester.components().insertComponent(newFileDto(project));
+    RuleDefinitionDto rule1 = newRule(SECURITY_HOTSPOT);
+    RuleDefinitionDto rule2 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("cwe:117", "cwe:190")));
+    RuleDefinitionDto rule3 = newRule(SECURITY_HOTSPOT, r -> r.setSecurityStandards(of("owaspTop10:a1", "cwe:601")));
+    insertHotspot(project, file, rule1);
+    insertHotspot(project, file, rule2);
+    IssueDto hotspot3 = insertHotspot(project, file, rule3);
+    indexIssues();
+
+    SearchWsResponse response = newRequest(project).setParam("sansTop25", "insecure-interaction")
+      .executeProtobuf(SearchWsResponse.class);
+
+    assertThat(response.getHotspotsList())
+      .extracting(SearchWsResponse.Hotspot::getKey)
+      .containsExactly(hotspot3.getKey());
+  }
+
+  @Test
   public void returns_hotspots_on_the_leak_period_when_sinceLeakPeriod_is_true() {
     ComponentDto project = dbTester.components().insertPublicProject();
     userSessionRule.registerComponents(project);
@@ -1395,7 +1491,7 @@ public class SearchActionTest {
   }
 
   @Test
-  public void returnsall_issues_when_sinceLeakPeriod_is_true_and_is_pr() {
+  public void returns_all_issues_when_sinceLeakPeriod_is_true_and_is_pr() {
     long referenceDate = 800_996_999_332L;
 
     system2.setNow(referenceDate + 10_000);
@@ -1424,6 +1520,52 @@ public class SearchActionTest {
       t -> t.setParam("sinceLeakPeriod", "true").setParam("pullRequest", "pr"))
         .executeProtobuf(SearchWsResponse.class);
     assertThat(responseOnLeak.getHotspotsList()).hasSize(3);
+  }
+
+  @Test
+  public void returns_issues_when_sinceLeakPeriod_is_true_and_is_application() {
+    long referenceDate = 800_996_999_332L;
+
+    system2.setNow(referenceDate + 10_000);
+    ComponentDto application = dbTester.components().insertPublicApplication();
+    ComponentDto project = dbTester.components().insertPublicProject();
+    ComponentDto project2 = dbTester.components().insertPublicProject();
+
+    dbTester.components().addApplicationProject(application, project);
+    dbTester.components().addApplicationProject(application, project2);
+
+    dbTester.components().insertComponent(ComponentTesting.newProjectCopy(project, application));
+    dbTester.components().insertComponent(ComponentTesting.newProjectCopy(project2, application));
+
+    indexViews();
+
+    userSessionRule.registerComponents(application, project, project2);
+    indexPermissions();
+    ComponentDto file = dbTester.components().insertComponent(newFileDto(project));
+    dbTester.components().insertSnapshot(project, t -> t.setPeriodDate(referenceDate).setLast(true));
+    RuleDefinitionDto rule = newRule(SECURITY_HOTSPOT);
+    IssueDto afterRef = dbTester.issues().insertHotspot(rule, project, file, t -> t.setIssueCreationTime(referenceDate + 1000));
+    IssueDto atRef = dbTester.issues().insertHotspot(rule, project, file, t -> t.setType(SECURITY_HOTSPOT).setIssueCreationTime(referenceDate));
+    IssueDto beforeRef = dbTester.issues().insertHotspot(rule, project, file, t -> t.setIssueCreationTime(referenceDate - 1000));
+
+    ComponentDto file2 = dbTester.components().insertComponent(newFileDto(project2));
+    IssueDto project2Issue = dbTester.issues().insertHotspot(rule, project2, file2, t -> t.setIssueCreationTime(referenceDate - 1000));
+
+    indexIssues();
+
+    SearchWsResponse responseAll = newRequest(application)
+      .executeProtobuf(SearchWsResponse.class);
+    assertThat(responseAll.getHotspotsList())
+      .extracting(SearchWsResponse.Hotspot::getKey)
+      .containsExactlyInAnyOrder(afterRef.getKey(), atRef.getKey(), beforeRef.getKey(), project2Issue.getKey());
+
+    SearchWsResponse responseOnLeak = newRequest(application,
+      t -> t.setParam("sinceLeakPeriod", "true"))
+      .executeProtobuf(SearchWsResponse.class);
+    assertThat(responseOnLeak.getHotspotsList())
+      .extracting(SearchWsResponse.Hotspot::getKey)
+      .containsExactlyInAnyOrder(afterRef.getKey());
+
   }
 
   @Test
@@ -1457,10 +1599,10 @@ public class SearchActionTest {
       .toArray(IssueDto[]::new);
     indexIssues();
 
+    assertThat(actionTester.getDef().responseExampleAsString()).isNotNull();
     newRequest(project)
       .execute()
-      .assertJson(actionTester.getDef().responseExampleAsString()
-        .replaceAll("default-organization", dbTester.getDefaultOrganization().getKey()));
+      .assertJson(actionTester.getDef().responseExampleAsString());
   }
 
   private IssueDto insertHotspot(ComponentDto project, ComponentDto file, RuleDefinitionDto rule) {
@@ -1528,7 +1670,7 @@ public class SearchActionTest {
   }
 
   private void indexPermissions() {
-    permissionIndexer.indexOnStartup(permissionIndexer.getIndexTypes());
+    permissionIndexer.indexAll(permissionIndexer.getIndexTypes());
   }
 
   private void indexIssues() {
@@ -1536,7 +1678,7 @@ public class SearchActionTest {
   }
 
   private void indexViews() {
-    viewIndexer.indexOnStartup(viewIndexer.getIndexTypes());
+    viewIndexer.indexAll();
   }
 
   private RuleDefinitionDto newRule(RuleType ruleType) {

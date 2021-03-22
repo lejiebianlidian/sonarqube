@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@ import org.sonar.api.utils.text.JsonWriter;
 import static org.sonar.api.measures.CoreMetrics.NCLOC_KEY;
 
 public class TelemetryDataJsonWriter {
+
+  public static final String COUNT = "count";
 
   public void writeTelemetryData(JsonWriter json, TelemetryData statistics) {
     json.beginObject();
@@ -55,7 +57,7 @@ public class TelemetryDataJsonWriter {
     statistics.getProjectCountByLanguage().forEach((language, count) -> {
       json.beginObject();
       json.prop("language", language);
-      json.prop("count", count);
+      json.prop(COUNT, count);
       json.endObject();
     });
     json.endArray();
@@ -68,6 +70,36 @@ public class TelemetryDataJsonWriter {
       json.endObject();
     });
     json.endArray();
+    json.name("almIntegrationCount");
+    json.beginArray();
+    statistics.getAlmIntegrationCountByAlm().forEach((alm, count) -> {
+      json.beginObject();
+      json.prop("alm", alm);
+      json.prop(COUNT, count);
+      json.endObject();
+    });
+    json.endArray();
+
+    if (!statistics.getCustomSecurityConfigs().isEmpty()) {
+      json.name("customSecurityConfig");
+      json.beginArray();
+      json.values(statistics.getCustomSecurityConfigs());
+      json.endArray();
+    }
+
+    statistics.hasUnanalyzedC().ifPresent(hasUnanalyzedC -> json.prop("hasUnanalyzedC", hasUnanalyzedC));
+    statistics.hasUnanalyzedCpp().ifPresent(hasUnanalyzedCpp -> json.prop("hasUnanalyzedCpp", hasUnanalyzedCpp));
+
+    json.name("externalAuthProviders");
+    json.beginArray();
+    statistics.getExternalAuthenticationProviders().forEach(json::value);
+    json.endArray();
+
+    addScmInfo(json, statistics);
+    addCiInfo(json, statistics);
+
+    json.prop("sonarlintWeeklyUsers", statistics.sonarlintWeeklyUsers());
+
     if (statistics.getInstallationDate() != null) {
       json.prop("installationDate", statistics.getInstallationDate());
     }
@@ -76,5 +108,29 @@ public class TelemetryDataJsonWriter {
     }
     json.prop("docker", statistics.isInDocker());
     json.endObject();
+  }
+
+  private static void addScmInfo(JsonWriter json, TelemetryData statistics) {
+    json.name("projectCountByScm");
+    json.beginArray();
+    statistics.getProjectCountByScm().forEach((scm, count) -> {
+      json.beginObject();
+      json.prop("scm", scm);
+      json.prop(COUNT, count);
+      json.endObject();
+    });
+    json.endArray();
+  }
+
+  private static void addCiInfo(JsonWriter json, TelemetryData statistics) {
+    json.name("projectCountByCI");
+    json.beginArray();
+    statistics.getProjectCountByCi().forEach((ci, count) -> {
+      json.beginObject();
+      json.prop("ci", ci);
+      json.prop(COUNT, count);
+      json.endObject();
+    });
+    json.endArray();
   }
 }

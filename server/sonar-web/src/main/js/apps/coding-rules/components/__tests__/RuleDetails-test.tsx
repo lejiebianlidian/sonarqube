@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-/* eslint-disable sonarjs/no-duplicate-string */
+
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
@@ -91,7 +91,6 @@ it('should correctly handle tag changes', async () => {
 
   expect(updateRule).toHaveBeenCalledWith({
     key: 'squid:S1337',
-    organization: undefined,
     tags: 'foo,bar'
   });
 });
@@ -160,7 +159,6 @@ function shallowRender(props: Partial<RuleDetails['props']> = {}) {
       onDeactivate={jest.fn()}
       onDelete={jest.fn()}
       onFilterChange={jest.fn()}
-      organization={undefined}
       referencedProfiles={{ key: profile }}
       referencedRepositories={{
         javascript: { key: 'javascript', language: 'js', name: 'SonarAnalyzer' }

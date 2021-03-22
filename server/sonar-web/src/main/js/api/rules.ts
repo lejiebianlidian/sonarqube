@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,50 +19,56 @@
  */
 import { getJSON, post, postJSON } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
+import { GetRulesAppResponse, SearchRulesResponse } from '../types/coding-rules';
 
-export interface GetRulesAppResponse {
-  canWrite?: boolean;
-  repositories: { key: string; language: string; name: string }[];
-}
-
-export function getRulesApp(organization?: string): Promise<GetRulesAppResponse> {
-  return getJSON('/api/rules/app', { organization }).catch(throwGlobalError);
-}
-
-export interface SearchRulesResponse {
-  actives?: T.Dict<T.RuleActivation[]>;
-  facets?: { property: string; values: { count: number; val: string }[] }[];
-  p: number;
-  ps: number;
-  rules: T.Rule[];
-  total: number;
+export function getRulesApp(): Promise<GetRulesAppResponse> {
+  return getJSON('/api/rules/app').catch(throwGlobalError);
 }
 
 export function searchRules(data: {
-  organization: string | undefined;
-  [x: string]: any;
+  activation?: boolean | string;
+  active_severities?: string;
+  asc?: boolean | string;
+  available_since?: string;
+  cwe?: string;
+  f?: string;
+  facets?: string;
+  include_external?: boolean | string;
+  inheritance?: string;
+  is_template?: boolean | string;
+  languages?: string;
+  owaspTop10?: string;
+  p?: number;
+  ps?: number;
+  q?: string;
+  qprofile?: string;
+  repositories?: string;
+  rule_key?: string;
+  s?: string;
+  sansTop25?: string;
+  severities?: string;
+  sonarsourceSecurity?: string;
+  statuses?: string;
+  tags?: string;
+  template_key?: string;
+  types?: string;
 }): Promise<SearchRulesResponse> {
   return getJSON('/api/rules/search', data).catch(throwGlobalError);
 }
 
-export function takeFacet(response: any, property: string) {
-  const facet = response.facets.find((facet: any) => facet.property === property);
+export function takeFacet(response: SearchRulesResponse, property: string) {
+  const facet = response.facets?.find(f => f.property === property);
   return facet ? facet.values : [];
 }
 
 export function getRuleDetails(parameters: {
   actives?: boolean;
   key: string;
-  organization: string | undefined;
 }): Promise<{ actives?: T.RuleActivation[]; rule: T.RuleDetails }> {
   return getJSON('/api/rules/show', parameters).catch(throwGlobalError);
 }
 
-export function getRuleTags(parameters: {
-  organization: string | undefined;
-  ps?: number;
-  q: string;
-}): Promise<string[]> {
+export function getRuleTags(parameters: { ps?: number; q: string }): Promise<string[]> {
   return getJSON('/api/rules/tags', parameters).then(r => r.tags, throwGlobalError);
 }
 
@@ -70,7 +76,6 @@ export function createRule(data: {
   custom_key: string;
   markdown_description: string;
   name: string;
-  organization: string | undefined;
   params?: string;
   prevent_reactivation?: boolean;
   severity?: string;
@@ -92,7 +97,7 @@ export function createRule(data: {
   );
 }
 
-export function deleteRule(parameters: { key: string; organization: string | undefined }) {
+export function deleteRule(parameters: { key: string }) {
   return post('/api/rules/delete', parameters).catch(throwGlobalError);
 }
 
@@ -101,7 +106,6 @@ export function updateRule(data: {
   markdown_description?: string;
   markdown_note?: string;
   name?: string;
-  organization: string | undefined;
   params?: string;
   remediation_fn_base_effort?: string;
   remediation_fn_type?: string;

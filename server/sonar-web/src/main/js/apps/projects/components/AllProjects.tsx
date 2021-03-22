@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -46,10 +46,8 @@ interface Props {
   currentUser: T.CurrentUser;
   isFavorite: boolean;
   location: Pick<Location, 'pathname' | 'query'>;
-  organization: T.Organization | undefined;
   qualifiers: ComponentQualifier[];
   router: Pick<Router, 'push' | 'replace'>;
-  storageOptionsSuffix?: string;
 }
 
 interface State {
@@ -61,9 +59,9 @@ interface State {
   total?: number;
 }
 
-const PROJECTS_SORT = 'sonarqube.projects.sort';
-const PROJECTS_VIEW = 'sonarqube.projects.view';
-const PROJECTS_VISUALIZATION = 'sonarqube.projects.visualization';
+export const LS_PROJECTS_SORT = 'sonarqube.projects.sort';
+export const LS_PROJECTS_VIEW = 'sonarqube.projects.view';
+export const LS_PROJECTS_VISUALIZATION = 'sonarqube.projects.visualization';
 
 export class AllProjects extends React.PureComponent<Props, State> {
   mounted = false;
@@ -97,7 +95,7 @@ export class AllProjects extends React.PureComponent<Props, State> {
 
   fetchProjects = (query: Query) => {
     this.setState({ loading: true, query });
-    fetchProjects(query, this.props.isFavorite, this.props.organization).then(response => {
+    fetchProjects(query, this.props.isFavorite).then(response => {
       if (this.mounted) {
         this.setState({
           facets: response.facets,
@@ -114,38 +112,34 @@ export class AllProjects extends React.PureComponent<Props, State> {
     const { pageIndex, projects, query } = this.state;
     if (pageIndex && projects && query) {
       this.setState({ loading: true });
-      fetchProjects(query, this.props.isFavorite, this.props.organization, pageIndex + 1).then(
-        response => {
-          if (this.mounted) {
-            this.setState({
-              loading: false,
-              pageIndex: pageIndex + 1,
-              projects: [...projects, ...response.projects]
-            });
-          }
-        },
-        this.stopLoading
-      );
+      fetchProjects(query, this.props.isFavorite, pageIndex + 1).then(response => {
+        if (this.mounted) {
+          this.setState({
+            loading: false,
+            pageIndex: pageIndex + 1,
+            projects: [...projects, ...response.projects]
+          });
+        }
+      }, this.stopLoading);
     }
   };
 
   getSort = () => this.state.query.sort || 'name';
 
   getStorageOptions = () => {
-    const { storageOptionsSuffix } = this.props;
     const options: {
       sort?: string;
       view?: string;
       visualization?: string;
     } = {};
-    if (get(PROJECTS_SORT, storageOptionsSuffix)) {
-      options.sort = get(PROJECTS_SORT, storageOptionsSuffix) || undefined;
+    if (get(LS_PROJECTS_SORT)) {
+      options.sort = get(LS_PROJECTS_SORT) || undefined;
     }
-    if (get(PROJECTS_VIEW, storageOptionsSuffix)) {
-      options.view = get(PROJECTS_VIEW, storageOptionsSuffix) || undefined;
+    if (get(LS_PROJECTS_VIEW)) {
+      options.view = get(LS_PROJECTS_VIEW) || undefined;
     }
-    if (get(PROJECTS_VISUALIZATION, storageOptionsSuffix)) {
-      options.visualization = get(PROJECTS_VISUALIZATION, storageOptionsSuffix) || undefined;
+    if (get(LS_PROJECTS_VISUALIZATION)) {
+      options.visualization = get(LS_PROJECTS_VISUALIZATION) || undefined;
     }
     return options;
   };
@@ -171,7 +165,6 @@ export class AllProjects extends React.PureComponent<Props, State> {
   };
 
   handlePerspectiveChange = ({ view, visualization }: { view: string; visualization?: string }) => {
-    const { storageOptionsSuffix } = this.props;
     const query: {
       view: string | undefined;
       visualization: string | undefined;
@@ -193,9 +186,9 @@ export class AllProjects extends React.PureComponent<Props, State> {
       this.updateLocationQuery(query);
     }
 
-    save(PROJECTS_SORT, query.sort, storageOptionsSuffix);
-    save(PROJECTS_VIEW, query.view, storageOptionsSuffix);
-    save(PROJECTS_VISUALIZATION, visualization, storageOptionsSuffix);
+    save(LS_PROJECTS_SORT, query.sort);
+    save(LS_PROJECTS_VIEW, query.view);
+    save(LS_PROJECTS_VISUALIZATION, visualization);
   };
 
   handleQueryChange(initialMount: boolean) {
@@ -214,7 +207,7 @@ export class AllProjects extends React.PureComponent<Props, State> {
   handleSortChange = (sort: string, desc: boolean) => {
     const asString = (desc ? '-' : '') + sort;
     this.updateLocationQuery({ sort: asString });
-    save(PROJECTS_SORT, asString, this.props.storageOptionsSuffix);
+    save(LS_PROJECTS_SORT, asString);
   };
 
   stopLoading = () => {
@@ -231,7 +224,10 @@ export class AllProjects extends React.PureComponent<Props, State> {
   renderSide = () => (
     <ScreenPositionHelper className="layout-page-side-outer">
       {({ top }) => (
-        <div className="layout-page-side projects-page-side" style={{ top }}>
+        <section
+          aria-label={translate('filters')}
+          className="layout-page-side projects-page-side"
+          style={{ top }}>
           <div className="layout-page-side-inner">
             <div className="layout-page-filters">
               <A11ySkipTarget
@@ -245,14 +241,13 @@ export class AllProjects extends React.PureComponent<Props, State> {
                 facets={this.state.facets}
                 onClearAll={this.handleClearAll}
                 onQueryChange={this.updateLocationQuery}
-                organization={this.props.organization}
                 query={this.state.query}
                 view={this.getView()}
                 visualization={this.getVisualization()}
               />
             </div>
           </div>
-        </div>
+        </section>
       )}
     </ScreenPositionHelper>
   );
@@ -263,12 +258,10 @@ export class AllProjects extends React.PureComponent<Props, State> {
         <div className="layout-page-main-inner">
           <PageHeader
             currentUser={this.props.currentUser}
-            isFavorite={this.props.isFavorite}
             loading={this.state.loading}
             onPerspectiveChange={this.handlePerspectiveChange}
             onQueryChange={this.updateLocationQuery}
             onSortChange={this.handleSortChange}
-            organization={this.props.organization}
             projects={this.state.projects}
             query={this.state.query}
             selectedSort={this.getSort()}
@@ -290,7 +283,6 @@ export class AllProjects extends React.PureComponent<Props, State> {
       <div className="layout-page-main-inner">
         {this.state.projects && (
           <Visualizations
-            displayOrganizations={false}
             projects={this.state.projects}
             sort={this.state.query.sort}
             total={this.state.total}
@@ -328,13 +320,18 @@ export class AllProjects extends React.PureComponent<Props, State> {
         <Suggestions suggestions="projects" />
         <Helmet defer={false} title={translate('projects.page')} />
 
+        <h1 className="a11y-hidden">{translate('projects.page')}</h1>
+
         {this.renderSide()}
 
         <div className="layout-page-main">
           <A11ySkipTarget anchor="projects_main" />
 
-          {this.renderHeader()}
-          {this.renderMain()}
+          <div role="main">
+            <h2 className="a11y-hidden">{translate('list_of_projects')}</h2>
+            {this.renderHeader()}
+            {this.renderMain()}
+          </div>
         </div>
       </div>
     );

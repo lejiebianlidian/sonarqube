@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@ import Risk from './Risk';
 import Security from './Security';
 
 interface Props {
-  displayOrganizations?: boolean;
   projects: Project[];
   sort?: string;
   total?: number;
@@ -50,7 +49,6 @@ export default class Visualizations extends React.PureComponent<Props> {
 
     return Component ? (
       <Component
-        displayOrganizations={this.props.displayOrganizations}
         helpText={translate('projects.visualization', this.props.visualization, 'description')}
         projects={projects}
       />
@@ -80,9 +78,9 @@ export default class Visualizations extends React.PureComponent<Props> {
 
     return (
       <div className="boxed-group projects-visualizations">
-        <div className="projects-visualization">
+        <main className="projects-visualization">
           {projects != null && this.renderVisualization(projects)}
-        </div>
+        </main>
         {this.renderFooter()}
       </div>
     );

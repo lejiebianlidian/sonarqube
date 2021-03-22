@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ import org.sonar.db.DbTester;
 import org.sonar.db.EmailSubscriberDto;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.UserDto;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -64,17 +63,16 @@ public class PropertiesDaoTest {
   private static final String VALUE_SIZE_4001 = VALUE_SIZE_4000 + "P";
   private static final long INITIAL_DATE = 1_444_000L;
 
-  private AlwaysIncreasingSystem2 system2 = new AlwaysIncreasingSystem2(INITIAL_DATE, 1);
+  private final AlwaysIncreasingSystem2 system2 = new AlwaysIncreasingSystem2(INITIAL_DATE, 1);
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
   @Rule
   public DbTester db = DbTester.create(system2);
 
-  private DbClient dbClient = db.getDbClient();
-  private DbSession session = db.getSession();
-
-  private PropertiesDao underTest = db.getDbClient().propertiesDao();
+  private final DbClient dbClient = db.getDbClient();
+  private final DbSession session = db.getSession();
+  private final PropertiesDao underTest = db.getDbClient().propertiesDao();
 
   @Test
   public void shouldFindUsersForNotification() {
@@ -122,7 +120,7 @@ public class PropertiesDaoTest {
     String userUuid1 = db.users().insertUser(u -> u.setLogin("user1")).getUuid();
     String userUuid2 = db.users().insertUser(u -> u.setLogin("user2")).getUuid();
     String projectUuid = randomAlphabetic(8);
-    db.components().insertPrivateProject(db.getDefaultOrganization(), projectUuid);
+    db.components().insertPrivateProject(projectUuid);
 
     // global subscription
     insertProperty("notification.DispatcherWithGlobalSubscribers.Email", "true", null, userUuid2);
@@ -690,27 +688,27 @@ public class PropertiesDaoTest {
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
     assertThatPropertiesRow("global.empty")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     assertThatPropertiesRow("global.text")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasTextValue("some text")
-      .hasCreatedAt(INITIAL_DATE + 4);
+      .hasCreatedAt(INITIAL_DATE + 2);
     assertThatPropertiesRow("global.4000")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasTextValue(VALUE_SIZE_4000)
-      .hasCreatedAt(INITIAL_DATE + 5);
+      .hasCreatedAt(INITIAL_DATE + 3);
     assertThatPropertiesRow("global.clob")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasClobValue(VALUE_SIZE_4001)
-      .hasCreatedAt(INITIAL_DATE + 6);
+      .hasCreatedAt(INITIAL_DATE + 4);
   }
 
   @Test
@@ -726,27 +724,27 @@ public class PropertiesDaoTest {
       .hasComponentUuid(componentUuid)
       .hasNoUserUuid()
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
     assertThatPropertiesRow("component.empty")
       .hasComponentUuid(componentUuid)
       .hasNoUserUuid()
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     assertThatPropertiesRow("component.text")
       .hasComponentUuid(componentUuid)
       .hasNoUserUuid()
       .hasTextValue("some text")
-      .hasCreatedAt(INITIAL_DATE + 4);
+      .hasCreatedAt(INITIAL_DATE + 2);
     assertThatPropertiesRow("component.4000")
       .hasComponentUuid(componentUuid)
       .hasNoUserUuid()
       .hasTextValue(VALUE_SIZE_4000)
-      .hasCreatedAt(INITIAL_DATE + 5);
+      .hasCreatedAt(INITIAL_DATE + 3);
     assertThatPropertiesRow("component.clob")
       .hasComponentUuid(componentUuid)
       .hasNoUserUuid()
       .hasClobValue(VALUE_SIZE_4001)
-      .hasCreatedAt(INITIAL_DATE + 6);
+      .hasCreatedAt(INITIAL_DATE + 4);
   }
 
   @Test
@@ -762,27 +760,27 @@ public class PropertiesDaoTest {
       .hasNoComponentUuid()
       .hasUserUuid(userUuid)
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
     assertThatPropertiesRow("user.empty")
       .hasNoComponentUuid()
       .hasUserUuid(userUuid)
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     assertThatPropertiesRow("user.text")
       .hasNoComponentUuid()
       .hasUserUuid(userUuid)
       .hasTextValue("some text")
-      .hasCreatedAt(INITIAL_DATE + 4);
+      .hasCreatedAt(INITIAL_DATE + 2);
     assertThatPropertiesRow("user.4000")
       .hasNoComponentUuid()
       .hasUserUuid(userUuid)
       .hasTextValue(VALUE_SIZE_4000)
-      .hasCreatedAt(INITIAL_DATE + 5);
+      .hasCreatedAt(INITIAL_DATE + 3);
     assertThatPropertiesRow("user.clob")
       .hasNoComponentUuid()
       .hasUserUuid(userUuid)
       .hasClobValue(VALUE_SIZE_4001)
-      .hasCreatedAt(INITIAL_DATE + 6);
+      .hasCreatedAt(INITIAL_DATE + 4);
   }
 
   @Test
@@ -798,7 +796,7 @@ public class PropertiesDaoTest {
     PropertiesRowAssert propertiesRowAssert = assertThatPropertiesRow("global")
       .hasNoComponentUuid()
       .hasNoUserUuid()
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     if (newValue == null || newValue.isEmpty()) {
       propertiesRowAssert.isEmpty();
     } else if (newValue.length() > 4000) {
@@ -821,7 +819,7 @@ public class PropertiesDaoTest {
     PropertiesRowAssert propertiesRowAssert = assertThatPropertiesRow("global")
       .hasComponentUuid(componentUuid)
       .hasNoUserUuid()
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     if (newValue == null || newValue.isEmpty()) {
       propertiesRowAssert.isEmpty();
     } else if (newValue.length() > 4000) {
@@ -845,7 +843,7 @@ public class PropertiesDaoTest {
     PropertiesRowAssert propertiesRowAssert = assertThatPropertiesRow("global")
       .hasNoComponentUuid()
       .hasUserUuid(userUuid)
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     if (newValue == null || newValue.isEmpty()) {
       propertiesRowAssert.isEmpty();
     } else if (newValue.length() > 4000) {
@@ -1011,11 +1009,9 @@ public class PropertiesDaoTest {
   }
 
   @Test
-  public void delete_by_organization_and_user() {
-    OrganizationDto organization = db.organizations().insert();
-    OrganizationDto anotherOrganization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
-    ComponentDto anotherProject = db.components().insertPrivateProject(anotherOrganization);
+  public void delete_by_user() {
+    ComponentDto project = db.components().insertPrivateProject();
+    ComponentDto anotherProject = db.components().insertPrivateProject();
     UserDto user = db.users().insertUser();
     UserDto anotherUser = db.users().insertUser();
     insertProperty("KEY_11", "VALUE", project.uuid(), user.getUuid());
@@ -1023,22 +1019,19 @@ public class PropertiesDaoTest {
     insertProperty("KEY_11", "VALUE", project.uuid(), anotherUser.getUuid());
     insertProperty("KEY_11", "VALUE", anotherProject.uuid(), user.getUuid());
 
-    underTest.deleteByOrganizationAndUser(session, organization.getUuid(), user.getUuid());
+    underTest.deleteByUser(session, user.getUuid());
 
     assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(project.uuid()).build(), session))
       .hasSize(1)
       .extracting(PropertyDto::getUserUuid).containsOnly(anotherUser.getUuid());
     assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(anotherProject.uuid()).build(), session))
-      .extracting(PropertyDto::getUserUuid)
-      .hasSize(1).containsOnly(user.getUuid());
+      .isEmpty();
   }
 
   @Test
-  public void delete_by_organization_and_matching_login() {
-    OrganizationDto organization = db.organizations().insert();
-    OrganizationDto anotherOrganization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
-    ComponentDto anotherProject = db.components().insertPrivateProject(anotherOrganization);
+  public void delete_by_matching_login() {
+    ComponentDto project = db.components().insertPrivateProject();
+    ComponentDto anotherProject = db.components().insertPrivateProject();
     UserDto user = db.users().insertUser();
     UserDto anotherUser = db.users().insertUser();
     insertProperty("KEY_11", user.getLogin(), project.uuid(), null);
@@ -1046,14 +1039,13 @@ public class PropertiesDaoTest {
     insertProperty("KEY_11", anotherUser.getLogin(), project.uuid(), null);
     insertProperty("KEY_11", user.getLogin(), anotherProject.uuid(), null);
 
-    underTest.deleteByOrganizationAndMatchingLogin(session, organization.getUuid(), user.getLogin(), newArrayList("KEY_11", "KEY_12"));
+    underTest.deleteByMatchingLogin(session, user.getLogin(), newArrayList("KEY_11", "KEY_12"));
 
     assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(project.uuid()).build(), session))
       .hasSize(1)
       .extracting(PropertyDto::getValue).containsOnly(anotherUser.getLogin());
     assertThat(dbClient.propertiesDao().selectByQuery(PropertyQuery.builder().setComponentUuid(anotherProject.uuid()).build(), session))
-      .extracting(PropertyDto::getValue)
-      .hasSize(1).containsOnly(user.getLogin());
+      .isEmpty();
   }
 
   @Test
@@ -1090,27 +1082,27 @@ public class PropertiesDaoTest {
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
     assertThatPropertiesRow("empty_value_property")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .isEmpty()
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     assertThatPropertiesRow("text_value_property")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasTextValue("dfdsfsd")
-      .hasCreatedAt(INITIAL_DATE + 4);
+      .hasCreatedAt(INITIAL_DATE + 2);
     assertThatPropertiesRow("4000_char_value_property")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasTextValue(VALUE_SIZE_4000)
-      .hasCreatedAt(INITIAL_DATE + 5);
+      .hasCreatedAt(INITIAL_DATE + 3);
     assertThatPropertiesRow("clob_value_property")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasClobValue(VALUE_SIZE_4001)
-      .hasCreatedAt(INITIAL_DATE + 6);
+      .hasCreatedAt(INITIAL_DATE + 4);
   }
 
   @Test
@@ -1126,7 +1118,7 @@ public class PropertiesDaoTest {
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasTextValue("new value")
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
   }
 
   private static Map<String, String> mapOf(String... values) {
@@ -1155,37 +1147,37 @@ public class PropertiesDaoTest {
       .hasNoUserUuid()
       .hasNoComponentUuid()
       .hasTextValue("bar")
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
     assertThatPropertiesRowByUuid(uuid2)
       .hasKey("new_name")
       .hasNoComponentUuid()
       .hasNoUserUuid()
       .hasTextValue("doc1")
-      .hasCreatedAt(INITIAL_DATE + 3);
+      .hasCreatedAt(INITIAL_DATE + 1);
     assertThatPropertiesRowByUuid(uuid3)
       .hasKey("new_name")
       .hasComponentUuid("15")
       .hasNoUserUuid()
       .hasTextValue("doc2")
-      .hasCreatedAt(INITIAL_DATE + 4);
+      .hasCreatedAt(INITIAL_DATE + 2);
     assertThatPropertiesRowByUuid(uuid4)
       .hasKey("new_name")
       .hasComponentUuid("16")
       .hasNoUserUuid()
       .hasTextValue("doc3")
-      .hasCreatedAt(INITIAL_DATE + 5);
+      .hasCreatedAt(INITIAL_DATE + 3);
     assertThatPropertiesRowByUuid(uuid5)
       .hasKey("new_name")
       .hasNoComponentUuid()
       .hasUserUuid("100")
       .hasTextValue("doc4")
-      .hasCreatedAt(INITIAL_DATE + 6);
+      .hasCreatedAt(INITIAL_DATE + 4);
     assertThatPropertiesRowByUuid(uuid6)
       .hasKey("new_name")
       .hasNoComponentUuid()
       .hasUserUuid("101")
       .hasTextValue("doc5")
-      .hasCreatedAt(INITIAL_DATE + 7);
+      .hasCreatedAt(INITIAL_DATE + 5);
   }
 
   @Test
@@ -1193,7 +1185,7 @@ public class PropertiesDaoTest {
     String uuid = insertProperty("foo", "bar", null, null);
 
     assertThatPropertiesRowByUuid(uuid)
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
 
     underTest.renamePropertyKey("foo", "foo");
 
@@ -1202,7 +1194,7 @@ public class PropertiesDaoTest {
       .hasNoUserUuid()
       .hasNoComponentUuid()
       .hasTextValue("bar")
-      .hasCreatedAt(INITIAL_DATE + 2);
+      .hasCreatedAt(INITIAL_DATE);
   }
 
   @Test
@@ -1247,7 +1239,7 @@ public class PropertiesDaoTest {
   }
 
   private ComponentDto insertPrivateProject(String projectKey) {
-    return db.components().insertPrivateProject(db.getDefaultOrganization(), t -> t.setDbKey(projectKey));
+    return db.components().insertPrivateProject(t -> t.setDbKey(projectKey));
   }
 
   private static Consumer<UserDto> withEmail(String login) {

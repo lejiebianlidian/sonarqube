@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-/* eslint-disable sonarjs/no-duplicate-string */
+
 import { Location } from 'history';
 import { InjectedRouter } from 'react-router';
 import { createStore, Store } from 'redux';
@@ -32,21 +32,6 @@ export function mockAlmApplication(overrides: Partial<T.AlmApplication> = {}): T
     installationUrl: 'https://github.com/apps/greg-sonarcloud/installations/new',
     key: 'github',
     name: 'GitHub',
-    ...overrides
-  };
-}
-
-export function mockAlmOrganization(overrides: Partial<T.AlmOrganization> = {}): T.AlmOrganization {
-  return {
-    avatar: 'http://example.com/avatar',
-    almUrl: 'https://github.com/foo',
-    description: 'description-foo',
-    key: 'foo',
-    name: 'foo',
-    personal: false,
-    privateRepos: 0,
-    publicRepos: 3,
-    url: 'http://example.com/foo',
     ...overrides
   };
 }
@@ -99,7 +84,6 @@ export function mockAnalysisEvent(overrides: Partial<T.AnalysisEvent> = {}): T.A
 
 export function mockAppState(overrides: Partial<T.AppState> = {}): T.AppState {
   return {
-    defaultOrganization: 'foo',
     edition: 'community',
     productionDatabase: true,
     qualifiers: ['TRK'],
@@ -277,7 +261,6 @@ export function mockComponent(overrides: Partial<T.Component> = {}): T.Component
     breadcrumbs: [],
     key: 'my-project',
     name: 'MyProject',
-    organization: 'foo',
     qualifier: ComponentQualifier.Project,
     qualityGate: { isDefault: true, key: '30', name: 'Sonar way' },
     qualityProfiles: [
@@ -408,11 +391,9 @@ export function mockIssue(withLocations = false, overrides: Partial<T.Issue> = {
     key: 'AVsae-CQS-9G3txfbFN2',
     line: 25,
     message: 'Reduce the number of conditional operators (4) used in the expression',
-    organization: 'myorg',
     project: 'myproject',
     projectKey: 'foo',
     projectName: 'Foo',
-    projectOrganization: 'org',
     rule: 'javascript:S1067',
     ruleName: 'foo',
     secondaryLocations: [],
@@ -470,13 +451,11 @@ export function mockMeasure(overrides: Partial<T.Measure> = {}): T.Measure {
   return {
     bestValue: true,
     metric: 'bugs',
-    periods: [
-      {
-        bestValue: true,
-        index: 1,
-        value: '1.0'
-      }
-    ],
+    period: {
+      bestValue: true,
+      index: 1,
+      value: '1.0'
+    },
     value: '1.0',
     ...overrides
   };
@@ -487,43 +466,14 @@ export function mockMeasureEnhanced(overrides: Partial<T.MeasureEnhanced> = {}):
     bestValue: true,
     leak: '1',
     metric: mockMetric({ ...(overrides.metric || {}) }),
-    periods: [
-      {
-        bestValue: true,
-        index: 1,
-        value: '1.0'
-      }
-    ],
+    period: {
+      bestValue: true,
+      index: 1,
+      value: '1.0'
+    },
     value: '1.0',
     ...overrides
   };
-}
-
-export function mockOrganization(overrides: Partial<T.Organization> = {}): T.Organization {
-  return { key: 'foo', name: 'Foo', ...overrides };
-}
-
-export function mockOrganizationWithAdminActions(
-  overrides: Partial<T.Organization> = {},
-  actionsOverrides: Partial<T.Organization['actions']> = {}
-) {
-  return mockOrganization({ actions: { admin: true, ...actionsOverrides }, ...overrides });
-}
-
-export function mockOrganizationWithAlm(
-  overrides: Partial<T.Organization> = {},
-  almOverrides: Partial<T.Organization['alm']> = {}
-): T.Organization {
-  return mockOrganization({
-    alm: {
-      key: 'github',
-      membersSync: false,
-      personal: false,
-      url: 'https://github.com/foo',
-      ...almOverrides
-    },
-    ...overrides
-  });
 }
 
 export function mockPeriod(overrides: Partial<T.Period> = {}): T.Period {
@@ -549,7 +499,6 @@ export function mockQualityProfile(overrides: Partial<Profile> = {}): Profile {
     languageName: 'JavaScript',
     name: 'name',
     projectCount: 3,
-    organization: 'foo',
     ...overrides
   };
 }
@@ -730,6 +679,9 @@ export function mockStandaloneSysInfo(overrides: Partial<any> = {}): T.SysInfoSt
       'file.encoding': 'UTF-8',
       'file.separator': '/'
     },
+    ALMs: {},
+    Bundled: {},
+    Plugins: {},
     ...overrides
   };
 }

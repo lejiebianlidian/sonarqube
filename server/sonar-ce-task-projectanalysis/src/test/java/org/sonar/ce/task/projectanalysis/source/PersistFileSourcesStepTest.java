@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -220,7 +220,7 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
     assertThat(data.getLines(1).getScmRevision()).isEmpty();
 
     assertThat(data.getLines(2).getScmAuthor()).isEmpty();
-    assertThat(data.getLines(2).getScmDate()).isEqualTo(0);
+    assertThat(data.getLines(2).getScmDate()).isZero();
     assertThat(data.getLines(2).getScmRevision()).isEmpty();
     verify(fileSourceDataWarnings).commitWarnings();
   }

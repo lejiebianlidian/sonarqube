@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -61,6 +61,7 @@ public class AlmSettingsService extends BaseService {
       new PostRequest(path("create_azure"))
         .setParam("key", request.getKey())
         .setParam("personalAccessToken", request.getPersonalAccessToken())
+        .setParam("url", request.getUrl())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -91,6 +92,22 @@ public class AlmSettingsService extends BaseService {
         .setParam("key", request.getKey())
         .setParam("url", request.getUrl())
         .setParam("personalAccessToken", request.getPersonalAccessToken())
+        .setMediaType(MediaTypes.JSON)).content();
+  }
+
+  /**
+   *
+   * This is a POST request.
+   * @see <a href="https://next.sonarqube.com/sonarqube/web_api/api/alm_settings/create_bitbucket_cloud">Further information about this action online (including a response example)</a>
+   * @since 8.7
+   */
+  public void createBitbucketCloud(CreateBitbucketCloudRequest request) {
+    call(
+      new PostRequest(path("create_bitbucketcloud"))
+        .setParam("key", request.getKey())
+        .setParam("clientId", request.getClientId())
+        .setParam("clientSecret", request.getClientSecret())
+        .setParam("workspace", request.getWorkspace())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -163,6 +180,17 @@ public class AlmSettingsService extends BaseService {
   }
 
   /**
+   * This is a GET request.
+   * @see <a href="https://next.sonarqube.com/sonarqube/web_api/api/alm_settings/validate">Further information about this action online (including a response example)</a>
+   * @since 8.6
+   */
+  public void validate(ValidateRequest request) {
+    call(
+      new GetRequest(path("validate"))
+        .setParam("key", request.getKey()));
+  }
+
+  /**
    *
    * This is a GET request.
    * @see <a href="https://next.sonarqube.com/sonarqube/web_api/api/alm_settings/list_definitions">Further information about this action online (including a response example)</a>
@@ -184,6 +212,9 @@ public class AlmSettingsService extends BaseService {
       new PostRequest(path("set_azure_binding"))
         .setParam("almSetting", request.getAlmSetting())
         .setParam("project", request.getProject())
+        .setParam("projectName", request.getProjectName())
+        .setParam("repositoryName", request.getRepositoryName())
+        .setParam("monorepo", request.getMonorepo())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -198,6 +229,7 @@ public class AlmSettingsService extends BaseService {
         .setParam("almSetting", request.getAlmSetting())
         .setParam("project", request.getProject())
         .setParam("repository", request.getRepository())
+        .setParam("monorepo", request.getMonorepo())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -213,6 +245,7 @@ public class AlmSettingsService extends BaseService {
         .setParam("project", request.getProject())
         .setParam("repository", request.getRepositoryKey())
         .setParam("slug", request.getRepositorySlug())
+        .setParam("monorepo", request.getMonorepo())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -228,6 +261,7 @@ public class AlmSettingsService extends BaseService {
         .setParam("project", request.getProject())
         .setParam("repository", request.getRepository())
         .setParam("summaryCommentEnabled", request.getSummaryCommentEnabled())
+        .setParam("monorepo", request.getMonorepo())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -243,6 +277,7 @@ public class AlmSettingsService extends BaseService {
         .setParam("key", request.getKey())
         .setParam("newKey", request.getNewKey())
         .setParam("personalAccessToken", request.getPersonalAccessToken())
+        .setParam("url", request.getUrl())
         .setMediaType(MediaTypes.JSON)).content();
   }
 
@@ -258,6 +293,7 @@ public class AlmSettingsService extends BaseService {
         .setParam("key", request.getKey())
         .setParam("newKey", request.getNewKey())
         .setParam("personalAccessToken", request.getPersonalAccessToken())
+        .setParam("url", request.getUrl())
         .setMediaType(MediaTypes.JSON)).content();
   }
 

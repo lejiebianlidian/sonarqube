@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,14 +25,13 @@ import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualitygate.QualityGateDto;
 import org.sonar.server.qualitygate.QualityGateUpdater;
 import org.sonar.server.user.UserSession;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonar.core.util.Uuids.UUID_EXAMPLE_01;
-import static org.sonar.db.permission.OrganizationPermission.ADMINISTER_QUALITY_GATES;
+import static org.sonar.db.permission.GlobalPermission.ADMINISTER_QUALITY_GATES;
 import static org.sonar.server.qualitygate.ws.CreateAction.NAME_MAXIMUM_LENGTH;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_ID;
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_NAME;
@@ -84,8 +83,6 @@ public class CopyAction implements QualityGatesWsAction {
       .setDescription("The name of the quality gate to create")
       .setRequired(true)
       .setExampleValue("My New Quality Gate");
-
-    wsSupport.createOrganizationParam(action);
   }
 
   @Override
@@ -98,15 +95,14 @@ public class CopyAction implements QualityGatesWsAction {
 
     try (DbSession dbSession = dbClient.openSession(false)) {
 
-      OrganizationDto organization = wsSupport.getOrganization(dbSession, request);
-      userSession.checkPermission(ADMINISTER_QUALITY_GATES, organization);
+      userSession.checkPermission(ADMINISTER_QUALITY_GATES);
       QualityGateDto qualityGate;
       if (uuid != null) {
-        qualityGate = wsSupport.getByOrganizationAndUuid(dbSession, organization, uuid);
+        qualityGate = wsSupport.getByUuid(dbSession, uuid);
       } else {
-        qualityGate = wsSupport.getByOrganizationAndName(dbSession, organization, sourceName);
+        qualityGate = wsSupport.getByName(dbSession, sourceName);
       }
-      QualityGateDto copy = qualityGateUpdater.copy(dbSession, organization, qualityGate, destinationName);
+      QualityGateDto copy = qualityGateUpdater.copy(dbSession, qualityGate, destinationName);
       dbSession.commit();
 
       writeProtobuf(newBuilder()

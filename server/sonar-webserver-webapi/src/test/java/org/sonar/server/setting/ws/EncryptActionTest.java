@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,9 @@
 package org.sonar.server.setting.ws;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -39,7 +41,6 @@ import org.sonarqube.ws.Settings.EncryptWsResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.server.setting.ws.SettingsWsParameters.PARAM_VALUE;
-import static org.sonar.test.JsonAssert.assertJson;
 
 public class EncryptActionTest {
   @Rule
@@ -59,18 +60,9 @@ public class EncryptActionTest {
     logInAsSystemAdministrator();
 
     File secretKeyFile = folder.newFile();
-    FileUtils.writeStringToFile(secretKeyFile, "fCVFf/JHRi8Qwu5KLNva7g==");
+    FileUtils.writeStringToFile(secretKeyFile, "fCVFf/JHRi8Qwu5KLNva7g==", StandardCharsets.UTF_8);
 
     encryption.setPathToSecretKey(secretKeyFile.getAbsolutePath());
-  }
-
-  @Test
-  public void json_example() {
-    logInAsSystemAdministrator();
-
-    String result = ws.newRequest().setParam("value", "my value").execute().getInput();
-
-    assertJson(result).isSimilarTo(ws.getDef().responseExampleAsString());
   }
 
   @Test
@@ -79,7 +71,7 @@ public class EncryptActionTest {
 
     EncryptWsResponse result = call("my value!");
 
-    assertThat(result.getEncryptedValue()).isEqualTo("{aes}NoofntibpMBdhkMfXQxYcA==");
+    assertThat(result.getEncryptedValue()).matches("^\\{aes-gcm\\}.+");
   }
 
   @Test

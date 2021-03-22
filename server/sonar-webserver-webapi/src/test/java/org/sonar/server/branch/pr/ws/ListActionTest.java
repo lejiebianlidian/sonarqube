@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,8 +35,7 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.component.ResourceTypesRule;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.protobuf.DbProjectBranches;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.component.ComponentFinder;
@@ -55,7 +54,6 @@ import org.sonarqube.ws.ProjectPullRequests.ListWsResponse;
 import org.sonarqube.ws.ProjectPullRequests.PullRequest;
 
 import static java.lang.String.format;
-import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.api.issue.Issue.RESOLUTION_FALSE_POSITIVE;
@@ -386,10 +384,9 @@ public class ListActionTest {
   }
 
   @Test
-  public void does_not_fail_when_only_scan_permission_on_organization() {
-    OrganizationDto organization = db.organizations().insert();
-    userSession.logIn().addPermission(OrganizationPermission.SCAN, organization);
-    ComponentDto project = db.components().insertPublicProject(organization);
+  public void does_not_fail_when_only_scan_permission() {
+    userSession.logIn().addPermission(GlobalPermission.SCAN);
+    ComponentDto project = db.components().insertPublicProject();
     db.components().insertProjectBranch(project,
       b -> b.setKey("123")
         .setBranchType(PULL_REQUEST)
@@ -407,8 +404,7 @@ public class ListActionTest {
 
   @Test
   public void fail_when_using_branch_db_key() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+    ComponentDto project = db.components().insertPrivateProject();
     userSession.logIn().addProjectPermission(UserRole.USER, project);
     ComponentDto branch = db.components().insertProjectBranch(project);
 

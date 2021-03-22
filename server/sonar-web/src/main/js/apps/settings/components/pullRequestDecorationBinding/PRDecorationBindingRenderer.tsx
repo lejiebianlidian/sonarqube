@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,18 +21,15 @@ import * as React from 'react';
 import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router';
 import { Button, SubmitButton } from 'sonar-ui-common/components/controls/buttons';
-import HelpTooltip from 'sonar-ui-common/components/controls/HelpTooltip';
 import Select from 'sonar-ui-common/components/controls/Select';
 import AlertSuccessIcon from 'sonar-ui-common/components/icons/AlertSuccessIcon';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import {
-  AlmKeys,
-  AlmSettingsInstance,
-  ProjectAlmBindingResponse
-} from '../../../../types/alm-settings';
-import InputForBoolean from '../inputs/InputForBoolean';
+import { AlmSettingsInstance, ProjectAlmBindingResponse } from '../../../../types/alm-settings';
+import AlmSpecificForm from './AlmSpecificForm';
 
 export interface PRDecorationBindingRendererProps {
   formData: T.Omit<ProjectAlmBindingResponse, 'alm'>;
@@ -46,18 +43,7 @@ export interface PRDecorationBindingRendererProps {
   onSubmit: () => void;
   saving: boolean;
   success: boolean;
-}
-
-interface LabelProps {
-  help?: boolean;
-  helpParams?: T.Dict<string | JSX.Element>;
-  id: string;
-  optional?: boolean;
-}
-
-interface CommonFieldProps extends LabelProps {
-  onFieldChange: (id: keyof ProjectAlmBindingResponse, value: string | boolean) => void;
-  propKey: keyof ProjectAlmBindingResponse;
+  monorepoEnabled: boolean;
 }
 
 function optionRenderer(instance: AlmSettingsInstance) {
@@ -71,80 +57,17 @@ function optionRenderer(instance: AlmSettingsInstance) {
   );
 }
 
-function renderLabel(props: LabelProps) {
-  const { help, helpParams, optional, id } = props;
-  return (
-    <label className="display-flex-center" htmlFor={id}>
-      {translate('settings.pr_decoration.binding.form', id)}
-      {!optional && <em className="mandatory">*</em>}
-      {help && (
-        <HelpTooltip
-          className="spacer-left"
-          overlay={
-            <FormattedMessage
-              defaultMessage={translate('settings.pr_decoration.binding.form', id, 'help')}
-              id={`settings.pr_decoration.binding.form.${id}.help`}
-              values={helpParams}
-            />
-          }
-          placement="right"
-        />
-      )}
-    </label>
-  );
-}
-
-function renderBooleanField(
-  props: Omit<CommonFieldProps, 'optional'> & {
-    value: boolean;
-  }
-) {
-  const { id, value, onFieldChange, propKey } = props;
-  return (
-    <div className="form-field">
-      {renderLabel({ ...props, optional: true })}
-      <InputForBoolean
-        isDefault={true}
-        name={id}
-        onChange={v => onFieldChange(propKey, v)}
-        value={value}
-      />
-    </div>
-  );
-}
-
-function renderField(
-  props: CommonFieldProps & {
-    value: string;
-  }
-) {
-  const { id, propKey, value, onFieldChange } = props;
-  return (
-    <div className="form-field">
-      {renderLabel(props)}
-      <input
-        className="input-super-large"
-        id={id}
-        maxLength={256}
-        name={id}
-        onChange={e => onFieldChange(propKey, e.currentTarget.value)}
-        type="text"
-        value={value}
-      />
-    </div>
-  );
-}
-
 export default function PRDecorationBindingRenderer(props: PRDecorationBindingRendererProps) {
   const {
-    formData: { key, repository, slug, summaryCommentEnabled },
+    formData,
     instances,
     isChanged,
     isConfigured,
     isValid,
     loading,
     saving,
-    success
+    success,
+    monorepoEnabled
   } = props;
 
   if (loading) {
@@ -171,7 +94,7 @@ export default function PRDecorationBindingRenderer(props: PRDecorationBindingRe
     );
   }
 
-  const selected = key && instances.find(i => i.key === key);
+  const selected = formData.key && instances.find(i => i.key === formData.key);
   const alm = selected && selected.alm;
 
   return (
@@ -189,10 +112,12 @@ export default function PRDecorationBindingRenderer(props: PRDecorationBindingRe
           event.preventDefault();
           props.onSubmit();
         }}>
+        <MandatoryFieldsExplanation className="form-field" />
+
         <div className="form-field">
           <label htmlFor="name">
             {translate('settings.pr_decoration.binding.form.name')}
-            <em className="mandatory spacer-right">*</em>
+            <MandatoryFieldMarker className="spacer-right" />
           </label>
           <Select
             autosize={true}
@@ -207,78 +132,20 @@ export default function PRDecorationBindingRenderer(props: PRDecorationBindingRe
             optionRenderer={optionRenderer}
             options={instances}
             searchable={false}
-            value={key}
+            value={formData.key}
             valueKey="key"
             valueRenderer={optionRenderer}
           />
         </div>
 
-        {alm === AlmKeys.Bitbucket && (
-          <>
-            {renderField({
-              help: true,
-              helpParams: {
-                example: (
-                  <>
-                    {'.../projects/'}
-                    <strong>{'{KEY}'}</strong>
-                    {'/repos/{SLUG}/browse'}
-                  </>
-                )
-              },
-              id: 'bitbucket.repository',
-              onFieldChange: props.onFieldChange,
-              propKey: 'repository',
-              value: repository || ''
-            })}
-            {renderField({
-              help: true,
-              helpParams: {
-                example: (
-                  <>
-                    {'.../projects/{KEY}/repos/'}
-                    <strong>{'{SLUG}'}</strong>
-                    {'/browse'}
-                  </>
-                )
-              },
-              id: 'bitbucket.slug',
-              onFieldChange: props.onFieldChange,
-              propKey: 'slug',
-              value: slug || ''
-            })}
-          </>
+        {alm && (
+          <AlmSpecificForm
+            alm={alm}
+            formData={formData}
+            onFieldChange={props.onFieldChange}
+            monorepoEnabled={monorepoEnabled}
+          />
         )}
-
-        {alm === AlmKeys.GitHub && (
-          <>
-            {renderField({
-              help: true,
-              helpParams: { example: 'SonarSource/sonarqube' },
-              id: 'github.repository',
-              onFieldChange: props.onFieldChange,
-              propKey: 'repository',
-              value: repository || ''
-            })}
-            {renderBooleanField({
-              help: true,
-              id: 'github.summary_comment_setting',
-              onFieldChange: props.onFieldChange,
-              propKey: 'summaryCommentEnabled',
-              value: summaryCommentEnabled === undefined ? true : summaryCommentEnabled
-            })}
-          </>
-        )}
-
-        {alm === AlmKeys.GitLab &&
-          renderField({
-            help: true,
-            id: 'gitlab.repository',
-            onFieldChange: props.onFieldChange,
-            optional: true,
-            propKey: 'repository',
-            value: repository || ''
-          })}
 
         <div className="display-flex-center">
           <DeferredSpinner className="spacer-right" loading={saving} />

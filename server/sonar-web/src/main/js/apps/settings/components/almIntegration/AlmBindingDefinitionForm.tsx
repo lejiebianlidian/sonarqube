@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,29 +21,22 @@ import { isEqual, omit } from 'lodash';
 import * as React from 'react';
 import { AlmBindingDefinition } from '../../../../types/alm-settings';
 import AlmBindingDefinitionFormModalRenderer from './AlmBindingDefinitionFormModalRenderer';
-import AlmBindingDefinitionFormRenderer from './AlmBindingDefinitionFormRenderer';
 
 export interface AlmBindingDefinitionFormChildrenProps<B> {
   formData: B;
-  hideKeyField?: boolean;
   onFieldChange: (fieldId: keyof B, value: string) => void;
-  readOnly?: boolean;
 }
 
 interface Props<B> {
   bindingDefinition: B;
   children: (props: AlmBindingDefinitionFormChildrenProps<B>) => React.ReactNode;
   help?: React.ReactNode;
-  hideKeyField?: boolean;
-  loading?: boolean;
+  isSecondInstance?: boolean;
   onCancel?: () => void;
   onDelete?: (definitionKey: string) => void;
   onEdit?: (definitionKey: string) => void;
   onSubmit: (data: B, originalKey: string) => void;
   optionalFields?: Array<keyof B>;
-  readOnly?: boolean;
-  showInModal?: boolean;
-  success?: boolean;
 }
 
 interface State<B> {
@@ -99,45 +92,30 @@ export default class AlmBindingDefinitionForm<
   };
 
   canSubmit = () => {
-    const { hideKeyField, optionalFields } = this.props;
+    const { optionalFields } = this.props;
     const { formData, touched } = this.state;
 
-    let values;
-    if (hideKeyField) {
-      values = omit(formData, 'key');
-    } else {
-      values = { ...formData };
-    }
+    let values = { ...formData };
 
     if (optionalFields && optionalFields.length > 0) {
-      values = omit(values, optionalFields);
+      values = omit(values, optionalFields) as B;
     }
 
     return touched && !Object.values(values).some(v => !v);
   };
 
   render() {
-    const {
-      bindingDefinition,
-      children,
-      help,
-      hideKeyField,
-      showInModal,
-      loading = false,
-      readOnly = false,
-      success = false
-    } = this.props;
-    const { formData, touched } = this.state;
+    const { bindingDefinition, children, help, isSecondInstance } = this.props;
+    const { formData } = this.state;
 
-    const showEdit = this.props.onEdit !== undefined;
-    const showCancel = touched || !showEdit;
-    const showDelete = showEdit && this.props.onDelete !== undefined;
+    const action = bindingDefinition.key ? 'edit' : 'create';
 
-    return showInModal ? (
+    return (
       <AlmBindingDefinitionFormModalRenderer
-        action={bindingDefinition.key ? 'edit' : 'create'}
+        action={action}
         canSubmit={this.canSubmit}
         help={help}
+        isSecondInstance={Boolean(isSecondInstance)}
         onCancel={this.handleCancel}
         onSubmit={this.handleFormSubmit}>
         {children({
@@ -145,23 +123,6 @@ export default class AlmBindingDefinitionForm<
           onFieldChange: this.handleFieldChange
         })}
       </AlmBindingDefinitionFormModalRenderer>
-    ) : (
-      <AlmBindingDefinitionFormRenderer
-        canSubmit={this.canSubmit}
-        help={help}
-        loading={loading}
-        onCancel={showCancel ? this.handleCancel : undefined}
-        onDelete={showDelete ? this.handleDelete : undefined}
-        onEdit={showEdit ? this.handleEdit : undefined}
-        onSubmit={this.handleFormSubmit}
-        success={success}>
-        {children({
-          formData,
-          hideKeyField,
-          onFieldChange: this.handleFieldChange,
-          readOnly
-        })}
-      </AlmBindingDefinitionFormRenderer>
     );
   }
 }

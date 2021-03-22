@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -96,11 +96,13 @@ public class ComponentAction implements MeasuresWsAction {
       .setResponseExample(getClass().getResource("component-example.json"))
       .setSince("5.4")
       .setChangelog(
+        new Change("8.8", "deprecated response field 'id' has been removed"),
+        new Change("8.8", "deprecated response field 'refId' has been removed."),
         new Change("8.1", "the response field periods under measures field is deprecated. Use period instead."),
         new Change("8.1", "the response field periods is deprecated. Use period instead."),
         new Change("7.6", format("The use of module keys in parameter '%s' is deprecated", PARAM_COMPONENT)),
-        new Change("6.6", "the response field id is deprecated. Use key instead."),
-        new Change("6.6", "the response field refId is deprecated. Use refKey instead."))
+        new Change("6.6", "the response field 'id' is deprecated. Use 'key' instead."),
+        new Change("6.6", "the response field 'refId' is deprecated. Use 'refKey' instead."))
       .setHandler(this);
 
     action.createParam(PARAM_COMPONENT)
@@ -109,15 +111,13 @@ public class ComponentAction implements MeasuresWsAction {
       .setExampleValue(KEY_PROJECT_EXAMPLE_001);
 
     action.createParam(PARAM_BRANCH)
-      .setDescription("Branch key")
+      .setDescription("Branch key. Not available in the community edition.")
       .setExampleValue(KEY_BRANCH_EXAMPLE_001)
-      .setInternal(true)
       .setSince("6.6");
 
     action.createParam(PARAM_PULL_REQUEST)
-      .setDescription("Pull request id")
+      .setDescription("Pull request id. Not available in the community edition.")
       .setExampleValue(KEY_PULL_REQUEST_EXAMPLE_001)
-      .setInternal(true)
       .setSince("7.1");
 
     createMetricKeysParameter(action);
@@ -239,7 +239,7 @@ public class ComponentAction implements MeasuresWsAction {
   }
 
   private static ComponentWsResponse buildResponse(ComponentRequest request, ComponentDto component, Optional<ComponentDto> refComponent,
-    Map<MetricDto, LiveMeasureDto> measuresByMetric, Collection<MetricDto> metrics, Optional<Measures.Period> period) {
+                                                   Map<MetricDto, LiveMeasureDto> measuresByMetric, Collection<MetricDto> metrics, Optional<Measures.Period> period) {
     ComponentWsResponse.Builder response = ComponentWsResponse.newBuilder();
 
     if (refComponent.isPresent()) {

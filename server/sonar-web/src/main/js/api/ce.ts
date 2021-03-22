@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 import { getJSON, post, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
 import { IndexationStatus } from '../types/indexation';
+import { Task, TaskWarning } from '../types/tasks';
 
 export function getAnalysisStatus(data: {
   component: string;
@@ -30,29 +31,24 @@ export function getAnalysisStatus(data: {
     branch?: string;
     key: string;
     name: string;
-    organization?: string;
     pullRequest?: string;
-    warnings: string[];
+    warnings: TaskWarning[];
   };
 }> {
   return getJSON('/api/ce/analysis_status', data).catch(throwGlobalError);
 }
 
-export function getActivity(data: RequestData): Promise<{ tasks: T.Task[] }> {
+export function getActivity(data: RequestData): Promise<{ tasks: Task[] }> {
   return getJSON('/api/ce/activity', data);
 }
 
 export function getStatus(
-  componentId?: string
+  component?: string
 ): Promise<{ failing: number; inProgress: number; pending: number; pendingTime?: number }> {
-  const data = {};
-  if (componentId) {
-    Object.assign(data, { componentId });
-  }
-  return getJSON('/api/ce/activity_status', data);
+  return getJSON('/api/ce/activity_status', { component });
 }
 
-export function getTask(id: string, additionalFields?: string[]): Promise<T.Task> {
+export function getTask(id: string, additionalFields?: string[]): Promise<Task> {
   return getJSON('/api/ce/task', { id, additionalFields }).then(r => r.task);
 }
 
@@ -67,9 +63,7 @@ export function cancelAllTasks(): Promise<any> {
   return post('/api/ce/cancel_all');
 }
 
-export function getTasksForComponent(
-  component: string
-): Promise<{ queue: T.Task[]; current: T.Task }> {
+export function getTasksForComponent(component: string): Promise<{ queue: Task[]; current: Task }> {
   return getJSON('/api/ce/component', { component }).catch(throwGlobalError);
 }
 
@@ -87,4 +81,8 @@ export function setWorkerCount(count: number): Promise<void | Response> {
 
 export function getIndexationStatus(): Promise<IndexationStatus> {
   return getJSON('/api/ce/indexation_status').catch(throwGlobalError);
+}
+
+export function dismissAnalysisWarning(component: string, warning: string) {
+  return post('/api/ce/dismiss_analysis_warning', { component, warning }).catch(throwGlobalError);
 }

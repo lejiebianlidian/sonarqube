@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
-import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.ws.Request;
 import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
@@ -78,20 +77,6 @@ public class DeleteCommentActionTest {
     loginAndAddProjectPermission(user, issueDto, USER);
 
     call(commentDto.getKey());
-
-    verify(responseWriter).write(eq(issueDto.getKey()), preloadedSearchResponseDataCaptor.capture(), any(Request.class), any(Response.class));
-    assertThat(dbClient.issueChangeDao().selectCommentByKey(dbTester.getSession(), commentDto.getKey())).isNotPresent();
-    verifyContentOfPreloadedSearchResponseData(issueDto);
-  }
-
-  @Test
-  public void delete_comment_using_deprecated_key_parameter() {
-    IssueDto issueDto = issueDbTester.insertIssue();
-    UserDto user = dbTester.users().insertUser();
-    IssueChangeDto commentDto = issueDbTester.insertComment(issueDto, user, "please fix it");
-    loginAndAddProjectPermission(user, issueDto, USER);
-
-    tester.newRequest().setParam("key", commentDto.getKey()).setParam("text", "please have a look").execute();
 
     verify(responseWriter).write(eq(issueDto.getKey()), preloadedSearchResponseDataCaptor.capture(), any(Request.class), any(Response.class));
     assertThat(dbClient.issueChangeDao().selectCommentByKey(dbTester.getSession(), commentDto.getKey())).isNotPresent();
@@ -163,9 +148,10 @@ public class DeleteCommentActionTest {
     IssueChangeDto commentDto = issueDbTester.insertComment(hotspot, user, "please fix it");
     loginAndAddProjectPermission(user, hotspot, USER);
 
-    assertThatThrownBy(() -> call(commentDto.getKey()))
-    .isInstanceOf(NotFoundException.class)
-    .hasMessage("Issue with key '%s' does not exist", hotspot.getKey());
+    String commentDtoKey = commentDto.getKey();
+    assertThatThrownBy(() -> call(commentDtoKey))
+      .isInstanceOf(NotFoundException.class)
+      .hasMessage("Issue with key '%s' does not exist", hotspot.getKey());
   }
 
   @Test

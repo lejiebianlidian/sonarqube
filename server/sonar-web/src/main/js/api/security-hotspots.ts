@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@ import {
   HotspotSetStatusRequest,
   HotspotStatus
 } from '../types/security-hotspots';
+
+const HOTSPOTS_SEARCH_URL = '/api/hotspots/search';
 
 export function assignSecurityHotspot(
   hotspotKey: string,
@@ -76,7 +78,7 @@ export function getSecurityHotspots(
     sinceLeakPeriod?: boolean;
   } & BranchParameters
 ): Promise<HotspotSearchResponse> {
-  return getJSON('/api/hotspots/search', data).catch(throwGlobalError);
+  return getJSON(HOTSPOTS_SEARCH_URL, data).catch(throwGlobalError);
 }
 
 export function getSecurityHotspotList(
@@ -85,7 +87,7 @@ export function getSecurityHotspotList(
     projectKey: string;
   } & BranchParameters
 ): Promise<HotspotSearchResponse> {
-  return getJSON('/api/hotspots/search', { ...data, hotspots: hotspotKeys.join() }).catch(
+  return getJSON(HOTSPOTS_SEARCH_URL, { ...data, hotspots: hotspotKeys.join() }).catch(
     throwGlobalError
   );
 }

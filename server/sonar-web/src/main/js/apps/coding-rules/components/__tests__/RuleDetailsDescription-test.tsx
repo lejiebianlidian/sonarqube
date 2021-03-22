@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -82,12 +82,6 @@ it('should add extra description', async () => {
 
 function getWrapper(props = {}) {
   return shallow(
-    <RuleDetailsDescription
-      canWrite={false}
-      onChange={jest.fn()}
-      organization={undefined}
-      ruleDetails={RULE}
-      {...props}
-    />
+    <RuleDetailsDescription canWrite={false} onChange={jest.fn()} ruleDetails={RULE} {...props} />
   );
 }

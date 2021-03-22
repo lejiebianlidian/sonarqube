@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,17 +26,6 @@ import org.sonar.server.project.Project;
 import org.sonar.server.qualityprofile.QualityProfile;
 
 public interface AnalysisMetadataHolder {
-
-  /**
-   * @throws IllegalStateException if organizations enabled flag has not been set
-   */
-  boolean isOrganizationsEnabled();
-
-  /**
-   * Returns the organization the analysis belongs to.
-   * @throws IllegalStateException if organization has not been set
-   */
-  Organization getOrganization();
 
   /**
    * Returns the UUID generated for this analysis.

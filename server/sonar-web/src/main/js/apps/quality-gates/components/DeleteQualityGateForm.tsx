@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,18 +27,17 @@ import { getQualityGatesUrl } from '../../../helpers/urls';
 
 interface Props {
   onDelete: () => Promise<void>;
-  organization?: string;
   qualityGate: T.QualityGate;
   router: Pick<Router, 'push'>;
 }
 
-class DeleteQualityGateForm extends React.PureComponent<Props> {
+export class DeleteQualityGateForm extends React.PureComponent<Props> {
   onDelete = () => {
-    const { organization, qualityGate } = this.props;
-    return deleteQualityGate({ id: qualityGate.id, organization })
+    const { qualityGate } = this.props;
+    return deleteQualityGate({ id: qualityGate.id })
       .then(this.props.onDelete)
       .then(() => {
-        this.props.router.push(getQualityGatesUrl(organization));
+        this.props.router.push(getQualityGatesUrl());
       });
   };
 

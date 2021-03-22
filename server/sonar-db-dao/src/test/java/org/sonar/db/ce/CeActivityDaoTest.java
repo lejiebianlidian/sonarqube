@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -72,13 +72,13 @@ public class CeActivityDaoTest {
 
   private static final long INITIAL_TIME = 1_450_000_000_000L;
 
-  private TestSystem2 system2 = new TestSystem2().setNow(INITIAL_TIME);
+  private final TestSystem2 system2 = new TestSystem2().setNow(INITIAL_TIME);
 
   @Rule
   public DbTester db = DbTester.create(system2);
 
-  private DbSession dbSession = db.getSession();
-  private CeActivityDao underTest = new CeActivityDao(system2);
+  private final DbSession dbSession = db.getSession();
+  private final CeActivityDao underTest = new CeActivityDao(system2);
 
   @Before
   public void setup() {
@@ -129,7 +129,7 @@ public class CeActivityDaoTest {
     insertWarnings(tasks[2], 1);
 
     assertThat(underTest.selectByUuid(dbSession, tasks[0].getUuid()).get().getWarningCount()).isEqualTo(moreThan1);
-    assertThat(underTest.selectByUuid(dbSession, tasks[1].getUuid()).get().getWarningCount()).isEqualTo(0);
+    assertThat(underTest.selectByUuid(dbSession, tasks[1].getUuid()).get().getWarningCount()).isZero();
     assertThat(underTest.selectByUuid(dbSession, tasks[2].getUuid()).get().getWarningCount()).isEqualTo(1);
   }
 
@@ -139,6 +139,7 @@ public class CeActivityDaoTest {
         .setUuid(UuidFactoryFast.getInstance().create())
         .setTaskUuid(task.getUuid())
         .setMessage("message_" + task.getUuid() + "_" + i)
+        .setType(CeTaskMessageType.GENERIC)
         .setCreatedAt(task.getUuid().hashCode() + i)));
     db.commit();
   }
@@ -767,36 +768,41 @@ public class CeActivityDaoTest {
     insert("TASK_1", REPORT, MAINCOMPONENT_1, SUCCESS);
     insert("TASK_2", REPORT, MAINCOMPONENT_1, FAILED);
 
-    ProjectDto projectDto1 = db.components()
-        .insertPrivateProjectDto(db.getDefaultOrganization(), branchDto -> branchDto.setNeedIssueSync(false));
+    ProjectDto projectDto1 = db.components().insertPrivateProjectDto(
+      branchDto -> branchDto.setNeedIssueSync(false), c -> {
+      }, p -> {
+      });
     insert("TASK_3", CeTaskTypes.BRANCH_ISSUE_SYNC, projectDto1.getUuid(), projectDto1.getUuid(), SUCCESS);
 
-    ProjectDto projectDto2 = db.components()
-        .insertPrivateProjectDto(db.getDefaultOrganization(), branchDto -> branchDto.setNeedIssueSync(false));
+    ProjectDto projectDto2 = db.components().insertPrivateProjectDto(branchDto -> branchDto.setNeedIssueSync(false), c -> {
+    }, p -> {
+    });
     insert("TASK_4", CeTaskTypes.BRANCH_ISSUE_SYNC, projectDto2.getUuid(), projectDto2.getUuid(), SUCCESS);
 
     assertThat(underTest.hasAnyFailedIssueSyncTask(db.getSession())).isFalse();
 
-    ProjectDto projectDto3 = db.components().insertPrivateProjectDto(db.getDefaultOrganization(), branchDto -> branchDto.setNeedIssueSync(false));
+    ProjectDto projectDto3 = db.components().insertPrivateProjectDto(branchDto -> branchDto.setNeedIssueSync(false), c -> {
+    }, p -> {
+    });
     insert("TASK_5", CeTaskTypes.BRANCH_ISSUE_SYNC, projectDto3.getUuid(), projectDto3.getUuid(), SUCCESS);
 
     BranchDto projectBranch = db.components()
-        .insertProjectBranch(projectDto3, branchDto -> branchDto.setNeedIssueSync(true));
+      .insertProjectBranch(projectDto3, branchDto -> branchDto.setNeedIssueSync(true));
 
     insert("TASK_6", CeTaskTypes.BRANCH_ISSUE_SYNC, projectBranch.getUuid(), projectDto3.getUuid(), FAILED);
 
-    //failed task and project branch still exists and need sync
+    // failed task and project branch still exists and need sync
     assertThat(underTest.hasAnyFailedIssueSyncTask(db.getSession())).isTrue();
 
-    //assume branch has been re-analysed
+    // assume branch has been re-analysed
     db.getDbClient().branchDao().updateNeedIssueSync(db.getSession(), projectBranch.getUuid(), false);
 
     assertThat(underTest.hasAnyFailedIssueSyncTask(db.getSession())).isFalse();
 
-    //assume branch has been deleted
+    // assume branch has been deleted
     db.getDbClient().purgeDao().deleteBranch(db.getSession(), projectBranch.getUuid());
 
-    //associated branch does not exist, so there is no failures - either it has been deleted or purged or reanalysed
+    // associated branch does not exist, so there is no failures - either it has been deleted or purged or reanalysed
     assertThat(underTest.hasAnyFailedIssueSyncTask(db.getSession())).isFalse();
   }
 

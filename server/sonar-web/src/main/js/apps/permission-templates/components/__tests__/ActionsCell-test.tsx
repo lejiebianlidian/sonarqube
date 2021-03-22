@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,19 +52,4 @@ it('should not set default', () => {
   const permissionTemplate = { ...SAMPLE, defaultFor: ['TRK', 'VW'] };
   const setDefault = renderActionsCell({ permissionTemplate }).find('.js-set-default');
   expect(setDefault.length).toBe(0);
-});
-
-it('should display all qualifiers for default organization', () => {
-  const organization = { isDefault: true, key: 'org' };
-  const setDefault = renderActionsCell({ organization }).find('.js-set-default');
-  expect(setDefault.length).toBe(2);
-  expect(setDefault.at(0).prop('data-qualifier')).toBe('TRK');
-  expect(setDefault.at(1).prop('data-qualifier')).toBe('VW');
-});
-
-it('should display only projects for custom organization', () => {
-  const organization = { isDefault: false, key: 'org' };
-  const setDefault = renderActionsCell({ organization }).find('.js-set-default');
-  expect(setDefault.length).toBe(1);
-  expect(setDefault.at(0).prop('data-qualifier')).toBe('TRK');
 });

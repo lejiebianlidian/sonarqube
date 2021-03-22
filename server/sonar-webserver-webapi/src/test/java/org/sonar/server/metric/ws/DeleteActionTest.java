@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,17 +54,17 @@ public class DeleteActionTest {
   @Rule
   public DbTester db = DbTester.create(System2.INSTANCE);
 
-  private DbClient dbClient = db.getDbClient();
-  private WsActionTester ws = new WsActionTester(new DeleteAction(dbClient, userSessionRule));
+  private final DbClient dbClient = db.getDbClient();
+  private final WsActionTester ws = new WsActionTester(new DeleteAction(dbClient, userSessionRule));
 
   @Test
   public void verify_definition() {
     Action wsDef = ws.getDef();
 
     assertThat(wsDef.deprecatedSince()).isEqualTo("7.7");
-    assertThat(wsDef.isInternal()).isEqualTo(false);
+    assertThat(wsDef.isInternal()).isFalse();
     assertThat(wsDef.since()).isEqualTo("5.2");
-    assertThat(wsDef.isPost()).isEqualTo(true);
+    assertThat(wsDef.isPost()).isTrue();
     assertThat(wsDef.changelog()).extracting(Change::getVersion, Change::getDescription)
       .containsExactly(
         tuple("8.4", "Parameter 'ids' format changes from integer to string."));
@@ -126,9 +126,9 @@ public class DeleteActionTest {
     loggedAsSystemAdministrator();
     MetricDto customMetric = insertCustomMetric("custom-key");
     MetricDto nonCustomMetric = insertMetric(newMetricDto().setEnabled(true).setUserManaged(false).setKey("non-custom"));
-    QualityGateDto qualityGate1 = db.qualityGates().insertQualityGate(db.getDefaultOrganization());
+    QualityGateDto qualityGate1 = db.qualityGates().insertQualityGate();
     db.qualityGates().addCondition(qualityGate1, customMetric);
-    QualityGateDto qualityGate2 = db.qualityGates().insertQualityGate(db.getDefaultOrganization());
+    QualityGateDto qualityGate2 = db.qualityGates().insertQualityGate();
     db.qualityGates().addCondition(qualityGate2, customMetric);
     db.qualityGates().addCondition(qualityGate2, nonCustomMetric);
 

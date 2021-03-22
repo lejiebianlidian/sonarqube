@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ public class HtmlHeadingChannel extends RegexChannel<MarkdownOutput> {
     CharSequence headingText = token.subSequence(index, token.length());
 
     output.append("<h" + headingLevel + ">");
-    output.append(headingText);
+    output.append(headingText.toString().trim());
     output.append("</h" + headingLevel + ">");
   }
 }

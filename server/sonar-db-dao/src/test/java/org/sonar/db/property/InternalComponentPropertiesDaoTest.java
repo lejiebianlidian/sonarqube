@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@ import org.sonar.core.util.UuidFactoryFast;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -165,17 +164,16 @@ public class InternalComponentPropertiesDaoTest {
   public void delete_by_component_uuid_and_key_does_nothing_if_property_doesnt_exist() {
     saveDto();
 
-    assertThat(underTest.deleteByComponentUuid(dbSession, "other_component")).isEqualTo(0);
+    assertThat(underTest.deleteByComponentUuid(dbSession, "other_component")).isZero();
     assertThat(underTest.selectByComponentUuidAndKey(dbSession, SOME_COMPONENT, SOME_KEY)).isNotEmpty();
   }
 
   @Test
   public void loadDbKey_loads_dbKeys_for_all_components_with_given_property_and_value() {
-    OrganizationDto organizationDto = dbTester.organizations().insert();
-    ComponentDto portfolio1 = dbTester.components().insertPublicPortfolio(organizationDto);
-    ComponentDto portfolio2 = dbTester.components().insertPublicPortfolio(organizationDto);
-    ComponentDto portfolio3 = dbTester.components().insertPublicPortfolio(organizationDto);
-    ComponentDto portfolio4 = dbTester.components().insertPublicPortfolio(organizationDto);
+    ComponentDto portfolio1 = dbTester.components().insertPublicPortfolio();
+    ComponentDto portfolio2 = dbTester.components().insertPublicPortfolio();
+    ComponentDto portfolio3 = dbTester.components().insertPublicPortfolio();
+    ComponentDto portfolio4 = dbTester.components().insertPublicPortfolio();
 
     underTest.insertOrUpdate(dbSession, portfolio1.uuid(), SOME_KEY, SOME_VALUE);
     underTest.insertOrUpdate(dbSession, portfolio2.uuid(), SOME_KEY, "bar");

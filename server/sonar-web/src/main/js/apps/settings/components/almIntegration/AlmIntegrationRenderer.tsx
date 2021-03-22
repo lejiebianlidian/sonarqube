@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,11 @@ import * as React from 'react';
 import BoxedTabs from 'sonar-ui-common/components/controls/BoxedTabs';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getBaseUrl } from 'sonar-ui-common/helpers/urls';
-import { AlmKeys, AlmSettingsBindingDefinitions } from '../../../../types/alm-settings';
+import {
+  AlmKeys,
+  AlmSettingsBindingDefinitions,
+  AlmSettingsBindingStatus
+} from '../../../../types/alm-settings';
 import AzureTab from './AzureTab';
 import BitbucketTab from './BitbucketTab';
 import DeleteModal from './DeleteModal';
@@ -34,10 +38,12 @@ export interface AlmIntegrationRendererProps {
   currentAlm: AlmKeys;
   definitionKeyForDeletion?: string;
   definitions: AlmSettingsBindingDefinitions;
+  definitionStatus: T.Dict<AlmSettingsBindingStatus>;
   loadingAlmDefinitions: boolean;
   loadingProjectCount: boolean;
   multipleAlmEnabled: boolean;
   onCancel: () => void;
+  onCheck: (definitionKey: string) => void;
   onConfirmDelete: (definitionKey: string) => void;
   onDelete: (definitionKey: string) => void;
   onSelectAlm: (alm: AlmKeys) => void;
@@ -58,10 +64,11 @@ const tabs = [
         />
         GitHub
       </>
-    )
+    ),
+    requiresBranchesEnabled: false
   },
   {
-    key: AlmKeys.Bitbucket,
+    key: AlmKeys.BitbucketServer,
     label: (
       <>
         <img
@@ -70,10 +77,10 @@ const tabs = [
           height={16}
           src={`${getBaseUrl()}/images/alm/bitbucket.svg`}
         />
-        Bitbucket Server
+        Bitbucket
       </>
     ),
-    requiresBranchesEnabled: true
+    requiresBranchesEnabled: false
   },
   {
     key: AlmKeys.Azure,
@@ -85,10 +92,10 @@ const tabs = [
           height={16}
           src={`${getBaseUrl()}/images/alm/azure.svg`}
         />
-        Azure DevOps Server
+        Azure DevOps
       </>
     ),
-    requiresBranchesEnabled: true
+    requiresBranchesEnabled: false
   },
   {
     key: AlmKeys.GitLab,
@@ -102,7 +109,8 @@ const tabs = [
         />
         GitLab
       </>
-    )
+    ),
+    requiresBranchesEnabled: false
   }
 ];
 
@@ -111,6 +119,7 @@ export default function AlmIntegrationRenderer(props: AlmIntegrationRendererProp
     component,
     definitionKeyForDeletion,
     definitions,
+    definitionStatus,
     currentAlm,
     loadingAlmDefinitions,
     loadingProjectCount,
@@ -136,20 +145,26 @@ export default function AlmIntegrationRenderer(props: AlmIntegrationRendererProp
 
       {currentAlm === AlmKeys.Azure && (
         <AzureTab
+          branchesEnabled={branchesEnabled}
           definitions={definitions.azure}
+          definitionStatus={definitionStatus}
           loadingAlmDefinitions={loadingAlmDefinitions}
           loadingProjectCount={loadingProjectCount}
           multipleAlmEnabled={multipleAlmEnabled}
+          onCheck={props.onCheck}
           onDelete={props.onDelete}
           onUpdateDefinitions={props.onUpdateDefinitions}
         />
       )}
-      {currentAlm === AlmKeys.Bitbucket && (
+      {currentAlm === AlmKeys.BitbucketServer && (
         <BitbucketTab
-          definitions={definitions.bitbucket}
+          branchesEnabled={branchesEnabled}
+          definitions={[...definitions.bitbucket, ...definitions.bitbucketcloud]}
+          definitionStatus={definitionStatus}
           loadingAlmDefinitions={loadingAlmDefinitions}
           loadingProjectCount={loadingProjectCount}
           multipleAlmEnabled={multipleAlmEnabled}
+          onCheck={props.onCheck}
           onDelete={props.onDelete}
           onUpdateDefinitions={props.onUpdateDefinitions}
         />
@@ -159,9 +174,11 @@ export default function AlmIntegrationRenderer(props: AlmIntegrationRendererProp
           branchesEnabled={branchesEnabled}
           component={component}
           definitions={definitions.github}
+          definitionStatus={definitionStatus}
           loadingAlmDefinitions={loadingAlmDefinitions}
           loadingProjectCount={loadingProjectCount}
           multipleAlmEnabled={multipleAlmEnabled}
+          onCheck={props.onCheck}
           onDelete={props.onDelete}
           onUpdateDefinitions={props.onUpdateDefinitions}
         />
@@ -170,9 +187,11 @@ export default function AlmIntegrationRenderer(props: AlmIntegrationRendererProp
         <GitlabTab
           branchesEnabled={branchesEnabled}
           definitions={definitions.gitlab}
+          definitionStatus={definitionStatus}
           loadingAlmDefinitions={loadingAlmDefinitions}
           loadingProjectCount={loadingProjectCount}
           multipleAlmEnabled={multipleAlmEnabled}
+          onCheck={props.onCheck}
           onDelete={props.onDelete}
           onUpdateDefinitions={props.onUpdateDefinitions}
         />

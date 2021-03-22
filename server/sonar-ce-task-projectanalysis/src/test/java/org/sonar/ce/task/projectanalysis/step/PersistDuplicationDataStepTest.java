@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -165,7 +165,7 @@ public class PersistDuplicationDataStepTest extends BaseStepTest {
   }
 
   private void assertThatNothingPersisted() {
-    assertThat(db.countRowsOfTable(db.getSession(), "live_measures")).isEqualTo(0);
+    assertThat(db.countRowsOfTable(db.getSession(), "live_measures")).isZero();
   }
 
   private Optional<String> selectMeasureData(String componentUuid) {
@@ -175,13 +175,12 @@ public class PersistDuplicationDataStepTest extends BaseStepTest {
 
   private ComponentDto insertComponent(String key, String uuid) {
     ComponentDto componentDto = new ComponentDto()
-      .setOrganizationUuid("org1")
       .setDbKey(key)
       .setUuid(uuid)
       .setUuidPath(uuid + ".")
       .setRootUuid(uuid)
       .setProjectUuid(uuid);
-    db.getDbClient().componentDao().insert(db.getSession(), componentDto);
+    db.components().insertComponent(componentDto);
     return componentDto;
   }
 

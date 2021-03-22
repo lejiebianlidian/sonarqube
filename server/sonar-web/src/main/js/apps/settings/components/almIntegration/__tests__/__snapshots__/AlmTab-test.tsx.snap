@@ -2,15 +2,9 @@
 
 exports[`should render correctly 1`] = `
 <AlmTabRenderer
-  additionalColumnsHeaders={Array []}
-  additionalColumnsKeys={Array []}
   alm="azure"
-  defaultBinding={
-    Object {
-      "key": "",
-      "personalAccessToken": "",
-    }
-  }
+  branchesEnabled={true}
+  definitionStatus={Object {}}
   definitions={
     Array [
       Object {
@@ -20,10 +14,12 @@ exports[`should render correctly 1`] = `
     ]
   }
   form={[MockFunction]}
+  help={<div />}
   loadingAlmDefinitions={false}
   loadingProjectCount={false}
   multipleAlmEnabled={true}
   onCancel={[Function]}
+  onCheck={[MockFunction]}
   onCreate={[Function]}
   onDelete={[MockFunction]}
   onEdit={[Function]}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,10 +19,12 @@
  */
 import * as React from 'react';
 import { WithRouterProps } from 'react-router';
+import { getHostUrl } from 'sonar-ui-common/helpers/urls';
 import { getAlmDefinitionsNoCatch, getProjectAlmBinding } from '../../api/alm-settings';
-import { AlmBindingDefinition, AlmKeys, ProjectAlmBindingResponse } from '../../types/alm-settings';
+import { getValues } from '../../api/settings';
+import { AlmBindingDefinition, ProjectAlmBindingResponse } from '../../types/alm-settings';
+import { SettingsKey } from '../../types/settings';
 import { withRouter } from '../hoc/withRouter';
-import './styles.css';
 import TutorialSelectionRenderer from './TutorialSelectionRenderer';
 import { TutorialModes } from './types';
 
@@ -33,6 +35,7 @@ interface Props extends Pick<WithRouterProps, 'router' | 'location'> {
 
 interface State {
   almBinding?: AlmBindingDefinition;
+  baseUrl: string;
   forceManual: boolean;
   loading: boolean;
   projectBinding?: ProjectAlmBindingResponse;
@@ -41,13 +44,23 @@ interface State {
 export class TutorialSelection extends React.PureComponent<Props, State> {
   mounted = false;
   state: State = {
+    baseUrl: getHostUrl(),
     forceManual: true,
     loading: true
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.mounted = true;
-    this.fetchAlmBindings();
+
+    await Promise.all([this.fetchAlmBindings(), this.fetchBaseUrl()]);
+
+    if (this.mounted) {
+      this.setState({ loading: false });
+    }
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
   }
 
   fetchAlmBindings = async () => {
@@ -59,16 +72,24 @@ export class TutorialSelection extends React.PureComponent<Props, State> {
     ]);
 
     if (this.mounted) {
-      // We only support Bitbucket for now.
-      if (projectBinding === undefined || projectBinding.alm !== AlmKeys.Bitbucket) {
-        this.setState({ loading: false, forceManual: true });
+      if (projectBinding === undefined) {
+        this.setState({ forceManual: true });
       } else {
         let almBinding;
         if (almDefinitions !== undefined) {
-          almBinding = almDefinitions[projectBinding.alm].find(d => d.key === projectBinding.key);
+          const specificDefinitions = almDefinitions[projectBinding.alm] as AlmBindingDefinition[];
+          almBinding = specificDefinitions.find(d => d.key === projectBinding.key);
         }
-        this.setState({ almBinding, forceManual: false, projectBinding, loading: false });
+        this.setState({ almBinding, forceManual: false, projectBinding });
       }
+    }
+  };
+
+  fetchBaseUrl = async () => {
+    const settings = await getValues({ keys: SettingsKey.ServerBaseUrl }).catch(() => undefined);
+    const baseUrl = settings && settings.find(s => s.key === SettingsKey.ServerBaseUrl)?.value;
+    if (baseUrl && baseUrl.length > 0 && this.mounted) {
+      this.setState({ baseUrl });
     }
   };
 
@@ -86,7 +107,7 @@ export class TutorialSelection extends React.PureComponent<Props, State> {
 
   render() {
     const { component, currentUser, location } = this.props;
-    const { almBinding, forceManual, loading, projectBinding } = this.state;
+    const { almBinding, baseUrl, forceManual, loading, projectBinding } = this.state;
 
     const selectedTutorial: TutorialModes | undefined = forceManual
       ? TutorialModes.Manual
@@ -95,6 +116,7 @@ export class TutorialSelection extends React.PureComponent<Props, State> {
     return (
       <TutorialSelectionRenderer
         almBinding={almBinding}
+        baseUrl={baseUrl}
         component={component}
         currentUser={currentUser}
         loading={loading}

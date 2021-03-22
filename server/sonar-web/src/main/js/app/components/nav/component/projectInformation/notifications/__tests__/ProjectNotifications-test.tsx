@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-/* eslint-disable sonarjs/no-duplicate-string */
+
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { mockComponent } from '../../../../../../../helpers/testMocks';
@@ -56,22 +56,19 @@ function shallowRender(props = {}) {
           channel: 'channel1',
           type: 'type-global',
           project: 'foo',
-          projectName: 'Foo',
-          organization: 'org'
+          projectName: 'Foo'
         },
         {
           channel: 'channel1',
           type: 'type-common',
           project: 'bar',
-          projectName: 'Bar',
-          organization: 'org'
+          projectName: 'Bar'
         },
         {
           channel: 'channel2',
           type: 'type-common',
           project: 'qux',
-          projectName: 'Qux',
-          organization: 'org'
+          projectName: 'Qux'
         }
       ]}
       perProjectTypes={['type-common']}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-/* eslint-disable sonarjs/no-duplicate-string */
+
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import Radio from 'sonar-ui-common/components/controls/Radio';
@@ -39,6 +39,7 @@ it('should render correctly', () => {
     'selected repo'
   );
   expect(shallowRender({ showingAllRepositories: false })).toMatchSnapshot('not showing all repos');
+  expect(shallowRender({ project: undefined })).toMatchSnapshot('no project info');
 });
 
 it('should correctly handle selecting repos', () => {

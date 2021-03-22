@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -52,6 +53,7 @@ import org.sonar.server.issue.index.IssueIndex;
 import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
 import org.sonar.server.issue.index.IssueQuery;
 import org.sonar.server.issue.index.IssueQueryFactory;
+import org.sonar.server.issue.index.IssueScope;
 import org.sonar.server.security.SecurityStandards.SQCategory;
 import org.sonar.server.user.UserSession;
 import org.sonarqube.ws.Issues.SearchWsResponse;
@@ -76,7 +78,7 @@ import static org.sonar.api.issue.Issue.STATUS_TO_REVIEW;
 import static org.sonar.api.server.ws.WebService.Param.FACETS;
 import static org.sonar.api.utils.Paging.forPageIndex;
 import static org.sonar.core.util.stream.MoreCollectors.toSet;
-import static org.sonar.server.es.SearchOptions.MAX_LIMIT;
+import static org.sonar.server.es.SearchOptions.MAX_PAGE_SIZE;
 import static org.sonar.server.issue.index.IssueIndex.FACET_ASSIGNED_TO_ME;
 import static org.sonar.server.issue.index.IssueIndex.FACET_PROJECTS;
 import static org.sonar.server.issue.index.IssueQuery.SORT_BY_ASSIGNEE;
@@ -108,12 +110,11 @@ import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_CREATED_BEF
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_CREATED_IN_LAST;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_CWE;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_DIRECTORIES;
-import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_FILE_UUIDS;
+import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_FILES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_ISSUES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_LANGUAGES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_MODULE_UUIDS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_ON_COMPONENT_ONLY;
-import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_ORGANIZATION;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_OWASP_TOP_10;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PROJECTS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PULL_REQUEST;
@@ -121,22 +122,25 @@ import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_RESOLUTIONS
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_RESOLVED;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_RULES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SANS_TOP_25;
+import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SCOPES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SEVERITIES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SINCE_LEAK_PERIOD;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_SONARSOURCE_SECURITY;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_STATUSES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_TAGS;
+import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_TIMEZONE;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_TYPES;
 
 public class SearchAction implements IssuesWsAction {
 
   private static final String LOGIN_MYSELF = "__me__";
+  private static final Set<String> ISSUE_SCOPES = Arrays.stream(IssueScope.values()).map(Enum::name).collect(Collectors.toSet());
   private static final EnumSet<RuleType> ALL_RULE_TYPES_EXCEPT_SECURITY_HOTSPOTS = EnumSet.complementOf(EnumSet.of(RuleType.SECURITY_HOTSPOT));
 
   static final List<String> SUPPORTED_FACETS = ImmutableList.of(
     FACET_PROJECTS,
     PARAM_MODULE_UUIDS,
-    PARAM_FILE_UUIDS,
+    PARAM_FILES,
     FACET_ASSIGNED_TO_ME,
     PARAM_SEVERITIES,
     PARAM_STATUSES,
@@ -146,6 +150,7 @@ public class SearchAction implements IssuesWsAction {
     DEPRECATED_PARAM_AUTHORS,
     PARAM_AUTHOR,
     PARAM_DIRECTORIES,
+    PARAM_SCOPES,
     PARAM_LANGUAGES,
     PARAM_TAGS,
     PARAM_TYPES,
@@ -156,7 +161,7 @@ public class SearchAction implements IssuesWsAction {
     PARAM_SONARSOURCE_SECURITY);
 
   private static final String INTERNAL_PARAMETER_DISCLAIMER = "This parameter is mostly used by the Issues page, please prefer usage of the componentKeys parameter. ";
-  private static final Set<String> FACETS_REQUIRING_PROJECT_OR_ORGANIZATION = newHashSet(PARAM_MODULE_UUIDS, PARAM_FILE_UUIDS, PARAM_DIRECTORIES);
+  private static final Set<String> FACETS_REQUIRING_PROJECT = newHashSet(PARAM_MODULE_UUIDS, PARAM_FILES, PARAM_DIRECTORIES);
 
   private final UserSession userSession;
   private final IssueIndex issueIndex;
@@ -185,9 +190,13 @@ public class SearchAction implements IssuesWsAction {
       .createAction(ACTION_SEARCH)
       .setHandler(this)
       .setDescription("Search for issues.<br>Requires the 'Browse' permission on the specified project(s)."
-          + "<br/>When issue indexation is in progress returns 503 service unavailable HTTP code.")
+        + "<br/>When issue indexation is in progress returns 503 service unavailable HTTP code.")
       .setSince("3.6")
       .setChangelog(
+        new Change("8.6", "Parameter 'timeZone' added"),
+        new Change("8.5", "Facet 'fileUuids' is dropped in favour of the new facet 'files'" +
+          "Note that they are not strictly identical, the latter returns the file paths."),
+        new Change("8.5", "Internal parameter 'fileUuids' has been dropped"),
         new Change("8.4", "parameters 'componentUuids', 'projectKeys' has been dropped."),
         new Change("8.2", "'REVIEWED', 'TO_REVIEW' status param values are no longer supported"),
         new Change("8.2", "Security hotspots are no longer returned as type 'SECURITY_HOTSPOT' is not supported anymore, use dedicated api/hotspots"),
@@ -211,7 +220,7 @@ public class SearchAction implements IssuesWsAction {
         new Change("5.5", "response field 'debt' is renamed 'effort'"))
       .setResponseExample(getClass().getResource("search-example.json"));
 
-    action.addPagingParams(100, MAX_LIMIT);
+    action.addPagingParams(100, MAX_PAGE_SIZE);
     action.createParam(FACETS)
       .setDescription("Comma-separated list of the facets to be computed. No facet is computed by default.")
       .setPossibleValues(SUPPORTED_FACETS);
@@ -284,6 +293,10 @@ public class SearchAction implements IssuesWsAction {
     action.createParam(PARAM_ASSIGNED)
       .setDescription("To retrieve assigned or unassigned issues")
       .setBooleanPossibleValues();
+    action.createParam(PARAM_SCOPES)
+      .setDescription("Comma-separated list of scopes. Available since 8.5")
+      .setPossibleValues(IssueScope.MAIN.name(), IssueScope.TEST.name())
+      .setExampleValue(format("%s,%s", IssueScope.MAIN.name(), IssueScope.TEST.name()));
     action.createParam(PARAM_LANGUAGES)
       .setDescription("Comma-separated list of languages. Available since 4.4")
       .setExampleValue("java,js");
@@ -292,12 +305,12 @@ public class SearchAction implements IssuesWsAction {
       .setExampleValue("2017-10-19T13:00:00+0200");
     action.createParam(PARAM_CREATED_AFTER)
       .setDescription("To retrieve issues created after the given date (inclusive). <br>" +
-        "Either a date (server timezone) or datetime can be provided. <br>" +
-        "If this parameter is set, createdSince must not be set")
+        "Either a date (use '" + PARAM_TIMEZONE + "' attribute or it will default to server timezone) or datetime can be provided. <br>" +
+        "If this parameter is set, createdInLast must not be set")
       .setExampleValue("2017-10-19 or 2017-10-19T13:00:00+0200");
     action.createParam(PARAM_CREATED_BEFORE)
       .setDescription("To retrieve issues created before the given date (exclusive). <br>" +
-        "Either a date (server timezone) or datetime can be provided.")
+        "Either a date (use '" + PARAM_TIMEZONE + "' attribute or it will default to server timezone) or datetime can be provided.")
       .setExampleValue("2017-10-19 or 2017-10-19T13:00:00+0200");
     action.createParam(PARAM_CREATED_IN_LAST)
       .setDescription("To retrieve issues created during a time span before the current time (exclusive). " +
@@ -309,12 +322,18 @@ public class SearchAction implements IssuesWsAction {
         "If this parameter is set to a truthy value, createdAfter must not be set and one component uuid or key must be provided.")
       .setBooleanPossibleValues()
       .setDefaultValue("false");
+    action.createParam(PARAM_TIMEZONE)
+      .setDescription(
+        "To resolve dates passed to '" + PARAM_CREATED_AFTER + "' or '" + PARAM_CREATED_BEFORE + "' (does not apply to datetime) and to compute creation date histogram")
+      .setRequired(false)
+      .setExampleValue("'Europe/Paris', 'Z' or '+02:00'")
+      .setSince("8.6");
   }
 
   private static void addComponentRelatedParams(WebService.NewAction action) {
     action.createParam(PARAM_ON_COMPONENT_ONLY)
       .setDescription("Return only issues at a component's level, not on its descendants (modules, directories, files, etc). " +
-        "This parameter is only considered when componentKeys or componentUuids is set.")
+        "This parameter is only considered when componentKeys is set.")
       .setBooleanPossibleValues()
       .setDefaultValue("false");
 
@@ -345,11 +364,11 @@ public class SearchAction implements IssuesWsAction {
       .setSince("5.1")
       .setExampleValue("src/main/java/org/sonar/server/");
 
-    action.createParam(PARAM_FILE_UUIDS)
-      .setDescription("To retrieve issues associated to a specific list of files (comma-separated list of file IDs). " +
+    action.createParam(PARAM_FILES)
+      .setDescription("To retrieve issues associated to a specific list of files (comma-separated list of file paths). " +
         INTERNAL_PARAMETER_DISCLAIMER)
       .setInternal(true)
-      .setExampleValue("bdd82933-3070-4903-9188-7d8749e8bb92");
+      .setExampleValue("src/main/java/org/sonar/server/Test.java");
 
     action.createParam(PARAM_BRANCH)
       .setDescription("Branch key. Not available in the community edition.")
@@ -360,13 +379,6 @@ public class SearchAction implements IssuesWsAction {
       .setDescription("Pull request id. Not available in the community edition.")
       .setExampleValue(KEY_PULL_REQUEST_EXAMPLE_001)
       .setSince("7.1");
-
-    action.createParam(PARAM_ORGANIZATION)
-      .setDescription("Organization key")
-      .setRequired(false)
-      .setInternal(true)
-      .setExampleValue("my-org")
-      .setSince("6.4");
   }
 
   @Override
@@ -385,12 +397,12 @@ public class SearchAction implements IssuesWsAction {
     EnumSet<SearchAdditionalField> additionalFields = SearchAdditionalField.getFromRequest(request);
     IssueQuery query = issueQueryFactory.create(request);
 
-    Set<String> facetsRequiringProjectOrOrganizationParameter = options.getFacets().stream()
-      .filter(FACETS_REQUIRING_PROJECT_OR_ORGANIZATION::contains)
+    Set<String> facetsRequiringProjectParameter = options.getFacets().stream()
+      .filter(FACETS_REQUIRING_PROJECT::contains)
       .collect(toSet());
-    checkArgument(facetsRequiringProjectOrOrganizationParameter.isEmpty() ||
-      (!query.projectUuids().isEmpty()) || query.organizationUuid() != null, "Facet(s) '%s' require to also filter by project or organization",
-      String.join(",", facetsRequiringProjectOrOrganizationParameter));
+    checkArgument(facetsRequiringProjectParameter.isEmpty() ||
+      (!query.projectUuids().isEmpty()), "Facet(s) '%s' require to also filter by project",
+      String.join(",", facetsRequiringProjectParameter));
 
     // execute request
     SearchResponse result = issueIndex.search(query, options);
@@ -402,7 +414,7 @@ public class SearchAction implements IssuesWsAction {
     SearchResponseLoader.Collector collector = new SearchResponseLoader.Collector(issueKeys);
     collectLoggedInUser(collector);
     collectRequestParams(collector, request);
-    Facets facets = new Facets(result, system2.getDefaultTimeZone());
+    Facets facets = new Facets(result, Optional.ofNullable(query.timeZone()).orElse(system2.getDefaultTimeZone().toZoneId()));
     if (!options.getFacets().isEmpty()) {
       // add missing values to facets. For example if assignee "john" and facet on "assignees" are requested, then
       // "john" should always be listed in the facet. If it is not present, then it is added with value zero.
@@ -415,7 +427,7 @@ public class SearchAction implements IssuesWsAction {
     SearchResponseData data = searchResponseLoader.load(preloadedData, collector, additionalFields, facets);
 
     // FIXME allow long in Paging
-    Paging paging = forPageIndex(options.getPage()).withPageSize(options.getLimit()).andTotal((int) result.getHits().getTotalHits());
+    Paging paging = forPageIndex(options.getPage()).withPageSize(options.getLimit()).andTotal((int) result.getHits().getTotalHits().value);
     return searchResponseFormat.formatSearch(additionalFields, data, paging, facets);
   }
 
@@ -439,7 +451,7 @@ public class SearchAction implements IssuesWsAction {
     addMandatoryValuesToFacet(facets, PARAM_RESOLUTIONS, concat(singletonList(""), RESOLUTIONS));
     addMandatoryValuesToFacet(facets, FACET_PROJECTS, query.projectUuids());
     addMandatoryValuesToFacet(facets, PARAM_MODULE_UUIDS, query.moduleUuids());
-    addMandatoryValuesToFacet(facets, PARAM_FILE_UUIDS, query.fileUuids());
+    addMandatoryValuesToFacet(facets, PARAM_FILES, query.files());
 
     List<String> assignees = Lists.newArrayList("");
     List<String> assigneesFromRequest = request.getAssigneeUuids();
@@ -450,6 +462,7 @@ public class SearchAction implements IssuesWsAction {
     addMandatoryValuesToFacet(facets, PARAM_ASSIGNEES, assignees);
     addMandatoryValuesToFacet(facets, FACET_ASSIGNED_TO_ME, singletonList(userSession.getUuid()));
     addMandatoryValuesToFacet(facets, PARAM_RULES, query.rules().stream().map(RuleDefinitionDto::getUuid).collect(toList()));
+    addMandatoryValuesToFacet(facets, PARAM_SCOPES, ISSUE_SCOPES);
     addMandatoryValuesToFacet(facets, PARAM_LANGUAGES, request.getLanguages());
     addMandatoryValuesToFacet(facets, PARAM_TAGS, request.getTags());
 
@@ -489,13 +502,11 @@ public class SearchAction implements IssuesWsAction {
   private static void collectFacets(SearchResponseLoader.Collector collector, Facets facets) {
     collector.addProjectUuids(facets.getBucketKeys(FACET_PROJECTS));
     collector.addComponentUuids(facets.getBucketKeys(PARAM_MODULE_UUIDS));
-    collector.addComponentUuids(facets.getBucketKeys(PARAM_FILE_UUIDS));
     collector.addRuleIds(facets.getBucketKeys(PARAM_RULES));
     collector.addUserUuids(facets.getBucketKeys(PARAM_ASSIGNEES));
   }
 
   private static void collectRequestParams(SearchResponseLoader.Collector collector, SearchRequest request) {
-    collector.addComponentUuids(request.getFileUuids());
     collector.addComponentUuids(request.getModuleUuids());
     collector.addUserUuids(request.getAssigneeUuids());
   }
@@ -515,14 +526,14 @@ public class SearchAction implements IssuesWsAction {
       .setDirectories(request.paramAsStrings(PARAM_DIRECTORIES))
       .setFacetMode(request.mandatoryParam(FACET_MODE))
       .setFacets(request.paramAsStrings(FACETS))
-      .setFileUuids(request.paramAsStrings(PARAM_FILE_UUIDS))
+      .setFiles(request.paramAsStrings(PARAM_FILES))
       .setIssues(request.paramAsStrings(PARAM_ISSUES))
+      .setScopes(request.paramAsStrings(PARAM_SCOPES))
       .setLanguages(request.paramAsStrings(PARAM_LANGUAGES))
       .setModuleUuids(request.paramAsStrings(PARAM_MODULE_UUIDS))
       .setOnComponentOnly(request.paramAsBoolean(PARAM_ON_COMPONENT_ONLY))
       .setBranch(request.param(PARAM_BRANCH))
       .setPullRequest(request.param(PARAM_PULL_REQUEST))
-      .setOrganization(request.param(PARAM_ORGANIZATION))
       .setPage(request.mandatoryParamAsInt(Param.PAGE))
       .setPageSize(request.mandatoryParamAsInt(Param.PAGE_SIZE))
       .setProjects(request.paramAsStrings(PARAM_PROJECTS))
@@ -538,7 +549,8 @@ public class SearchAction implements IssuesWsAction {
       .setOwaspTop10(request.paramAsStrings(PARAM_OWASP_TOP_10))
       .setSansTop25(request.paramAsStrings(PARAM_SANS_TOP_25))
       .setCwe(request.paramAsStrings(PARAM_CWE))
-      .setSonarsourceSecurity(request.paramAsStrings(PARAM_SONARSOURCE_SECURITY));
+      .setSonarsourceSecurity(request.paramAsStrings(PARAM_SONARSOURCE_SECURITY))
+      .setTimeZone(request.param(PARAM_TIMEZONE));
   }
 
   private void checkIfNeedIssueSync(DbSession dbSession, SearchRequest searchRequest) {

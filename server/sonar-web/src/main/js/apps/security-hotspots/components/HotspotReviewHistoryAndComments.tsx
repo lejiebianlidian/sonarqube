@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import {
   deleteSecurityHotspotComment,
   editSecurityHotspotComment
 } from '../../../api/security-hotspots';
-import MarkdownTips from '../../../components/common/MarkdownTips';
+import FormattingTips from '../../../components/common/FormattingTips';
 import { isLoggedIn } from '../../../helpers/users';
 import { Hotspot } from '../../../types/security-hotspots';
 import HotspotReviewHistory from './HotspotReviewHistory';
@@ -96,7 +96,7 @@ export default class HotspotReviewHistoryAndComments extends React.PureComponent
     return (
       <>
         <h1>{translate('hotspot.section.activity')}</h1>
-        <div className="padded">
+        <div className="padded it__hs-review-history">
           <HotspotReviewHistory
             hotspot={hotspot}
             onDeleteComment={this.handleDeleteComment}
@@ -108,7 +108,7 @@ export default class HotspotReviewHistoryAndComments extends React.PureComponent
               <hr />
               <div className="big-spacer-top">
                 <Button
-                  className={classNames({ invisible: commentVisible })}
+                  className={classNames('it__hs-add-comment', { invisible: commentVisible })}
                   id="hotspot-comment-box-display"
                   onClick={this.props.onOpenComment}>
                   {translate('hotspots.comment.open')}
@@ -124,7 +124,7 @@ export default class HotspotReviewHistoryAndComments extends React.PureComponent
                     value={comment}
                   />
                   <div className="display-flex-space-between display-flex-center ">
-                    <MarkdownTips className="huge-spacer-bottom" />
+                    <FormattingTips className="huge-spacer-bottom" />
                     <div>
                       <Button
                         className="huge-spacer-bottom"

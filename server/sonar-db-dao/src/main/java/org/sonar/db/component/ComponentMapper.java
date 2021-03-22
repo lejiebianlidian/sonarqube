@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,9 +42,6 @@ public interface ComponentMapper {
   @CheckForNull
   ComponentDto selectByUuid(String uuid);
 
-  @CheckForNull
-  ComponentDto selectByAlmIdAndAlmRepositoryId(@Param("almId") String almId, @Param("almRepositoryId") String almRepositoryId);
-
   /**
    * Return sub project of component keys
    */
@@ -66,17 +63,9 @@ public interface ComponentMapper {
 
   int countEnabledModulesByProjectUuid(@Param("projectUuid") String projectUuid);
 
-  /**
-   * Counts the number of components with the specified id belonging to the specified organization.
-   *
-   * @return 1 or 0. Either because the organization uuid is not the one of the component or because the component does
-   * not exist.
-   */
-  int countComponentByOrganizationAndUuid(@Param("organizationUuid") String organizationUuid, @Param("componentUuid") String componentUuid);
+  List<ComponentDto> selectByQuery(@Param("query") ComponentQuery query, RowBounds rowBounds);
 
-  List<ComponentDto> selectByQuery(@Nullable @Param("organizationUuid") String organizationUuid, @Param("query") ComponentQuery query, RowBounds rowBounds);
-
-  int countByQuery(@Nullable @Param("organizationUuid") String organizationUuid, @Param("query") ComponentQuery query);
+  int countByQuery(@Param("query") ComponentQuery query);
 
   List<ComponentDto> selectDescendants(@Param("query") ComponentTreeQuery query, @Param("baseUuid") String baseUuid, @Param("baseUuidPath") String baseUuidPath);
 
@@ -86,8 +75,6 @@ public interface ComponentMapper {
    * regular ones.
    */
   List<ComponentDto> selectProjects();
-
-  List<ComponentDto> selectProjectsByOrganization(@Param("organizationUuid") String organizationUuid);
 
   /**
    * Return all descendant modules (including itself) from a given component uuid and scope
@@ -154,7 +141,7 @@ public interface ComponentMapper {
   List<KeyWithUuidDto> selectAllSiblingComponentKeysHavingOpenIssues(@Param("referenceBranchUuid") String referenceBranchUuid,
     @Param("currentBranchUuid") String currentBranchUuid);
 
-  List<ProjectNclocDistributionDto> selectPrivateProjectsWithNcloc(@Param("organizationUuid") String organizationUuid);
+  List<ProjectNclocDistributionDto> selectPrivateProjectsWithNcloc();
 
   List<ComponentWithModuleUuidDto> selectEnabledComponentsWithModuleUuidFromProjectKey(String projectKey);
 

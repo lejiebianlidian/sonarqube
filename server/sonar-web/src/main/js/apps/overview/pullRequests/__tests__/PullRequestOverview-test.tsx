@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import { PR_METRICS } from '../../utils';
 import { PullRequestOverview } from '../PullRequestOverview';
 
 jest.mock('../../../../api/measures', () => {
-  const { mockMeasure, mockMetric } = require.requireActual('../../../../helpers/testMocks');
+  const { mockMeasure, mockMetric } = jest.requireActual('../../../../helpers/testMocks');
   return {
     getMeasuresWithMetrics: jest.fn().mockResolvedValue({
       component: {

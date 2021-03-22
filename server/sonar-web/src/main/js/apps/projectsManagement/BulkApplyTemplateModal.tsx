@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@ import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/contro
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import Select from 'sonar-ui-common/components/controls/Select';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { toNotSoISOString } from 'sonar-ui-common/helpers/dates';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { bulkApplyTemplate, getPermissionTemplates } from '../../api/permissions';
@@ -29,7 +31,6 @@ import { bulkApplyTemplate, getPermissionTemplates } from '../../api/permissions
 export interface Props {
   analyzedBefore: Date | undefined;
   onClose: () => void;
-  organization: string;
   provisioned: boolean;
   qualifier: string;
   query: string;
@@ -60,7 +61,7 @@ export default class BulkApplyTemplateModal extends React.PureComponent<Props, S
 
   loadPermissionTemplates() {
     this.setState({ loading: true });
-    getPermissionTemplates(this.props.organization).then(
+    getPermissionTemplates().then(
       ({ permissionTemplates }) => {
         if (this.mounted) {
           this.setState({
@@ -86,7 +87,6 @@ export default class BulkApplyTemplateModal extends React.PureComponent<Props, S
       this.setState({ submitting: true });
       const parameters = this.props.selection.length
         ? {
-            organization: this.props.organization,
             projects: this.props.selection.join(),
             qualifiers: this.props.qualifier,
             templateId: permissionTemplate
@@ -94,7 +94,6 @@ export default class BulkApplyTemplateModal extends React.PureComponent<Props, S
         : {
             analyzedBefore: analyzedBefore && toNotSoISOString(analyzedBefore),
             onProvisionedOnly: this.props.provisioned || undefined,
-            organization: this.props.organization,
             qualifiers: this.props.qualifier,
             q: this.props.query || undefined,
             templateId: permissionTemplate
@@ -136,7 +135,7 @@ export default class BulkApplyTemplateModal extends React.PureComponent<Props, S
     <div className="modal-field">
       <label>
         {translate('template')}
-        <em className="mandatory">*</em>
+        <MandatoryFieldMarker />
       </label>
       <Select
         clearable={false}
@@ -165,8 +164,13 @@ export default class BulkApplyTemplateModal extends React.PureComponent<Props, S
 
           {loading && <i className="spinner" />}
 
-          {!loading && !done && permissionTemplates && this.renderWarning()}
-          {!loading && !done && permissionTemplates && this.renderSelect()}
+          {!loading && !done && permissionTemplates && (
+            <>
+              <MandatoryFieldsExplanation className="spacer-bottom" />
+              {this.renderWarning()}
+              {this.renderSelect()}
+            </>
+          )}
         </div>
 
         <footer className="modal-foot">

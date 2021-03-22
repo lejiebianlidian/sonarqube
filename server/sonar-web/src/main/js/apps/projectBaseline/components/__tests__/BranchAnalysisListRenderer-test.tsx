@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ jest.mock('date-fns/start_of_day', () => (date: Date) => {
 });
 
 jest.mock('sonar-ui-common/helpers/dates', () => {
-  const actual = require.requireActual('sonar-ui-common/helpers/dates');
+  const actual = jest.requireActual('sonar-ui-common/helpers/dates');
   return { ...actual, toShortNotSoISOString: (date: string) => `ISO.${date}` };
 });
 

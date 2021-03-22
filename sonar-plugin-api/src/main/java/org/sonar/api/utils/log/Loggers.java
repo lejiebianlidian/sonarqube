@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,33 +19,10 @@
  */
 package org.sonar.api.utils.log;
 
-/**
- * @since 5.1
- */
 public abstract class Loggers {
 
-  private static volatile Loggers factory;
-
-  static {
-    try {
-      Class.forName("ch.qos.logback.classic.Logger");
-      factory = new LogbackLoggers();
-    } catch (Throwable e) {
-      // no slf4j -> testing environment
-      factory = new ConsoleLoggers();
-    }
-  }
-
-  public static Logger get(Class<?> name) {
-    return factory.newInstance(name.getName());
-  }
-
-  public static Logger get(String name) {
-    return factory.newInstance(name);
-  }
-
   static Loggers getFactory() {
-    return factory;
+    return LoggerFactory.getFactory();
   }
 
   protected abstract Logger newInstance(String name);
@@ -53,5 +30,13 @@ public abstract class Loggers {
   protected abstract LoggerLevel getLevel();
 
   protected abstract void setLevel(LoggerLevel level);
+
+  public static Logger get(Class<?> name) {
+    return LoggerFactory.get(name);
+  }
+
+  public static Logger get(String name) {
+    return LoggerFactory.get(name);
+  }
 
 }

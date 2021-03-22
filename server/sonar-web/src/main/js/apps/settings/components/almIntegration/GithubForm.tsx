@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,27 +24,22 @@ import { AlmBindingDefinitionFormField } from './AlmBindingDefinitionFormField';
 
 export interface GithubFormProps {
   formData: GithubBindingDefinition;
-  hideKeyField?: boolean;
   onFieldChange: (fieldId: keyof GithubBindingDefinition, value: string) => void;
-  readOnly?: boolean;
 }
 
 export default function GithubForm(props: GithubFormProps) {
-  const { formData, hideKeyField, onFieldChange, readOnly } = props;
+  const { formData, onFieldChange } = props;
 
   return (
     <>
-      {!hideKeyField && (
-        <AlmBindingDefinitionFormField
-          autoFocus={true}
-          help={translate('settings.almintegration.form.name.github.help')}
-          id="name.github"
-          onFieldChange={onFieldChange}
-          propKey="key"
-          readOnly={readOnly}
-          value={formData.key}
-        />
-      )}
+      <AlmBindingDefinitionFormField
+        autoFocus={true}
+        help={translate('settings.almintegration.form.name.github.help')}
+        id="name.github"
+        onFieldChange={onFieldChange}
+        propKey="key"
+        value={formData.key}
+      />
       <AlmBindingDefinitionFormField
         help={
           <>
@@ -62,7 +57,6 @@ export default function GithubForm(props: GithubFormProps) {
         maxLength={2000}
         onFieldChange={onFieldChange}
         propKey="url"
-        readOnly={readOnly}
         value={formData.url}
       />
       <AlmBindingDefinitionFormField
@@ -70,31 +64,29 @@ export default function GithubForm(props: GithubFormProps) {
         maxLength={80}
         onFieldChange={onFieldChange}
         propKey="appId"
-        readOnly={readOnly}
         value={formData.appId}
       />
       <AlmBindingDefinitionFormField
-        id="client_id"
+        id="client_id.github"
         maxLength={80}
         onFieldChange={onFieldChange}
         propKey="clientId"
-        readOnly={readOnly}
         value={formData.clientId}
       />
       <AlmBindingDefinitionFormField
-        id="client_secret"
+        id="client_secret.github"
         maxLength={80}
         onFieldChange={onFieldChange}
+        overwriteOnly={Boolean(formData.key)}
         propKey="clientSecret"
-        readOnly={readOnly}
         value={formData.clientSecret}
       />
       <AlmBindingDefinitionFormField
         id="private_key"
         isTextArea={true}
         onFieldChange={onFieldChange}
+        overwriteOnly={Boolean(formData.key)}
         propKey="privateKey"
-        readOnly={readOnly}
         value={formData.privateKey}
       />
     </>

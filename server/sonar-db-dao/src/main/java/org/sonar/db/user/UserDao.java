@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,16 +35,16 @@ import org.sonar.core.util.UuidFactory;
 import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 
 import static java.util.Locale.ENGLISH;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 import static org.sonar.db.DatabaseUtils.executeLargeInputsWithoutOutput;
 import static org.sonar.db.user.UserDto.SCM_ACCOUNTS_SEPARATOR;
 
 public class UserDao implements Dao {
-
+  private static final long WEEK_IN_MS = DAYS.toMillis(7L);
   private final System2 system2;
   private final UuidFactory uuidFactory;
 
@@ -113,16 +113,16 @@ public class UserDao implements Dao {
     return dto;
   }
 
+  public void updateSonarlintLastConnectionDate(DbSession session, String login) {
+    mapper(session).updateSonarlintLastConnectionDate(login, system2.now());
+  }
+
   public void setRoot(DbSession session, String login, boolean root) {
     mapper(session).setRoot(login, root, system2.now());
   }
 
   public void deactivateUser(DbSession dbSession, UserDto user) {
     mapper(dbSession).deactivateUser(user.getLogin(), system2.now());
-  }
-
-  public void cleanHomepage(DbSession dbSession, OrganizationDto organization) {
-    mapper(dbSession).clearHomepages("ORGANIZATION", organization.getUuid(), system2.now());
   }
 
   public void cleanHomepage(DbSession dbSession, ProjectDto project) {
@@ -163,6 +163,10 @@ public class UserDao implements Dao {
     return mapper(dbSession).selectByExternalIdAndIdentityProvider(externalId, externalIdentityProvider);
   }
 
+  public List<String> selectExternalIdentityProviders(DbSession dbSession) {
+    return mapper(dbSession).selectExternalIdentityProviders();
+  }
+
   public List<UserDto> selectByExternalIdsAndIdentityProvider(DbSession dbSession, Collection<String> externalIds, String externalIdentityProvider) {
     return executeLargeInputs(externalIds, e -> mapper(dbSession).selectByExternalIdsAndIdentityProvider(e, externalIdentityProvider));
   }
@@ -170,6 +174,11 @@ public class UserDao implements Dao {
   @CheckForNull
   public UserDto selectByExternalLoginAndIdentityProvider(DbSession dbSession, String externalLogin, String externalIdentityProvider) {
     return mapper(dbSession).selectByExternalLoginAndIdentityProvider(externalLogin, externalIdentityProvider);
+  }
+
+  public long countSonarlintWeeklyUsers(DbSession dbSession) {
+    long threshold = system2.now() - WEEK_IN_MS;
+    return mapper(dbSession).countActiveSonarlintUsers(threshold);
   }
 
   public void scrollByUuids(DbSession dbSession, Collection<String> uuids, Consumer<UserDto> consumer) {

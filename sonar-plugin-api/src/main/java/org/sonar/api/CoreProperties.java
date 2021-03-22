@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -197,7 +197,9 @@ public interface CoreProperties {
   /* Sonar Core */
 
   String CORE_FORCE_AUTHENTICATION_PROPERTY = "sonar.forceAuthentication";
-  boolean CORE_FORCE_AUTHENTICATION_DEFAULT_VALUE = false;
+  boolean CORE_FORCE_AUTHENTICATION_DEFAULT_VALUE = true;
+  String CORE_ALLOW_PERMISSION_MANAGEMENT_FOR_PROJECT_ADMINS_PROPERTY = "sonar.allowPermissionManagementForProjectAdmins";
+  boolean CORE_ALLOW_PERMISSION_MANAGEMENT_FOR_PROJECT_ADMINS_DEFAULT_VALUE = true;
 
   /**
    * @deprecated since 2.14. See http://jira.sonarsource.com/browse/SONAR-3153. Replaced by {@link #CORE_AUTHENTICATOR_REALM}.
@@ -309,6 +311,12 @@ public interface CoreProperties {
   String SCAN_TASK = "scan";
 
   /**
+   * @since 3.6
+   * Removed in 8.4 by mistake and reintroduced in 8.5
+   */
+  String PROFILING_LOG_PROPERTY = "sonar.showProfiling";
+
+  /**
    * @since 4.0
    */
   String WORKING_DIRECTORY = "sonar.working.directory";
@@ -385,6 +393,11 @@ public interface CoreProperties {
    * @since 5.1
    */
   String DEFAULT_ISSUE_ASSIGNEE = "sonar.issues.defaultAssigneeLogin";
+
+  /**
+   * @since 8.5
+   */
+  String DEVELOPER_AGGREGATED_INFO_DISABLED = "sonar.developerAggregatedInfo.disabled";
 
   /**
    * @since 7.6

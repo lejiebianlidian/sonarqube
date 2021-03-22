@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,23 +30,9 @@ import javax.annotation.Generated;
 @Generated("sonar-ws-generator")
 public class AddProjectCreatorToTemplateRequest {
 
-  private String organization;
   private String permission;
   private String templateId;
   private String templateName;
-
-  /**
-   * This is part of the internal API.
-   * Example value: "my-org"
-   */
-  public AddProjectCreatorToTemplateRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
-  }
 
   /**
    * This is a mandatory parameter.

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,16 +17,15 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.server.platform.db.migration.version.v84.qualitygateconditions;
 
 import java.sql.SQLException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.db.CoreDbTester;
+import org.sonar.server.platform.db.migration.sql.DbPrimaryKeyConstraintFinder;
+import org.sonar.server.platform.db.migration.sql.DropPrimaryKeySqlGenerator;
 import org.sonar.server.platform.db.migration.step.DdlChange;
-import org.sonar.server.platform.db.migration.version.v84.util.DropPrimaryKeySqlGenerator;
-import org.sonar.server.platform.db.migration.version.v84.util.SqlHelper;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -36,9 +35,9 @@ public class DropPrimaryKeyOnIdColumnOfQualityGateConditionsTableTest {
   @Rule
   public CoreDbTester db = CoreDbTester.createForSchema(DropPrimaryKeyOnIdColumnOfQualityGateConditionsTableTest.class, "schema.sql");
 
-  private DropPrimaryKeySqlGenerator dropPrimaryKeySqlGenerator = new DropPrimaryKeySqlGenerator(db.database(), new SqlHelper(db.database()));
+  private final DropPrimaryKeySqlGenerator dropPrimaryKeySqlGenerator = new DropPrimaryKeySqlGenerator(db.database(), new DbPrimaryKeyConstraintFinder(db.database()));
 
-  private DdlChange underTest = new DropPrimaryKeyOnIdColumnOfQualityGateConditionsTable(db.database(), dropPrimaryKeySqlGenerator);
+  private final DdlChange underTest = new DropPrimaryKeyOnIdColumnOfQualityGateConditionsTable(db.database(), dropPrimaryKeySqlGenerator);
 
   @Test
   public void execute() throws SQLException {

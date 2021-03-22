@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,16 +25,23 @@ import javax.annotation.Nullable;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 public class CiConfigurationImpl implements CiConfiguration {
+  private final String ciName;
 
   @Nullable
   private final String scmRevision;
 
-  public CiConfigurationImpl(@Nullable String scmRevision) {
+  public CiConfigurationImpl(@Nullable String scmRevision, String ciName) {
     this.scmRevision = defaultIfBlank(scmRevision, null);
+    this.ciName = ciName;
   }
 
   @Override
   public Optional<String> getScmRevision() {
     return Optional.ofNullable(scmRevision);
+  }
+
+  @Override
+  public String getCiName() {
+    return ciName;
   }
 }

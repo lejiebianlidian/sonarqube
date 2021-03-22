@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: var(--sourceCodeFontFamily);
 }
 
 .coding-rules-detail-quality-profile-parameter + .coding-rules-detail-quality-profile-parameter {
@@ -135,7 +135,7 @@
 }
 
 .coding-rules-detail-parameter-value {
-  font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: var(--sourceCodeFontFamily);
   word-break: break-all;
 }
 

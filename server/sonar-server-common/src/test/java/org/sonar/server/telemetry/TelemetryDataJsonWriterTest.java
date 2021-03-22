@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 package org.sonar.server.telemetry;
 
+import com.google.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -36,6 +37,7 @@ import org.sonar.core.platform.EditionProvider;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.server.measure.index.ProjectMeasuresStatistics;
 
+import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,12 +50,17 @@ public class TelemetryDataJsonWriterTest {
     .setServerId("foo")
     .setVersion("bar")
     .setPlugins(Collections.emptyMap())
+    .setAlmIntegrationCountByAlm(Collections.emptyMap())
     .setProjectMeasuresStatistics(ProjectMeasuresStatistics.builder()
       .setProjectCount(12)
       .setProjectCountByLanguage(Collections.emptyMap())
       .setNclocByLanguage(Collections.emptyMap())
       .build())
     .setNcloc(42L)
+    .setExternalAuthenticationProviders(asList("github", "gitlab"))
+    .setProjectCountByScm(Collections.emptyMap())
+    .setSonarlintWeeklyUsers(10)
+    .setProjectCountByCi(Collections.emptyMap())
     .setDatabase(new TelemetryData.Database("H2", "11"))
     .setUsingBranches(true);
 
@@ -80,6 +87,24 @@ public class TelemetryDataJsonWriterTest {
     String json = writeTelemetryData(data);
 
     assertThat(json).doesNotContain("edition");
+  }
+
+  @Test
+  public void write_external_auth_providers() {
+    TelemetryData data = SOME_TELEMETRY_DATA.build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{ \"externalAuthProviders\": [ \"github\", \"gitlab\" ] }");
+  }
+
+  @Test
+  public void write_sonarlint_weekly_users() {
+    TelemetryData data = SOME_TELEMETRY_DATA.build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{ \"sonarlintWeeklyUsers\": 10 }");
   }
 
   @Test
@@ -204,6 +229,40 @@ public class TelemetryDataJsonWriterTest {
   }
 
   @Test
+  public void write_project_count_by_scm() {
+    TelemetryData data = SOME_TELEMETRY_DATA
+      .setProjectCountByScm(ImmutableMap.of("git", 5L, "svn", 4L, "cvs", 3L, "undetected", 2L))
+      .build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{" +
+      "  \"projectCountByScm\": ["
+      + "{ \"scm\":\"git\", \"count\":5},"
+      + "{ \"scm\":\"svn\", \"count\":4},"
+      + "{ \"scm\":\"cvs\", \"count\":3},"
+      + "{ \"scm\":\"undetected\", \"count\":2},"
+      + "]}");
+  }
+
+  @Test
+  public void write_project_count_by_ci() {
+    TelemetryData data = SOME_TELEMETRY_DATA
+      .setProjectCountByCi(ImmutableMap.of("Bitbucket Pipelines", 5L, "Github Actions", 4L, "Jenkins", 3L, "undetected", 2L))
+      .build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{" +
+      "  \"projectCountByCI\": ["
+      + "{ \"ci\":\"Bitbucket Pipelines\", \"count\":5},"
+      + "{ \"ci\":\"Github Actions\", \"count\":4},"
+      + "{ \"ci\":\"Jenkins\", \"count\":3},"
+      + "{ \"ci\":\"undetected\", \"count\":2},"
+      + "]}");
+  }
+
+  @Test
   public void write_project_stats_by_language() {
     int projectCount = random.nextInt(8909);
     Map<String, Long> countByLanguage = IntStream.range(0, 1 + random.nextInt(10))
@@ -232,6 +291,32 @@ public class TelemetryDataJsonWriterTest {
       "[" +
       nclocByLanguage.entrySet().stream().map(e -> "{\"language\":\"" + e.getKey() + "\",\"ncloc\":" + e.getValue() + "}").collect(joining()) +
       "]" +
+      "}");
+  }
+
+  @Test
+  public void write_alm_count_by_alm() {
+    TelemetryData data = SOME_TELEMETRY_DATA
+      .setAlmIntegrationCountByAlm(ImmutableMap.of(
+        "github", 4L,
+        "github_cloud", 1L,
+        "gitlab", 2L,
+        "gitlab_cloud", 5L,
+        "azure_devops", 1L))
+      .build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{" +
+      "  \"almIntegrationCount\": " +
+      "["
+      + "{ \"alm\":\"github\", \"count\":4},"
+      + "{ \"alm\":\"github_cloud\", \"count\":1},"
+      + "{ \"alm\":\"gitlab\", \"count\":2},"
+      + "{ \"alm\":\"gitlab_cloud\", \"count\":5},"
+      + "{ \"alm\":\"azure_devops\", \"count\":1},"
+      + "]"
+      +
       "}");
   }
 
@@ -299,10 +384,38 @@ public class TelemetryDataJsonWriterTest {
       "}");
   }
 
+  @Test
+  public void writes_has_unanalyzed_languages() {
+    TelemetryData data = SOME_TELEMETRY_DATA
+      .setHasUnanalyzedC(true)
+      .setHasUnanalyzedCpp(false)
+      .build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{" +
+      "  \"hasUnanalyzedC\":true," +
+      "  \"hasUnanalyzedCpp\":false," +
+      "}");
+  }
+
+  @Test
+  public void writes_security_custom_config() {
+    TelemetryData data = SOME_TELEMETRY_DATA
+      .setCustomSecurityConfigs(Arrays.asList("php", "java"))
+      .build();
+
+    String json = writeTelemetryData(data);
+
+    assertJson(json).isSimilarTo("{" +
+      "  \"customSecurityConfig\": [\"php\", \"java\"]" +
+      "}");
+  }
+
   @DataProvider
   public static Object[][] allEditions() {
     return Arrays.stream(EditionProvider.Edition.values())
-      .map(t -> new Object[] {t})
+      .map(t -> new Object[]{t})
       .toArray(Object[][]::new);
   }
 

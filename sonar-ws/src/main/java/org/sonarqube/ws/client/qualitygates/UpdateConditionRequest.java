@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@ public class UpdateConditionRequest {
   private String id;
   private String metric;
   private String op;
-  private String organization;
 
   /**
    * Example value: "10"
@@ -91,15 +90,4 @@ public class UpdateConditionRequest {
     return op;
   }
 
-  /**
-   * Example value: "my-org"
-   */
-  public UpdateConditionRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
-  }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,6 +53,7 @@ import org.sonarqube.ws.client.WsResponse;
 import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,12 +96,22 @@ public class ReportPublisherTest {
   }
 
   @Test
+  public void use_30s_write_timeout() {
+    MockWsResponse submitMockResponse = new MockWsResponse();
+    submitMockResponse.setContent(Ce.SubmitResponse.newBuilder().setTaskId("task-1234").build().toByteArray());
+    when(wsClient.call(any())).thenReturn(submitMockResponse);
+
+    underTest.start();
+    underTest.execute();
+    
+    verify(wsClient).call(argThat(req -> req.getWriteTimeOutInMs().orElse(0) == 30_000));
+  }
+
+  @Test
   public void dump_information_about_report_uploading() throws IOException {
-    when(properties.organizationKey()).thenReturn(Optional.of("MyOrg"));
     underTest.prepareAndDumpMetadata("TASK-123");
 
     assertThat(readFileToString(properties.metadataFilePath().toFile(), StandardCharsets.UTF_8)).isEqualTo(
-      "organization=MyOrg\n" +
         "projectKey=org.sonarsource.sonarqube:sonarqube\n" +
         "serverUrl=https://localhost\n" +
         "serverVersion=6.4\n" +
@@ -249,8 +259,6 @@ public class ReportPublisherTest {
 
   @Test
   public void test_ws_parameters() throws Exception {
-    when(properties.organizationKey()).thenReturn(Optional.of("MyOrg"));
-
     WsResponse response = mock(WsResponse.class);
 
     PipedOutputStream out = new PipedOutputStream();
@@ -268,16 +276,12 @@ public class ReportPublisherTest {
     verify(wsClient).call(capture.capture());
 
     WsRequest wsRequest = capture.getValue();
-    assertThat(wsRequest.getParameters().getKeys()).containsOnly("organization", "projectKey");
-    assertThat(wsRequest.getParameters().getValue("organization")).isEqualTo("MyOrg");
+    assertThat(wsRequest.getParameters().getKeys()).containsOnly("projectKey");
     assertThat(wsRequest.getParameters().getValue("projectKey")).isEqualTo("org.sonarsource.sonarqube:sonarqube");
   }
 
   @Test
   public void test_send_branches_characteristics() throws Exception {
-    String orgName = "MyOrg";
-    when(properties.organizationKey()).thenReturn(Optional.of(orgName));
-
     String branchName = "feature";
     when(branchConfiguration.branchName()).thenReturn(branchName);
     when(branchConfiguration.branchType()).thenReturn(BRANCH);
@@ -299,8 +303,7 @@ public class ReportPublisherTest {
     verify(wsClient).call(capture.capture());
 
     WsRequest wsRequest = capture.getValue();
-    assertThat(wsRequest.getParameters().getKeys()).hasSize(3);
-    assertThat(wsRequest.getParameters().getValues("organization")).containsExactly(orgName);
+    assertThat(wsRequest.getParameters().getKeys()).hasSize(2);
     assertThat(wsRequest.getParameters().getValues("projectKey")).containsExactly("org.sonarsource.sonarqube:sonarqube");
     assertThat(wsRequest.getParameters().getValues("characteristic"))
       .containsExactlyInAnyOrder("branch=" + branchName, "branchType=" + BRANCH.name());
@@ -308,9 +311,6 @@ public class ReportPublisherTest {
 
   @Test
   public void send_pull_request_characteristic() throws Exception {
-    String orgName = "MyOrg";
-    when(properties.organizationKey()).thenReturn(Optional.of(orgName));
-
     String branchName = "feature";
     String pullRequestId = "pr-123";
     when(branchConfiguration.branchName()).thenReturn(branchName);
@@ -334,8 +334,7 @@ public class ReportPublisherTest {
     verify(wsClient).call(capture.capture());
 
     WsRequest wsRequest = capture.getValue();
-    assertThat(wsRequest.getParameters().getKeys()).hasSize(3);
-    assertThat(wsRequest.getParameters().getValues("organization")).containsExactly(orgName);
+    assertThat(wsRequest.getParameters().getKeys()).hasSize(2);
     assertThat(wsRequest.getParameters().getValues("projectKey")).containsExactly("org.sonarsource.sonarqube:sonarqube");
     assertThat(wsRequest.getParameters().getValues("characteristic"))
       .containsExactlyInAnyOrder("pullRequest=" + pullRequestId);

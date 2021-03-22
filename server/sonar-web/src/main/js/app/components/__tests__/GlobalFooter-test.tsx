@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { isSonarCloud } from '../../../helpers/system';
 import { EditionKey } from '../../../types/editions';
 import GlobalFooter from '../GlobalFooter';
 
@@ -45,12 +44,7 @@ it('should display the sq version', () => {
   ).toMatchSnapshot();
 });
 
-it('should render SonarCloud footer', () => {
-  expect(getWrapper({}, true)).toMatchSnapshot();
-});
-
-function getWrapper(props = {}, onSonarCloud = false) {
-  (isSonarCloud as jest.Mock).mockImplementation(() => onSonarCloud);
+function getWrapper(props = {}) {
   return shallow(
     <GlobalFooter productionDatabase={true} sonarqubeEdition={EditionKey.community} {...props} />
   );

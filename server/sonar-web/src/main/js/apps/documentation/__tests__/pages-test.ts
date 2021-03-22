@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -123,5 +123,5 @@ it('should not break the whole doc when one page cannot be parsed', () => {
 function getPages(overrides: T.Dict<ParsedContent> = {}) {
   // This allows the use of out-of-scope data inside jest.mock
   // Usually, it is impossible as jest.mock'ed module is hoisted on the top of the file
-  return require.requireActual('../pages').default(overrides);
+  return jest.requireActual('../pages').default(overrides);
 }

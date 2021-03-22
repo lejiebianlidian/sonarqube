@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +22,11 @@ import { translate } from 'sonar-ui-common/helpers/l10n';
 import { Update } from '../../../types/plugins';
 import PluginUpdateItem from './PluginUpdateItem';
 
-interface Props {
+export interface PluginUpdatesProps {
   updates?: Update[];
 }
 
-export default function PluginUpdates({ updates }: Props) {
+export default function PluginUpdates({ updates }: PluginUpdatesProps) {
   if (!updates || updates.length <= 0) {
     return null;
   }

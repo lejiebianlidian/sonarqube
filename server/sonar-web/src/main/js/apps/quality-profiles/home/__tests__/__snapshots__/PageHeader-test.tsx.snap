@@ -194,9 +194,19 @@ exports[`should show a create form 1`] = `
         },
       ]
     }
+    location={
+      Object {
+        "action": "PUSH",
+        "hash": "",
+        "key": "key",
+        "pathname": "/path",
+        "query": Object {},
+        "search": "",
+        "state": Object {},
+      }
+    }
     onClose={[Function]}
     onCreate={[Function]}
-    organization="foo"
     profiles={
       Array [
         Object {
@@ -211,7 +221,6 @@ exports[`should show a create form 1`] = `
           "language": "js",
           "languageName": "JavaScript",
           "name": "name",
-          "organization": "foo",
           "projectCount": 3,
         },
       ]
@@ -270,7 +279,6 @@ exports[`should show a restore form 1`] = `
   <RestoreProfileForm
     onClose={[Function]}
     onRestore={[MockFunction]}
-    organization="foo"
   />
 </header>
 `;

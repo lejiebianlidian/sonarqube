@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@ import org.sonar.ce.task.projectanalysis.component.ReferenceBranchComponentUuids
 import org.sonar.ce.task.projectanalysis.component.ReportModulesPath;
 import org.sonar.ce.task.projectanalysis.component.SiblingComponentsWithOpenIssues;
 import org.sonar.ce.task.projectanalysis.component.TreeRootHolderImpl;
-import org.sonar.ce.task.projectanalysis.dbmigration.DbMigrationModule;
 import org.sonar.ce.task.projectanalysis.duplication.CrossProjectDuplicationStatusHolderImpl;
 import org.sonar.ce.task.projectanalysis.duplication.DuplicationMeasures;
 import org.sonar.ce.task.projectanalysis.duplication.DuplicationRepositoryImpl;
@@ -61,7 +60,6 @@ import org.sonar.ce.task.projectanalysis.issue.DefaultAssignee;
 import org.sonar.ce.task.projectanalysis.issue.EffortAggregator;
 import org.sonar.ce.task.projectanalysis.issue.IntegrateIssuesVisitor;
 import org.sonar.ce.task.projectanalysis.issue.IssueAssigner;
-import org.sonar.ce.task.projectanalysis.issue.ProtoIssueCache;
 import org.sonar.ce.task.projectanalysis.issue.IssueCounter;
 import org.sonar.ce.task.projectanalysis.issue.IssueCreationDateCalculator;
 import org.sonar.ce.task.projectanalysis.issue.IssueLifecycle;
@@ -71,6 +69,8 @@ import org.sonar.ce.task.projectanalysis.issue.IssuesRepositoryVisitor;
 import org.sonar.ce.task.projectanalysis.issue.LoadComponentUuidsHavingOpenIssuesVisitor;
 import org.sonar.ce.task.projectanalysis.issue.MovedIssueVisitor;
 import org.sonar.ce.task.projectanalysis.issue.NewEffortAggregator;
+import org.sonar.ce.task.projectanalysis.issue.ProtoIssueCache;
+import org.sonar.ce.task.projectanalysis.issue.PullRequestSourceBranchMerger;
 import org.sonar.ce.task.projectanalysis.issue.PullRequestTrackerExecution;
 import org.sonar.ce.task.projectanalysis.issue.ReferenceBranchTrackerExecution;
 import org.sonar.ce.task.projectanalysis.issue.RemoveProcessedComponentsVisitor;
@@ -80,10 +80,14 @@ import org.sonar.ce.task.projectanalysis.issue.ScmAccountToUser;
 import org.sonar.ce.task.projectanalysis.issue.ScmAccountToUserLoader;
 import org.sonar.ce.task.projectanalysis.issue.SiblingsIssueMerger;
 import org.sonar.ce.task.projectanalysis.issue.SiblingsIssuesLoader;
+import org.sonar.ce.task.projectanalysis.issue.SourceBranchComponentUuids;
+import org.sonar.ce.task.projectanalysis.issue.TargetBranchComponentUuids;
 import org.sonar.ce.task.projectanalysis.issue.TrackerBaseInputFactory;
 import org.sonar.ce.task.projectanalysis.issue.TrackerExecution;
 import org.sonar.ce.task.projectanalysis.issue.TrackerRawInputFactory;
 import org.sonar.ce.task.projectanalysis.issue.TrackerReferenceBranchInputFactory;
+import org.sonar.ce.task.projectanalysis.issue.TrackerSourceBranchInputFactory;
+import org.sonar.ce.task.projectanalysis.issue.TrackerTargetBranchInputFactory;
 import org.sonar.ce.task.projectanalysis.issue.UpdateConflictResolver;
 import org.sonar.ce.task.projectanalysis.issue.commonrule.BranchCoverageRule;
 import org.sonar.ce.task.projectanalysis.issue.commonrule.CommentDensityRule;
@@ -100,7 +104,6 @@ import org.sonar.ce.task.projectanalysis.measure.MeasureRepositoryImpl;
 import org.sonar.ce.task.projectanalysis.measure.MeasureToMeasureDto;
 import org.sonar.ce.task.projectanalysis.metric.MetricModule;
 import org.sonar.ce.task.projectanalysis.notification.NotificationFactory;
-import org.sonar.ce.task.projectanalysis.organization.DefaultOrganizationLoader;
 import org.sonar.ce.task.projectanalysis.period.NewCodePeriodResolver;
 import org.sonar.ce.task.projectanalysis.period.PeriodHolderImpl;
 import org.sonar.ce.task.projectanalysis.qualitygate.EvaluationResultTextConverterImpl;
@@ -139,6 +142,7 @@ import org.sonar.ce.task.step.ComputationSteps;
 import org.sonar.ce.task.taskprocessor.MutableTaskResultHolderImpl;
 import org.sonar.core.issue.tracking.Tracker;
 import org.sonar.core.platform.ContainerPopulator;
+import org.sonar.server.setting.ProjectConfigurationLoaderImpl;
 import org.sonar.server.view.index.ViewIndex;
 
 public final class ProjectAnalysisTaskContainerPopulator implements ContainerPopulator<TaskContainer> {
@@ -156,7 +160,6 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
   public void populateContainer(TaskContainer container) {
     ComputationSteps steps = new ReportComputationSteps(container);
     container.add(SettingsLoader.class);
-    container.add(DefaultOrganizationLoader.class);
     container.add(task);
     container.add(steps);
     container.addSingletons(componentClasses());
@@ -172,6 +175,8 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
    */
   private static List<Object> componentClasses() {
     return Arrays.asList(
+      ProjectConfigurationLoaderImpl.class,
+
       PostProjectAnalysisTasksExecutor.class,
       ComputationStepExecutor.class,
 
@@ -182,7 +187,6 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
       // File System
       new ComputationTempFolderProvider(),
 
-      DbMigrationModule.class,
       ReportModulesPath.class,
       MetricModule.class,
 
@@ -271,15 +275,19 @@ public final class ProjectAnalysisTaskContainerPopulator implements ContainerPop
       NewSecurityReviewMeasuresVisitor.class,
       LastCommitVisitor.class,
       MeasureComputersVisitor.class,
-
+      TargetBranchComponentUuids.class,
       UpdateConflictResolver.class,
       TrackerBaseInputFactory.class,
+      TrackerTargetBranchInputFactory.class,
       TrackerRawInputFactory.class,
       TrackerReferenceBranchInputFactory.class,
+      TrackerSourceBranchInputFactory.class,
+      SourceBranchComponentUuids.class,
       ClosedIssuesInputFactory.class,
       Tracker.class,
       TrackerExecution.class,
       PullRequestTrackerExecution.class,
+      PullRequestSourceBranchMerger.class,
       ReferenceBranchTrackerExecution.class,
       ComponentIssuesLoader.class,
       BaseIssuesLoader.class,

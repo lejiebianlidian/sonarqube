@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,16 @@ function shallowRender(props: Partial<Props> = {}) {
       }}
       update={{
         previousUpdates: [
+          {
+            release: {
+              version: '0.11',
+              date: '2018-06-08',
+              description: 'Change version description',
+              changeLogUrl: 'https://my.change.log/url'
+            },
+            requires: [],
+            status: 'COMPATIBLE'
+          },
           {
             release: {
               version: '0.10',

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,11 +35,9 @@ import org.sonar.api.utils.Durations;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.es.EsTester;
-import org.sonar.server.es.StartupIndexer;
 import org.sonar.server.issue.AvatarResolverImpl;
 import org.sonar.server.issue.TextRangeResponseFormatter;
 import org.sonar.server.issue.TransitionService;
@@ -68,9 +66,8 @@ import static org.sonar.server.tester.UserSessionRule.standalone;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.FACET_MODE_EFFORT;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_COMPONENT_KEYS;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_COMPONENT_UUIDS;
-import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_FILE_UUIDS;
+import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_FILES;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_MODULE_UUIDS;
-import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_ORGANIZATION;
 import static org.sonarqube.ws.client.issue.IssuesWsParameters.PARAM_PROJECTS;
 
 public class SearchActionFacetsTest {
@@ -89,7 +86,7 @@ public class SearchActionFacetsTest {
 
   private IssueIndex issueIndex = new IssueIndex(es.client(), System2.INSTANCE, userSession, new WebAuthorizationTypeSupport(userSession));
   private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
-  private StartupIndexer permissionIndexer = new PermissionIndexer(db.getDbClient(), es.client(), issueIndexer);
+  private PermissionIndexer permissionIndexer = new PermissionIndexer(db.getDbClient(), es.client(), issueIndexer);
   private IssueQueryFactory issueQueryFactory = new IssueQueryFactory(db.getDbClient(), Clock.systemUTC(), userSession);
   private SearchResponseLoader searchResponseLoader = new SearchResponseLoader(userSession, db.getDbClient(), new TransitionService(userSession, null));
   private Languages languages = new Languages();
@@ -117,7 +114,7 @@ public class SearchActionFacetsTest {
 
     SearchWsResponse response = ws.newRequest()
       .setParam(PARAM_COMPONENT_KEYS, project.getKey())
-      .setParam(FACETS, "severities,statuses,resolutions,rules,types,languages,projects,moduleUuids,fileUuids,assignees")
+      .setParam(FACETS, "severities,statuses,resolutions,rules,types,languages,projects,moduleUuids,files,assignees")
       .executeProtobuf(SearchWsResponse.class);
 
     Map<String, Number> expectedStatuses = ImmutableMap.<String, Number>builder().put("OPEN", 1L).put("CONFIRMED", 0L)
@@ -134,7 +131,7 @@ public class SearchActionFacetsTest {
         tuple("languages", of(rule.getLanguage(), 1L)),
         tuple("projects", of(project.getKey(), 1L)),
         tuple("moduleUuids", of(module.uuid(), 1L)),
-        tuple("fileUuids", of(file.uuid(), 1L)),
+        tuple("files", of(file.path(), 1L)),
         tuple("assignees", of("", 0L, user.getLogin(), 1L)));
   }
 
@@ -154,7 +151,7 @@ public class SearchActionFacetsTest {
 
     SearchWsResponse response = ws.newRequest()
       .setParam(PARAM_COMPONENT_KEYS, project.getKey())
-      .setParam(FACETS, "severities,statuses,resolutions,rules,types,languages,projects,fileUuids,assignees")
+      .setParam(FACETS, "severities,statuses,resolutions,rules,types,languages,projects,files,assignees")
       .setParam("facetMode", FACET_MODE_EFFORT)
       .executeProtobuf(SearchWsResponse.class);
 
@@ -171,7 +168,7 @@ public class SearchActionFacetsTest {
         tuple("types", of("CODE_SMELL", 10L, "BUG", 0L, "VULNERABILITY", 0L)),
         tuple("languages", of(rule.getLanguage(), 10L)),
         tuple("projects", of(project.getKey(), 10L)),
-        tuple("fileUuids", of(file.uuid(), 10L)),
+        tuple("files", of(file.path(), 10L)),
         tuple("assignees", of("", 10L)));
   }
 
@@ -196,12 +193,9 @@ public class SearchActionFacetsTest {
 
   @Test
   public void projects_facet_is_sticky() {
-    OrganizationDto organization1 = db.organizations().insert();
-    OrganizationDto organization2 = db.organizations().insert();
-    OrganizationDto organization3 = db.organizations().insert();
-    ComponentDto project1 = db.components().insertPublicProject(organization1);
-    ComponentDto project2 = db.components().insertPublicProject(organization2);
-    ComponentDto project3 = db.components().insertPublicProject(organization3);
+    ComponentDto project1 = db.components().insertPublicProject();
+    ComponentDto project2 = db.components().insertPublicProject();
+    ComponentDto project3 = db.components().insertPublicProject();
     ComponentDto file1 = db.components().insertComponent(newFileDto(project1));
     ComponentDto file2 = db.components().insertComponent(newFileDto(project2));
     ComponentDto file3 = db.components().insertComponent(newFileDto(project3));
@@ -250,35 +244,7 @@ public class SearchActionFacetsTest {
   }
 
   @Test
-  public void display_module_facet_using_organization() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPublicProject(organization);
-    ComponentDto module = db.components().insertComponent(newModuleDto(project));
-    ComponentDto subModule1 = db.components().insertComponent(newModuleDto(module));
-    ComponentDto subModule2 = db.components().insertComponent(newModuleDto(module));
-    ComponentDto subModule3 = db.components().insertComponent(newModuleDto(module));
-    ComponentDto file1 = db.components().insertComponent(newFileDto(subModule1));
-    ComponentDto file2 = db.components().insertComponent(newFileDto(subModule2));
-    RuleDefinitionDto rule = db.rules().insertIssueRule();
-    db.issues().insertIssue(rule, project, file1);
-    db.issues().insertIssue(rule, project, file2);
-    indexPermissions();
-    indexIssues();
-
-    SearchWsResponse response = ws.newRequest()
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_COMPONENT_UUIDS, module.uuid())
-      .setParam(PARAM_MODULE_UUIDS, subModule1.uuid() + "," + subModule2.uuid())
-      .setParam(WebService.Param.FACETS, "moduleUuids")
-      .executeProtobuf(SearchWsResponse.class);
-
-    assertThat(response.getFacets().getFacetsList())
-      .extracting(Common.Facet::getProperty, facet -> facet.getValuesList().stream().collect(toMap(FacetValue::getVal, FacetValue::getCount)))
-      .containsExactlyInAnyOrder(tuple("moduleUuids", of(subModule1.uuid(), 1L, subModule2.uuid(), 1L)));
-  }
-
-  @Test
-  public void fail_to_display_module_facet_when_no_organization_or_project_is_set() {
+  public void fail_to_display_module_facet_when_no_project_is_set() {
     ComponentDto project = db.components().insertPublicProject();
     ComponentDto module = db.components().insertComponent(newModuleDto(project));
     ComponentDto file = db.components().insertComponent(newFileDto(module, null));
@@ -288,7 +254,7 @@ public class SearchActionFacetsTest {
     indexIssues();
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Facet(s) 'moduleUuids' require to also filter by project or organization");
+    expectedException.expectMessage("Facet(s) 'moduleUuids' require to also filter by project");
 
     ws.newRequest()
       .setParam(PARAM_COMPONENT_UUIDS, module.uuid())
@@ -318,29 +284,7 @@ public class SearchActionFacetsTest {
   }
 
   @Test
-  public void display_directory_facet_using_organization() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPublicProject(organization);
-    ComponentDto directory = db.components().insertComponent(newDirectory(project, "src/main/java/dir"));
-    ComponentDto file = db.components().insertComponent(newFileDto(project, directory));
-    RuleDefinitionDto rule = db.rules().insertIssueRule();
-    db.issues().insertIssue(rule, project, file);
-    indexPermissions();
-    indexIssues();
-
-    SearchWsResponse response = ws.newRequest()
-      .setParam("resolved", "false")
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(WebService.Param.FACETS, "directories")
-      .executeProtobuf(SearchWsResponse.class);
-
-    assertThat(response.getFacets().getFacetsList())
-      .extracting(Common.Facet::getProperty, facet -> facet.getValuesList().stream().collect(toMap(FacetValue::getVal, FacetValue::getCount)))
-      .containsExactlyInAnyOrder(tuple("directories", of(directory.path(), 1L)));
-  }
-
-  @Test
-  public void fail_to_display_directory_facet_when_no_organization_or_project_is_set() {
+  public void fail_to_display_directory_facet_when_no_project_is_set() {
     ComponentDto project = db.components().insertPublicProject();
     ComponentDto directory = db.components().insertComponent(newDirectory(project, "src"));
     ComponentDto file = db.components().insertComponent(newFileDto(project, directory));
@@ -350,7 +294,7 @@ public class SearchActionFacetsTest {
     indexIssues();
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Facet(s) 'directories' require to also filter by project or organization");
+    expectedException.expectMessage("Facet(s) 'directories' require to also filter by project");
 
     ws.newRequest()
       .setParam(WebService.Param.FACETS, "directories")
@@ -358,9 +302,8 @@ public class SearchActionFacetsTest {
   }
 
   @Test
-  public void display_fileUuids_facet_with_project() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPublicProject(organization);
+  public void display_files_facet_with_project() {
+    ComponentDto project = db.components().insertPublicProject();
     ComponentDto file1 = db.components().insertComponent(newFileDto(project));
     ComponentDto file2 = db.components().insertComponent(newFileDto(project));
     ComponentDto file3 = db.components().insertComponent(newFileDto(project));
@@ -372,41 +315,17 @@ public class SearchActionFacetsTest {
 
     SearchWsResponse response = ws.newRequest()
       .setParam(PARAM_COMPONENT_KEYS, project.getKey())
-      .setParam(PARAM_FILE_UUIDS, file1.uuid())
-      .setParam(WebService.Param.FACETS, "fileUuids")
+      .setParam(PARAM_FILES, file1.path())
+      .setParam(WebService.Param.FACETS, "files")
       .executeProtobuf(SearchWsResponse.class);
 
     assertThat(response.getFacets().getFacetsList())
       .extracting(Common.Facet::getProperty, facet -> facet.getValuesList().stream().collect(toMap(FacetValue::getVal, FacetValue::getCount)))
-      .containsExactlyInAnyOrder(tuple("fileUuids", of(file1.uuid(), 1L, file2.uuid(), 1L)));
+      .containsExactlyInAnyOrder(tuple("files", of(file1.path(), 1L, file2.path(), 1L)));
   }
 
   @Test
-  public void display_fileUuids_facet_with_organization() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPublicProject(organization);
-    ComponentDto file1 = db.components().insertComponent(newFileDto(project));
-    ComponentDto file2 = db.components().insertComponent(newFileDto(project));
-    ComponentDto file3 = db.components().insertComponent(newFileDto(project));
-    RuleDefinitionDto rule = db.rules().insertIssueRule();
-    db.issues().insertIssue(rule, project, file1);
-    db.issues().insertIssue(rule, project, file2);
-    indexPermissions();
-    indexIssues();
-
-    SearchWsResponse response = ws.newRequest()
-      .setParam(PARAM_ORGANIZATION, organization.getKey())
-      .setParam(PARAM_FILE_UUIDS, file1.uuid())
-      .setParam(WebService.Param.FACETS, "fileUuids")
-      .executeProtobuf(SearchWsResponse.class);
-
-    assertThat(response.getFacets().getFacetsList())
-      .extracting(Common.Facet::getProperty, facet -> facet.getValuesList().stream().collect(toMap(FacetValue::getVal, FacetValue::getCount)))
-      .containsExactlyInAnyOrder(tuple("fileUuids", of(file1.uuid(), 1L, file2.uuid(), 1L)));
-  }
-
-  @Test
-  public void fail_to_display_fileUuids_facet_when_no_organization_or_project_is_set() {
+  public void fail_to_display_fileUuids_facet_when_no_project_is_set() {
     ComponentDto project = db.components().insertPublicProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project));
     RuleDefinitionDto rule = db.rules().insertIssueRule();
@@ -415,11 +334,11 @@ public class SearchActionFacetsTest {
     indexIssues();
 
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Facet(s) 'fileUuids' require to also filter by project or organization");
+    expectedException.expectMessage("Facet(s) 'files' require to also filter by project");
 
     ws.newRequest()
-      .setParam(PARAM_FILE_UUIDS, file.uuid())
-      .setParam(WebService.Param.FACETS, "fileUuids")
+      .setParam(PARAM_FILES, file.path())
+      .setParam(WebService.Param.FACETS, "files")
       .execute();
   }
 
@@ -457,13 +376,13 @@ public class SearchActionFacetsTest {
 
     SearchWsResponse response = ws.newRequest()
       .setParam(PARAM_COMPONENT_KEYS, project.getKey())
-      .setParam(FACETS, "fileUuids,directories,moduleUuids,statuses,resolutions,severities,types,rules,languages,assignees")
+      .setParam(FACETS, "files,directories,moduleUuids,statuses,resolutions,severities,types,rules,languages,assignees")
       .executeProtobuf(SearchWsResponse.class);
 
     assertThat(response.getFacets().getFacetsList())
       .extracting(Common.Facet::getProperty, Common.Facet::getValuesCount)
       .containsExactlyInAnyOrder(
-        tuple("fileUuids", 100),
+        tuple("files", 100),
         tuple("directories", 100),
         tuple("moduleUuids", 100),
         tuple("rules", 100),
@@ -521,12 +440,12 @@ public class SearchActionFacetsTest {
     SearchWsResponse response = ws.newRequest()
       .setParam(PARAM_PROJECTS, project1.getKey() + "," + project2.getKey())
       .setParam(PARAM_MODULE_UUIDS, module1.uuid() + "," + module2.uuid())
-      .setParam(PARAM_FILE_UUIDS, file1.uuid() + "," + file2.uuid())
+      .setParam(PARAM_FILES, file1.path() + "," + file2.path())
       .setParam("rules", rule1.getKey().toString() + "," + rule2.getKey().toString())
       .setParam("severities", "MAJOR,MINOR")
       .setParam("languages", rule1.getLanguage() + "," + rule2.getLanguage())
       .setParam("assignees", user1.getLogin() + "," + user2.getLogin())
-      .setParam(FACETS, "severities,statuses,resolutions,rules,types,languages,projects,moduleUuids,fileUuids,assignees")
+      .setParam(FACETS, "severities,statuses,resolutions,rules,types,languages,projects,moduleUuids,files,assignees")
       .executeProtobuf(SearchWsResponse.class);
 
     Map<String, Number> expectedStatuses = ImmutableMap.<String, Number>builder().put("OPEN", 1L).put("CONFIRMED", 0L)
@@ -543,7 +462,7 @@ public class SearchActionFacetsTest {
         tuple("languages", of(rule1.getLanguage(), 1L, rule2.getLanguage(), 0L)),
         tuple("projects", of(project1.getKey(), 1L, project2.getKey(), 0L)),
         tuple("moduleUuids", of(module1.uuid(), 1L, module2.uuid(), 0L)),
-        tuple("fileUuids", of(file1.uuid(), 1L, file2.uuid(), 0L)),
+        tuple("files", of(file1.path(), 1L, file2.path(), 0L)),
         tuple("assignees", of("", 0L, user1.getLogin(), 1L, user2.getLogin(), 0L)));
   }
 
@@ -592,7 +511,7 @@ public class SearchActionFacetsTest {
   }
 
   private void indexPermissions() {
-    permissionIndexer.indexOnStartup(permissionIndexer.getIndexTypes());
+    permissionIndexer.indexAll(permissionIndexer.getIndexTypes());
   }
 
   private void indexIssues() {

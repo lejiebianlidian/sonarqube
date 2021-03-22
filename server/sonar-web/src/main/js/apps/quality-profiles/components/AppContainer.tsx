@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,14 +18,11 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { connect } from 'react-redux';
-import { getLanguages, getOrganizationByKey, Store } from '../../../store/rootReducer';
+import { getLanguages, Store } from '../../../store/rootReducer';
 import App from './App';
 
-const mapStateToProps = (state: Store, ownProps: any) => ({
-  languages: getLanguages(state),
-  organization: ownProps.params.organizationKey
-    ? getOrganizationByKey(state, ownProps.params.organizationKey)
-    : undefined
+const mapStateToProps = (state: Store) => ({
+  languages: getLanguages(state)
 });
 
 export default connect(mapStateToProps)(App);

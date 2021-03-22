@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,6 @@ public class IndexIssuesStepTest {
 
   private CeTask.Component component = new CeTask.Component(BRANCH_UUID, "component key", "component name");
   private CeTask ceTask = new CeTask.Builder()
-    .setOrganizationUuid("organizationUuid")
     .setType("type")
     .setUuid("uuid")
     .setComponent(component)
@@ -106,7 +105,6 @@ public class IndexIssuesStepTest {
   @Test
   public void fail_if_missing_component_in_task() {
     CeTask ceTask = new CeTask.Builder()
-      .setOrganizationUuid("organizationUuid")
       .setType("type")
       .setUuid("uuid")
       .setComponent(null)

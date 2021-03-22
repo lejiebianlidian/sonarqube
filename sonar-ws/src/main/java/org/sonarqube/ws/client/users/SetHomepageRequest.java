@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,6 @@ public class SetHomepageRequest {
    * Possible values:
    * <ul>
    *   <li>"PROJECT"</li>
-   *   <li>"ORGANIZATION"</li>
    *   <li>"MY_PROJECTS"</li>
    *   <li>"MY_ISSUES"</li>
    * </ul>

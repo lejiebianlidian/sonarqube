@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -68,13 +68,13 @@ public class RuleParamTypeTest {
     assertThat(selectList.multiple()).isFalse();
     assertThat(selectList.toString()).isEqualTo("SINGLE_SELECT_LIST,values=\"foo,bar,\"");
 
-    RuleParamType.parse("SINGLE_SELECT_LIST,values=\"foo,bar\",multiple=false");
+    selectList = RuleParamType.parse("SINGLE_SELECT_LIST,values=\"foo,bar\",multiple=false");
     assertThat(selectList.type()).isEqualTo("SINGLE_SELECT_LIST");
     assertThat(selectList.values()).containsOnly("foo", "bar");
     assertThat(selectList.multiple()).isFalse();
     assertThat(selectList.toString()).isEqualTo("SINGLE_SELECT_LIST,values=\"foo,bar,\"");
 
-    RuleParamType.parse("SINGLE_SELECT_LIST,\"values=foo,bar\",\"multiple=false\"");
+    selectList = RuleParamType.parse("SINGLE_SELECT_LIST,\"values=foo,bar\",multiple=false");
     assertThat(selectList.type()).isEqualTo("SINGLE_SELECT_LIST");
     assertThat(selectList.values()).containsOnly("foo", "bar");
     assertThat(selectList.multiple()).isFalse();
@@ -96,7 +96,7 @@ public class RuleParamTypeTest {
     assertThat(selectList.multiple()).isTrue();
     assertThat(selectList.toString()).isEqualTo("SINGLE_SELECT_LIST,multiple=true,values=\"foo,bar,\"");
 
-    RuleParamType.parse("SINGLE_SELECT_LIST,\"values=foo,bar\",\"multiple=true\"");
+    selectList = RuleParamType.parse("SINGLE_SELECT_LIST,\"values=foo,bar\",multiple=true");
     assertThat(selectList.type()).isEqualTo("SINGLE_SELECT_LIST");
     assertThat(selectList.values()).containsOnly("foo", "bar");
     assertThat(selectList.multiple()).isTrue();

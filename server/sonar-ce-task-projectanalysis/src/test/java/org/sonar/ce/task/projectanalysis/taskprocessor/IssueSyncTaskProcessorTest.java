@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,13 +47,12 @@ public class IssueSyncTaskProcessorTest {
   @Test
   public void newContainerPopulator() {
     CeTask task = new CeTask.Builder()
-      .setOrganizationUuid("ORGANIZATION_UUID")
       .setUuid("TASK_UUID")
       .setType("Type")
       .build();
 
     IssueSyncTaskProcessor.newContainerPopulator(task).populateContainer(container);
-    Mockito.verify(container, Mockito.times(4)).add(any());
+    Mockito.verify(container, Mockito.times(5)).add(any());
   }
 
   @Test
@@ -62,7 +61,7 @@ public class IssueSyncTaskProcessorTest {
 
     List<Class<? extends ComputationStep>> steps = syncComputationSteps.orderedStepClasses();
 
-    Assertions.assertThat(steps).containsExactly(IndexIssuesStep.class);
+    Assertions.assertThat(steps).containsExactly(IgnoreOrphanBranchStep.class, IndexIssuesStep.class);
   }
 
 }

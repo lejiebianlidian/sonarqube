@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,15 +24,19 @@ import { translate } from 'sonar-ui-common/helpers/l10n';
 export interface SentenceWithHighlightsProps {
   highlightKeys: string[];
   translationKey: string;
+  highlightPrefixKeys?: string;
 }
 
 export default function SentenceWithHighlights({
   highlightKeys,
-  translationKey
+  translationKey,
+  highlightPrefixKeys
 }: SentenceWithHighlightsProps) {
   const values: T.Dict<JSX.Element> = {};
+
+  const transhighlightPrefixKeys = highlightPrefixKeys || translationKey;
   highlightKeys.forEach(key => {
-    values[key] = <strong>{translate(translationKey, 'sentence', key)}</strong>;
+    values[key] = <strong>{translate(transhighlightPrefixKeys, 'sentence', key)}</strong>;
   });
   return (
     <FormattedMessage

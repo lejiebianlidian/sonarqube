@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { debounce, uniq } from 'lodash';
+import { debounce } from 'lodash';
 import * as React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { connect } from 'react-redux';
 import { toShortNotSoISOString } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { parseAsDate } from 'sonar-ui-common/helpers/query';
@@ -33,9 +32,9 @@ import {
 } from '../../../api/ce';
 import Suggestions from '../../../app/components/embed-docs-modal/Suggestions';
 import { Location, Router } from '../../../components/hoc/withRouter';
-import { fetchOrganizations } from '../../../store/rootActions';
+import { Task, TaskStatuses } from '../../../types/tasks';
 import '../background-tasks.css';
-import { CURRENTS, DEBOUNCE_DELAY, DEFAULT_FILTERS, STATUSES } from '../constants';
+import { CURRENTS, DEBOUNCE_DELAY, DEFAULT_FILTERS } from '../constants';
 import { mapFiltersToParameters, Query, updateTask } from '../utils';
 import Footer from './Footer';
 import Header from './Header';
@@ -45,7 +44,6 @@ import Tasks from './Tasks';
 
 interface Props {
   component?: Pick<T.Component, 'key'> & { id: string }; // id should be removed when api/ce/activity accept a component key instead of an id
-  fetchOrganizations: (keys: string[]) => void;
   location: Location;
   router: Pick<Router, 'push'>;
 }
@@ -55,11 +53,11 @@ interface State {
   loading: boolean;
   pendingCount: number;
   pendingTime?: number;
-  tasks: T.Task[];
+  tasks: Task[];
   types?: string[];
 }
 
-export class BackgroundTasksApp extends React.PureComponent<Props, State> {
+export default class BackgroundTasksApp extends React.PureComponent<Props, State> {
   loadTasksDebounced: () => void;
   mounted = false;
 
@@ -115,15 +113,12 @@ export class BackgroundTasksApp extends React.PureComponent<Props, State> {
     const parameters = mapFiltersToParameters(filters);
 
     if (this.props.component) {
-      parameters.componentId = this.props.component.id;
+      parameters.component = this.props.component.key;
     }
 
-    Promise.all([getActivity(parameters), getStatus(parameters.componentId)]).then(
+    Promise.all([getActivity(parameters), getStatus(parameters.component)]).then(
       ([{ tasks }, status]) => {
         if (this.mounted) {
-          const organizations = uniq(tasks.map(task => task.organization).filter(o => o));
-          this.props.fetchOrganizations(organizations);
-
           this.setState({
             failingCount: status.failing,
             loading: false,
@@ -161,7 +156,7 @@ export class BackgroundTasksApp extends React.PureComponent<Props, State> {
     });
   };
 
-  handleCancelTask = (task: T.Task) => {
+  handleCancelTask = (task: Task) => {
     this.setState({ loading: true });
 
     return cancelTaskAPI(task.id).then(nextTask => {
@@ -174,14 +169,14 @@ export class BackgroundTasksApp extends React.PureComponent<Props, State> {
     }, this.stopLoading);
   };
 
-  handleFilterTask = (task: T.Task) => {
+  handleFilterTask = (task: Task) => {
     this.handleFilterUpdate({ query: task.componentKey });
   };
 
   handleShowFailing = () => {
     this.handleFilterUpdate({
       ...DEFAULT_FILTERS,
-      status: STATUSES.FAILED,
+      status: TaskStatuses.Failed,
       currents: CURRENTS.ONLY_CURRENTS
     });
   };
@@ -257,7 +252,3 @@ export class BackgroundTasksApp extends React.PureComponent<Props, State> {
     );
   }
 }
-
-const mapDispatchToProps = { fetchOrganizations };
-
-export default connect(null, mapDispatchToProps)(BackgroundTasksApp);

@@ -15,7 +15,7 @@ exports[`should render correctly 1`] = `
     className="page page-limited huge-spacer-bottom position-relative"
     id="create-project"
   >
-    <CreateProjectModeSelection
+    <Connect(withAppState(CreateProjectModeSelection))
       almCounts={
         Object {
           "azure": 0,
@@ -31,7 +31,7 @@ exports[`should render correctly 1`] = `
 </Fragment>
 `;
 
-exports[`should render correctly if no branch support 1`] = `
+exports[`should render correctly if the Azure method is selected 1`] = `
 <Fragment>
   <Helmet
     defer={true}
@@ -46,8 +46,37 @@ exports[`should render correctly if no branch support 1`] = `
     className="page page-limited huge-spacer-bottom position-relative"
     id="create-project"
   >
-    <ManualProjectCreate
+    <AzureProjectCreate
+      canAdmin={false}
+      loadingBindings={true}
+      location={
+        Object {
+          "action": "PUSH",
+          "hash": "",
+          "key": "key",
+          "pathname": "/path",
+          "query": Object {
+            "mode": "azure",
+          },
+          "search": "",
+          "state": Object {},
+        }
+      }
       onProjectCreate={[Function]}
+      router={
+        Object {
+          "createHref": [MockFunction],
+          "createPath": [MockFunction],
+          "go": [MockFunction],
+          "goBack": [MockFunction],
+          "goForward": [MockFunction],
+          "isActive": [MockFunction],
+          "push": [MockFunction],
+          "replace": [MockFunction],
+          "setRouteLeaveHook": [MockFunction],
+        }
+      }
+      settings={Array []}
     />
   </div>
 </Fragment>
@@ -117,6 +146,57 @@ exports[`should render correctly if the GitHub method is selected 1`] = `
           "pathname": "/path",
           "query": Object {
             "mode": "github",
+          },
+          "search": "",
+          "state": Object {},
+        }
+      }
+      onProjectCreate={[Function]}
+      router={
+        Object {
+          "createHref": [MockFunction],
+          "createPath": [MockFunction],
+          "go": [MockFunction],
+          "goBack": [MockFunction],
+          "goForward": [MockFunction],
+          "isActive": [MockFunction],
+          "push": [MockFunction],
+          "replace": [MockFunction],
+          "setRouteLeaveHook": [MockFunction],
+        }
+      }
+      settings={Array []}
+    />
+  </div>
+</Fragment>
+`;
+
+exports[`should render correctly if the GitLab method is selected 1`] = `
+<Fragment>
+  <Helmet
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="my_account.create_new.TRK"
+    titleTemplate="%s"
+  />
+  <A11ySkipTarget
+    anchor="create_project_main"
+  />
+  <div
+    className="page page-limited huge-spacer-bottom position-relative"
+    id="create-project"
+  >
+    <GitlabProjectCreate
+      canAdmin={false}
+      loadingBindings={true}
+      location={
+        Object {
+          "action": "PUSH",
+          "hash": "",
+          "key": "key",
+          "pathname": "/path",
+          "query": Object {
+            "mode": "gitlab",
           },
           "search": "",
           "state": Object {},

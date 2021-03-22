@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -406,15 +406,6 @@ public class RuleDto {
     if (updatedAt != null && updatedAt > definition.getUpdatedAt()) {
       setUpdatedAt(updatedAt);
     }
-  }
-
-  public String getOrganizationUuid() {
-    return metadata.getOrganizationUuid();
-  }
-
-  public RuleDto setOrganizationUuid(String organizationUuid) {
-    metadata.setOrganizationUuid(organizationUuid);
-    return this;
   }
 
   @CheckForNull

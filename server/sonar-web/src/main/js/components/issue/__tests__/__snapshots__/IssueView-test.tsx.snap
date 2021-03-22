@@ -5,8 +5,7 @@ exports[`should render hotspots correctly 1`] = `
   className="issue hotspot selected"
   data-issue="AVsae-CQS-9G3txfbFN2"
   onClick={[Function]}
-  role="listitem"
-  tabIndex={0}
+  role="group"
 >
   <IssueTitleBar
     issue={
@@ -22,11 +21,9 @@ exports[`should render hotspots correctly 1`] = `
         "key": "AVsae-CQS-9G3txfbFN2",
         "line": 25,
         "message": "Reduce the number of conditional operators (4) used in the expression",
-        "organization": "myorg",
         "project": "myproject",
         "projectKey": "foo",
         "projectName": "Foo",
-        "projectOrganization": "org",
         "rule": "javascript:S1067",
         "ruleName": "foo",
         "secondaryLocations": Array [],
@@ -58,11 +55,9 @@ exports[`should render hotspots correctly 1`] = `
         "key": "AVsae-CQS-9G3txfbFN2",
         "line": 25,
         "message": "Reduce the number of conditional operators (4) used in the expression",
-        "organization": "myorg",
         "project": "myproject",
         "projectKey": "foo",
         "projectName": "Foo",
-        "projectOrganization": "org",
         "rule": "javascript:S1067",
         "ruleName": "foo",
         "secondaryLocations": Array [],
@@ -90,8 +85,7 @@ exports[`should render issues correctly 1`] = `
   className="issue selected"
   data-issue="AVsae-CQS-9G3txfbFN2"
   onClick={[Function]}
-  role="listitem"
-  tabIndex={0}
+  role="group"
 >
   <IssueTitleBar
     issue={
@@ -121,11 +115,9 @@ exports[`should render issues correctly 1`] = `
         "key": "AVsae-CQS-9G3txfbFN2",
         "line": 25,
         "message": "Reduce the number of conditional operators (4) used in the expression",
-        "organization": "myorg",
         "project": "myproject",
         "projectKey": "foo",
         "projectName": "Foo",
-        "projectOrganization": "org",
         "rule": "javascript:S1067",
         "ruleName": "foo",
         "secondaryLocations": Array [],
@@ -171,11 +163,9 @@ exports[`should render issues correctly 1`] = `
         "key": "AVsae-CQS-9G3txfbFN2",
         "line": 25,
         "message": "Reduce the number of conditional operators (4) used in the expression",
-        "organization": "myorg",
         "project": "myproject",
         "projectKey": "foo",
         "projectName": "Foo",
-        "projectOrganization": "org",
         "rule": "javascript:S1067",
         "ruleName": "foo",
         "secondaryLocations": Array [],

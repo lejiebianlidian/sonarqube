@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ import { addSideBarClass, removeSideBarClass } from 'sonar-ui-common/helpers/pag
 import { request } from 'sonar-ui-common/helpers/request';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { isSonarCloud } from '../../../../helpers/system';
+import { InstalledPlugin } from '../../../../types/plugins';
 import getPages from '../../pages';
 import App from '../App';
 
@@ -83,7 +84,7 @@ jest.mock('sonar-ui-common/helpers/pages', () => ({
 }));
 
 jest.mock('sonar-ui-common/helpers/request', () => {
-  const { mockDocumentationMarkdown } = require.requireActual('../../../../helpers/testMocks');
+  const { mockDocumentationMarkdown } = jest.requireActual('../../../../helpers/testMocks');
   return {
     request: jest.fn(() => ({
       submit: jest.fn().mockResolvedValue({
@@ -95,7 +96,7 @@ jest.mock('sonar-ui-common/helpers/request', () => {
 });
 
 jest.mock('../../pages', () => {
-  const { mockDocumentationEntry } = require.requireActual('../../../../helpers/testMocks');
+  const { mockDocumentationEntry } = jest.requireActual('../../../../helpers/testMocks');
   return {
     default: jest
       .fn()
@@ -108,10 +109,14 @@ jest.mock('../../pages', () => {
 
 jest.mock('../../../../api/plugins', () => ({
   getInstalledPlugins: jest.fn().mockResolvedValue([
-    { key: 'csharp', documentationPath: 'static/documentation.md' },
+    {
+      key: 'csharp',
+      documentationPath: 'static/documentation.md',
+      issueTrackerUrl: 'csharp_plugin_issue_tracker_url'
+    },
     { key: 'vbnet', documentationPath: 'Sstatic/documentation.md' },
     { key: 'vbnett', documentationPath: undefined }
-  ])
+  ] as InstalledPlugin[])
 }));
 
 beforeEach(() => {
@@ -158,6 +163,17 @@ it('should try to fetch language plugin documentation if documentationPath match
       'analysis/languages/csharp': expect.any(Object)
     })
   );
+});
+
+it('should display the issue tracker url of the plugin if it exists', async () => {
+  (isSonarCloud as jest.Mock).mockReturnValue(false);
+
+  const wrapper = shallowRender({ params: { splat: 'analysis/languages/csharp/' } });
+  await waitAndUpdate(wrapper);
+
+  const { content } = (getPages as jest.Mock).mock.calls[0][0]['analysis/languages/csharp'];
+
+  expect(content).toContain('csharp_plugin_issue_tracker_url');
 });
 
 function shallowRender(props: Partial<App['props']> = {}) {

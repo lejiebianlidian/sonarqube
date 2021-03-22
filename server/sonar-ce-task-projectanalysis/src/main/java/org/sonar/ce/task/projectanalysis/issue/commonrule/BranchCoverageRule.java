@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +40,6 @@ public class BranchCoverageRule extends AbstractCoverageRule {
   @Override
   protected String formatMessage(int effortToFix, double minCoverage) {
     // FIXME declare min threshold as int but not float ?
-    return format("%d more branches need to be covered by tests to reach the minimum threshold of %s%% branch coverage.", effortToFix, minCoverage);
+    return format("%d more conditions need to be covered by tests to reach the minimum threshold of %s%% condition coverage.", effortToFix, minCoverage);
   }
 }

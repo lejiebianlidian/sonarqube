@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ public class OAuthCsrfVerifierTest {
     assertThat(updatedCookie.getName()).isEqualTo("OAUTHSTATE");
     assertThat(updatedCookie.getValue()).isNull();
     assertThat(updatedCookie.getPath()).isEqualTo("/");
-    assertThat(updatedCookie.getMaxAge()).isEqualTo(0);
+    assertThat(updatedCookie.getMaxAge()).isZero();
   }
 
   @Test
@@ -99,7 +99,7 @@ public class OAuthCsrfVerifierTest {
     assertThat(updatedCookie.getName()).isEqualTo("OAUTHSTATE");
     assertThat(updatedCookie.getValue()).isNull();
     assertThat(updatedCookie.getPath()).isEqualTo("/");
-    assertThat(updatedCookie.getMaxAge()).isEqualTo(0);
+    assertThat(updatedCookie.getMaxAge()).isZero();
   }
 
   @Test

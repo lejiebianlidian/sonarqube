@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,6 @@ import static org.sonar.api.server.ws.WebService.Param.TEXT_QUERY;
 import static org.sonar.api.utils.DateUtils.formatDateTime;
 import static org.sonar.api.utils.Paging.forPageIndex;
 import static org.sonar.core.util.stream.MoreCollectors.toList;
-import static org.sonar.server.es.SearchOptions.MAX_LIMIT;
 import static org.sonar.server.ws.WsUtils.writeProtobuf;
 import static org.sonarqube.ws.Users.SearchWsResponse.Groups;
 import static org.sonarqube.ws.Users.SearchWsResponse.ScmAccounts;
@@ -101,7 +100,7 @@ public class SearchAction implements UsersWsAction {
       .setHandler(this)
       .setResponseExample(getClass().getResource("search-example.json"));
 
-    action.addPagingParams(50, MAX_LIMIT);
+    action.addPagingParams(50, SearchOptions.MAX_PAGE_SIZE);
 
     action.createParam(TEXT_QUERY)
       .setMinimumLength(2)

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ public class PopulateNewCodePeriodTableTest {
     insertProperty(0, "2019-04-05");
 
     underTest.execute();
-    assertThat(dbTester.countRowsOfTable(NEW_CODE_PERIODS_TABLE_NAME)).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable(NEW_CODE_PERIODS_TABLE_NAME)).isZero();
   }
 
   @Test
@@ -82,7 +82,7 @@ public class PopulateNewCodePeriodTableTest {
     insertProperty(null, "2.0");
 
     underTest.execute();
-    assertThat(dbTester.countRowsOfTable(NEW_CODE_PERIODS_TABLE_NAME)).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable(NEW_CODE_PERIODS_TABLE_NAME)).isZero();
   }
 
   @Test

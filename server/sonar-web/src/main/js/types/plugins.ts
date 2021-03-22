@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 export interface Plugin {
   key: string;
   name: string;
@@ -50,6 +49,7 @@ export interface PendingPlugin extends Plugin {
 
 export interface InstalledPlugin extends PendingPlugin {
   documentationPath?: string;
+  issueTrackerUrl?: string;
   filename: string;
   hash: string;
   sonarLintSupported: boolean;
@@ -69,6 +69,11 @@ export interface Update {
   release?: Release;
   requires: Plugin[];
   previousUpdates?: Update[];
+}
+
+export enum PluginType {
+  Bundled = 'BUNDLED',
+  External = 'EXTERNAL'
 }
 
 export function isAvailablePlugin(plugin: Plugin): plugin is AvailablePlugin {

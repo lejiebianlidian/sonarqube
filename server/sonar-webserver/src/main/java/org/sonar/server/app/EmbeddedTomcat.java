@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +19,15 @@
  */
 package org.sonar.server.app;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.google.common.base.Throwables;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.process.Props;
 
@@ -58,11 +61,16 @@ class EmbeddedTomcat {
     tomcat.getHost().setAutoDeploy(false);
     tomcat.getHost().setCreateDirs(false);
     tomcat.getHost().setDeployOnStartup(true);
+    new TomcatErrorHandling().configure(tomcat);
     new TomcatAccessLog().configure(tomcat, props);
     TomcatConnectors.configure(tomcat, props);
     webappContext = new TomcatContexts().configure(tomcat, props);
     try {
+      // let Tomcat temporarily log errors at start up - for example, port in use
+      Logger logger = (Logger) LoggerFactory.getLogger("org.apache.catalina.core.StandardService");
+      logger.setLevel(Level.ERROR);
       tomcat.start();
+      logger.setLevel(Level.OFF);
       new TomcatStartupLogs(Loggers.get(getClass())).log(tomcat);
     } catch (LifecycleException e) {
       Loggers.get(EmbeddedTomcat.class).error("Fail to start web server", e);

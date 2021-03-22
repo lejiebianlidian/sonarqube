@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -53,8 +53,6 @@ import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
 import org.sonar.server.issue.notification.IssuesChangesNotificationSerializer;
 import org.sonar.server.notification.NotificationManager;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.rule.DefaultRuleFinder;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ws.TestRequest;
@@ -86,7 +84,6 @@ public class SetTagsActionTest {
 
   private System2 system2 = mock(System2.class);
   private DbClient dbClient = db.getDbClient();
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
   private OperationResponseWriter responseWriter = mock(OperationResponseWriter.class);
   private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient), null);
   private ArgumentCaptor<SearchResponseData> preloadedSearchResponseDataCaptor = ArgumentCaptor.forClass(SearchResponseData.class);
@@ -95,8 +92,9 @@ public class SetTagsActionTest {
 
   private WsActionTester ws = new WsActionTester(new SetTagsAction(userSession, dbClient, new IssueFinder(dbClient, userSession), new IssueFieldsSetter(),
     new IssueUpdater(dbClient,
-      new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(dbClient, defaultOrganizationProvider), issueIndexer, new SequenceUuidFactory()),
-      mock(NotificationManager.class), issueChangePostProcessor, issuesChangesSerializer), responseWriter));
+      new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(dbClient), issueIndexer, new SequenceUuidFactory()),
+      mock(NotificationManager.class), issueChangePostProcessor, issuesChangesSerializer),
+    responseWriter));
 
   @Test
   public void set_tags() {
@@ -133,17 +131,6 @@ public class SetTagsActionTest {
 
     IssueDto issueReloaded = dbClient.issueDao().selectByKey(db.getSession(), issueDto.getKey()).get();
     assertThat(issueReloaded.getTags()).isEmpty();
-  }
-
-  @Test
-  public void set_tags_using_deprecated_key_param() {
-    IssueDto issueDto = insertIssueForPublicProject(i -> i.setTags(singletonList("old-tag")));
-    logIn(issueDto);
-
-    ws.newRequest().setParam("key", issueDto.getKey()).setParam("tags", "bug").execute();
-
-    IssueDto issueReloaded = dbClient.issueDao().selectByKey(db.getSession(), issueDto.getKey()).get();
-    assertThat(issueReloaded.getTags()).containsOnly("bug");
   }
 
   @Test
@@ -213,7 +200,7 @@ public class SetTagsActionTest {
   @Test
   public void fail_when_security_hotspot() {
     RuleDefinitionDto rule = db.rules().insertHotspotRule();
-    ComponentDto project = db.components().insertPublicProject(newPublicProjectDto(db.getDefaultOrganization()));
+    ComponentDto project = db.components().insertPublicProject(newPublicProjectDto());
     ComponentDto file = db.components().insertComponent(newFileDto(project));
     IssueDto issueDto = db.issues().insertHotspot(rule, project, file);
     logIn(issueDto);
@@ -246,7 +233,7 @@ public class SetTagsActionTest {
   @SafeVarargs
   private final IssueDto insertIssueForPublicProject(Consumer<IssueDto>... consumers) {
     RuleDefinitionDto rule = db.rules().insertIssueRule();
-    ComponentDto project = db.components().insertPublicProject(newPublicProjectDto(db.getDefaultOrganization()));
+    ComponentDto project = db.components().insertPublicProject(newPublicProjectDto());
     ComponentDto file = db.components().insertComponent(newFileDto(project));
     return db.issues().insertIssue(rule, project, file, consumers);
   }

@@ -28,6 +28,7 @@ option optimize_for = SPEED;
 
 // Response of GET api/issues/search
 message SearchWsResponse {
+  reserved 5;
   optional int64 total = 1;
   optional int64 p = 2;
   optional int32 ps = 3;
@@ -35,8 +36,6 @@ message SearchWsResponse {
 
   // Total amount of effort, only when the facet "total" is enabled
   optional int64 effortTotal = 13;
-  // Deprecated since 5.5, replaced by effortTotal
-  optional int64 debtTotal = 5;
 
   repeated Issue issues = 6;
   repeated Component components = 7;
@@ -102,6 +101,8 @@ message TagsResponse {
 }
 
 message Issue {
+  reserved 29; //drop organization
+
   optional string key = 1;
   optional string rule = 2;
   optional sonarqube.ws.commons.Severity severity = 3;
@@ -148,12 +149,13 @@ message Issue {
 
   optional sonarqube.ws.commons.RuleType type = 27;
 
-  optional string organization = 29;
+
   optional string branch = 30;
   optional string pullRequest = 32;
 
   optional string externalRuleEngine = 33;
   optional bool fromHotspot = 34;
+  optional string scope = 35;
 }
 
 message Transitions {
@@ -195,10 +197,9 @@ message Languages {
 }
 
 message Component {
-  optional string organization = 11;
+  reserved 3, 11; //drop organization
   optional int64 deprecatedId = 1;
   optional string key = 2;
-  optional string uuid = 3;
   optional bool enabled = 4;
   optional string qualifier = 5;
   optional string name = 6;

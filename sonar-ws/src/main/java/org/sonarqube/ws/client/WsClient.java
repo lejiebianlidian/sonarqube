@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,6 @@ import org.sonarqube.ws.client.metrics.MetricsService;
 import org.sonarqube.ws.client.navigation.NavigationService;
 import org.sonarqube.ws.client.newcodeperiods.NewCodePeriodsService;
 import org.sonarqube.ws.client.notifications.NotificationsService;
-import org.sonarqube.ws.client.organizations.OrganizationsService;
 import org.sonarqube.ws.client.permissions.PermissionsService;
 import org.sonarqube.ws.client.plugins.PluginsService;
 import org.sonarqube.ws.client.projectanalyses.ProjectAnalysesService;
@@ -144,8 +143,6 @@ public interface WsClient {
   NewCodePeriodsService newCodePeriods();
 
   NotificationsService notifications();
-
-  OrganizationsService organizations();
 
   PermissionsService permissions();
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,24 +19,11 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { mockTask } from '../../../../helpers/mocks/tasks';
 import Task from '../Task';
 
 it('renders', () => {
   expect(
-    shallow(
-      <Task
-        onCancelTask={jest.fn()}
-        onFilterTask={jest.fn()}
-        task={{
-          componentName: 'foo',
-          id: '123',
-          organization: 'org',
-          status: 'PENDING',
-          submittedAt: '2017-01-01',
-          submitterLogin: 'yoda',
-          type: 'REPORT'
-        }}
-      />
-    )
+    shallow(<Task onCancelTask={jest.fn()} onFilterTask={jest.fn()} task={mockTask()} />)
   ).toMatchSnapshot();
 });

@@ -27,6 +27,18 @@ yarn_run {
 }
 build.dependsOn(yarn_run)
 
+"yarn_check-ci" {
+  // Note that outputs are not relocatable, because contain absolute paths, and that's why inputs are not relativized
+  ['config', 'src'].each {
+    inputs.dir(it)
+  }
+  ['package.json', 'yarn.lock', 'tsconfig.json'].each {
+    inputs.file(it)
+  }
+
+  dependsOn(yarn)
+}
+
 "yarn_validate-ci" {
   // Note that outputs are not relocatable, because contain absolute paths, and that's why inputs are not relativized
   ['config', 'src/main/js'].each {
@@ -51,7 +63,7 @@ yarn_audit {
   dependsOn(yarn)
 }
 
-def sources = fileTree(dir: "src") + fileTree(dir: "scripts") + fileTree(dir: "config")
+def sources = fileTree(dir: "src") + fileTree(dir: "scripts") + fileTree(dir: "config") + fileTree(dir: "__mocks__")
 
 task licenseCheckWeb(type: com.hierynomus.gradle.license.tasks.LicenseCheck) {
   source = sources

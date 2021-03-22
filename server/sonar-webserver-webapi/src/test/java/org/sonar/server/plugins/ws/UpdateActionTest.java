@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 package org.sonar.server.plugins.ws;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -124,7 +124,7 @@ public class UpdateActionTest {
   @Test
   public void IAE_is_raised_when_update_center_is_unavailable() {
     logInAsSystemAdministrator();
-    when(updateCenterFactory.getUpdateCenter(anyBoolean())).thenReturn(Optional.absent());
+    when(updateCenterFactory.getUpdateCenter(anyBoolean())).thenReturn(Optional.empty());
 
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("No plugin with key 'pluginKey'");

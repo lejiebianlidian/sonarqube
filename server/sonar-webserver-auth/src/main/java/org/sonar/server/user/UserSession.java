@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,7 @@ import java.util.Optional;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.Immutable;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.user.GroupDto;
 
@@ -57,11 +56,16 @@ public interface UserSession {
   @CheckForNull
   String getName();
 
+  @CheckForNull
+  Long getLastSonarlintConnectionDate();
+
   /**
    * The groups that the logged-in user is member of. An empty
    * collection is returned if {@link #isLoggedIn()} is {@code false}.
    */
   Collection<GroupDto> getGroups();
+
+  boolean shouldResetPassword();
 
   /**
    * This enum supports by name only the few providers for which specific code exists.
@@ -126,8 +130,7 @@ public interface UserSession {
         return false;
       }
       ExternalIdentity that = (ExternalIdentity) o;
-      return Objects.equals(id, that.id) &&
-        Objects.equals(login, that.login);
+      return Objects.equals(id, that.id) && Objects.equals(login, that.login);
     }
 
     @Override
@@ -148,7 +151,7 @@ public interface UserSession {
 
   /**
    * Whether the user has root privileges. If {@code true}, then user automatically
-   * benefits from all the permissions on all organizations and projects.
+   * benefits from all the permissions on all projects.
    */
   boolean isRoot();
 
@@ -164,24 +167,17 @@ public interface UserSession {
   UserSession checkLoggedIn();
 
   /**
-   * Returns {@code true} if the permission is granted on the organization, otherwise {@code false}.
+   * Returns {@code true} if the permission is granted, otherwise {@code false}.
    *
-   * If the organization does not exist, then returns {@code false}.
-   *
-   * Always returns {@code true} if {@link #isRoot()} is {@code true}, even if
-   * organization does not exist.
+   * Always returns {@code true} if {@link #isRoot()} is {@code true}.
    */
-  boolean hasPermission(OrganizationPermission permission, OrganizationDto organization);
-
-  boolean hasPermission(OrganizationPermission permission, String organizationUuid);
+  boolean hasPermission(GlobalPermission permission);
 
   /**
-   * Ensures that {@link #hasPermission(OrganizationPermission, OrganizationDto)} is {@code true},
+   * Ensures that {@link #hasPermission(GlobalPermission)} is {@code true},
    * otherwise throws a {@link org.sonar.server.exceptions.ForbiddenException}.
    */
-  UserSession checkPermission(OrganizationPermission permission, OrganizationDto organization);
-
-  UserSession checkPermission(OrganizationPermission permission, String organizationUuid);
+  UserSession checkPermission(GlobalPermission permission);
 
   /**
    * Returns {@code true} if the permission is granted to user on the component,
@@ -191,8 +187,6 @@ public interface UserSession {
    *
    * Always returns {@code true} if {@link #isRoot()} is {@code true}, even if
    * component does not exist.
-   *
-   * If the permission is not granted, then the organization permission is _not_ checked.
    *
    * @param component non-null component.
    * @param permission project permission as defined by {@link org.sonar.server.permission.PermissionService}
@@ -221,6 +215,7 @@ public interface UserSession {
   List<ComponentDto> keepAuthorizedComponents(String permission, Collection<ComponentDto> components);
 
   List<ProjectDto> keepAuthorizedProjects(String permission, Collection<ProjectDto> projects);
+
   /**
    * Ensures that {@link #hasComponentPermission(String, ComponentDto)} is {@code true},
    * otherwise throws a {@link org.sonar.server.exceptions.ForbiddenException}.
@@ -249,7 +244,7 @@ public interface UserSession {
    * Returns {@code true} if:
    * <ul>
    *   <li>{@link #isRoot()} is {@code true}</li>
-   *   <li>organization feature is disabled and user is administrator of the (single) default organization</li>
+   *   <li>user is administrator</li>
    * </ul>
    */
   boolean isSystemAdministrator();
@@ -259,21 +254,4 @@ public interface UserSession {
    * otherwise throws {@link org.sonar.server.exceptions.ForbiddenException}.
    */
   UserSession checkIsSystemAdministrator();
-
-  /**
-   * Returns {@code true} if the user is member of the organization, otherwise {@code false}.
-   *
-   * If the organization does not exist, then returns {@code false}.
-   *
-   * Always returns {@code true} if {@link #isRoot()} is {@code true}, even if
-   * organization does not exist.
-   */
-  boolean hasMembership(OrganizationDto organization);
-
-  /**
-   * Ensures that {@link #hasMembership(OrganizationDto)} is {@code true},
-   * otherwise throws a {@link org.sonar.server.exceptions.ForbiddenException}.
-   */
-  UserSession checkMembership(OrganizationDto organization);
-
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,8 +18,6 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { FormattedMessage } from 'react-intl';
-import * as ReactRedux from 'react-redux';
-import * as ReactRouter from 'react-router';
 import ActionsDropdown, {
   ActionsDropdownItem
 } from 'sonar-ui-common/components/controls/ActionsDropdown';
@@ -68,6 +66,15 @@ import Level from 'sonar-ui-common/components/ui/Level';
 import Rating from 'sonar-ui-common/components/ui/Rating';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
+import {
+  get,
+  getJSON,
+  getText,
+  post,
+  postJSON,
+  postJSONBody,
+  request
+} from 'sonar-ui-common/helpers/request';
 import NotFound from '../../../app/components/NotFound';
 import Favorite from '../../../components/controls/Favorite';
 import HomePageSelect from '../../../components/controls/HomePageSelect';
@@ -96,89 +103,121 @@ import addGlobalSuccessMessage from '../../utils/addGlobalSuccessMessage';
 import throwGlobalError from '../../utils/throwGlobalError';
 import A11ySkipTarget from '../a11y/A11ySkipTarget';
 import Suggestions from '../embed-docs-modal/Suggestions';
-import request from './legacy/request-legacy';
 
 const exposeLibraries = () => {
   const global = window as any;
 
-  global.ReactRedux = ReactRedux;
-  global.ReactRouter = ReactRouter;
-  global.SonarHelpers = {
-    getBranchLikeQuery,
-    isBranch,
-    isMainBranch,
-    isPullRequest,
-    getStandards,
-    renderCWECategory,
-    renderOwaspTop10Category,
-    renderSansTop25Category,
-    renderSonarSourceSecurityCategory,
-    getComponentIssuesUrl,
-    getComponentSecurityHotspotsUrl,
-    getRulesUrl
-  };
-  global.SonarMeasures = { ...measures, formatMeasure };
   global.SonarRequest = {
-    ...request,
+    request,
+    get,
+    getJSON,
+    getText,
+    post,
+    postJSON,
+    postJSONBody,
     throwGlobalError,
     addGlobalSuccessMessage
   };
-  global.SonarComponents = {
-    A11ySkipTarget,
-    ActionsDropdown,
-    ActionsDropdownItem,
-    Alert,
-    AlertErrorIcon,
-    AlertSuccessIcon,
-    AlertWarnIcon,
-    BranchIcon: BranchLikeIcon,
-    Button,
-    Checkbox,
-    CheckIcon,
-    ClearIcon,
-    ConfirmButton,
-    CoverageRating,
-    DateFormatter,
-    DateFromNow,
-    DateTimeFormatter,
-    DeferredSpinner,
-    DetachIcon,
-    Dropdown,
-    DropdownIcon,
-    DuplicationsRating,
-    EditButton,
-    Favorite,
-    FormattedMessage,
-    HelpIcon,
-    HelpTooltip,
-    HomePageSelect,
-    Level,
-    ListFooter,
-    LockIcon,
-    LongLivingBranchIcon: BranchIcon,
-    Modal,
-    NotFound,
-    PlusCircleIcon,
-    PullRequestIcon,
-    QualifierIcon,
-    RadioToggle,
-    Rating,
-    ReloadButton,
-    ResetButtonLink,
-    SearchBox,
-    SearchSelect,
-    SecurityHotspotIcon,
-    Select,
-    SelectList,
-    SimpleModal,
-    SubmitButton,
-    Suggestions,
-    Tooltip,
-    VulnerabilityIcon
-  };
-
   global.t = translate;
   global.tp = translateWithParameters;
+
+  /**
+   * @deprecated since SonarQube 8.7
+   */
+  Object.defineProperty(global, 'SonarHelpers', {
+    get: () => {
+      // eslint-disable-next-line no-console
+      console.warn('SonarHelpers usages are deprecated since SonarQube 8.7');
+      return {
+        getBranchLikeQuery,
+        isBranch,
+        isMainBranch,
+        isPullRequest,
+        getStandards,
+        renderCWECategory,
+        renderOwaspTop10Category,
+        renderSansTop25Category,
+        renderSonarSourceSecurityCategory,
+        getComponentIssuesUrl,
+        getComponentSecurityHotspotsUrl,
+        getRulesUrl
+      };
+    }
+  });
+
+  /**
+   * @deprecated since SonarQube 8.7
+   */
+  Object.defineProperty(global, 'SonarMeasures', {
+    get: () => {
+      // eslint-disable-next-line no-console
+      console.warn('SonarMeasures usages are deprecated since SonarQube 8.7');
+      return { ...measures, formatMeasure };
+    }
+  });
+
+  /**
+   * @deprecated since SonarQube 8.7
+   */
+  Object.defineProperty(global, 'SonarComponents', {
+    get: () => {
+      // eslint-disable-next-line no-console
+      console.warn('SonarComponents usages are deprecated since SonarQube 8.7');
+      return {
+        A11ySkipTarget,
+        ActionsDropdown,
+        ActionsDropdownItem,
+        Alert,
+        AlertErrorIcon,
+        AlertSuccessIcon,
+        AlertWarnIcon,
+        BranchIcon: BranchLikeIcon,
+        Button,
+        Checkbox,
+        CheckIcon,
+        ClearIcon,
+        ConfirmButton,
+        CoverageRating,
+        DateFormatter,
+        DateFromNow,
+        DateTimeFormatter,
+        DeferredSpinner,
+        DetachIcon,
+        Dropdown,
+        DropdownIcon,
+        DuplicationsRating,
+        EditButton,
+        Favorite,
+        FormattedMessage,
+        HelpIcon,
+        HelpTooltip,
+        HomePageSelect,
+        Level,
+        ListFooter,
+        LockIcon,
+        LongLivingBranchIcon: BranchIcon,
+        Modal,
+        NotFound,
+        PlusCircleIcon,
+        PullRequestIcon,
+        QualifierIcon,
+        RadioToggle,
+        Rating,
+        ReloadButton,
+        ResetButtonLink,
+        SearchBox,
+        SearchSelect,
+        SecurityHotspotIcon,
+        Select,
+        SelectList,
+        SimpleModal,
+        SubmitButton,
+        Suggestions,
+        Tooltip,
+        VulnerabilityIcon
+      };
+    }
+  });
 };
 
 export default exposeLibraries;

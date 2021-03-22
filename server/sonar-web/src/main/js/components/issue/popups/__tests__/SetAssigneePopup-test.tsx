@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,24 +20,9 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
-import { searchMembers } from '../../../../api/organizations';
 import { searchUsers } from '../../../../api/users';
-import { isSonarCloud } from '../../../../helpers/system';
 import { mockLoggedInUser, mockUser } from '../../../../helpers/testMocks';
 import { SetAssigneePopup } from '../SetAssigneePopup';
-
-jest.mock('../../../../helpers/system', () => ({
-  isSonarCloud: jest.fn().mockReturnValue(false)
-}));
-
-jest.mock('../../../../api/organizations', () => {
-  const { mockUser } = jest.requireActual('../../../../helpers/testMocks');
-  return {
-    searchMembers: jest.fn().mockResolvedValue({
-      users: [mockUser(), mockUser({ active: false, login: 'foo', name: undefined })]
-    })
-  };
-});
 
 jest.mock('../../../../api/users', () => {
   const { mockUser } = jest.requireActual('../../../../helpers/testMocks');
@@ -60,22 +45,8 @@ it('should allow to search for a user on SQ', async () => {
   expect(wrapper.state('users')).toEqual([mockUser()]);
 });
 
-it('should allow to search for a user on SC', async () => {
-  (isSonarCloud as jest.Mock).mockReturnValueOnce(true);
-  const wrapper = shallowRender();
-  wrapper.find('SearchBox').prop<Function>('onChange')('o');
-  await waitAndUpdate(wrapper);
-  expect(searchMembers).toBeCalledWith({ organization: 'foo', q: 'o', ps: 10 });
-  expect(wrapper.state('users')).toEqual([mockUser()]);
-});
-
 function shallowRender(props: Partial<SetAssigneePopup['props']> = {}) {
   return shallow(
-    <SetAssigneePopup
-      currentUser={mockLoggedInUser()}
-      issue={{ projectOrganization: 'foo' }}
-      onSelect={jest.fn()}
-      {...props}
-    />
+    <SetAssigneePopup currentUser={mockLoggedInUser()} onSelect={jest.fn()} {...props} />
   );
 }

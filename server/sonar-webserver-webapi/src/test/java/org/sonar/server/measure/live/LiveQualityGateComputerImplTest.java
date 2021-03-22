@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,10 +35,9 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.measure.LiveMeasureDto;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
-import org.sonar.db.qualitygate.QGateWithOrgDto;
 import org.sonar.db.qualitygate.QualityGateConditionDto;
+import org.sonar.db.qualitygate.QualityGateDto;
 import org.sonar.server.qualitygate.Condition;
 import org.sonar.server.qualitygate.EvaluatedCondition;
 import org.sonar.server.qualitygate.EvaluatedQualityGate;
@@ -53,7 +52,6 @@ import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.sonar.db.metric.MetricTesting.newMetricDto;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 
 public class LiveQualityGateComputerImplTest {
 
@@ -63,39 +61,37 @@ public class LiveQualityGateComputerImplTest {
   @Rule
   public DbTester db = DbTester.create();
 
-  private TestQualityGateEvaluator qualityGateEvaluator = new TestQualityGateEvaluator();
-  private LiveQualityGateComputerImpl underTest = new LiveQualityGateComputerImpl(db.getDbClient(), new QualityGateFinder(db.getDbClient()), qualityGateEvaluator);
+  private final TestQualityGateEvaluator qualityGateEvaluator = new TestQualityGateEvaluator();
+  private final LiveQualityGateComputerImpl underTest = new LiveQualityGateComputerImpl(db.getDbClient(), new QualityGateFinder(db.getDbClient()), qualityGateEvaluator);
 
   @Test
   public void loadQualityGate_returns_hardcoded_gate_for_pull_requests() {
-    OrganizationDto organization = db.organizations().insert();
-    ProjectDto project = db.components().insertPublicProjectDto(organization);
+    ProjectDto project = db.components().insertPublicProjectDto();
     BranchDto branch = db.components().insertProjectBranch(project, b -> b.setBranchType(BranchType.PULL_REQUEST));
     MetricDto metric1 = db.measures().insertMetric(m -> m.setKey("new_metric"));
     MetricDto metric2 = db.measures().insertMetric(m -> m.setKey("metric"));
 
-    QGateWithOrgDto gate = db.qualityGates().insertQualityGate(organization);
-    db.qualityGates().setDefaultQualityGate(organization, gate);
+    QualityGateDto gate = db.qualityGates().insertQualityGate();
+    db.qualityGates().setDefaultQualityGate(gate);
 
     db.qualityGates().addCondition(gate, metric1);
     db.qualityGates().addCondition(gate, metric2);
 
-    QualityGate result = underTest.loadQualityGate(db.getSession(), organization, project, branch);
+    QualityGate result = underTest.loadQualityGate(db.getSession(), project, branch);
     assertThat(result.getConditions()).extracting(Condition::getMetricKey).containsExactly("new_metric");
   }
 
   @Test
-  public void loadQualityGate_on_branch_returns_organization_default_gate() {
-    OrganizationDto organization = db.organizations().insert();
-    ProjectDto project = db.components().insertPublicProjectDto(organization);
+  public void loadQualityGate_on_branch_returns_default_gate() {
+    ProjectDto project = db.components().insertPublicProjectDto();
     BranchDto branch = db.components().insertProjectBranch(project).setBranchType(BranchType.BRANCH);
 
     MetricDto metric = db.measures().insertMetric();
-    QGateWithOrgDto gate = db.qualityGates().insertQualityGate(organization);
-    db.qualityGates().setDefaultQualityGate(organization, gate);
+    QualityGateDto gate = db.qualityGates().insertQualityGate();
+    db.qualityGates().setDefaultQualityGate(gate);
     QualityGateConditionDto condition = db.qualityGates().addCondition(gate, metric);
 
-    QualityGate result = underTest.loadQualityGate(db.getSession(), organization, project, branch);
+    QualityGate result = underTest.loadQualityGate(db.getSession(), project, branch);
 
     assertThat(result.getId()).isEqualTo("" + gate.getUuid());
     assertThat(result.getConditions())
@@ -120,7 +116,7 @@ public class LiveQualityGateComputerImplTest {
 
   @Test
   public void refreshGateStatus_generates_gate_related_measures() {
-    ComponentDto project = ComponentTesting.newPublicProjectDto(newOrganizationDto());
+    ComponentDto project = ComponentTesting.newPublicProjectDto();
     MetricDto conditionMetric = newMetricDto();
     MetricDto statusMetric = newMetricDto().setKey(CoreMetrics.ALERT_STATUS_KEY);
     MetricDto detailsMetric = newMetricDto().setKey(CoreMetrics.QUALITY_GATE_DETAILS_KEY);
@@ -146,7 +142,7 @@ public class LiveQualityGateComputerImplTest {
 
   @Test
   public void refreshGateStatus_provides_measures_to_evaluator() {
-    ComponentDto project = ComponentTesting.newPublicProjectDto(newOrganizationDto());
+    ComponentDto project = ComponentTesting.newPublicProjectDto();
     MetricDto numericMetric = newMetricDto().setValueType(Metric.ValueType.FLOAT.name());
     MetricDto numericNewMetric = newMetricDto().setValueType(Metric.ValueType.FLOAT.name()).setKey("new_metric");
     MetricDto stringMetric = newMetricDto().setValueType(Metric.ValueType.STRING.name());

@@ -2,7 +2,7 @@
 
 exports[`should render correctly: default 1`] = `
 <div
-  className="issue-message"
+  className="issue-message break-word"
 >
   <span
     className="spacer-right"
@@ -11,7 +11,7 @@ exports[`should render correctly: default 1`] = `
   </span>
   <ButtonLink
     aria-label="issue.why_this_issue.long"
-    className="issue-see-rule spacer-right"
+    className="issue-see-rule spacer-right text-baseline"
     onClick={[Function]}
   >
     issue.why_this_issue
@@ -19,9 +19,9 @@ exports[`should render correctly: default 1`] = `
 </div>
 `;
 
-exports[`should render correctly: is manual vulnerability 1`] = `
+exports[`should render correctly: is deprecated rule 1`] = `
 <div
-  className="issue-message"
+  className="issue-message break-word"
 >
   <span
     className="spacer-right"
@@ -30,7 +30,44 @@ exports[`should render correctly: is manual vulnerability 1`] = `
   </span>
   <ButtonLink
     aria-label="issue.why_this_issue.long"
-    className="issue-see-rule spacer-right"
+    className="issue-see-rule spacer-right text-baseline"
+    onClick={[Function]}
+  >
+    issue.why_this_issue
+  </ButtonLink>
+  <DocumentationTooltip
+    className="spacer-left"
+    content="rules.status.DEPRECATED.help"
+    links={
+      Array [
+        Object {
+          "href": "/documentation/user-guide/rules/",
+          "label": "see_x.rules",
+        },
+      ]
+    }
+  >
+    <span
+      className="spacer-right badge badge-error"
+    >
+      rules.status.DEPRECATED
+    </span>
+  </DocumentationTooltip>
+</div>
+`;
+
+exports[`should render correctly: is manual vulnerability 1`] = `
+<div
+  className="issue-message break-word"
+>
+  <span
+    className="spacer-right"
+  >
+    Reduce the number of conditional operators (4) used in the expression
+  </span>
+  <ButtonLink
+    aria-label="issue.why_this_issue.long"
+    className="issue-see-rule spacer-right text-baseline"
     onClick={[Function]}
   >
     issue.why_this_issue
@@ -39,7 +76,7 @@ exports[`should render correctly: is manual vulnerability 1`] = `
     overlay="issue.manual_vulnerability.description"
   >
     <div
-      className="badge spacer-right text-top"
+      className="badge spacer-right text-baseline"
     >
       issue.manual_vulnerability
     </div>
@@ -47,9 +84,9 @@ exports[`should render correctly: is manual vulnerability 1`] = `
 </div>
 `;
 
-exports[`should render correctly: with engine info 1`] = `
+exports[`should render correctly: is removed rule 1`] = `
 <div
-  className="issue-message"
+  className="issue-message break-word"
 >
   <span
     className="spacer-right"
@@ -58,7 +95,44 @@ exports[`should render correctly: with engine info 1`] = `
   </span>
   <ButtonLink
     aria-label="issue.why_this_issue.long"
-    className="issue-see-rule spacer-right"
+    className="issue-see-rule spacer-right text-baseline"
+    onClick={[Function]}
+  >
+    issue.why_this_issue
+  </ButtonLink>
+  <DocumentationTooltip
+    className="spacer-left"
+    content="rules.status.REMOVED.help"
+    links={
+      Array [
+        Object {
+          "href": "/documentation/user-guide/rules/",
+          "label": "see_x.rules",
+        },
+      ]
+    }
+  >
+    <span
+      className="spacer-right badge badge-error"
+    >
+      rules.status.REMOVED
+    </span>
+  </DocumentationTooltip>
+</div>
+`;
+
+exports[`should render correctly: with engine info 1`] = `
+<div
+  className="issue-message break-word"
+>
+  <span
+    className="spacer-right"
+  >
+    Reduce the number of conditional operators (4) used in the expression
+  </span>
+  <ButtonLink
+    aria-label="issue.why_this_issue.long"
+    className="issue-see-rule spacer-right text-baseline"
     onClick={[Function]}
   >
     issue.why_this_issue
@@ -67,7 +141,7 @@ exports[`should render correctly: with engine info 1`] = `
     overlay="issue.from_external_rule_engine.js"
   >
     <div
-      className="badge spacer-right text-top"
+      className="badge spacer-right text-baseline"
     >
       js
     </div>
@@ -77,7 +151,7 @@ exports[`should render correctly: with engine info 1`] = `
 
 exports[`should render correctly: with engine name 1`] = `
 <div
-  className="issue-message"
+  className="issue-message break-word"
 >
   <span
     className="spacer-right"
@@ -86,7 +160,7 @@ exports[`should render correctly: with engine name 1`] = `
   </span>
   <ButtonLink
     aria-label="issue.why_this_issue.long"
-    className="issue-see-rule spacer-right"
+    className="issue-see-rule spacer-right text-baseline"
     onClick={[Function]}
   >
     issue.why_this_issue
@@ -95,7 +169,7 @@ exports[`should render correctly: with engine name 1`] = `
     overlay="issue.from_external_rule_engine.JS"
   >
     <div
-      className="badge spacer-right text-top"
+      className="badge spacer-right text-baseline"
     >
       JS
     </div>

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { AlmKeys } from '../../../../types/alm-settings';
 import PreRequisitesStep, { PreRequisitesStepProps } from '../PreRequisitesStep';
 import { renderStepContent } from '../test-utils';
 
@@ -27,11 +27,20 @@ it('should render correctly', () => {
   const wrapper = shallowRender();
   expect(wrapper).toMatchSnapshot('Step wrapper');
   expect(renderStepContent(wrapper)).toMatchSnapshot('content');
+
+  expect(renderStepContent(shallowRender({ branchesEnabled: false }))).toMatchSnapshot(
+    'content for branches disabled'
+  );
+  expect(
+    renderStepContent(shallowRender({ alm: AlmKeys.GitLab, branchesEnabled: false }))
+  ).toMatchSnapshot('content for branches disabled, gitlab');
 });
 
 function shallowRender(props: Partial<PreRequisitesStepProps> = {}) {
   return shallow<PreRequisitesStepProps>(
     <PreRequisitesStep
+      alm={AlmKeys.BitbucketServer}
+      branchesEnabled={true}
       onChangeSkipNextTime={jest.fn()}
       onDone={jest.fn()}
       onOpen={jest.fn()}

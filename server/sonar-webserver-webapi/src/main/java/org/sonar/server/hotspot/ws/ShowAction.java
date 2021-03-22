@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,6 @@ import org.sonar.server.issue.IssueChangeWSSupport.Load;
 import org.sonar.server.issue.TextRangeResponseFormatter;
 import org.sonar.server.issue.ws.UserResponseFormatter;
 import org.sonar.server.rule.HotspotRuleDescription;
-import org.sonar.server.rule.RuleDescriptionFormatter;
 import org.sonar.server.security.SecurityStandards;
 import org.sonar.server.text.MacroInterpreter;
 import org.sonarqube.ws.Common;
@@ -53,6 +52,7 @@ import org.sonarqube.ws.Hotspots;
 import org.sonarqube.ws.Hotspots.ShowWsResponse;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.String.format;
 import static java.util.Collections.singleton;
@@ -91,8 +91,7 @@ public class ShowAction implements HotspotsWsAction {
       .createAction("show")
       .setHandler(this)
       .setDescription("Provides the details of a Security Hotspot.")
-      .setSince("8.1")
-      .setInternal(true);
+      .setSince("8.1");
 
     action.createParam(PARAM_HOTSPOT_KEY)
       .setDescription("Key of the Security Hotspot")
@@ -144,6 +143,7 @@ public class ShowAction implements HotspotsWsAction {
     ofNullable(hotspot.getStatus()).ifPresent(builder::setStatus);
     ofNullable(hotspot.getResolution()).ifPresent(builder::setResolution);
     ofNullable(hotspot.getLine()).ifPresent(builder::setLine);
+    ofNullable(emptyToNull(hotspot.getChecksum())).ifPresent(builder::setHash);
     builder.setMessage(nullToEmpty(hotspot.getMessage()));
     builder.setCreationDate(formatDateTime(hotspot.getIssueCreationDate()));
     builder.setUpdateDate(formatDateTime(hotspot.getIssueUpdateDate()));
@@ -168,17 +168,10 @@ public class ShowAction implements HotspotsWsAction {
       .setSecurityCategory(sqCategory.getKey())
       .setVulnerabilityProbability(sqCategory.getVulnerability().name());
 
-    if (ruleDefinitionDto.isCustomRule()) {
-      String htmlDescription = RuleDescriptionFormatter.getDescriptionAsHtml(ruleDefinitionDto);
-      if (htmlDescription != null) {
-        ruleBuilder.setRiskDescription(macroInterpreter.interpret(htmlDescription));
-      }
-    } else {
-      HotspotRuleDescription hotspotRuleDescription = HotspotRuleDescription.from(ruleDefinitionDto);
-      hotspotRuleDescription.getVulnerable().ifPresent(ruleBuilder::setVulnerabilityDescription);
-      hotspotRuleDescription.getRisk().ifPresent(ruleBuilder::setRiskDescription);
-      hotspotRuleDescription.getFixIt().ifPresent(ruleBuilder::setFixRecommendations);
-    }
+    HotspotRuleDescription hotspotRuleDescription = HotspotRuleDescription.from(ruleDefinitionDto);
+    hotspotRuleDescription.getVulnerable().ifPresent(ruleBuilder::setVulnerabilityDescription);
+    hotspotRuleDescription.getRisk().ifPresent(ruleBuilder::setRiskDescription);
+    hotspotRuleDescription.getFixIt().ifPresent(ruleBuilder::setFixRecommendations);
 
     responseBuilder.setRule(ruleBuilder.build());
   }
@@ -231,7 +224,7 @@ public class ShowAction implements HotspotsWsAction {
     boolean hotspotOnProject = Objects.equals(project.uuid(), componentUuid);
     ComponentDto component = hotspotOnProject ? project
       : dbClient.componentDao().selectByUuid(dbSession, componentUuid)
-        .orElseThrow(() -> new NotFoundException(format("Component with uuid '%s' does not exist", componentUuid)));
+      .orElseThrow(() -> new NotFoundException(format("Component with uuid '%s' does not exist", componentUuid)));
 
     return new Components(project, component);
   }

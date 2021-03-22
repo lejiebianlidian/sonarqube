@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.es.EsQueueDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.GroupDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.es.EsTester;
@@ -77,6 +76,19 @@ public class PermissionIndexerTest {
   }
 
   @Test
+  public void indexAll_grants_access_to_any_user_and_to_group_Anyone_on_public_projects() {
+    ComponentDto project = createAndIndexPublicProject();
+    UserDto user1 = db.users().insertUser();
+    UserDto user2 = db.users().insertUser();
+
+    underTest.indexAll(underTest.getIndexTypes());
+
+    verifyAnyoneAuthorized(project);
+    verifyAuthorized(project, user1);
+    verifyAuthorized(project, user2);
+  }
+
+  @Test
   public void deletion_resilience_will_deindex_projects() {
     ComponentDto project1 = createUnindexedPublicProject();
     ComponentDto project2 = createUnindexedPublicProject();
@@ -92,7 +104,7 @@ public class PermissionIndexerTest {
 
     underTest.index(db.getSession(), esQueueDtos);
 
-    assertThat(db.countRowsOfTable(db.getSession(), "es_queue")).isEqualTo(0);
+    assertThat(db.countRowsOfTable(db.getSession(), "es_queue")).isZero();
     assertThat(es.countDocuments(INDEX_TYPE_FOO_AUTH)).isEqualTo(1);
   }
 
@@ -224,17 +236,14 @@ public class PermissionIndexerTest {
   }
 
   @Test
-  public void public_projects_are_visible_to_anybody_whatever_the_organization() {
-    ComponentDto projectOnOrg1 = createAndIndexPublicProject(db.organizations().insert());
-    ComponentDto projectOnOrg2 = createAndIndexPublicProject(db.organizations().insert());
+  public void public_projects_are_visible_to_anybody() {
+    ComponentDto projectOnOrg1 = createAndIndexPublicProject();
     UserDto user = db.users().insertUser();
 
     indexOnStartup();
 
     verifyAnyoneAuthorized(projectOnOrg1);
-    verifyAnyoneAuthorized(projectOnOrg2);
     verifyAuthorized(projectOnOrg1, user);
-    verifyAuthorized(projectOnOrg2, user);
   }
 
   @Test
@@ -407,15 +416,9 @@ public class PermissionIndexerTest {
   }
 
   private ComponentDto createAndIndexView() {
-    ComponentDto view = db.components().insertView();
+    ComponentDto view = db.components().insertPublicPortfolio();
     fooIndexer.indexOnAnalysis(view.uuid());
     return view;
-  }
-
-  private ComponentDto createAndIndexPublicProject(OrganizationDto org) {
-    ComponentDto project = db.components().insertPublicProject(org);
-    fooIndexer.indexOnAnalysis(project.uuid());
-    return project;
   }
 
   private IndexingResult recover() {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,12 +39,10 @@ import org.sonar.db.ce.CeActivityDto;
 import org.sonar.db.ce.CeQueueDto;
 import org.sonar.db.ce.CeTaskCharacteristicDto;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.UserDto;
 import org.sonarqube.ws.Ce;
 import org.sonarqube.ws.Common;
 
-import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -78,8 +76,6 @@ public class TaskFormatter {
 
   private Ce.Task formatQueue(CeQueueDto dto, DtoCache cache) {
     Ce.Task.Builder builder = Ce.Task.newBuilder();
-    String organizationKey = cache.getOrganizationKey(dto.getComponentUuid());
-    ofNullable(organizationKey).ifPresent(builder::setOrganization);
     if (dto.getComponentUuid() != null) {
       builder.setComponentId(dto.getComponentUuid());
       setComponent(builder, dto.getComponentUuid(), cache);
@@ -87,7 +83,6 @@ public class TaskFormatter {
     builder.setId(dto.getUuid());
     builder.setStatus(Ce.TaskStatus.valueOf(dto.getStatus().name()));
     builder.setType(dto.getTaskType());
-    builder.setLogs(false);
     cache.getUser(dto.getSubmitterUuid()).ifPresent(user -> builder.setSubmitterLogin(user.getLogin()));
     builder.setSubmittedAt(formatDateTime(new Date(dto.getCreatedAt())));
     ofNullable(dto.getStartedAt()).map(DateUtils::formatDateTime).ifPresent(builder::setStartedAt);
@@ -109,12 +104,9 @@ public class TaskFormatter {
 
   private static Ce.Task formatActivity(CeActivityDto dto, DtoCache cache, @Nullable String scannerContext, List<String> warnings) {
     Ce.Task.Builder builder = Ce.Task.newBuilder();
-    String organizationKey = cache.getOrganizationKey(dto.getComponentUuid());
-    ofNullable(organizationKey).ifPresent(builder::setOrganization);
     builder.setId(dto.getUuid());
     builder.setStatus(Ce.TaskStatus.valueOf(dto.getStatus().name()));
     builder.setType(dto.getTaskType());
-    builder.setLogs(false);
     ofNullable(dto.getComponentUuid()).ifPresent(uuid -> setComponent(builder, uuid, cache).setComponentId(uuid));
     String analysisUuid = dto.getAnalysisUuid();
     ofNullable(analysisUuid).ifPresent(builder::setAnalysisId);
@@ -167,14 +159,11 @@ public class TaskFormatter {
 
   private static class DtoCache {
     private final Map<String, ComponentDto> componentsByUuid;
-    private final Map<String, OrganizationDto> organizationsByUuid;
     private final Multimap<String, CeTaskCharacteristicDto> characteristicsByTaskUuid;
     private final Map<String, UserDto> usersByUuid;
 
-    private DtoCache(Map<String, ComponentDto> componentsByUuid, Map<String, OrganizationDto> organizationsByUuid,
-      Multimap<String, CeTaskCharacteristicDto> characteristicsByTaskUuid, Map<String, UserDto> usersByUuid) {
+    private DtoCache(Map<String, ComponentDto> componentsByUuid, Multimap<String, CeTaskCharacteristicDto> characteristicsByTaskUuid, Map<String, UserDto> usersByUuid) {
       this.componentsByUuid = componentsByUuid;
-      this.organizationsByUuid = organizationsByUuid;
       this.characteristicsByTaskUuid = characteristicsByTaskUuid;
       this.usersByUuid = usersByUuid;
     }
@@ -188,7 +177,7 @@ public class TaskFormatter {
         .stream().collect(MoreCollectors.index(CeTaskCharacteristicDto::getTaskUuid));
       Set<String> submitterUuids = ceQueueDtos.stream().map(CeQueueDto::getSubmitterUuid).filter(Objects::nonNull).collect(toSet());
       Map<String, UserDto> usersByUuid = dbClient.userDao().selectByUuids(dbSession, submitterUuids).stream().collect(uniqueIndex(UserDto::getUuid));
-      return new DtoCache(componentsByUuid, buildOrganizationsByUuid(dbClient, dbSession, componentsByUuid), characteristicsByTaskUuid, usersByUuid);
+      return new DtoCache(componentsByUuid, characteristicsByTaskUuid, usersByUuid);
     }
 
     private static Set<String> componentUuidsOfCeQueues(Collection<CeQueueDto> ceQueueDtos) {
@@ -210,7 +199,7 @@ public class TaskFormatter {
         .stream().collect(MoreCollectors.index(CeTaskCharacteristicDto::getTaskUuid));
       Set<String> submitterUuids = ceActivityDtos.stream().map(CeActivityDto::getSubmitterUuid).filter(Objects::nonNull).collect(toSet());
       Map<String, UserDto> usersByUuid = dbClient.userDao().selectByUuids(dbSession, submitterUuids).stream().collect(uniqueIndex(UserDto::getUuid));
-      return new DtoCache(componentsByUuid, buildOrganizationsByUuid(dbClient, dbSession, componentsByUuid), characteristicsByTaskUuid, usersByUuid);
+      return new DtoCache(componentsByUuid, characteristicsByTaskUuid, usersByUuid);
     }
 
     private static Set<String> getComponentUuidsOfCeActivities(Collection<CeActivityDto> ceActivityDtos) {
@@ -221,37 +210,12 @@ public class TaskFormatter {
         .collect(toSet(ceActivityDtos.size()));
     }
 
-    private static Map<String, OrganizationDto> buildOrganizationsByUuid(DbClient dbClient, DbSession dbSession, Map<String, ComponentDto> componentsByUuid) {
-      return dbClient.organizationDao().selectByUuids(
-        dbSession,
-        componentsByUuid.values().stream()
-          .map(ComponentDto::getOrganizationUuid)
-          .collect(toSet(componentsByUuid.size())))
-        .stream()
-        .collect(uniqueIndex(OrganizationDto::getUuid));
-    }
-
     @CheckForNull
     ComponentDto getComponent(@Nullable String uuid) {
       if (uuid == null) {
         return null;
       }
       return componentsByUuid.get(uuid);
-    }
-
-    @CheckForNull
-    String getOrganizationKey(@Nullable String componentUuid) {
-      if (componentUuid == null) {
-        return null;
-      }
-      ComponentDto componentDto = componentsByUuid.get(componentUuid);
-      if (componentDto == null) {
-        return null;
-      }
-      String organizationUuid = componentDto.getOrganizationUuid();
-      OrganizationDto organizationDto = organizationsByUuid.get(organizationUuid);
-      checkState(organizationDto != null, "Organization with uuid '%s' not found", organizationUuid);
-      return organizationDto.getKey();
     }
 
     Optional<String> getBranchKey(String taskUuid) {

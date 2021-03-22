@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualitygate.QualityGateDto;
 import org.sonar.server.qualitygate.QualityGateFinder;
 import org.sonarqube.ws.Qualitygates.ListWsResponse;
@@ -52,7 +51,7 @@ public class ListAction implements QualityGatesWsAction {
 
   @Override
   public void define(WebService.NewController controller) {
-    WebService.NewAction action = controller.createAction("list")
+    controller.createAction("list")
       .setDescription("Get a list of quality gates")
       .setSince("4.3")
       .setResponseExample(Resources.getResource(this.getClass(), "list-example.json"))
@@ -63,30 +62,28 @@ public class ListAction implements QualityGatesWsAction {
         new Change("7.0", "'isBuiltIn' field is added in the response"),
         new Change("7.0", "'actions' fields are added in the response"))
       .setHandler(this);
-    wsSupport.createOrganizationParam(action);
   }
 
   @Override
   public void handle(Request request, Response response) {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      OrganizationDto organization = wsSupport.getOrganization(dbSession, request);
-      QualityGateDto defaultQualityGate = finder.getDefault(dbSession, organization);
-      Collection<QualityGateDto> qualityGates = dbClient.qualityGateDao().selectAll(dbSession, organization);
-      writeProtobuf(buildResponse(organization, qualityGates, defaultQualityGate), request, response);
+      QualityGateDto defaultQualityGate = finder.getDefault(dbSession);
+      Collection<QualityGateDto> qualityGates = dbClient.qualityGateDao().selectAll(dbSession);
+      writeProtobuf(buildResponse(qualityGates, defaultQualityGate), request, response);
     }
   }
 
-  private ListWsResponse buildResponse(OrganizationDto organization, Collection<QualityGateDto> qualityGates, @Nullable QualityGateDto defaultQualityGate) {
+  private ListWsResponse buildResponse(Collection<QualityGateDto> qualityGates, @Nullable QualityGateDto defaultQualityGate) {
     String defaultUuid = defaultQualityGate == null ? null : defaultQualityGate.getUuid();
     ListWsResponse.Builder builder = ListWsResponse.newBuilder()
-      .setActions(ListWsResponse.RootActions.newBuilder().setCreate(wsSupport.isQualityGateAdmin(organization)))
+      .setActions(ListWsResponse.RootActions.newBuilder().setCreate(wsSupport.isQualityGateAdmin()))
       .addAllQualitygates(qualityGates.stream()
         .map(qualityGate -> QualityGate.newBuilder()
           .setId(qualityGate.getUuid())
           .setName(qualityGate.getName())
           .setIsDefault(qualityGate.getUuid().equals(defaultUuid))
           .setIsBuiltIn(qualityGate.isBuiltIn())
-          .setActions(wsSupport.getActions(organization, qualityGate, defaultQualityGate))
+          .setActions(wsSupport.getActions(qualityGate, defaultQualityGate))
           .build())
         .collect(toList()));
     ofNullable(defaultUuid).ifPresent(builder::setDefault);

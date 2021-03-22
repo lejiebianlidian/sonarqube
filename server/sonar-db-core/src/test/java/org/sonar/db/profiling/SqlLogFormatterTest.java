@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ public class SqlLogFormatterTest {
 
   @Test
   public void countArguments() {
-    assertThat(SqlLogFormatter.countArguments("select * from issues")).isEqualTo(0);
+    assertThat(SqlLogFormatter.countArguments("select * from issues")).isZero();
     assertThat(SqlLogFormatter.countArguments("select * from issues where id=?")).isEqualTo(1);
     assertThat(SqlLogFormatter.countArguments("select * from issues where id=? and kee=?")).isEqualTo(2);
   }

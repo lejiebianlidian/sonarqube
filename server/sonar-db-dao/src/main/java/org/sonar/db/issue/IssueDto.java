@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -96,7 +96,6 @@ public final class IssueDto implements Serializable {
   private String projectKey;
   private String filePath;
   private String tags;
-  private boolean isFromHotspot;
   // populate only when retrieving closed issue for issue tracking
   private String closedChangeData;
 

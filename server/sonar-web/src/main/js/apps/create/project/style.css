@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,13 @@
   justify-content: space-between;
 }
 
+.create-project-azdo-repo {
+  width: 410px;
+  min-height: 40px;
+  box-sizing: border-box;
+  margin-right: auto;
+}
+
 .create-project-import-bbs .open .boxed-group-header {
   border-bottom: 1px solid var(--barBorderColor);
 }
@@ -58,5 +65,22 @@
 }
 
 .create-project-github-repository .notice svg {
+  color: var(--green);
+}
+
+.create-project-import-gitlab table > tbody > tr > td {
+  vertical-align: middle;
+}
+
+.create-project-import-gitlab .project-name,
+.create-project-import-gitlab .project-path {
+  max-width: 400px;
+}
+
+.create-project-import-gitlab .sq-project-link {
+  max-width: 300px;
+}
+
+.create-project-import-gitlab .already-set-up svg {
   color: var(--green);
 }

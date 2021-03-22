@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -57,18 +57,6 @@ export function getBranchLikeDisplayName(branchLike: BranchLike) {
 
 export function getBranchLikeKey(branchLike: BranchLike) {
   return isPullRequest(branchLike) ? `pull-request-${branchLike.key}` : `branch-${branchLike.name}`;
-}
-
-export function getBranchQualityGateColor(status: string) {
-  let indicatorColor = 'gray';
-  if (status === 'ERROR') {
-    indicatorColor = 'red';
-  } else if (status === 'WARN') {
-    indicatorColor = 'orange';
-  } else if (status === 'OK') {
-    indicatorColor = 'green';
-  }
-  return indicatorColor;
 }
 
 export function isSameBranchLike(a: BranchLike | undefined, b: BranchLike | undefined) {

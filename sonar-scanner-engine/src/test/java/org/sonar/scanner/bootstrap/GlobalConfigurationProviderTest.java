@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -41,12 +41,12 @@ public class GlobalConfigurationProviderTest {
   public LogTester logTester = new LogTester();
 
   GlobalServerSettings globalServerSettings;
-  RawScannerProperties scannerProps;
+  ScannerProperties scannerProps;
 
   @Before
   public void prepare() {
     globalServerSettings = mock(GlobalServerSettings.class);
-    scannerProps = new RawScannerProperties(Collections.emptyMap());
+    scannerProps = new ScannerProperties(Collections.emptyMap());
   }
 
   @Test

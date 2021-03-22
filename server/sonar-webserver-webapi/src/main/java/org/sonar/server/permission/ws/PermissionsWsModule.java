@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,6 @@ public class PermissionsWsModule extends Module {
       UsersAction.class,
       GroupsAction.class,
       SearchGlobalPermissionsAction.class,
-      SearchProjectPermissionsAction.class,
       RemoveUserFromTemplateAction.class,
       AddUserToTemplateAction.class,
       AddGroupToTemplateAction.class,

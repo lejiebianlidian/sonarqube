@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,6 @@ import ProfileNotFound from './ProfileNotFound';
 
 interface Props {
   children: React.ReactElement<any>;
-  location: {
-    pathname: string;
-    query: { key?: string; language: string; name: string };
-  };
-  organization: string | null;
   profiles: Profile[];
   updateProfiles: () => Promise<void>;
 }
@@ -53,7 +48,7 @@ export default class ProfileContainer extends React.PureComponent<Props & WithRo
   }
 
   render() {
-    const { organization, profiles, location, ...other } = this.props;
+    const { profiles, location, ...other } = this.props;
     const { key, language, name } = location.query;
 
     if (key) {
@@ -62,7 +57,7 @@ export default class ProfileContainer extends React.PureComponent<Props & WithRo
       // then we will be redirected in `componentDidMount`
       // otherwise show `ProfileNotFound`
       const profile = profiles.find(profile => profile.key === location.query.key);
-      return profile ? null : <ProfileNotFound organization={organization} />;
+      return profile ? null : <ProfileNotFound />;
     }
 
     const profile = profiles.find(
@@ -70,11 +65,10 @@ export default class ProfileContainer extends React.PureComponent<Props & WithRo
     );
 
     if (!profile) {
-      return <ProfileNotFound organization={organization} />;
+      return <ProfileNotFound />;
     }
 
     const child = React.cloneElement(this.props.children, {
-      organization,
       profile,
       profiles,
       ...other
@@ -83,11 +77,7 @@ export default class ProfileContainer extends React.PureComponent<Props & WithRo
     return (
       <div id="quality-profile">
         <Helmet defer={false} title={profile.name} />
-        <ProfileHeader
-          organization={organization}
-          profile={profile}
-          updateProfiles={this.props.updateProfiles}
-        />
+        <ProfileHeader profile={profile} updateProfiles={this.props.updateProfiles} />
         {child}
       </div>
     );

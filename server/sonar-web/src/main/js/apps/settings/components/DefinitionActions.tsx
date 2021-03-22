@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@ import * as React from 'react';
 import { Button, ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import { translate } from 'sonar-ui-common/helpers/l10n';
+import { Setting } from '../../../types/settings';
 import { getDefaultValue, getSettingValue, isEmptyValue } from '../utils';
 
 type Props = {
@@ -31,7 +32,7 @@ type Props = {
   onCancel: () => void;
   onReset: () => void;
   onSave: () => void;
-  setting: T.Setting;
+  setting: Setting;
 };
 
 type State = { reseting: boolean };

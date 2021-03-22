@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualityprofile.ActiveRuleDto;
 import org.sonar.db.qualityprofile.ActiveRuleParamDto;
 import org.sonar.db.qualityprofile.QProfileDto;
@@ -64,18 +63,18 @@ public class QProfileBackuperImplTest {
     "<rules/>" +
     "</profile>";
 
-  private System2 system2 = new AlwaysIncreasingSystem2();
+  private final System2 system2 = new AlwaysIncreasingSystem2();
 
   @Rule
   public ExpectedException expectedException = none();
   @Rule
   public DbTester db = DbTester.create(system2);
 
-  private DummyReset reset = new DummyReset();
-  private QProfileFactory profileFactory = new DummyProfileFactory();
-  private RuleCreator ruleCreator = mock(RuleCreator.class);
+  private final DummyReset reset = new DummyReset();
+  private final QProfileFactory profileFactory = new DummyProfileFactory();
+  private final RuleCreator ruleCreator = mock(RuleCreator.class);
 
-  private QProfileBackuper underTest = new QProfileBackuperImpl(db.getDbClient(), reset, profileFactory, ruleCreator, new QProfileParser());
+  private final QProfileBackuper underTest = new QProfileBackuperImpl(db.getDbClient(), reset, profileFactory, ruleCreator, new QProfileParser());
 
   @Test
   public void backup_generates_xml_file() {
@@ -176,10 +175,9 @@ public class QProfileBackuperImplTest {
 
   @Test
   public void restore_backup_on_the_profile_specified_in_backup() {
-    OrganizationDto organization = db.organizations().insert();
     Reader backup = new StringReader(EMPTY_BACKUP);
 
-    QProfileRestoreSummary summary = underTest.restore(db.getSession(), backup, organization, null);
+    QProfileRestoreSummary summary = underTest.restore(db.getSession(), backup, (String) null);
 
     assertThat(summary.getProfile().getName()).isEqualTo("foo");
     assertThat(summary.getProfile().getLanguage()).isEqualTo("js");
@@ -189,11 +187,76 @@ public class QProfileBackuperImplTest {
   }
 
   @Test
+  public void restore_detects_deprecated_rule_keys() {
+    String ruleUuid = db.rules().insert(RuleKey.of("sonarjs", "s001")).getUuid();
+    db.rules().insertDeprecatedKey(c -> c.setRuleUuid(ruleUuid).setOldRuleKey("oldkey").setOldRepositoryKey("oldrepo"));
+
+    Reader backup = new StringReader("<?xml version='1.0' encoding='UTF-8'?>" +
+      "<profile><name>foo</name>" +
+      "<language>js</language>" +
+      "<rules>" +
+      "<rule>" +
+      "<repositoryKey>oldrepo</repositoryKey>" +
+      "<key>oldkey</key>" +
+      "<priority>BLOCKER</priority>" +
+      "<parameters>" +
+      "<parameter><key>bar</key><value>baz</value></parameter>" +
+      "</parameters>" +
+      "</rule>" +
+      "</rules>" +
+      "</profile>");
+
+    underTest.restore(db.getSession(), backup, (String) null);
+
+    assertThat(reset.calledActivations).hasSize(1);
+    RuleActivation activation = reset.calledActivations.get(0);
+    assertThat(activation.getSeverity()).isEqualTo("BLOCKER");
+    assertThat(activation.getRuleUuid()).isEqualTo(ruleUuid);
+    assertThat(activation.getParameter("bar")).isEqualTo("baz");
+  }
+
+  @Test
+  public void restore_ignores_deprecated_rule_keys_if_new_key_is_already_present() {
+    String ruleUuid = db.rules().insert(RuleKey.of("sonarjs", "s001")).getUuid();
+    db.rules().insertDeprecatedKey(c -> c.setRuleUuid(ruleUuid).setOldRuleKey("oldkey").setOldRepositoryKey("oldrepo"));
+
+    Reader backup = new StringReader("<?xml version='1.0' encoding='UTF-8'?>" +
+      "<profile><name>foo</name>" +
+      "<language>js</language>" +
+      "<rules>" +
+      "<rule>" +
+      "<repositoryKey>oldrepo</repositoryKey>" +
+      "<key>oldkey</key>" +
+      "<priority>MAJOR</priority>" +
+      "<parameters>" +
+      "<parameter><key>bar</key><value>baz</value></parameter>" +
+      "</parameters>" +
+      "</rule>" +
+      "<rule>" +
+      "<repositoryKey>sonarjs</repositoryKey>" +
+      "<key>s001</key>" +
+      "<priority>BLOCKER</priority>" +
+      "<parameters>" +
+      "<parameter><key>bar2</key><value>baz2</value></parameter>" +
+      "</parameters>" +
+      "</rule>" +
+      "</rules>" +
+      "</profile>");
+
+    underTest.restore(db.getSession(), backup, (String) null);
+
+    assertThat(reset.calledActivations).hasSize(1);
+    RuleActivation activation = reset.calledActivations.get(0);
+    assertThat(activation.getSeverity()).isEqualTo("BLOCKER");
+    assertThat(activation.getRuleUuid()).isEqualTo(ruleUuid);
+    assertThat(activation.getParameter("bar2")).isEqualTo("baz2");
+  }
+
+  @Test
   public void restore_backup_on_profile_having_different_name() {
-    OrganizationDto organization = db.organizations().insert();
     Reader backup = new StringReader(EMPTY_BACKUP);
 
-    QProfileRestoreSummary summary = underTest.restore(db.getSession(), backup, organization, "bar");
+    QProfileRestoreSummary summary = underTest.restore(db.getSession(), backup, "bar");
 
     assertThat(summary.getProfile().getName()).isEqualTo("bar");
     assertThat(summary.getProfile().getLanguage()).isEqualTo("js");
@@ -205,7 +268,6 @@ public class QProfileBackuperImplTest {
   @Test
   public void restore_resets_the_activated_rules() {
     String ruleUuid = db.rules().insert(RuleKey.of("sonarjs", "s001")).getUuid();
-    OrganizationDto organization = db.organizations().insert();
     Reader backup = new StringReader("<?xml version='1.0' encoding='UTF-8'?>" +
       "<profile><name>foo</name>" +
       "<language>js</language>" +
@@ -221,7 +283,7 @@ public class QProfileBackuperImplTest {
       "</rules>" +
       "</profile>");
 
-    underTest.restore(db.getSession(), backup, organization, null);
+    underTest.restore(db.getSession(), backup, (String) null);
 
     assertThat(reset.calledActivations).hasSize(1);
     RuleActivation activation = reset.calledActivations.get(0);
@@ -234,7 +296,6 @@ public class QProfileBackuperImplTest {
   public void restore_custom_rule() {
     when(ruleCreator.create(any(), anyList())).then(invocation -> Collections.singletonList(db.rules().insert(RuleKey.of("sonarjs", "s001")).getKey()));
 
-    OrganizationDto organization = db.organizations().insert();
     Reader backup = new StringReader("<?xml version='1.0' encoding='UTF-8'?>" +
       "<profile>" +
       "<name>custom rule</name>" +
@@ -254,7 +315,7 @@ public class QProfileBackuperImplTest {
       "</parameters>" +
       "</rule></rules></profile>");
 
-    underTest.restore(db.getSession(), backup, organization, null);
+    underTest.restore(db.getSession(), backup, (String) null);
 
     assertThat(reset.calledActivations).hasSize(1);
     RuleActivation activation = reset.calledActivations.get(0);
@@ -265,7 +326,6 @@ public class QProfileBackuperImplTest {
   @Test
   public void restore_skips_rule_without_template_key_and_db_definition() {
     String ruleUuid = db.rules().insert(RuleKey.of("sonarjs", "s001")).getUuid();
-    OrganizationDto organization = db.organizations().insert();
     Reader backup = new StringReader("<?xml version='1.0' encoding='UTF-8'?>" +
       "<profile><name>foo</name>" +
       "<language>js</language>" +
@@ -286,7 +346,7 @@ public class QProfileBackuperImplTest {
       "</rules>" +
       "</profile>");
 
-    underTest.restore(db.getSession(), backup, organization, null);
+    underTest.restore(db.getSession(), backup, (String) null);
 
     assertThat(reset.calledActivations).hasSize(1);
     RuleActivation activation = reset.calledActivations.get(0);
@@ -312,9 +372,8 @@ public class QProfileBackuperImplTest {
 
   @Test
   public void fail_to_restore_if_bad_xml_format() {
-    OrganizationDto organization = db.organizations().insert();
     try {
-      underTest.restore(db.getSession(), new StringReader("<rules><rule></rules>"), organization, null);
+      underTest.restore(db.getSession(), new StringReader("<rules><rule></rules>"), (String) null);
       fail();
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("Backup XML is not valid. Root element must be <profile>.");
@@ -324,9 +383,8 @@ public class QProfileBackuperImplTest {
 
   @Test
   public void fail_to_restore_if_not_xml_backup() {
-    OrganizationDto organization = db.organizations().insert();
     try {
-      underTest.restore(db.getSession(), new StringReader("foo"), organization, null);
+      underTest.restore(db.getSession(), new StringReader("foo"), (String) null);
       fail();
     } catch (IllegalArgumentException e) {
       assertThat(reset.calledProfile).isNull();
@@ -337,18 +395,16 @@ public class QProfileBackuperImplTest {
   public void fail_to_restore_if_xml_is_not_well_formed() {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Fail to restore Quality profile backup, XML document is not well formed");
-    OrganizationDto organization = db.organizations().insert();
     String notWellFormedXml = "<?xml version='1.0' encoding='UTF-8'?><profile><name>\"profil\"</name><language>\"language\"</language><rules/></profile";
 
-    underTest.restore(db.getSession(), new StringReader(notWellFormedXml), organization, null);
+    underTest.restore(db.getSession(), new StringReader(notWellFormedXml), (String) null);
   }
 
   @Test
   public void fail_to_restore_if_duplicate_rule() throws Exception {
-    OrganizationDto organization = db.organizations().insert();
     try {
       String xml = Resources.toString(getClass().getResource("QProfileBackuperTest/duplicates-xml-backup.xml"), UTF_8);
-      underTest.restore(db.getSession(), new StringReader(xml), organization, null);
+      underTest.restore(db.getSession(), new StringReader(xml), (String) null);
       fail();
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("The quality profile cannot be restored as it contains duplicates for the following rules: xoo:x1, xoo:x2");
@@ -359,7 +415,6 @@ public class QProfileBackuperImplTest {
   @Test
   public void fail_to_restore_external_rule() {
     db.rules().insert(RuleKey.of("sonarjs", "s001"), r -> r.setIsExternal(true));
-    OrganizationDto organization = db.organizations().insert();
     Reader backup = new StringReader("<?xml version='1.0' encoding='UTF-8'?>" +
       "<profile><name>foo</name>" +
       "<language>js</language>" +
@@ -377,7 +432,7 @@ public class QProfileBackuperImplTest {
 
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("The quality profile cannot be restored as it contains rules from external rule engines: sonarjs:s001");
-    underTest.restore(db.getSession(), backup, organization, null);
+    underTest.restore(db.getSession(), backup, (String) null);
   }
 
   private RuleDefinitionDto createRule() {
@@ -385,7 +440,7 @@ public class QProfileBackuperImplTest {
   }
 
   private QProfileDto createProfile(String language) {
-    return db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(language));
+    return db.qualityProfiles().insert(p -> p.setLanguage(language));
   }
 
   private ActiveRuleDto activate(QProfileDto profile, RuleDefinitionDto rule) {
@@ -415,20 +470,19 @@ public class QProfileBackuperImplTest {
 
   private static class DummyProfileFactory implements QProfileFactory {
     @Override
-    public QProfileDto getOrCreateCustom(DbSession dbSession, OrganizationDto organization, QProfileName key) {
+    public QProfileDto getOrCreateCustom(DbSession dbSession, QProfileName key) {
       return QualityProfileTesting.newQualityProfileDto()
-        .setOrganizationUuid(organization.getUuid())
         .setLanguage(key.getLanguage())
         .setName(key.getName());
     }
 
     @Override
-    public QProfileDto checkAndCreateCustom(DbSession dbSession, OrganizationDto organization, QProfileName name) {
+    public QProfileDto checkAndCreateCustom(DbSession dbSession, QProfileName name) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public QProfileDto createCustom(DbSession dbSession, OrganizationDto organization, QProfileName name, @Nullable String parentKey) {
+    public QProfileDto createCustom(DbSession dbSession, QProfileName name, @Nullable String parentKey) {
       throw new UnsupportedOperationException();
     }
 

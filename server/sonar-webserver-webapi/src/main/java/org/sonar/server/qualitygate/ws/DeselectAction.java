@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import org.sonar.api.server.ws.Response;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 
 import static org.sonar.server.qualitygate.ws.QualityGatesWsParameters.PARAM_PROJECT_KEY;
@@ -61,22 +60,19 @@ public class DeselectAction implements QualityGatesWsAction {
       .setDescription("Project key")
       .setExampleValue(KEY_PROJECT_EXAMPLE_001)
       .setSince("6.1");
-
-    wsSupport.createOrganizationParam(action);
   }
 
   @Override
   public void handle(Request request, Response response) {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      OrganizationDto organization = wsSupport.getOrganization(dbSession, request);
-      ProjectDto project = wsSupport.getProject(dbSession, organization, request.mandatoryParam(PARAM_PROJECT_KEY));
-      dissociateProject(dbSession, organization, project);
+      ProjectDto project = wsSupport.getProject(dbSession, request.mandatoryParam(PARAM_PROJECT_KEY));
+      dissociateProject(dbSession, project);
       response.noContent();
     }
   }
 
-  private void dissociateProject(DbSession dbSession, OrganizationDto organization, ProjectDto project) {
-    wsSupport.checkCanAdminProject(organization, project);
+  private void dissociateProject(DbSession dbSession, ProjectDto project) {
+    wsSupport.checkCanAdminProject(project);
     dbClient.projectQgateAssociationDao().deleteByProjectUuid(dbSession, project.getUuid());
     dbSession.commit();
   }

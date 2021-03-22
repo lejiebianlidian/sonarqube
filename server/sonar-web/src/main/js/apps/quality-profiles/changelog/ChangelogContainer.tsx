@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@ import ChangelogEmpty from './ChangelogEmpty';
 import ChangelogSearch from './ChangelogSearch';
 
 interface Props extends Pick<WithRouterProps, 'router' | 'location'> {
-  organization: string | null;
   profile: Profile;
 }
 
@@ -114,24 +113,15 @@ export class ChangelogContainer extends React.PureComponent<Props, State> {
   }
 
   handleDateRangeChange = ({ from, to }: { from?: Date; to?: Date }) => {
-    const path = getProfileChangelogPath(
-      this.props.profile.name,
-      this.props.profile.language,
-      this.props.organization,
-      {
-        since: from && toShortNotSoISOString(from),
-        to: to && toShortNotSoISOString(to)
-      }
-    );
+    const path = getProfileChangelogPath(this.props.profile.name, this.props.profile.language, {
+      since: from && toShortNotSoISOString(from),
+      to: to && toShortNotSoISOString(to)
+    });
     this.props.router.push(path);
   };
 
   handleReset = () => {
-    const path = getProfileChangelogPath(
-      this.props.profile.name,
-      this.props.profile.language,
-      this.props.organization
-    );
+    const path = getProfileChangelogPath(this.props.profile.name, this.props.profile.language);
     this.props.router.push(path);
   };
 
@@ -161,7 +151,7 @@ export class ChangelogContainer extends React.PureComponent<Props, State> {
         {this.state.events != null && this.state.events.length === 0 && <ChangelogEmpty />}
 
         {this.state.events != null && this.state.events.length > 0 && (
-          <Changelog events={this.state.events} organization={this.props.organization} />
+          <Changelog events={this.state.events} />
         )}
 
         {shouldDisplayFooter && (

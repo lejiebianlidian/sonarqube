@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ import ChangeParentForm from './ChangeParentForm';
 import ProfileInheritanceBox from './ProfileInheritanceBox';
 
 interface Props {
-  organization: string | null;
   profile: Profile;
   profiles: Profile[];
   updateProfiles: () => Promise<void>;
@@ -143,7 +142,6 @@ export default class ProfileInheritance extends React.PureComponent<Props, State
                       depth={index}
                       key={ancestor.key}
                       language={profile.language}
-                      organization={this.props.organization}
                       profile={ancestor}
                       type="ancestor"
                     />
@@ -158,7 +156,6 @@ export default class ProfileInheritance extends React.PureComponent<Props, State
                     displayLink={false}
                     extendsBuiltIn={extendsBuiltIn}
                     language={profile.language}
-                    organization={this.props.organization}
                     profile={this.state.profile}
                   />
                 )}
@@ -169,7 +166,6 @@ export default class ProfileInheritance extends React.PureComponent<Props, State
                       depth={ancestors ? ancestors.length + 1 : 0}
                       key={child.key}
                       language={profile.language}
-                      organization={this.props.organization}
                       profile={child}
                       type="child"
                     />

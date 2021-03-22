@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import * as classNames from 'classnames';
 import * as React from 'react';
 import { DropdownOverlay } from 'sonar-ui-common/components/controls/Dropdown';
@@ -38,7 +37,7 @@ export interface StatusProps {
   currentUser: T.CurrentUser;
   hotspot: Hotspot;
 
-  onStatusChange: () => void;
+  onStatusChange: () => Promise<void>;
 }
 
 export function Status(props: StatusProps) {
@@ -80,9 +79,9 @@ export function Status(props: StatusProps) {
         <DropdownOverlay noPadding={true} placement={PopupPlacement.Bottom}>
           <StatusSelection
             hotspot={hotspot}
-            onStatusOptionChange={() => {
+            onStatusOptionChange={async () => {
+              await props.onStatusChange();
               setIsOpen(false);
-              props.onStatusChange();
             }}
           />
         </DropdownOverlay>

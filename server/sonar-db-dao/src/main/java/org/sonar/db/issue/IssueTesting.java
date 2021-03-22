@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -90,6 +90,7 @@ public class IssueTesting {
       .setChangeData("data_" + randomAlphanumeric(40))
       .setChangeType(IssueChangeDto.TYPE_FIELD_CHANGE)
       .setUserUuid("userUuid_" + randomAlphanumeric(40))
+      .setProjectUuid(issue.getProjectUuid())
       .setIssueChangeCreationDate(nextLong())
       .setCreatedAt(nextLong())
       .setUpdatedAt(nextLong());

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ public class DefaultScannerWsClientTest {
 
     logTester.setLevel(LoggerLevel.DEBUG);
     DefaultScannerWsClient underTest = new DefaultScannerWsClient(wsClient, false, new GlobalAnalysisMode(
-      new RawScannerProperties(Collections.emptyMap())));
+      new ScannerProperties(Collections.emptyMap())));
 
     WsResponse result = underTest.call(request);
 
@@ -93,13 +93,13 @@ public class DefaultScannerWsClientTest {
   public void fail_if_requires_credentials() {
     expectedException.expect(MessageException.class);
     expectedException
-      .expectMessage("Not authorized. Analyzing this project requires to be authenticated. Please provide the values of the properties sonar.login and sonar.password.");
+      .expectMessage("Not authorized. Analyzing this project requires authentication. Please provide a user token in sonar.login or other credentials in sonar.login and sonar.password.");
 
     WsRequest request = newRequest();
     WsResponse response = newResponse().setCode(401);
     when(wsClient.wsConnector().call(request)).thenReturn(response);
 
-    new DefaultScannerWsClient(wsClient, false, new GlobalAnalysisMode(new RawScannerProperties(Collections.emptyMap()))).call(request);
+    new DefaultScannerWsClient(wsClient, false, new GlobalAnalysisMode(new ScannerProperties(Collections.emptyMap()))).call(request);
   }
 
   @Test
@@ -111,7 +111,7 @@ public class DefaultScannerWsClientTest {
     WsResponse response = newResponse().setCode(401);
     when(wsClient.wsConnector().call(request)).thenReturn(response);
 
-    new DefaultScannerWsClient(wsClient, /* credentials are configured */true, new GlobalAnalysisMode(new RawScannerProperties(Collections.emptyMap()))).call(request);
+    new DefaultScannerWsClient(wsClient, /* credentials are configured */true, new GlobalAnalysisMode(new ScannerProperties(Collections.emptyMap()))).call(request);
   }
 
   @Test
@@ -124,7 +124,7 @@ public class DefaultScannerWsClientTest {
       .setCode(403);
     when(wsClient.wsConnector().call(request)).thenReturn(response);
 
-    new DefaultScannerWsClient(wsClient, true, new GlobalAnalysisMode(new RawScannerProperties(Collections.emptyMap()))).call(request);
+    new DefaultScannerWsClient(wsClient, true, new GlobalAnalysisMode(new ScannerProperties(Collections.emptyMap()))).call(request);
   }
 
   @Test
@@ -138,7 +138,7 @@ public class DefaultScannerWsClientTest {
       .setContent("{\"errors\":[{\"msg\":\"Boo! bad request! bad!\"}]}");
     when(wsClient.wsConnector().call(request)).thenReturn(response);
 
-    new DefaultScannerWsClient(wsClient, true, new GlobalAnalysisMode(new RawScannerProperties(Collections.emptyMap()))).call(request);
+    new DefaultScannerWsClient(wsClient, true, new GlobalAnalysisMode(new ScannerProperties(Collections.emptyMap()))).call(request);
   }
 
   private MockWsResponse newResponse() {

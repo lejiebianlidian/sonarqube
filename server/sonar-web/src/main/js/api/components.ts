@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +20,11 @@
 import { getJSON, post, postJSON, RequestData } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
 import { BranchParameters } from '../types/branch-like';
-import { ComponentQualifier } from '../types/component';
+import { ComponentQualifier, TreeComponent, TreeComponentWithPath } from '../types/component';
 
 export interface BaseSearchProjectsParameters {
   analyzedBefore?: string;
   onProvisionedOnly?: boolean;
-  organization: string;
   projects?: string;
   q?: string;
   qualifiers?: string;
@@ -42,7 +41,6 @@ export interface ProjectBase {
 export interface Project extends ProjectBase {
   id: string;
   lastAnalysisDate?: string;
-  organization: string;
 }
 
 export interface SearchProjectsParameters extends BaseSearchProjectsParameters {
@@ -76,7 +74,6 @@ export function deletePortfolio(portfolio: string): Promise<void | Response> {
 export function createProject(data: {
   name: string;
   project: string;
-  organization?: string;
   visibility?: T.Visibility;
 }): Promise<{ project: ProjectBase }> {
   return postJSON('/api/projects/create', data).catch(throwGlobalError);
@@ -130,20 +127,6 @@ export function getComponent(
   data: { component: string; metricKeys: string } & BranchParameters
 ): Promise<{ component: T.ComponentMeasure }> {
   return getJSON('/api/measures/component', data);
-}
-
-export interface TreeComponent extends T.LightComponent {
-  id?: string;
-  name: string;
-  path?: string;
-  refId?: string;
-  refKey?: string;
-  tags?: string[];
-  visibility: T.Visibility;
-}
-
-export interface TreeComponentWithPath extends TreeComponent {
-  path: string;
 }
 
 type GetTreeParams = {
@@ -206,7 +189,6 @@ export function getMyProjects(data: {
 }
 
 export interface Component {
-  organization: string;
   id: string;
   key: string;
   name: string;
@@ -229,7 +211,6 @@ export function searchProjects(
 ): Promise<{
   components: Component[];
   facets: Facet[];
-  organizations: Array<{ key: string; name: string }>;
   paging: T.Paging;
 }> {
   const url = '/api/components/search_projects';
@@ -249,7 +230,6 @@ export function changeKey(data: { from: string; to: string }) {
 }
 
 export interface SuggestionsResponse {
-  organizations: Array<{ key: string; name: string }>;
   projects: Array<{ key: string; name: string }>;
   results: Array<{
     items: Array<{
@@ -258,7 +238,6 @@ export interface SuggestionsResponse {
       key: string;
       match: string;
       name: string;
-      organization: string;
       project: string;
     }>;
     more: number;

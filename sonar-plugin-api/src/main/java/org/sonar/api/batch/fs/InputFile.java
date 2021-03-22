@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 
 /**
  * This layer over {@link java.io.File} adds information for code analyzers.
- * For unit testing purpose, use TestInputFileBuilder and initialize
+ * For unit testing purpose, use TestInputFileBuilder available in sonar-plugin-api-impl and initialize
  * the needed fields:
  * 
  * <pre>

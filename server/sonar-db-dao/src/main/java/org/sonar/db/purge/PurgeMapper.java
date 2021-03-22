@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -67,6 +67,8 @@ public interface PurgeMapper {
   void deletePropertiesByComponentUuids(@Param("componentUuids") List<String> componentUuids);
 
   void deleteComponentsByProjectUuid(@Param("rootUuid") String rootUuid);
+
+  void deleteComponentsByMainBranchProjectUuid(@Param("uuid") String uuid);
 
   void deleteProjectsByProjectUuid(@Param("projectUuid") String projectUuid);
 
@@ -139,7 +141,13 @@ public interface PurgeMapper {
 
   void deleteProjectMappingsByProjectUuid(@Param("projectUuid") String projectUuid);
 
-  void deleteProjectAlmBindingsByProjectUuid(@Param("projectUuid") String projectUuid);
+  void deleteApplicationProjectsByApplicationUuid(@Param("applicationUuid") String applicationUuid);
+
+  void deleteApplicationBranchProjectBranchesByApplicationUuid(@Param("applicationUuid") String applicationUuid);
+
+  void deleteApplicationBranchProjects(@Param("branchUuid") String applicationBranchUuid);
+
+  void deleteApplicationBranchProjectBranchesByProjectBranchUuid(@Param("projectBranchUuid") String projectBranchUuid);
 
   void deleteBranchByUuid(@Param("uuid") String uuid);
 
@@ -149,4 +157,7 @@ public interface PurgeMapper {
 
   void deleteNewCodePeriodsByRootUuid(String rootUuid);
 
+  void deleteProjectAlmSettingsByProjectUuid(@Param("projectUuid") String projectUuid);
+
+  void deleteUserDismissedMessagesByProjectUuid(@Param("projectUuid") String projectUuid);
 }

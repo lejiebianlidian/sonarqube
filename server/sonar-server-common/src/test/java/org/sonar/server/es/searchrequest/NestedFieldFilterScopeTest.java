@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -83,8 +83,7 @@ public class NestedFieldFilterScopeTest {
 
     assertThat(underTest)
       .isEqualTo(underTest)
-      .isEqualTo(new NestedFieldFilterScope<>(fieldName, nestedFieldName, value));
-    assertThat(underTest)
+      .isEqualTo(new NestedFieldFilterScope<>(fieldName, nestedFieldName, value))
       .isNotEqualTo(null)
       .isNotEqualTo(new Object())
       .isNotEqualTo(new NestedFieldFilterScope<>(fieldName2, nestedFieldName, value))

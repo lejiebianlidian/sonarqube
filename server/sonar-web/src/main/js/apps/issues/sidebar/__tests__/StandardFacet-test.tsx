@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ import { Query } from '../../utils';
 import StandardFacet from '../StandardFacet';
 
 jest.mock('../../../../helpers/security-standard', () => ({
-  ...require.requireActual('../../../../helpers/security-standard'),
+  ...jest.requireActual('../../../../helpers/security-standard'),
   getStandards: jest.fn().mockResolvedValue({
     owaspTop10: {
       a1: {

@@ -2,8 +2,8 @@
 
 exports[`should render correctly 1`] = `
 <DeferredSpinner
+  className="big-spacer-left big-spacer-top"
   loading={false}
-  timeout={100}
 >
   <div
     className="big-padded hotspot-content"
@@ -23,10 +23,19 @@ exports[`should render correctly 1`] = `
           className="dropdown spacer-right flex-1-0-auto"
         >
           <Button
+            className="it__hs-add-comment"
             onClick={[MockFunction]}
           >
             hotspots.comment.open
           </Button>
+        </div>
+        <div
+          className="dropdown spacer-right flex-1-0-auto"
+        >
+          <HotspotOpenInIdeButton
+            hotspotKey="01fc972e-2a3c-433e-bcae-0bd7f88f5123"
+            projectKey="my-project"
+          />
         </div>
         <ClipboardButton
           className="flex-1-0-auto"
@@ -76,7 +85,7 @@ exports[`should render correctly 1`] = `
           </div>
         </div>
         <div
-          className="display-flex-center"
+          className="display-flex-center it__hs-assignee"
         >
           <span
             className="big-spacer-right"
@@ -108,7 +117,6 @@ exports[`should render correctly 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "FIL",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -133,7 +141,6 @@ exports[`should render correctly 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -216,7 +223,6 @@ exports[`should render correctly 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "FIL",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -241,7 +247,6 @@ exports[`should render correctly 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "TRK",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -292,7 +297,7 @@ exports[`should render correctly 1`] = `
               ],
             }
           }
-          onStatusChange={[MockFunction]}
+          onStatusChange={[Function]}
         />
       </div>
     </div>
@@ -310,7 +315,6 @@ exports[`should render correctly 1`] = `
           "breadcrumbs": Array [],
           "key": "my-project",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "TRK",
           "qualityGate": Object {
             "isDefault": true,
@@ -351,7 +355,6 @@ exports[`should render correctly 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -376,7 +379,6 @@ exports[`should render correctly 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -452,7 +454,6 @@ exports[`should render correctly 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -477,7 +478,6 @@ exports[`should render correctly 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -564,7 +564,6 @@ exports[`should render correctly 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -589,7 +588,6 @@ exports[`should render correctly 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -650,8 +648,8 @@ exports[`should render correctly 1`] = `
 
 exports[`should render correctly: anonymous user 1`] = `
 <DeferredSpinner
+  className="big-spacer-left big-spacer-top"
   loading={false}
-  timeout={100}
 >
   <div
     className="big-padded hotspot-content"
@@ -671,10 +669,19 @@ exports[`should render correctly: anonymous user 1`] = `
           className="dropdown spacer-right flex-1-0-auto"
         >
           <Button
+            className="it__hs-add-comment"
             onClick={[MockFunction]}
           >
             hotspots.comment.open
           </Button>
+        </div>
+        <div
+          className="dropdown spacer-right flex-1-0-auto"
+        >
+          <HotspotOpenInIdeButton
+            hotspotKey="01fc972e-2a3c-433e-bcae-0bd7f88f5123"
+            projectKey="my-project"
+          />
         </div>
         <ClipboardButton
           className="flex-1-0-auto"
@@ -724,7 +731,7 @@ exports[`should render correctly: anonymous user 1`] = `
           </div>
         </div>
         <div
-          className="display-flex-center"
+          className="display-flex-center it__hs-assignee"
         >
           <span
             className="big-spacer-right"
@@ -756,7 +763,6 @@ exports[`should render correctly: anonymous user 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "FIL",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -781,7 +787,6 @@ exports[`should render correctly: anonymous user 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -864,7 +869,6 @@ exports[`should render correctly: anonymous user 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "FIL",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -889,7 +893,6 @@ exports[`should render correctly: anonymous user 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "TRK",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -940,7 +943,7 @@ exports[`should render correctly: anonymous user 1`] = `
               ],
             }
           }
-          onStatusChange={[MockFunction]}
+          onStatusChange={[Function]}
         />
       </div>
     </div>
@@ -958,7 +961,6 @@ exports[`should render correctly: anonymous user 1`] = `
           "breadcrumbs": Array [],
           "key": "my-project",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "TRK",
           "qualityGate": Object {
             "isDefault": true,
@@ -999,7 +1001,6 @@ exports[`should render correctly: anonymous user 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -1024,7 +1025,6 @@ exports[`should render correctly: anonymous user 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -1100,7 +1100,6 @@ exports[`should render correctly: anonymous user 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -1125,7 +1124,6 @@ exports[`should render correctly: anonymous user 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -1212,7 +1210,6 @@ exports[`should render correctly: anonymous user 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -1237,7 +1234,6 @@ exports[`should render correctly: anonymous user 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -1298,8 +1294,8 @@ exports[`should render correctly: anonymous user 1`] = `
 
 exports[`should render correctly: assignee without name 1`] = `
 <DeferredSpinner
+  className="big-spacer-left big-spacer-top"
   loading={false}
-  timeout={100}
 >
   <div
     className="big-padded hotspot-content"
@@ -1319,10 +1315,19 @@ exports[`should render correctly: assignee without name 1`] = `
           className="dropdown spacer-right flex-1-0-auto"
         >
           <Button
+            className="it__hs-add-comment"
             onClick={[MockFunction]}
           >
             hotspots.comment.open
           </Button>
+        </div>
+        <div
+          className="dropdown spacer-right flex-1-0-auto"
+        >
+          <HotspotOpenInIdeButton
+            hotspotKey="01fc972e-2a3c-433e-bcae-0bd7f88f5123"
+            projectKey="my-project"
+          />
         </div>
         <ClipboardButton
           className="flex-1-0-auto"
@@ -1372,7 +1377,7 @@ exports[`should render correctly: assignee without name 1`] = `
           </div>
         </div>
         <div
-          className="display-flex-center"
+          className="display-flex-center it__hs-assignee"
         >
           <span
             className="big-spacer-right"
@@ -1404,7 +1409,6 @@ exports[`should render correctly: assignee without name 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "FIL",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1429,7 +1433,6 @@ exports[`should render correctly: assignee without name 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -1512,7 +1515,6 @@ exports[`should render correctly: assignee without name 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "FIL",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -1537,7 +1539,6 @@ exports[`should render correctly: assignee without name 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "TRK",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -1588,7 +1589,7 @@ exports[`should render correctly: assignee without name 1`] = `
               ],
             }
           }
-          onStatusChange={[MockFunction]}
+          onStatusChange={[Function]}
         />
       </div>
     </div>
@@ -1606,7 +1607,6 @@ exports[`should render correctly: assignee without name 1`] = `
           "breadcrumbs": Array [],
           "key": "my-project",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "TRK",
           "qualityGate": Object {
             "isDefault": true,
@@ -1647,7 +1647,6 @@ exports[`should render correctly: assignee without name 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -1672,7 +1671,6 @@ exports[`should render correctly: assignee without name 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -1748,7 +1746,6 @@ exports[`should render correctly: assignee without name 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -1773,7 +1770,6 @@ exports[`should render correctly: assignee without name 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -1860,7 +1856,6 @@ exports[`should render correctly: assignee without name 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -1885,7 +1880,6 @@ exports[`should render correctly: assignee without name 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -1946,8 +1940,8 @@ exports[`should render correctly: assignee without name 1`] = `
 
 exports[`should render correctly: deleted assignee 1`] = `
 <DeferredSpinner
+  className="big-spacer-left big-spacer-top"
   loading={false}
-  timeout={100}
 >
   <div
     className="big-padded hotspot-content"
@@ -1967,10 +1961,19 @@ exports[`should render correctly: deleted assignee 1`] = `
           className="dropdown spacer-right flex-1-0-auto"
         >
           <Button
+            className="it__hs-add-comment"
             onClick={[MockFunction]}
           >
             hotspots.comment.open
           </Button>
+        </div>
+        <div
+          className="dropdown spacer-right flex-1-0-auto"
+        >
+          <HotspotOpenInIdeButton
+            hotspotKey="01fc972e-2a3c-433e-bcae-0bd7f88f5123"
+            projectKey="my-project"
+          />
         </div>
         <ClipboardButton
           className="flex-1-0-auto"
@@ -2020,7 +2023,7 @@ exports[`should render correctly: deleted assignee 1`] = `
           </div>
         </div>
         <div
-          className="display-flex-center"
+          className="display-flex-center it__hs-assignee"
         >
           <span
             className="big-spacer-right"
@@ -2052,7 +2055,6 @@ exports[`should render correctly: deleted assignee 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "FIL",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2077,7 +2079,6 @@ exports[`should render correctly: deleted assignee 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2160,7 +2161,6 @@ exports[`should render correctly: deleted assignee 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "FIL",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -2185,7 +2185,6 @@ exports[`should render correctly: deleted assignee 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "TRK",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -2236,7 +2235,7 @@ exports[`should render correctly: deleted assignee 1`] = `
               ],
             }
           }
-          onStatusChange={[MockFunction]}
+          onStatusChange={[Function]}
         />
       </div>
     </div>
@@ -2254,7 +2253,6 @@ exports[`should render correctly: deleted assignee 1`] = `
           "breadcrumbs": Array [],
           "key": "my-project",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "TRK",
           "qualityGate": Object {
             "isDefault": true,
@@ -2295,7 +2293,6 @@ exports[`should render correctly: deleted assignee 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -2320,7 +2317,6 @@ exports[`should render correctly: deleted assignee 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -2396,7 +2392,6 @@ exports[`should render correctly: deleted assignee 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -2421,7 +2416,6 @@ exports[`should render correctly: deleted assignee 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -2508,7 +2502,6 @@ exports[`should render correctly: deleted assignee 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -2533,7 +2526,6 @@ exports[`should render correctly: deleted assignee 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -2594,15 +2586,15 @@ exports[`should render correctly: deleted assignee 1`] = `
 
 exports[`should render correctly: no hotspot 1`] = `
 <DeferredSpinner
+  className="big-spacer-left big-spacer-top"
   loading={false}
-  timeout={100}
 />
 `;
 
 exports[`should render correctly: unassigned 1`] = `
 <DeferredSpinner
+  className="big-spacer-left big-spacer-top"
   loading={false}
-  timeout={100}
 >
   <div
     className="big-padded hotspot-content"
@@ -2622,10 +2614,19 @@ exports[`should render correctly: unassigned 1`] = `
           className="dropdown spacer-right flex-1-0-auto"
         >
           <Button
+            className="it__hs-add-comment"
             onClick={[MockFunction]}
           >
             hotspots.comment.open
           </Button>
+        </div>
+        <div
+          className="dropdown spacer-right flex-1-0-auto"
+        >
+          <HotspotOpenInIdeButton
+            hotspotKey="01fc972e-2a3c-433e-bcae-0bd7f88f5123"
+            projectKey="my-project"
+          />
         </div>
         <ClipboardButton
           className="flex-1-0-auto"
@@ -2675,7 +2676,7 @@ exports[`should render correctly: unassigned 1`] = `
           </div>
         </div>
         <div
-          className="display-flex-center"
+          className="display-flex-center it__hs-assignee"
         >
           <span
             className="big-spacer-right"
@@ -2707,7 +2708,6 @@ exports[`should render correctly: unassigned 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "FIL",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2732,7 +2732,6 @@ exports[`should render correctly: unassigned 1`] = `
                     "breadcrumbs": Array [],
                     "key": "my-project",
                     "name": "MyProject",
-                    "organization": "foo",
                     "qualifier": "TRK",
                     "qualityGate": Object {
                       "isDefault": true,
@@ -2815,7 +2814,6 @@ exports[`should render correctly: unassigned 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "FIL",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -2840,7 +2838,6 @@ exports[`should render correctly: unassigned 1`] = `
                 "breadcrumbs": Array [],
                 "key": "my-project",
                 "name": "MyProject",
-                "organization": "foo",
                 "qualifier": "TRK",
                 "qualityGate": Object {
                   "isDefault": true,
@@ -2891,7 +2888,7 @@ exports[`should render correctly: unassigned 1`] = `
               ],
             }
           }
-          onStatusChange={[MockFunction]}
+          onStatusChange={[Function]}
         />
       </div>
     </div>
@@ -2909,7 +2906,6 @@ exports[`should render correctly: unassigned 1`] = `
           "breadcrumbs": Array [],
           "key": "my-project",
           "name": "MyProject",
-          "organization": "foo",
           "qualifier": "TRK",
           "qualityGate": Object {
             "isDefault": true,
@@ -2950,7 +2946,6 @@ exports[`should render correctly: unassigned 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -2975,7 +2970,6 @@ exports[`should render correctly: unassigned 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -3051,7 +3045,6 @@ exports[`should render correctly: unassigned 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -3076,7 +3069,6 @@ exports[`should render correctly: unassigned 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,
@@ -3163,7 +3155,6 @@ exports[`should render correctly: unassigned 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "FIL",
             "qualityGate": Object {
               "isDefault": true,
@@ -3188,7 +3179,6 @@ exports[`should render correctly: unassigned 1`] = `
             "breadcrumbs": Array [],
             "key": "my-project",
             "name": "MyProject",
-            "organization": "foo",
             "qualifier": "TRK",
             "qualityGate": Object {
               "isDefault": true,

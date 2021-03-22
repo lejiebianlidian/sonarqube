@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ import org.sonar.server.telemetry.TelemetryDataLoader;
 public abstract class AbstractSystemInfoWriter implements SystemInfoWriter {
   private static final String[] ORDERED_SECTION_NAMES = {
     // standalone
-    "System", "Database", "Plugins",
+    "System", "Database", "Bundled", "Plugins",
 
     // cluster
     "Web JVM State", "Web Database Connection", "Web Logging", "Web JVM Properties",

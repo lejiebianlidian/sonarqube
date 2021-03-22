@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ public class AddGroupToTemplateAction implements PermissionsWsAction {
         format("It is not possible to add the '%s' permission to the group 'Anyone'.", permission));
 
       PermissionTemplateDto template = support.findTemplate(dbSession, fromRequest(request));
-      checkGlobalAdmin(userSession, template.getOrganizationUuid());
+      checkGlobalAdmin(userSession);
 
       if (!groupAlreadyAdded(dbSession, template.getUuid(), permission, group)) {
         dbClient.permissionTemplateDao().insertGroupPermission(dbSession, template.getUuid(), group.getUuid(), permission);

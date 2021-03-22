@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -102,10 +103,9 @@ public class IssueIndexer implements ProjectIndexer, NeedAuthorizationIndexer {
     asyncIssueIndexing.triggerOnIndexCreation();
   }
 
-  @VisibleForTesting
   public void indexAllIssues() {
     try (IssueIterator issues = issueIteratorFactory.createForAll()) {
-      doIndex(issues, Size.LARGE, IndexingListener.FAIL_ON_ERROR);
+      doIndex(issues, Size.REGULAR, IndexingListener.FAIL_ON_ERROR);
     }
   }
 
@@ -248,7 +248,7 @@ public class IssueIndexer implements ProjectIndexer, NeedAuthorizationIndexer {
 
   @VisibleForTesting
   protected void index(Iterator<IssueDoc> issues) {
-    doIndex(issues, Size.LARGE, IndexingListener.FAIL_ON_ERROR);
+    doIndex(issues, Size.REGULAR, IndexingListener.FAIL_ON_ERROR);
   }
 
   private void doIndex(Iterator<IssueDoc> issues, Size size, IndexingListener listener) {
@@ -261,23 +261,23 @@ public class IssueIndexer implements ProjectIndexer, NeedAuthorizationIndexer {
     bulk.stop();
   }
 
-  private IndexRequest newIndexRequest(IssueDoc issue) {
-    return esClient.prepareIndex(TYPE_ISSUE.getMainType())
-      .setId(issue.getId())
-      .setRouting(issue.getRouting().orElseThrow(() -> new IllegalStateException("IssueDoc should define a routing")))
-      .setSource(issue.getFields())
-      .request();
+  private static IndexRequest newIndexRequest(IssueDoc issue) {
+    return new IndexRequest(TYPE_ISSUE.getMainType().getIndex().getName(), TYPE_ISSUE.getMainType().getType())
+      .id(issue.getId())
+      .routing(issue.getRouting().orElseThrow(() -> new IllegalStateException("IssueDoc should define a routing")))
+      .source(issue.getFields());
   }
 
-  private void addProjectDeletionToBulkIndexer(BulkIndexer bulkIndexer, String projectUuid) {
-    SearchRequestBuilder search = esClient.prepareSearch(TYPE_ISSUE.getMainType())
-      .setRouting(AuthorizationDoc.idOf(projectUuid))
-      .setQuery(boolQuery().must(termQuery(FIELD_ISSUE_PROJECT_UUID, projectUuid)));
+  private static void addProjectDeletionToBulkIndexer(BulkIndexer bulkIndexer, String projectUuid) {
+    SearchRequest search = EsClient.prepareSearch(TYPE_ISSUE.getMainType())
+      .routing(AuthorizationDoc.idOf(projectUuid))
+      .source(new SearchSourceBuilder().query(boolQuery().must(termQuery(FIELD_ISSUE_PROJECT_UUID, projectUuid))));
+
     bulkIndexer.addDeletion(search);
   }
 
   private static EsQueueDto createQueueDto(String docId, String docIdType, String projectUuid) {
-    return EsQueueDto.create(TYPE_ISSUE.format(), docId, docIdType, projectUuid);
+    return EsQueueDto.create(TYPE_ISSUE.format(), docId, docIdType, AuthorizationDoc.idOf(projectUuid));
   }
 
   private BulkIndexer createBulkIndexer(Size size, IndexingListener listener) {

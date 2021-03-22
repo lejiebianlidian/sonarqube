@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ interface Props {
   currentUser: Pick<T.LoggedInUser, 'login'>;
   onProjectDeselected: (project: string) => void;
   onProjectSelected: (project: string) => void;
-  organization: T.Organization;
   projects: Project[];
   ready?: boolean;
   selection: string[];
@@ -64,7 +63,6 @@ export default class Projects extends React.PureComponent<Props> {
                 currentUser={this.props.currentUser}
                 key={project.key}
                 onProjectCheck={this.onProjectCheck}
-                organization={this.props.organization && this.props.organization.key}
                 project={project}
                 selected={this.props.selection.includes(project.key)}
               />

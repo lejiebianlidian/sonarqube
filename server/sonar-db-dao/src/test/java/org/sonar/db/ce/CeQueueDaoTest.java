@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -246,7 +246,7 @@ public class CeQueueDaoTest {
     insertPending(TASK_UUID_2, MAIN_COMPONENT_UUID_1);
 
     int deletedCount = underTest.deleteByUuid(db.getSession(), "UNKNOWN");
-    assertThat(deletedCount).isEqualTo(0);
+    assertThat(deletedCount).isZero();
     assertThat(underTest.selectByUuid(db.getSession(), TASK_UUID_1)).isPresent();
 
     deletedCount = underTest.deleteByUuid(db.getSession(), TASK_UUID_1);
@@ -261,18 +261,18 @@ public class CeQueueDaoTest {
   @Test
   public void test_delete_with_expected_status() {
     insertPending(TASK_UUID_1, MAIN_COMPONENT_UUID_1);
-    insertInProgress(TASK_UUID_2, MAIN_COMPONENT_UUID_1);
+    insertInProgress(TASK_UUID_2);
 
     int deletedCount = underTest.deleteByUuid(db.getSession(), "UNKNOWN", null);
-    assertThat(deletedCount).isEqualTo(0);
+    assertThat(deletedCount).isZero();
     assertThat(underTest.selectByUuid(db.getSession(), TASK_UUID_1)).isPresent();
 
     deletedCount = underTest.deleteByUuid(db.getSession(), TASK_UUID_1, new DeleteIf(IN_PROGRESS));
-    assertThat(deletedCount).isEqualTo(0);
+    assertThat(deletedCount).isZero();
     assertThat(underTest.selectByUuid(db.getSession(), TASK_UUID_1)).isPresent();
 
     deletedCount = underTest.deleteByUuid(db.getSession(), TASK_UUID_2, new DeleteIf(PENDING));
-    assertThat(deletedCount).isEqualTo(0);
+    assertThat(deletedCount).isZero();
     assertThat(underTest.selectByUuid(db.getSession(), TASK_UUID_2)).isPresent();
 
     deletedCount = underTest.deleteByUuid(db.getSession(), TASK_UUID_1, new DeleteIf(PENDING));
@@ -519,7 +519,7 @@ public class CeQueueDaoTest {
     int total = underTest.countByQuery(db.getSession(), query);
 
     assertThat(result).isEmpty();
-    assertThat(total).isEqualTo(0);
+    assertThat(total).isZero();
   }
 
   @Test
@@ -536,7 +536,7 @@ public class CeQueueDaoTest {
     int total = underTest.countByQuery(db.getSession(), query);
 
     assertThat(result).isEmpty();
-    assertThat(total).isEqualTo(0);
+    assertThat(total).isZero();
   }
 
   @Test
@@ -553,7 +553,7 @@ public class CeQueueDaoTest {
     int total = underTest.countByQuery(db.getSession(), query);
 
     assertThat(result).isEmpty();
-    assertThat(total).isEqualTo(0);
+    assertThat(total).isZero();
   }
 
   @Test
@@ -660,6 +660,20 @@ public class CeQueueDaoTest {
   }
 
   @Test
+  public void excluding_view_pick_up_orphan_branches() {
+    insertPending(newCeQueueDto(TASK_UUID_1)
+      .setComponentUuid(MAIN_COMPONENT_UUID_1)
+      .setMainComponentUuid("non-existing-uuid")
+      .setStatus(PENDING)
+      .setTaskType(CeTaskTypes.BRANCH_ISSUE_SYNC)
+      .setCreatedAt(100_000L));
+
+    Optional<CeQueueDto> peek = underTest.peek(db.getSession(), WORKER_UUID_1, false, true);
+    assertThat(peek).isPresent();
+    assertThat(peek.get().getUuid()).isEqualTo(TASK_UUID_1);
+  }
+
+  @Test
   public void hasAnyIssueSyncTaskPendingOrInProgress_PENDING() {
     assertThat(underTest.hasAnyIssueSyncTaskPendingOrInProgress(db.getSession())).isFalse();
 
@@ -690,7 +704,6 @@ public class CeQueueDaoTest {
     view.setQualifier("VW");
     view.setDbKey(view_uuid + "_key");
     view.setUuid(view_uuid);
-    view.setOrganizationUuid("org_uuid");
     view.setPrivate(false);
     view.setRootUuid(view_uuid);
     view.setUuidPath("uuid_path");
@@ -704,7 +717,6 @@ public class CeQueueDaoTest {
     branch.setQualifier("TRK");
     branch.setDbKey(uuid + "_key");
     branch.setUuid(uuid);
-    branch.setOrganizationUuid("org_uuid");
     branch.setPrivate(false);
     branch.setRootUuid(uuid);
     branch.setUuidPath("uuid_path");
@@ -751,7 +763,7 @@ public class CeQueueDaoTest {
     return dto;
   }
 
-  private CeQueueDto insertInProgress(String uuid, String componentUuid) {
+  private CeQueueDto insertInProgress(String uuid) {
     CeQueueDto ceQueueDto = insertPending(uuid);
     CeQueueTesting.makeInProgress(db.getSession(), "workerUuid", System2.INSTANCE.now(), ceQueueDto);
     return underTest.selectByUuid(db.getSession(), uuid).get();

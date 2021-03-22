@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
@@ -186,8 +185,8 @@ it('should handle search', async () => {
   expect(getGithubRepositories).toBeCalledWith({
     almSetting: 'a',
     organization: 'o1',
-    p: 1,
-    ps: 30,
+    page: 1,
+    pageSize: 30,
     query: 'query'
   });
   expect(wrapper.state().repositories).toEqual(repositories);

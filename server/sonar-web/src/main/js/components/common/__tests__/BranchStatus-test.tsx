@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { mockBranch } from '../../../helpers/mocks/branch-like';
 import { BranchStatus } from '../BranchStatus';
 
 it('should render correctly', () => {
@@ -29,5 +28,5 @@ it('should render correctly', () => {
 });
 
 function shallowRender(status?: string) {
-  return shallow(<BranchStatus branchLike={mockBranch()} component="foo" status={status} />);
+  return shallow(<BranchStatus status={status} />);
 }

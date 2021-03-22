@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -161,7 +161,7 @@ public class UpdateEventActionTest {
 
   @Test
   public void throw_ForbiddenException_if_not_project_administrator() {
-    ComponentDto project = ComponentTesting.newPrivateProjectDto(db.organizations().insert());
+    ComponentDto project = ComponentTesting.newPrivateProjectDto();
     SnapshotDto analysis = db.components().insertProjectAndSnapshot(project);
     db.events().insertEvent(newEvent(analysis).setUuid("E1"));
     userSession.logIn().addProjectPermission(UserRole.USER, project);

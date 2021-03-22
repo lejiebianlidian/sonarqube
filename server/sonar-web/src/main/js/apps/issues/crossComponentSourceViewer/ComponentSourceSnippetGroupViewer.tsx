@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,10 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { noop } from 'lodash';
 import * as React from 'react';
 import { getSources } from '../../../api/components';
+import Issue from '../../../components/issue/Issue';
 import getCoverageStatus from '../../../components/SourceViewer/helpers/getCoverageStatus';
 import { locationsByLine } from '../../../components/SourceViewer/helpers/indexing';
 import SourceViewerHeaderSlim from '../../../components/SourceViewer/SourceViewerHeaderSlim';
@@ -38,6 +40,7 @@ interface Props {
   duplications?: T.Duplication[];
   duplicationsByLine?: { [line: number]: number[] };
   highlightedLocationMessage: { index: number; text: string | undefined } | undefined;
+  isLastOccurenceOfPrimaryComponent: boolean;
   issue: T.Issue;
   issuePopup?: { issue: string; name: string };
   issuesByLine: T.IssuesByLine;
@@ -344,10 +347,20 @@ export default class ComponentSourceSnippetGroupViewer extends React.PureCompone
   }
 
   render() {
-    const { branchLike, issue, issuesByLine, lastSnippetGroup, snippetGroup } = this.props;
+    const {
+      branchLike,
+      isLastOccurenceOfPrimaryComponent,
+      issue,
+      issuesByLine,
+      issuePopup,
+      lastSnippetGroup,
+      snippetGroup
+    } = this.props;
     const { additionalLines, loading, snippets } = this.state;
     const locations =
-      issue.component === snippetGroup.component.key ? locationsByLine([issue]) : {};
+      issue.component === snippetGroup.component.key && issue.textRange !== undefined
+        ? locationsByLine([issue])
+        : {};
 
     const fullyShown =
       snippets.length === 1 &&
@@ -361,8 +374,7 @@ export default class ComponentSourceSnippetGroupViewer extends React.PureCompone
     });
 
     const isFlow = issue.secondaryLocations.length === 0;
-    const includeIssueLocation = (snippetIndex: number) =>
-      isFlow ? lastSnippetGroup && snippetIndex === snippets.length - 1 : snippetIndex === 0;
+    const includeIssueLocation = isFlow ? isLastOccurenceOfPrimaryComponent : true;
 
     return (
       <div className="component-source-container" ref={this.rootNodeRef}>
@@ -373,13 +385,25 @@ export default class ComponentSourceSnippetGroupViewer extends React.PureCompone
           onExpand={this.expandComponent}
           sourceViewerFile={snippetGroup.component}
         />
+        {issue.component === snippetGroup.component.key && issue.textRange === undefined && (
+          <div className="padded-top padded-left padded-right">
+            <Issue
+              issue={issue}
+              onChange={this.props.onIssueChange}
+              onClick={noop}
+              onPopupToggle={this.props.onIssuePopupToggle}
+              openPopup={issuePopup && issuePopup.issue === issue.key ? issuePopup.name : undefined}
+              selected={true}
+            />
+          </div>
+        )}
         {snippetLines.map((snippet, index) => (
           <div id={`snippet-wrapper-${snippets[index].index}`} key={snippets[index].index}>
             {this.renderSnippet({
               snippet,
               index: snippets[index].index,
               issuesByLine,
-              locationsByLine: includeIssueLocation(index) ? locations : {},
+              locationsByLine: includeIssueLocation ? locations : {},
               lastSnippetOfLastGroup: lastSnippetGroup && index === snippets.length - 1
             })}
           </div>

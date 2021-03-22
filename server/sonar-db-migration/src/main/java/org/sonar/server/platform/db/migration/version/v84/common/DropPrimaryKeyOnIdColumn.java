@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,14 +21,14 @@ package org.sonar.server.platform.db.migration.version.v84.common;
 
 import java.sql.SQLException;
 import org.sonar.db.Database;
+import org.sonar.server.platform.db.migration.sql.DropPrimaryKeySqlGenerator;
 import org.sonar.server.platform.db.migration.step.DdlChange;
-import org.sonar.server.platform.db.migration.version.v84.util.DropPrimaryKeySqlGenerator;
 
 public abstract class DropPrimaryKeyOnIdColumn extends DdlChange {
   private final DropPrimaryKeySqlGenerator dropPrimaryKeySqlGenerator;
-  private String tableName;
+  private final String tableName;
 
-  public DropPrimaryKeyOnIdColumn(Database db, DropPrimaryKeySqlGenerator dropPrimaryKeySqlGenerator, String tableName) {
+  protected DropPrimaryKeyOnIdColumn(Database db, DropPrimaryKeySqlGenerator dropPrimaryKeySqlGenerator, String tableName) {
     super(db);
     this.dropPrimaryKeySqlGenerator = dropPrimaryKeySqlGenerator;
     this.tableName = tableName;

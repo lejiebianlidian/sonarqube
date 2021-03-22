@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,74 +19,307 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import ComponentNavBgTaskNotif from '../ComponentNavBgTaskNotif';
+import { FormattedMessage } from 'react-intl';
+import { Alert } from 'sonar-ui-common/components/ui/Alert';
+import { hasMessage } from 'sonar-ui-common/helpers/l10n';
+import { mockTask } from '../../../../../helpers/mocks/tasks';
+import { mockComponent, mockLocation } from '../../../../../helpers/testMocks';
+import { Task, TaskStatuses, TaskTypes } from '../../../../../types/tasks';
+import { ComponentNavBgTaskNotif } from '../ComponentNavBgTaskNotif';
 
 jest.mock('sonar-ui-common/helpers/l10n', () => ({
   ...jest.requireActual('sonar-ui-common/helpers/l10n'),
   hasMessage: jest.fn().mockReturnValue(true)
 }));
 
-const component = {
-  analysisDate: '2017-01-02T00:00:00.000Z',
-  breadcrumbs: [],
-  key: 'foo',
-  name: 'Foo',
-  organization: 'org',
-  qualifier: 'TRK',
-  version: '0.0.1'
-};
+const UNKNOWN_TASK_TYPE: TaskTypes = 'UNKOWN' as TaskTypes;
 
-it('renders background task error correctly', () => {
-  expect(getWrapper()).toMatchSnapshot();
-});
-
-it('renders background task error correctly for a different branch/PR', () => {
+it('renders correctly', () => {
+  expect(shallowRender()).toMatchSnapshot('default');
   expect(
-    getWrapper({
-      currentTask: { branch: 'my/branch', status: 'FAILED' } as T.Task,
-      currentTaskOnSameBranch: false
+    shallowRender({
+      currentTask: mockTask({
+        status: TaskStatuses.Failed,
+        errorType: 'LICENSING',
+        errorMessage: 'Foo'
+      })
     })
-  ).toMatchSnapshot();
-  expect(
-    getWrapper({
-      currentTask: {
-        pullRequest: '650',
-        pullRequestTitle: 'feature/my_pr',
-        status: 'FAILED'
-      } as T.Task,
-      currentTaskOnSameBranch: false
-    })
-  ).toMatchSnapshot();
+  ).toMatchSnapshot('license issue');
+  expect(shallowRender({ currentTask: undefined }).type()).toBeNull(); // No task.
 });
 
-it('renders background task pending info correctly', () => {
-  expect(getWrapper({ isPending: true })).toMatchSnapshot();
-});
+it.each([
+  // failed
+  [
+    'component_navigation.status.failed',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, type: UNKNOWN_TASK_TYPE }),
+    false,
+    false,
+    false,
+    false
+  ],
+  [
+    'component_navigation.status.failed_X',
+    'error',
+    mockTask({ status: TaskStatuses.Failed }),
+    false,
+    false,
+    false,
+    false
+  ],
+  [
+    'component_navigation.status.failed.admin.link',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, type: UNKNOWN_TASK_TYPE }),
+    false,
+    false,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.failed_X.admin.link',
+    'error',
+    mockTask({ status: TaskStatuses.Failed }),
+    false,
+    false,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.failed.admin.help',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, type: UNKNOWN_TASK_TYPE }),
+    false,
+    false,
+    true,
+    true
+  ],
+  [
+    'component_navigation.status.failed_X.admin.help',
+    'error',
+    mockTask({ status: TaskStatuses.Failed }),
+    false,
+    false,
+    true,
+    true
+  ],
+  // failed_branch
+  [
+    'component_navigation.status.failed_branch',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, branch: 'foo', type: UNKNOWN_TASK_TYPE }),
+    false,
+    false,
+    false,
+    false
+  ],
+  [
+    'component_navigation.status.failed_branch_X',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, branch: 'foo' }),
+    false,
+    false,
+    false,
+    false
+  ],
+  [
+    'component_navigation.status.failed_branch.admin.link',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, branch: 'foo', type: UNKNOWN_TASK_TYPE }),
+    false,
+    false,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.failed_branch_X.admin.link',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, branch: 'foo' }),
+    false,
+    false,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.failed_branch.admin.help',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, branch: 'foo', type: UNKNOWN_TASK_TYPE }),
+    false,
+    false,
+    true,
+    true
+  ],
+  [
+    'component_navigation.status.failed_branch_X.admin.help',
+    'error',
+    mockTask({ status: TaskStatuses.Failed, branch: 'foo' }),
+    false,
+    false,
+    true,
+    true
+  ],
+  // pending
+  [
+    'component_navigation.status.pending',
+    'info',
+    mockTask({ type: UNKNOWN_TASK_TYPE }),
+    true,
+    false,
+    false,
+    false
+  ],
+  ['component_navigation.status.pending_X', 'info', mockTask(), true, false, false, false],
+  [
+    'component_navigation.status.pending.admin.link',
+    'info',
+    mockTask({ type: UNKNOWN_TASK_TYPE }),
+    true,
+    false,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.pending_X.admin.link',
+    'info',
+    mockTask(),
+    true,
+    false,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.pending.admin.help',
+    'info',
+    mockTask({ type: UNKNOWN_TASK_TYPE }),
+    true,
+    false,
+    true,
+    true
+  ],
+  [
+    'component_navigation.status.pending_X.admin.help',
+    'info',
+    mockTask({ status: TaskStatuses.Failed }),
+    true,
+    false,
+    true,
+    true
+  ],
+  // in_progress
+  [
+    'component_navigation.status.in_progress',
+    'info',
+    mockTask({ type: UNKNOWN_TASK_TYPE }),
+    true,
+    true,
+    false,
+    false
+  ],
+  ['component_navigation.status.in_progress_X', 'info', mockTask(), true, true, false, false],
+  [
+    'component_navigation.status.in_progress.admin.link',
+    'info',
+    mockTask({ type: UNKNOWN_TASK_TYPE }),
+    true,
+    true,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.in_progress_X.admin.link',
+    'info',
+    mockTask(),
+    true,
+    true,
+    true,
+    false
+  ],
+  [
+    'component_navigation.status.in_progress.admin.help',
+    'info',
+    mockTask({ type: UNKNOWN_TASK_TYPE }),
+    true,
+    true,
+    true,
+    true
+  ],
+  [
+    'component_navigation.status.in_progress_X.admin.help',
+    'info',
+    mockTask({ status: TaskStatuses.Failed }),
+    true,
+    true,
+    true,
+    true
+  ]
+])(
+  'should render the expected message=%p',
+  (
+    expectedMessage: string,
+    alertVariant: string,
+    currentTask: Task,
+    isPending: boolean,
+    isInProgress: boolean,
+    showBackgroundTasks: boolean,
+    onBackgroudTaskPage: boolean
+  ) => {
+    if (currentTask.type === UNKNOWN_TASK_TYPE) {
+      (hasMessage as jest.Mock).mockReturnValueOnce(false);
+    }
 
-it('renders background task pending info correctly for admin', () => {
-  expect(
-    getWrapper({
-      component: { ...component, configuration: { showBackgroundTasks: true } },
-      isPending: true
-    })
-  ).toMatchSnapshot();
-});
+    const wrapper = shallowRender({
+      component: mockComponent({ configuration: { showBackgroundTasks } }),
+      currentTask,
+      currentTaskOnSameBranch: !currentTask.branch,
+      isPending,
+      isInProgress,
+      location: mockLocation({
+        pathname: onBackgroudTaskPage ? '/project/background_tasks' : '/foo/bar'
+      })
+    });
+    const messageProps = wrapper.find(FormattedMessage).props();
 
-it('renders background task in progress info correctly', () => {
-  expect(getWrapper({ isInProgress: true, isPending: true })).toMatchSnapshot();
-});
+    // Translation key.
+    expect(messageProps.defaultMessage).toBe(expectedMessage);
 
-it('renders background task license info correctly', () => {
-  expect(
-    getWrapper({ currentTask: { status: 'FAILED', errorType: 'LICENSING', errorMessage: 'Foo' } })
-  ).toMatchSnapshot();
-});
+    // Alert variant.
+    expect(wrapper.find(Alert).props().variant).toBe(alertVariant);
 
-function getWrapper(props = {}) {
-  return shallow(
+    // Formatted message values prop.
+    if (/_X/.test(expectedMessage)) {
+      expect(messageProps.values?.type).toBe(`background_task.type.${currentTask.type}`);
+    } else {
+      expect(messageProps.values?.type).toBeUndefined();
+    }
+
+    if (currentTask.branch) {
+      expect(messageProps.values?.branch).toBe(currentTask.branch);
+    } else {
+      expect(messageProps.values?.branch).toBeUndefined();
+    }
+
+    if (showBackgroundTasks) {
+      if (onBackgroudTaskPage) {
+        expect(messageProps.values?.url).toBeUndefined();
+        expect(messageProps.values?.stacktrace).toBe('background_tasks.show_stacktrace');
+      } else {
+        expect(messageProps.values?.url).toBeDefined();
+        expect(messageProps.values?.stacktrace).toBeUndefined();
+      }
+    } else {
+      expect(messageProps.values?.url).toBeUndefined();
+      expect(messageProps.values?.stacktrace).toBeUndefined();
+    }
+  }
+);
+
+function shallowRender(props: Partial<ComponentNavBgTaskNotif['props']> = {}) {
+  return shallow<ComponentNavBgTaskNotif>(
     <ComponentNavBgTaskNotif
-      component={component}
-      currentTask={{ status: 'FAILED' } as T.Task}
+      component={mockComponent()}
+      currentTask={mockTask({ status: TaskStatuses.Failed })}
+      location={mockLocation()}
       {...props}
     />
   );

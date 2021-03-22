@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,12 +21,13 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import ListFooter from 'sonar-ui-common/components/controls/ListFooter';
 import { getAppState, Store } from '../../../../store/rootReducer';
+import { ComponentQualifier } from '../../../../types/component';
 import HoldersList from '../../shared/components/HoldersList';
 import SearchForm from '../../shared/components/SearchForm';
 import {
   convertToPermissionDefinitions,
-  PERMISSIONS_ORDER_GLOBAL,
-  PERMISSIONS_ORDER_GLOBAL_GOV
+  filterPermissions,
+  PERMISSIONS_ORDER_GLOBAL
 } from '../../utils';
 
 interface StateProps {
@@ -44,7 +45,6 @@ interface OwnProps {
   onLoadMore: () => void;
   onFilter: (filter: string) => void;
   onSearch: (query: string) => void;
-  organization?: T.Organization;
   query: string;
   revokePermissionFromGroup: (groupName: string, permission: string) => Promise<void>;
   revokePermissionFromUser: (login: string, permission: string) => Promise<void>;
@@ -75,11 +75,13 @@ export class AllHoldersList extends React.PureComponent<Props> {
   };
 
   render() {
-    const { filter, groups, groupsPaging, users, usersPaging } = this.props;
-    const l10nPrefix = this.props.organization ? 'organizations_permissions' : 'global_permissions';
-    const governanceInstalled = this.props.appState.qualifiers.includes('VW');
+    const { appState, filter, groups, groupsPaging, users, usersPaging } = this.props;
+    const l10nPrefix = 'global_permissions';
+
+    const hasPortfoliosEnabled = appState.qualifiers.includes(ComponentQualifier.Portfolio);
+    const hasApplicationsEnabled = appState.qualifiers.includes(ComponentQualifier.Application);
     const permissions = convertToPermissionDefinitions(
-      governanceInstalled ? PERMISSIONS_ORDER_GLOBAL_GOV : PERMISSIONS_ORDER_GLOBAL,
+      filterPermissions(PERMISSIONS_ORDER_GLOBAL, hasApplicationsEnabled, hasPortfoliosEnabled),
       l10nPrefix
     );
 

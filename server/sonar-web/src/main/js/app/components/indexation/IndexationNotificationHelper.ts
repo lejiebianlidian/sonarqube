@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { get, remove, save } from 'sonar-ui-common/helpers/storage';
 import { getIndexationStatus } from '../../../api/ce';
 import { IndexationStatus } from '../../../types/indexation';
 
 const POLLING_INTERVAL_MS = 5000;
-const LS_INDEXATION_PROGRESS_WAS_DISPLAYED = 'indexation.progress.was.displayed';
+const LS_INDEXATION_COMPLETED_NOTIFICATION_SHOULD_BE_DISPLAYED =
+  'display_indexation_completed_notification';
 
 export default class IndexationNotificationHelper {
   private static interval?: NodeJS.Timeout;
@@ -57,15 +57,17 @@ export default class IndexationNotificationHelper {
     return status;
   }
 
-  static markInProgressNotificationAsDisplayed() {
-    save(LS_INDEXATION_PROGRESS_WAS_DISPLAYED, true.toString());
+  static markCompletedNotificationAsToDisplay() {
+    save(LS_INDEXATION_COMPLETED_NOTIFICATION_SHOULD_BE_DISPLAYED, true.toString());
   }
 
-  static markCompletedNotificationAsDismissed() {
-    remove(LS_INDEXATION_PROGRESS_WAS_DISPLAYED);
+  static markCompletedNotificationAsDisplayed() {
+    remove(LS_INDEXATION_COMPLETED_NOTIFICATION_SHOULD_BE_DISPLAYED);
   }
 
   static shouldDisplayCompletedNotification() {
-    return JSON.parse(get(LS_INDEXATION_PROGRESS_WAS_DISPLAYED) || false.toString());
+    return JSON.parse(
+      get(LS_INDEXATION_COMPLETED_NOTIFICATION_SHOULD_BE_DISPLAYED) || false.toString()
+    );
   }
 }

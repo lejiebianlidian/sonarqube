@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,7 @@ import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.qualityprofile.QProfileDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleTesting;
@@ -42,7 +41,6 @@ import org.sonar.db.user.UserDto;
 import org.sonar.server.exceptions.BadRequestException;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.UnauthorizedException;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.qualityprofile.QProfileRules;
 import org.sonar.server.qualityprofile.RuleActivation;
 import org.sonar.server.tester.UserSessionRule;
@@ -69,21 +67,16 @@ public class ActivateRuleActionTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  private ArgumentCaptor<Collection<RuleActivation>> ruleActivationCaptor = ArgumentCaptor.forClass(Collection.class);
-  private DbClient dbClient = db.getDbClient();
-  private QProfileRules qProfileRules = mock(QProfileRules.class);
-  private QProfileWsSupport wsSupport = new QProfileWsSupport(dbClient, userSession, TestDefaultOrganizationProvider.from(db));
+  private final ArgumentCaptor<Collection<RuleActivation>> ruleActivationCaptor = ArgumentCaptor.forClass(Collection.class);
+  private final DbClient dbClient = db.getDbClient();
+  private final QProfileRules qProfileRules = mock(QProfileRules.class);
+  private final QProfileWsSupport wsSupport = new QProfileWsSupport(dbClient, userSession);
 
-  private WsActionTester ws = new WsActionTester(new ActivateRuleAction(dbClient, qProfileRules, userSession, wsSupport));
-
-  private OrganizationDto defaultOrganization;
-  private OrganizationDto organization;
+  private final WsActionTester ws = new WsActionTester(new ActivateRuleAction(dbClient, qProfileRules, userSession, wsSupport));
 
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
-    defaultOrganization = db.getDefaultOrganization();
-    organization = db.organizations().insert();
   }
 
   @Test
@@ -107,9 +100,9 @@ public class ActivateRuleActionTest {
   }
 
   @Test
-  public void fail_if_not_organization_quality_profile_administrator() {
+  public void fail_if_not_global_quality_profile_administrator() {
     userSession.logIn(db.users().insertUser());
-    QProfileDto qualityProfile = db.qualityProfiles().insert(organization);
+    QProfileDto qualityProfile = db.qualityProfiles().insert();
     TestRequest request = ws.newRequest()
       .setMethod("POST")
       .setParam(PARAM_RULE, RuleTesting.newRule().getKey().toString())
@@ -122,9 +115,9 @@ public class ActivateRuleActionTest {
 
   @Test
   public void fail_activate_if_built_in_profile() {
-    userSession.logIn(db.users().insertUser()).addPermission(OrganizationPermission.ADMINISTER_QUALITY_PROFILES, defaultOrganization);
+    userSession.logIn(db.users().insertUser()).addPermission(GlobalPermission.ADMINISTER_QUALITY_PROFILES);
 
-    QProfileDto qualityProfile = db.qualityProfiles().insert(defaultOrganization, profile -> profile.setIsBuiltIn(true).setName("Xoo profile").setLanguage("xoo"));
+    QProfileDto qualityProfile = db.qualityProfiles().insert(profile -> profile.setIsBuiltIn(true).setName("Xoo profile").setLanguage("xoo"));
     TestRequest request = ws.newRequest()
       .setMethod("POST")
       .setParam(PARAM_RULE, RuleTesting.newRule().getKey().toString())
@@ -138,8 +131,8 @@ public class ActivateRuleActionTest {
 
   @Test
   public void fail_activate_external_rule() {
-    userSession.logIn(db.users().insertUser()).addPermission(OrganizationPermission.ADMINISTER_QUALITY_PROFILES, defaultOrganization);
-    QProfileDto qualityProfile = db.qualityProfiles().insert(defaultOrganization);
+    userSession.logIn(db.users().insertUser()).addPermission(GlobalPermission.ADMINISTER_QUALITY_PROFILES);
+    QProfileDto qualityProfile = db.qualityProfiles().insert();
     RuleDefinitionDto rule = db.rules().insert(r -> r.setIsExternal(true));
 
     TestRequest request = ws.newRequest()
@@ -154,9 +147,9 @@ public class ActivateRuleActionTest {
   }
 
   @Test
-  public void activate_rule_in_default_organization() {
-    userSession.logIn().addPermission(OrganizationPermission.ADMINISTER_QUALITY_PROFILES, defaultOrganization);
-    QProfileDto qualityProfile = db.qualityProfiles().insert(defaultOrganization);
+  public void activate_rule() {
+    userSession.logIn().addPermission(GlobalPermission.ADMINISTER_QUALITY_PROFILES);
+    QProfileDto qualityProfile = db.qualityProfiles().insert();
     RuleDefinitionDto rule = db.rules().insert(RuleTesting.randomRuleKey());
     TestRequest request = ws.newRequest()
       .setMethod("POST")
@@ -181,36 +174,9 @@ public class ActivateRuleActionTest {
   }
 
   @Test
-  public void activate_rule_in_specific_organization() {
-    userSession.logIn().addPermission(OrganizationPermission.ADMINISTER_QUALITY_PROFILES, organization);
-    QProfileDto qualityProfile = db.qualityProfiles().insert(organization);
-    RuleKey ruleKey = RuleTesting.randomRuleKey();
-    String ruleUuid = db.rules().insert(ruleKey).getUuid();
-    TestRequest request = ws.newRequest()
-      .setMethod("POST")
-      .setParam(PARAM_RULE, ruleKey.toString())
-      .setParam(PARAM_KEY, qualityProfile.getKee())
-      .setParam("severity", "BLOCKER")
-      .setParam("params", "key1=v1;key2=v2")
-      .setParam("reset", "false");
-
-    TestResponse response = request.execute();
-
-    assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_NO_CONTENT);
-    verify(qProfileRules).activateAndCommit(any(DbSession.class), any(QProfileDto.class), ruleActivationCaptor.capture());
-
-    Collection<RuleActivation> activations = ruleActivationCaptor.getValue();
-    assertThat(activations).hasSize(1);
-    RuleActivation activation = activations.iterator().next();
-    assertThat(activation.getRuleUuid()).isEqualTo(ruleUuid);
-    assertThat(activation.getSeverity()).isEqualTo(Severity.BLOCKER);
-    assertThat(activation.isReset()).isFalse();
-  }
-
-  @Test
   public void as_qprofile_editor() {
     UserDto user = db.users().insertUser();
-    QProfileDto qualityProfile = db.qualityProfiles().insert(organization);
+    QProfileDto qualityProfile = db.qualityProfiles().insert();
     db.qualityProfiles().addUserPermission(qualityProfile, user);
     userSession.logIn(user);
     RuleKey ruleKey = RuleTesting.randomRuleKey();

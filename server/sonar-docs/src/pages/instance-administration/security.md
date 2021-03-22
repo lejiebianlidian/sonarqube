@@ -17,17 +17,59 @@ Additionally, you can configure at a group or user level who can:
 * administer a project (set exclusion patterns, tune plugin configuration for that project, etc.)
 * administer Quality Profiles, Quality Gates, and the SonarQube instance itself.
 
-
 Another aspect of security is the encryption of settings such as passwords. SonarQube provides a built-in mechanism to encrypt settings.
 
 ## Authentication
-The first question that should be answered when setting the security strategy for SonarQube is: Can anonymous users browse the SonarQube instance or is authentication be required? 
 
-To force user authentication, log in as a system administrator, go to **[Administration > Configuration > General Settings > Security](/#sonarqube-admin#/admin/settings?category=security)**, and set the **Force user authentication** property to true. 
+By default, SonarQube forces user authentication. You can disable forced user authentication, and allow anonymous users to browse projects and run analyses in your instance. To do this, log in as a system administrator, go to **[Administration > Configuration > General Settings > Security](/#sonarqube-admin#/admin/settings?category=security)**, and disable the **Force user authentication** property. 
 
-[[info]]
-| SonarQube does not support sharing email addresses across multiple users.
+[[warning]]
+| Disabling the **Force user authentication** can expose your SonarQube instance to security risks. We strongly recommend forcing user authentication on production instances or carefully configuring the security (user permissions, project visibility, etc.) on your instance.  
 
+### API Endpoints Authentication
+
+If the **Force user authentication** property is set to false, the following API endpoints are accessible **without authentication** (click **API endpoints** below to expand the list):
+
+[[collapse]]
+| ## API endpoints
+|
+| * api/components/search
+| * api/issues/tags
+| * api/languages/list
+| * api/metrics/domains
+| * api/metrics/search
+| * api/metrics/types
+| * api/plugins/installed
+| * api/project_tags/search
+| * api/qualitygates/list
+| * api/qualitygates/search
+| * api/qualitygates/show
+| * api/qualityprofiles/backup
+| * api/qualityprofiles/changelog
+| * api/qualityprofiles/export
+| * api/qualityprofiles/exporters
+| * api/qualityprofiles/importers
+| * api/qualityprofiles/inheritance
+| * api/qualityprofiles/projects
+| * api/qualityprofiles/search
+| * api/rules/repositories
+| * api/rules/search
+| * api/rules/show
+| * api/rules/tags
+| * api/server/version
+| * api/sources/scm (for public repositories)
+| * api/sources/show (for public repositories)
+| * api/system/db_migration_status
+| * api/system/migrate_db
+| * api/system/ping
+| * api/system/status
+| * api/system/upgrades
+| * api/users/search
+| * api/views/run
+| * api/webservices/list
+| * api/webservices/response_example
+
+We advise keeping **Force user authentication** enabled if you have your SonarQube instance publicly accessible.
 
 ### Authentication Mechanisms
 Authentication can be managed through a number of mechanisms:
@@ -52,7 +94,7 @@ When installing SonarQube, a default user with Administer System permission is c
 ## Reinstating Admin Access
 If you changed and then lost the `admin` password, you can reset it using the following query:
 ```
-update users set crypted_password = '$2a$12$uCkkXmhW5ThVK8mpBvnXOOJRLd64LJeHTeCkSuB3lfaR2N0AYBaSi', salt=null, hash_method='BCRYPT' where login = 'admin'
+update users set crypted_password = '$2a$12$uCkkXmhW5ThVK8mpBvnXOOJRLd64LJeHTeCkSuB3lfaR2N0AYBaSi', salt=null, hash_method='BCRYPT', reset_password='true' where login = 'admin'
 ```
 If you've deleted `admin` and subsequently locked out the other users with global administrative permissions, you'll need to re-grant `admin` to a user with the following query:
 ```
@@ -63,7 +105,7 @@ VALUES ((select id from users where login='mylogin'),
 ```
 
 ## Authorization
-The way authorization is implemented in SonarQube is pretty standard. It is possible to create as many users and groups of users as needed. The users can then be attached (or not) to (multiple) groups. Groups and / or users are then given (multiple) permissions. The permissions grant access to projects, services and functionalities.
+The way authorization is implemented in SonarQube is pretty standard. It is possible to create as many users and groups of users as needed. The users can then be attached (or not) to (multiple) groups. Groups and/or users are then given (multiple) permissions. The permissions grant access to projects, services, and functionalities.
 
 To administer groups and users, choose **Administration > Security**, and use the sub-menu items.
 
@@ -81,21 +123,21 @@ To edit the membership of a group, click the icon next to the membership total.
 
 Two groups have a special meaning:
 
-* **Anyone** is a group that exists in the system, but that cannot be managed. Every user belongs to this group, including Anonymous user.
+* **Anyone** is a group that exists in the system, but that cannot be managed. Every user belongs to this group, including anonymous users.
 * **sonar-users** is the default group to which users are automatically added.
 
 ### Global Permissions
 To set global permissions, log in as a System administrator and go to **[Administration > Security > Global Permissions](/#sonarqube-admin#/admin/permissions)**. 
 
 * **Administer System**: All administration functions for the instance: global configuration.
-* **Administer Quality Profiles**: Any action on quality profiles.
+* **Administer Quality Profiles**: Any action on Quality Profiles.
 * **Administer Quality Gates**: Any action on quality gates
-* **Execute Analysis**: Execute analyses (project, view, report, developer), and to get all settings required to perform the analysis, even the secured ones like the scm account password, and so on.
+* **Execute Analysis**:  Access to all settings required to perform analysis and the ability to push analysis results to the SonarQube server. This includes private project settings and secured settings like passwords. 
 * **Create Projects**: Initialize the structure of a new project before its first analysis. This permission is also required when doing the very first analysis of a project that has not already been created via the GUI. * **
 * **Create Applications**: Create a new Application. * **
 * **Create Portfolios**: Create a new Portfolio. * **
 
-\* Users with any explicit create permission will see a "+" item in the top menu giving access to these functions. If these permissions are removed from global administrators, they will loose quick access to them via the "+" menu, **but retain access to creation** via the **Administration** menu.
+\* Users with any explicit create permission will see a "+" item in the top menu giving access to these functions. If these permissions are removed from global administrators, they will lose quick access to them via the "+" menu, **but retain access to creation** via the **Administration** menu.
 
 ** Creating an item does not automatically grant rights to administer it. For that, see _Creators permission_ below.
 
@@ -106,19 +148,20 @@ Project visibility may be toggled between public or private. Making a project pr
 
 * **Administer Issues**: Change the type and severity of issues, resolve issues as being "Won't Fix" or "False Positive" (users also need "Browse" permission).
 * **Administer Security Hotspots**: Change the status of a Security Hotspot.
-* **Administer**: Access project settings and perform administration tasks (users also need "Browse" permission).
-* **Execute Analysis**: Execute analyses (project, view, report, developer), and to get all settings required to perform the analysis, even the secured ones like the scm account password, the jira account password, and so on.
+* **Administer**: Access project settings and perform administration tasks (users also need "Browse" permission).  
+  By default, a user with this **Administer** permission can manage both configuration and permissions for the current project. To only allow project administrators to update the project configuration, go to **[Administration > Configuration > General Settings > Security](/#sonarqube-admin#/admin/settings?category=security)** and disable the **Enable permission management for project administrators** property.
+* **Execute Analysis**: Access to all settings required to perform analysis and the ability to push analysis results to the SonarQube server. This includes private project settings and secured settings like passwords
 
 Private projects have two additional permissions:
 * **Browse**: Access a project; browse its measures, issues, and Security Hotspots; perform some issue edits (confirm/resolve/reopen, assignment, comment); comment on or change the user assigned to a Security Hotspot.
 * **See Source Code**: View the project's source code.
 
-Note that permissions _are not_ cumulative. For instance, if you want to be able to administer the project, you also have to be granted the Browse permission to be able to access the project (which is the default for Public project).
+Note that permissions _are not_ cumulative. For instance, if you want to be able to administer the project, you also have to be granted the Browse permission to be able to access the project (which is the default for public projects).
 
 You can either manually grant permissions for each project to some users and groups or apply permission templates to projects. 
 
 ## Permission Templates for Default Permissions
-SonarQube ships with a default permissions template, which automatically grants specific permissions to certain groups when a project, portfolio, or application is created. It is possible to edit this template, and to create additional templates. A separate template can be set for each type of resource. Further, for projects you can have a template apply only to a subset of new projects using a project key regular expression (the template's **Project Key Pattern**). By default, every new project with a key that matches the supplied pattern will have template's permissions applied.
+SonarQube ships with a default permissions template, which automatically grants specific permissions to certain groups when a project, portfolio, or application is created. It is possible to edit this template and to create additional templates. A separate template can be set for each type of resource. Further, for projects, you can have a template apply only to a subset of new projects using a project key regular expression (the template's **Project Key Pattern**). By default, every new project with a key that matches the supplied pattern will have the template's permissions applied.
 
 Templates are empty immediately after creation. Clicking on the template name will take you to its permission editing interface.
 
@@ -130,21 +173,21 @@ Templates are administered through **[Administration > Security > Permission Tem
 While templates can be applied after project creation, applying a template that includes "Creators" permissions to an existing project/portfolio/application will not grant the relevant permissions to the project's original creator because that association is not stored.
 
 ### Reset project permissions to a template
-To apply permission templates to projects go to **[Administration > Projects > Management](/#sonarqube-admin#/admin/projects_management)**. You can  either apply a template to a specific project using the project-specific **Actions > Apply Permission Template** option or use the Bulk Apply Permission Template to apply a template to all selected projects.
+To apply permission templates to projects go to **[Administration > Projects > Management](/#sonarqube-admin#/admin/projects_management)**. You can either apply a template to a specific project using the project-specific **Actions > Apply Permission Template** option or use the Bulk Apply Permission Template to apply a template to all selected projects.
 
 Note that there is no relation between a project and a permission template, meaning that:
 * the permissions of a project can be modified after a permission template has been applied to this project
 * none of the project permissions is changed when a permission template is modified
 
 ## Settings Encryption
-Encryption is mostly used to remove clear passwords from settings (database or SCM credentials for instance). The implemented solution is based on a symetric key algorithm. The key point is that the secret key is stored in a secured file on disk. This file must owned by and readable only by the system account that runs the SonarQube server.
+Encryption is mostly used to remove clear passwords from settings (database or SCM credentials for instance). The implemented solution is based on a symmetric key algorithm. The key point is that the secret key is stored in a secured file on disk. This file must be owned by and readable only by the system account that runs the SonarQube server.
 
-The algorithm is AES 128 bits. Note that 256 bits cipher is not used because it's not supported by default on all Java Virtual Machines ([see this article](https://confluence.terena.org/display/~visser/No+256+bit+ciphers+for+Java+apps)).
+The encryption algorithm used is AES with 256 bit keys.
 
 1. **Generate the secret key**  
-A unique secret key must be shared between all parts of the SonarQube infrastructure (server and analyzers). To generate it, go to **[Administration > Configuration > Encryption](/#sonarqube-admin#/admin/settings/encryption)** and click on Generate Secret Key.
+A unique secret key must be shared between all parts of the SonarQube infrastructure. To generate it, go to **[Administration > Configuration > Encryption](/#sonarqube-admin#/admin/settings/encryption)** and click on Generate Secret Key.
 1. **Store the secret key on the SonarQube server**  
-   * Copy the generated secred key to a file on the machine hosting the SonarQube server. The default location is _~/.sonar/sonar-secret.txt_. If you want to store it somewhere else, set its path through the `sonar.secretKeyPath` property in _$SONARQUBE-HOME/conf/sonar.properties_
+   * Copy the generated secret key to a file on the machine hosting the SonarQube server. The default location is _~/.sonar/sonar-secret.txt_. If you want to store it somewhere else, set its path through the `sonar.secretKeyPath` property in _$SONARQUBE-HOME/conf/sonar.properties_
    * Restrict file permissions to the account running the SonarQube server (ownership and read-access only).
    * Restart your SonarQube server
 1. **Generate the encrypted values of your settings**  
@@ -153,8 +196,7 @@ Go back to **[Administration > Configuration > Encryption](/#sonarqube-admin#/ad
 1. **Use the encrypted values in your SonarQube server configuration**  
 Simply copy these encrypted values into _$SONARQUBE-HOME/conf/sonar.properties_
 ```
-sonar.jdbc.password={aes}CCGCFg4Xpm6r+PiJb1Swfg==  # Encrypted DB password
+sonar.jdbc.password={aes-gcm}CCGCFg4Xpm6r+PiJb1Swfg==  # Encrypted DB password
 ...
 sonar.secretKeyPath=C:/path/to/my/secure/location/my_secret_key.txt
 ```
-

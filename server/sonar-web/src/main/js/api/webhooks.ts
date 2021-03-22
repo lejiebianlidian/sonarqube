@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ import throwGlobalError from '../app/utils/throwGlobalError';
 
 export function createWebhook(data: {
   name: string;
-  organization: string | undefined;
   project?: string;
   secret?: string;
   url: string;
@@ -34,10 +33,7 @@ export function deleteWebhook(data: { webhook: string }): Promise<void | Respons
   return post('/api/webhooks/delete', data).catch(throwGlobalError);
 }
 
-export function searchWebhooks(data: {
-  organization: string | undefined;
-  project?: string;
-}): Promise<{ webhooks: T.Webhook[] }> {
+export function searchWebhooks(data: { project?: string }): Promise<{ webhooks: T.Webhook[] }> {
   return getJSON('/api/webhooks/list', data).catch(throwGlobalError);
 }
 

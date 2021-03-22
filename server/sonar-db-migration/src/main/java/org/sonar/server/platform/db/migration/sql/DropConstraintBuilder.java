@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,11 @@ import static java.util.Collections.singletonList;
 import static org.sonar.server.platform.db.migration.def.Validations.validateIndexName;
 import static org.sonar.server.platform.db.migration.def.Validations.validateTableName;
 
+/**
+ * This builder have the main goal to drop constraint of a column.
+ * <p>
+ * It shouldn't be used to drop primary keys constraint, use {@link DropPrimaryKeySqlGenerator}
+ */
 public class DropConstraintBuilder {
 
   private final Dialect dialect;
@@ -46,6 +51,9 @@ public class DropConstraintBuilder {
   }
 
   public DropConstraintBuilder setName(String s) {
+    if (s.startsWith("pk_")) {
+      throw new IllegalArgumentException("This builder should not be used with primary keys");
+    }
     this.constraintName = s;
     return this;
   }

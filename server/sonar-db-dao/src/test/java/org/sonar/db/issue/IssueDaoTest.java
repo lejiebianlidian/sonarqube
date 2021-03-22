@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,8 +37,6 @@ import org.sonar.db.component.BranchType;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.component.ComponentUpdateDto;
-import org.sonar.db.component.KeyType;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleDto;
 import org.sonar.db.rule.RuleTesting;
@@ -185,7 +183,7 @@ public class IssueDaoTest {
       .extracting(IssueDto::getKey)
       .containsExactlyInAnyOrder(Arrays.stream(new IssueDto[] {openIssue1OnFile, openIssue2OnFile, openIssueOnModule}).map(IssueDto::getKey).toArray(String[]::new));
 
-    ComponentDto notPersisted = ComponentTesting.newPrivateProjectDto(db.getDefaultOrganization());
+    ComponentDto notPersisted = ComponentTesting.newPrivateProjectDto();
     assertThat(underTest.selectNonClosedByModuleOrProjectExcludingExternalsAndSecurityHotspots(db.getSession(), notPersisted)).isEmpty();
   }
 
@@ -237,7 +235,6 @@ public class IssueDaoTest {
     assertThat(fp.getRuleKey()).isNotNull();
     assertThat(fp.getStatus()).isNotNull();
     assertThat(fp.getBranchKey()).isEqualTo("feature/foo");
-    assertThat(fp.getKeyType()).isEqualTo(KeyType.BRANCH);
     assertThat(fp.getIssueUpdateDate()).isNotNull();
   }
 
@@ -271,31 +268,31 @@ public class IssueDaoTest {
     assertThat(result.stream().mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
 
     assertThat(result.stream().filter(g -> g.getRuleType() == RuleType.BUG.getDbConstant()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
-    assertThat(result.stream().filter(g -> g.getRuleType() == RuleType.CODE_SMELL.getDbConstant()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
-    assertThat(result.stream().filter(g -> g.getRuleType() == RuleType.VULNERABILITY.getDbConstant()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> g.getRuleType() == RuleType.CODE_SMELL.getDbConstant()).mapToLong(IssueGroupDto::getCount).sum()).isZero();
+    assertThat(result.stream().filter(g -> g.getRuleType() == RuleType.VULNERABILITY.getDbConstant()).mapToLong(IssueGroupDto::getCount).sum()).isZero();
 
     assertThat(result.stream().filter(g -> g.getSeverity().equals("CRITICAL")).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(2);
     assertThat(result.stream().filter(g -> g.getSeverity().equals("MAJOR")).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(1);
-    assertThat(result.stream().filter(g -> g.getSeverity().equals("MINOR")).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> g.getSeverity().equals("MINOR")).mapToLong(IssueGroupDto::getCount).sum()).isZero();
 
     assertThat(result.stream().filter(g -> g.getStatus().equals("OPEN")).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(2);
     assertThat(result.stream().filter(g -> g.getStatus().equals("RESOLVED")).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(1);
-    assertThat(result.stream().filter(g -> g.getStatus().equals("CLOSED")).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> g.getStatus().equals("CLOSED")).mapToLong(IssueGroupDto::getCount).sum()).isZero();
 
     assertThat(result.stream().filter(g -> "FALSE-POSITIVE".equals(g.getResolution())).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(1);
     assertThat(result.stream().filter(g -> g.getResolution() == null).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(2);
 
     assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
-    assertThat(result.stream().filter(g -> !g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> !g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isZero();
 
     // test leak
     result = underTest.selectIssueGroupsByBaseComponent(db.getSession(), file, 999_999_999L);
-    assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isZero();
     assertThat(result.stream().filter(g -> !g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
 
     // test leak using exact creation time of criticalBug2 issue
     result = underTest.selectIssueGroupsByBaseComponent(db.getSession(), file, criticalBug2.getIssueCreationTime());
-    assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(0);
+    assertThat(result.stream().filter(g -> g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isZero();
     assertThat(result.stream().filter(g -> !g.isInLeak()).mapToLong(IssueGroupDto::getCount).sum()).isEqualTo(3);
   }
 
@@ -304,7 +301,6 @@ public class IssueDaoTest {
     assertThat(underTest.selectModuleAndDirComponentUuidsOfOpenIssuesForProjectUuid(db.getSession(), randomAlphabetic(12)))
       .isEmpty();
 
-    OrganizationDto organization = db.organizations().insert();
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto module11 = db.components().insertComponent(newModuleDto(project1));
     ComponentDto dir11 = db.components().insertComponent(newDirectory(module11, randomAlphabetic(10)));
@@ -313,8 +309,8 @@ public class IssueDaoTest {
     ComponentDto dir13 = db.components().insertComponent(newDirectory(module12, randomAlphabetic(12)));
     ComponentDto dir14 = db.components().insertComponent(newDirectory(project1, randomAlphabetic(13)));
     ComponentDto file11 = db.components().insertComponent(newFileDto(project1));
-    ComponentDto application = db.components().insertPrivateApplication(organization);
-    ComponentDto view = db.components().insertView(organization);
+    ComponentDto application = db.components().insertPrivateApplication();
+    ComponentDto view = db.components().insertPublicPortfolio();
     ComponentDto subview = db.components().insertSubView(view);
     ComponentDto project2 = db.components().insertPublicProject();
     ComponentDto module21 = db.components().insertComponent(newModuleDto(project2));
@@ -420,8 +416,7 @@ public class IssueDaoTest {
 
   private void prepareTables() {
     db.rules().insertRule(RULE.setIsExternal(true));
-    OrganizationDto organizationDto = db.organizations().insert();
-    ComponentDto projectDto = db.components().insertPrivateProject(organizationDto, (t) -> t.setUuid(PROJECT_UUID).setDbKey(PROJECT_KEY));
+    ComponentDto projectDto = db.components().insertPrivateProject(t -> t.setUuid(PROJECT_UUID).setDbKey(PROJECT_KEY));
     db.components().insertComponent(newFileDto(projectDto).setUuid(FILE_UUID).setDbKey(FILE_KEY));
     underTest.insert(db.getSession(), newIssueDto(ISSUE_KEY1)
       .setMessage("the message")

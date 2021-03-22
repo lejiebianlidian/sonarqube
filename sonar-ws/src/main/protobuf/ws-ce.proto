@@ -64,12 +64,18 @@ message AnalysisStatusWsResponse {
   optional Component component = 1;
 
   message Component {
-    optional string organization = 1;
+    reserved 1; //drop organization
     optional string key = 2;
     optional string name = 3;
-    repeated string warnings = 4;
+    repeated Warning warnings = 4;
     optional string branch = 5;
     optional string pullRequest = 6;
+  }
+
+  message Warning {
+    optional string key = 1;
+    optional string message = 2;
+    optional bool dismissable = 3;
   }
 }
 
@@ -102,6 +108,7 @@ message WorkerCountResponse {
 }
 
 message Task {
+  reserved 15,20; //drop organizations, drop 'logs'
   optional string id = 1;
   optional string type = 2;
   optional string componentId = 3;
@@ -116,12 +123,10 @@ message Task {
   optional string executedAt = 12;
   optional bool isLastExecuted = 13;
   optional int64 executionTimeMs = 14;
-  optional bool logs = 15;
   optional string errorMessage = 16;
   optional string errorStacktrace = 17;
   optional string scannerContext = 18;
   optional bool hasScannerContext = 19;
-  optional string organization = 20;
   optional string branch = 21;
   optional sonarqube.ws.commons.BranchType branchType = 22;
   optional string errorType = 23;

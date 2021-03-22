@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ export interface Hotspot {
   resolution?: HotspotResolution;
   rule: HotspotRule;
   status: HotspotStatus;
-  textRange: T.TextRange;
+  textRange?: T.TextRange;
   updateDate: string;
   users: T.UserBase[];
 }

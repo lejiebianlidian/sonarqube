@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.issue.IssueDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.exceptions.ForbiddenException;
@@ -46,10 +45,9 @@ import org.sonar.server.issue.index.IssueIteratorFactory;
 import org.sonar.server.issue.notification.IssuesChangesNotification;
 import org.sonar.server.issue.notification.IssuesChangesNotificationSerializer;
 import org.sonar.server.notification.NotificationManager;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.rule.DefaultRuleFinder;
 import org.sonar.server.tester.UserSessionRule;
+import org.sonar.server.ws.TestRequest;
 import org.sonar.server.ws.WsActionTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,14 +83,13 @@ public class AssignActionTest {
   private DbSession session = db.getSession();
   private NotificationManager notificationManager = mock(NotificationManager.class);
 
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
   private IssueIndexer issueIndexer = new IssueIndexer(es.client(), dbClient, new IssueIteratorFactory(dbClient), null);
   private OperationResponseWriter responseWriter = mock(OperationResponseWriter.class);
   private TestIssueChangePostProcessor issueChangePostProcessor = new TestIssueChangePostProcessor();
   private IssuesChangesNotificationSerializer issuesChangesSerializer = new IssuesChangesNotificationSerializer();
   private AssignAction underTest = new AssignAction(system2, userSession, dbClient, new IssueFinder(dbClient, userSession), new IssueFieldsSetter(),
     new IssueUpdater(dbClient,
-      new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(dbClient, defaultOrganizationProvider), issueIndexer, new SequenceUuidFactory()),
+      new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(dbClient), issueIndexer, new SequenceUuidFactory()),
       notificationManager, issueChangePostProcessor, issuesChangesSerializer),
     responseWriter);
   private WsActionTester ws = new WsActionTester(underTest);
@@ -216,12 +213,12 @@ public class AssignActionTest {
     setUserWithBrowsePermission(hotspot);
     UserDto arthur = insertUser("arthur");
 
-    assertThatThrownBy(() -> ws.newRequest()
+    TestRequest request = ws.newRequest()
       .setParam("issue", hotspot.getKey())
-      .setParam("assignee", arthur.getLogin())
-      .execute())
-        .isInstanceOf(NotFoundException.class)
-        .hasMessage("Issue with key '%s' does not exist", hotspot.getKey());
+      .setParam("assignee", arthur.getLogin());
+    assertThatThrownBy(request::execute)
+      .isInstanceOf(NotFoundException.class)
+      .hasMessage("Issue with key '%s' does not exist", hotspot.getKey());
   }
 
   @Test
@@ -263,28 +260,8 @@ public class AssignActionTest {
       .execute();
   }
 
-  @Test
-  public void fail_when_assignee_is_not_member_of_organization_of_project_issue() {
-    OrganizationDto org = db.organizations().insert(organizationDto -> organizationDto.setKey("Organization key"));
-    IssueDto issueDto = db.issues().insertIssue(org, i -> i.setType(CODE_SMELL));
-    setUserWithBrowsePermission(issueDto);
-    OrganizationDto otherOrganization = db.organizations().insert();
-    UserDto assignee = db.users().insertUser("arthur");
-    db.organizations().addMember(otherOrganization, assignee);
-
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("User 'arthur' is not member of organization 'Organization key'");
-
-    ws.newRequest()
-      .setParam("issue", issueDto.getKey())
-      .setParam("assignee", "arthur")
-      .execute();
-  }
-
   private UserDto insertUser(String login) {
-    UserDto user = db.users().insertUser(login);
-    db.organizations().addMember(db.getDefaultOrganization(), user);
-    return user;
+    return db.users().insertUser(login);
   }
 
   private IssueDto newIssue(String assignee) {

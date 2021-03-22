@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ import org.junit.Test;
 import org.sonar.api.rules.RuleFinder;
 import org.sonar.db.DbClient;
 import org.sonar.db.rule.RuleDao;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -33,8 +32,7 @@ import static org.mockito.Mockito.when;
 public class WebServerRuleFinderImplTest {
 
   private DbClient dbClient = mock(DbClient.class);
-  private TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.fromUuid("1111");
-  private WebServerRuleFinderImpl underTest = new WebServerRuleFinderImpl(dbClient, defaultOrganizationProvider);
+  private WebServerRuleFinderImpl underTest = new WebServerRuleFinderImpl(dbClient);
 
   @Before
   public void setUp() {

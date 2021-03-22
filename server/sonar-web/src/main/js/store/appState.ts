@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,9 +45,7 @@ export function requireAuthorization() {
 const defaultValue: T.AppState = {
   authenticationError: false,
   authorizationError: false,
-  defaultOrganization: '',
   edition: undefined,
-  organizationsEnabled: false,
   productionDatabase: true,
   qualifiers: [],
   settings: {},

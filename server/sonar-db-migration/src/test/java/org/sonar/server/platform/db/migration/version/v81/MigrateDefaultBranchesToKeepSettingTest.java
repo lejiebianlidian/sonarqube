@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ public class MigrateDefaultBranchesToKeepSettingTest {
 
   private void verifyMigrationOfDefaultSetting(String expectedValue) {
     assertThat(dbTester.countRowsOfTable(PROPS_TABLE)).isEqualTo(4);
-    assertThat(dbTester.countSql("select count(*) from " + PROPS_TABLE + " where prop_key = 'sonar.branch.longLivedBranches.regex'")).isEqualTo(0);
+    assertThat(dbTester.countSql("select count(*) from " + PROPS_TABLE + " where prop_key = 'sonar.branch.longLivedBranches.regex'")).isZero();
     assertThat(dbTester.countSql("select count(*) from " + PROPS_TABLE + " where prop_key = 'sonar.dbcleaner.branchesToKeepWhenInactive'")).isEqualTo(1);
     assertThat(dbTester.select("select resource_id, text_value from " + PROPS_TABLE + " where prop_key = 'sonar.dbcleaner.branchesToKeepWhenInactive'")
       .stream()

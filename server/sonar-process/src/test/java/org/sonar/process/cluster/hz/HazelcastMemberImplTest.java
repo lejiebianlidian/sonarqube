@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -110,7 +110,7 @@ public class HazelcastMemberImplTest {
   }
 
   private static HazelcastMember newHzMember(int port, int... otherPorts) {
-    return new HazelcastMemberBuilder()
+    return new HazelcastMemberBuilder(new InetAdressResolver())
       .setProcessId(ProcessId.COMPUTE_ENGINE)
       .setNodeName("name" + port)
       .setPort(port)

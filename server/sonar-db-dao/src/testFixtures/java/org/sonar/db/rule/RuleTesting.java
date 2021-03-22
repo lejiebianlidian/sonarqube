@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ import org.sonar.api.server.rule.RuleParamType;
 import org.sonar.core.util.UuidFactory;
 import org.sonar.core.util.UuidFactoryFast;
 import org.sonar.core.util.Uuids;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDto.Format;
 import org.sonar.db.rule.RuleDto.Scope;
 import org.sonar.db.user.UserDto;
@@ -40,7 +39,6 @@ import org.sonar.db.user.UserDto;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.newHashSet;
-import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
@@ -95,7 +93,6 @@ public class RuleTesting {
   public static RuleMetadataDto newRuleMetadata() {
     return new RuleMetadataDto()
       .setRuleUuid("uuid_" + randomAlphanumeric(5))
-      .setOrganizationUuid("org_" + randomAlphanumeric(5))
       .setRemediationBaseEffort(nextInt(10) + "h")
       .setRemediationGapMultiplier(nextInt(10) + "h")
       .setRemediationFunction("LINEAR_OFFSET")
@@ -112,15 +109,13 @@ public class RuleTesting {
       .setUpdatedAt(System.currentTimeMillis() - 50);
   }
 
-  public static RuleMetadataDto newRuleMetadata(RuleDefinitionDto rule, OrganizationDto organization) {
+  public static RuleMetadataDto newRuleMetadata(RuleDefinitionDto rule) {
     return newRuleMetadata()
-      .setRuleUuid(rule.getUuid())
-      .setOrganizationUuid(organization.getUuid());
+      .setRuleUuid(rule.getUuid());
   }
 
-  public static RuleMetadataDto newRuleMetadata(RuleDefinitionDto rule, UserDto noteUser, OrganizationDto organization) {
-    return newRuleMetadata(rule, organization)
-      .setNoteUserUuid(noteUser.getUuid());
+  public static RuleMetadataDto newRuleMetadata(RuleDefinitionDto rule, UserDto noteUser) {
+    return newRuleMetadata(rule).setNoteUserUuid(noteUser.getUuid());
   }
 
   public static RuleParamDto newRuleParam(RuleDefinitionDto rule) {
@@ -153,24 +148,8 @@ public class RuleTesting {
    * @deprecated use newRule(...)
    */
   @Deprecated
-  public static RuleDto newXooX1(OrganizationDto organization) {
-    return newDto(XOO_X1, requireNonNull(organization, "organization can't be null")).setLanguage("xoo");
-  }
-
-  /**
-   * @deprecated use newRule(...)
-   */
-  @Deprecated
   public static RuleDto newXooX2() {
     return newDto(XOO_X2).setLanguage("xoo");
-  }
-
-  /**
-   * @deprecated use newRule(...)
-   */
-  @Deprecated
-  public static RuleDto newXooX2(OrganizationDto organization) {
-    return newDto(XOO_X2, requireNonNull(organization, "organization can't be null")).setLanguage("xoo");
   }
 
   /**
@@ -185,23 +164,7 @@ public class RuleTesting {
    * @deprecated use newRule(...)
    */
   @Deprecated
-  public static RuleDto newXooX3(OrganizationDto organization) {
-    return newDto(XOO_X3, requireNonNull(organization, "organization can't be null")).setLanguage("xoo");
-  }
-
-  /**
-   * @deprecated use newRule(...)
-   */
-  @Deprecated
   public static RuleDto newDto(RuleKey ruleKey) {
-    return newDto(ruleKey, null);
-  }
-
-  /**
-   * @deprecated use newRule(...)
-   */
-  @Deprecated
-  public static RuleDto newDto(RuleKey ruleKey, @Nullable OrganizationDto organization) {
     RuleDto res = new RuleDto()
       .setUuid("uuid_" + Uuids.createFast())
       .setRuleKey(ruleKey.rule())
@@ -222,14 +185,11 @@ public class RuleTesting {
       .setType(RuleType.CODE_SMELL)
       .setCreatedAt(new Date().getTime())
       .setUpdatedAt(new Date().getTime())
-      .setScope(Scope.MAIN);
-    if (organization != null) {
-      res
-        .setOrganizationUuid(organization.getUuid())
-        .setTags(ImmutableSet.of("tag1", "tag2"))
-        .setRemediationFunction("LINEAR")
-        .setRemediationGapMultiplier("1h");
-    }
+      .setScope(Scope.MAIN)
+      .setTags(ImmutableSet.of("tag1", "tag2"))
+      .setRemediationFunction("LINEAR")
+      .setRemediationGapMultiplier("1h");
+
     return res;
   }
 
@@ -241,21 +201,8 @@ public class RuleTesting {
     return newDto(RuleKey.of(randomAlphanumeric(30), randomAlphanumeric(30)));
   }
 
-  /**
-   * @deprecated use newRule(...)
-   */
-  @Deprecated
-  public static RuleDto newRuleDto(OrganizationDto organization) {
-    return newDto(RuleKey.of(randomAlphanumeric(30), randomAlphanumeric(30)), organization);
-  }
-
   public static RuleDto newTemplateRule(RuleKey ruleKey) {
     return newDto(ruleKey)
-      .setIsTemplate(true);
-  }
-
-  public static RuleDto newTemplateRule(RuleKey ruleKey, OrganizationDto organization) {
-    return newDto(ruleKey, organization)
       .setIsTemplate(true);
   }
 
@@ -341,10 +288,6 @@ public class RuleTesting {
 
   public static Consumer<RuleDefinitionDto> setSystemTags(String... tags) {
     return rule -> rule.setSystemTags(copyOf(tags));
-  }
-
-  public static Consumer<RuleMetadataDto> setOrganization(OrganizationDto organization) {
-    return rule -> rule.setOrganizationUuid(organization.getUuid());
   }
 
   public static Consumer<RuleMetadataDto> setTags(String... tags) {

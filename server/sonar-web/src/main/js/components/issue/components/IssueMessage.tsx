@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,8 @@ import * as React from 'react';
 import { ButtonLink } from 'sonar-ui-common/components/controls/buttons';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
+import { RuleStatus } from '../../../types/rules';
+import DocumentationTooltip from '../../common/DocumentationTooltip';
 import { WorkspaceContextShape } from '../../workspace/context';
 
 export interface IssueMessageProps {
@@ -29,32 +31,52 @@ export interface IssueMessageProps {
   manualVulnerability: boolean;
   message: string;
   onOpenRule: WorkspaceContextShape['openRule'];
-  organization: string;
   ruleKey: string;
+  ruleStatus?: RuleStatus;
 }
 
 export default function IssueMessage(props: IssueMessageProps) {
-  const { engine, engineName, manualVulnerability, message, organization, ruleKey } = props;
+  const { engine, engineName, manualVulnerability, message, ruleKey, ruleStatus } = props;
   const ruleEngine = engineName ? engineName : engine;
 
   return (
-    <div className="issue-message">
+    <div className="issue-message break-word">
       <span className="spacer-right">{message}</span>
       <ButtonLink
         aria-label={translate('issue.why_this_issue.long')}
-        className="issue-see-rule spacer-right"
-        onClick={() => props.onOpenRule({ key: ruleKey, organization })}>
+        className="issue-see-rule spacer-right text-baseline"
+        onClick={() =>
+          props.onOpenRule({
+            key: ruleKey
+          })
+        }>
         {translate('issue.why_this_issue')}
       </ButtonLink>
 
+      {ruleStatus && (ruleStatus === RuleStatus.Deprecated || ruleStatus === RuleStatus.Removed) && (
+        <DocumentationTooltip
+          className="spacer-left"
+          content={translate('rules.status', ruleStatus, 'help')}
+          links={[
+            {
+              href: '/documentation/user-guide/rules/',
+              label: translateWithParameters('see_x', translate('rules'))
+            }
+          ]}>
+          <span className="spacer-right badge badge-error">
+            {translate('rules.status', ruleStatus)}
+          </span>
+        </DocumentationTooltip>
+      )}
+
       {ruleEngine && (
         <Tooltip overlay={translateWithParameters('issue.from_external_rule_engine', ruleEngine)}>
-          <div className="badge spacer-right text-top">{ruleEngine}</div>
+          <div className="badge spacer-right text-baseline">{ruleEngine}</div>
         </Tooltip>
       )}
       {manualVulnerability && (
         <Tooltip overlay={translate('issue.manual_vulnerability.description')}>
-          <div className="badge spacer-right text-top">
+          <div className="badge spacer-right text-baseline">
             {translate('issue.manual_vulnerability')}
           </div>
         </Tooltip>

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ import org.sonarsource.api.sonarlint.SonarLintSide;
  * </p>
  *
  * <p>
- * Unit tests of plugin extensions can create instances of {@link SonarRuntime}
+ * Unit tests of plugin extensions can add a test dependency to available in sonar-plugin-api-impl and create instances of {@link SonarRuntime}
  * via {@link org.sonar.api.internal.SonarRuntimeImpl}.
  * </p>
  *

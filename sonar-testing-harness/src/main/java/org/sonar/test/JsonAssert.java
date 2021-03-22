@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -92,6 +92,18 @@ public class JsonAssert {
 
   public JsonAssert isSimilarTo(URL expected) {
     return isSimilarTo(urlToString(expected));
+  }
+
+  public JsonAssert isNotSimilarTo(String expected) {
+    boolean similar = comparison.areSimilar(expected, actualJson);
+    if (similar) {
+      throw new ComparisonFailure("It's a super-set of expected JSON -", pretty(expected), pretty(actualJson));
+    }
+    return this;
+  }
+
+  public JsonAssert isNotSimilarTo(URL expected) {
+    return isNotSimilarTo(urlToString(expected));
   }
 
   public static JsonAssert assertJson(String actualJson) {

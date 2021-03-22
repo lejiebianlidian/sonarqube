@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -66,12 +66,12 @@ public class ProcessInfoProviderTest {
       new TestSystemInfoSection("foo"),
       new TestSystemInfoSection("bar")});
 
-    assertThat(ProcessInfoProvider.provide().getSectionsCount()).isEqualTo(0);
+    assertThat(ProcessInfoProvider.provide().getSectionsCount()).isZero();
 
     underTest.start();
     assertThat(ProcessInfoProvider.provide().getSectionsCount()).isEqualTo(2);
 
     underTest.stop();
-    assertThat(ProcessInfoProvider.provide().getSectionsCount()).isEqualTo(0);
+    assertThat(ProcessInfoProvider.provide().getSectionsCount()).isZero();
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,5 +18,56 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 export const enum SettingsKey {
-  DaysBeforeDeletingInactiveBranchesAndPRs = 'sonar.dbcleaner.daysBeforeDeletingInactiveBranchesAndPRs'
+  DaysBeforeDeletingInactiveBranchesAndPRs = 'sonar.dbcleaner.daysBeforeDeletingInactiveBranchesAndPRs',
+  DefaultProjectVisibility = 'projects.default.visibility',
+  ServerBaseUrl = 'sonar.core.serverBaseURL'
+}
+
+export type Setting = SettingValue & { definition: SettingDefinition };
+
+export type SettingType =
+  | 'STRING'
+  | 'TEXT'
+  | 'JSON'
+  | 'PASSWORD'
+  | 'BOOLEAN'
+  | 'FLOAT'
+  | 'INTEGER'
+  | 'LICENSE'
+  | 'LONG'
+  | 'SINGLE_SELECT_LIST'
+  | 'PROPERTY_SET';
+
+export interface SettingDefinition {
+  description?: string;
+  key: string;
+  multiValues?: boolean;
+  name?: string;
+  options: string[];
+  type?: SettingType;
+}
+
+export interface SettingFieldDefinition extends SettingDefinition {
+  description: string;
+  name: string;
+}
+
+export interface SettingCategoryDefinition extends SettingDefinition {
+  category: string;
+  defaultValue?: string;
+  deprecatedKey?: string;
+  fields: SettingFieldDefinition[];
+  multiValues?: boolean;
+  subCategory: string;
+}
+
+export interface SettingValue {
+  fieldValues?: Array<T.Dict<string>>;
+  inherited?: boolean;
+  key: string;
+  parentFieldValues?: Array<T.Dict<string>>;
+  parentValue?: string;
+  parentValues?: string[];
+  value?: string;
+  values?: string[];
 }

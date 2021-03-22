@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,18 +19,15 @@
  */
 package org.sonar.server.rule.ws;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.es.EsClient;
 import org.sonar.server.es.EsTester;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.rule.index.RuleIndex;
 import org.sonar.server.rule.index.RuleIndexer;
 import org.sonar.server.tester.UserSessionRule;
@@ -50,19 +47,12 @@ public class TagsActionTest {
   @Rule
   public EsTester es = EsTester.create();
 
-  private DbClient dbClient = db.getDbClient();
-  private EsClient esClient = es.client();
-  private RuleIndex ruleIndex = new RuleIndex(esClient, System2.INSTANCE);
-  private RuleIndexer ruleIndexer = new RuleIndexer(esClient, dbClient);
+  private final DbClient dbClient = db.getDbClient();
+  private final EsClient esClient = es.client();
+  private final RuleIndex ruleIndex = new RuleIndex(esClient, System2.INSTANCE);
+  private final RuleIndexer ruleIndexer = new RuleIndexer(esClient, dbClient);
 
-  private WsActionTester ws = new WsActionTester(new org.sonar.server.rule.ws.TagsAction(ruleIndex, dbClient, TestDefaultOrganizationProvider.from(db)));
-
-  private OrganizationDto organization;
-
-  @Before
-  public void before() {
-    organization = db.organizations().insert();
-  }
+  private final WsActionTester ws = new WsActionTester(new org.sonar.server.rule.ws.TagsAction(ruleIndex));
 
   @Test
   public void definition() {
@@ -71,7 +61,7 @@ public class TagsActionTest {
     assertThat(action.responseExampleAsString()).isNotEmpty();
     assertThat(action.isPost()).isFalse();
     assertThat(action.isInternal()).isFalse();
-    assertThat(action.params()).hasSize(3);
+    assertThat(action.params()).hasSize(2);
 
     WebService.Param query = action.param("q");
     assertThat(query).isNotNull();
@@ -85,14 +75,6 @@ public class TagsActionTest {
     assertThat(pageSize.defaultValue()).isEqualTo("10");
     assertThat(pageSize.description()).isNotEmpty();
     assertThat(pageSize.exampleValue()).isNotEmpty();
-
-    WebService.Param organization = action.param("organization");
-    assertThat(organization).isNotNull();
-    assertThat(organization.isRequired()).isFalse();
-    assertThat(organization.isInternal()).isTrue();
-    assertThat(organization.description()).isNotEmpty();
-    assertThat(organization.exampleValue()).isNotEmpty();
-    assertThat(organization.since()).isEqualTo("6.4");
   }
 
   @Test
@@ -108,10 +90,10 @@ public class TagsActionTest {
   public void tag() {
     RuleDefinitionDto r = db.rules().insert(setSystemTags());
     ruleIndexer.commitAndIndex(db.getSession(), r.getUuid());
-    db.rules().insertOrUpdateMetadata(r, organization, setTags("tag"));
-    ruleIndexer.commitAndIndex(db.getSession(), r.getUuid(), organization);
+    db.rules().insertOrUpdateMetadata(r, setTags("tag"));
+    ruleIndexer.commitAndIndex(db.getSession(), r.getUuid());
 
-    String result = ws.newRequest().setParam("organization", organization.getKey()).execute().getInput();
+    String result = ws.newRequest().execute().getInput();
     assertJson(result).isSimilarTo("{\"tags\":[\"tag\"]}");
   }
 }

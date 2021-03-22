@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.sonar.server.es.textsearch.ComponentTextSearchFeature.UseCase;
@@ -58,16 +57,15 @@ public class ComponentTextSearchQueryFactory {
 
   private static Optional<QueryBuilder> createQuery(ComponentTextSearchQuery query, ComponentTextSearchFeature[] features, UseCase useCase) {
     BoolQueryBuilder generateResults = boolQuery();
-    AtomicBoolean anyFeatures = new AtomicBoolean();
     Arrays.stream(features)
       .filter(f -> f.getUseCase() == useCase)
-      .peek(f -> anyFeatures.set(true))
       .flatMap(f -> f.getQueries(query))
       .forEach(generateResults::should);
-    if (anyFeatures.get()) {
+    if (!generateResults.should().isEmpty()) {
       return Optional.of(generateResults);
+    } else {
+      return Optional.empty();
     }
-    return Optional.empty();
   }
 
   public static class ComponentTextSearchQuery {

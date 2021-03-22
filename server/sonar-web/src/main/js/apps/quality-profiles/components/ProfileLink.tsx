@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,15 +26,11 @@ interface Props {
   children?: React.ReactElement<any> | string;
   language: string;
   name: string;
-  organization: string | null;
 }
 
-export default function ProfileLink({ name, language, organization, children, ...other }: Props) {
+export default function ProfileLink({ name, language, children, ...other }: Props) {
   return (
-    <Link
-      activeClassName="link-no-underline"
-      to={getProfilePath(name, language, organization)}
-      {...other}>
+    <Link activeClassName="link-no-underline" to={getProfilePath(name, language)} {...other}>
       {children}
     </Link>
   );

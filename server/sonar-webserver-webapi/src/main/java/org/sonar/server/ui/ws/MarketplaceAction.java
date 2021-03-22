@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import org.sonar.api.server.ws.WebService;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.measure.SumNclocDbQuery;
-import org.sonar.server.organization.DefaultOrganizationProvider;
 import org.sonar.server.user.UserSession;
 import org.sonarqube.ws.Navigation;
 
@@ -36,13 +35,11 @@ public class MarketplaceAction implements NavigationWsAction {
   private final UserSession userSession;
   private final Server server;
   private final DbClient dbClient;
-  private final DefaultOrganizationProvider defaultOrganizationProvider;
 
-  public MarketplaceAction(UserSession userSession, Server server, DbClient dbClient, DefaultOrganizationProvider defaultOrganizationProvider) {
+  public MarketplaceAction(UserSession userSession, Server server, DbClient dbClient) {
     this.userSession = userSession;
     this.server = server;
     this.dbClient = dbClient;
-    this.defaultOrganizationProvider = defaultOrganizationProvider;
   }
 
   @Override
@@ -73,7 +70,6 @@ public class MarketplaceAction implements NavigationWsAction {
     try (DbSession dbSession = dbClient.openSession(false)) {
       SumNclocDbQuery query = SumNclocDbQuery.builder()
         .setOnlyPrivateProjects(false)
-        .setOrganizationUuid(defaultOrganizationProvider.get().getUuid())
         .build();
       return dbClient.liveMeasureDao().sumNclocOfBiggestBranch(dbSession, query);
     }

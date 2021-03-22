@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ import { getRuleTags } from '../../../api/rules';
 import TagsSelector from '../../../components/tags/TagsSelector';
 
 export interface Props {
-  organization: string | undefined;
   setTags: (tags: string[]) => void;
   sysTags: string[];
   tags: string[];
@@ -50,8 +49,7 @@ export default class RuleDetailsTagsPopup extends React.PureComponent<Props, Sta
   onSearch = (query: string) => {
     return getRuleTags({
       q: query,
-      ps: Math.min(this.props.tags.length + LIST_SIZE, 100),
-      organization: this.props.organization
+      ps: Math.min(this.props.tags.length + LIST_SIZE, 100)
     }).then(
       tags => {
         if (this.mounted) {

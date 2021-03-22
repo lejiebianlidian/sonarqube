@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@ export interface Props {
   analyzedBefore: Date | undefined;
   onClose: () => void;
   onConfirm: () => void;
-  organization: string;
   provisioned: boolean;
   qualifier: string;
   query: string;
@@ -58,13 +57,11 @@ export default class DeleteModal extends React.PureComponent<Props, State> {
     const { analyzedBefore } = this.props;
     const parameters = this.props.selection.length
       ? {
-          organization: this.props.organization,
           projects: this.props.selection.join()
         }
       : {
           analyzedBefore: analyzedBefore && toNotSoISOString(analyzedBefore),
           onProvisionedOnly: this.props.provisioned || undefined,
-          organization: this.props.organization,
           qualifiers: this.props.qualifier,
           q: this.props.query || undefined
         };

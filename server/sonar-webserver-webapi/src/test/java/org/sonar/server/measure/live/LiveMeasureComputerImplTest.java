@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,6 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.measure.LiveMeasureDto;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.server.es.ProjectIndexer;
 import org.sonar.server.es.TestProjectIndexers;
@@ -81,11 +80,10 @@ public class LiveMeasureComputerImplTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  private TestProjectIndexers projectIndexer = new TestProjectIndexers();
+  private final TestProjectIndexers projectIndexer = new TestProjectIndexers();
   private MetricDto intMetric;
   private MetricDto ratingMetric;
   private MetricDto alertStatusMetric;
-  private OrganizationDto organization;
   private ComponentDto project;
   private ProjectDto projectDto;
   private ComponentDto dir;
@@ -93,17 +91,16 @@ public class LiveMeasureComputerImplTest {
   private ComponentDto file2;
   private ComponentDto branch;
   private ComponentDto branchFile;
-  private LiveQualityGateComputer qGateComputer = mock(LiveQualityGateComputer.class);
-  private QualityGate qualityGate = mock(QualityGate.class);
-  private EvaluatedQualityGate newQualityGate = mock(EvaluatedQualityGate.class);
+  private final LiveQualityGateComputer qGateComputer = mock(LiveQualityGateComputer.class);
+  private final QualityGate qualityGate = mock(QualityGate.class);
+  private final EvaluatedQualityGate newQualityGate = mock(EvaluatedQualityGate.class);
 
   @Before
   public void setUp() {
     intMetric = db.measures().insertMetric(m -> m.setValueType(Metric.ValueType.INT.name()));
     ratingMetric = db.measures().insertMetric(m -> m.setValueType(Metric.ValueType.RATING.name()));
     alertStatusMetric = db.measures().insertMetric(m -> m.setKey(CoreMetrics.ALERT_STATUS_KEY));
-    organization = db.organizations().insert();
-    project = db.components().insertPublicProject(organization);
+    project = db.components().insertPublicProject();
     projectDto = db.components().getProjectDto(project);
     dir = db.components().insertComponent(ComponentTesting.newDirectory(project, "src/main/java"));
     file1 = db.components().insertComponent(ComponentTesting.newFileDto(project, dir));
@@ -250,7 +247,7 @@ public class LiveMeasureComputerImplTest {
   public void do_nothing_if_project_has_not_been_analyzed() {
     // project has no snapshots
     List<QGChangeEvent> result = run(file1, newIncrementalFormula());
-    assertThat(db.countRowsOfTable(db.getSession(), "live_measures")).isEqualTo(0);
+    assertThat(db.countRowsOfTable(db.getSession(), "live_measures")).isZero();
     assertThatProjectNotChanged(result, project);
   }
 
@@ -258,7 +255,7 @@ public class LiveMeasureComputerImplTest {
   public void do_nothing_if_input_components_are_empty() {
     List<QGChangeEvent> result = run(emptyList(), newIncrementalFormula());
 
-    assertThat(db.countRowsOfTable(db.getSession(), "live_measures")).isEqualTo(0);
+    assertThat(db.countRowsOfTable(db.getSession(), "live_measures")).isZero();
     assertThatProjectNotChanged(result, project);
   }
 
@@ -370,7 +367,7 @@ public class LiveMeasureComputerImplTest {
       .extracting(QGChangeEvent::getQualityGateSupplier)
       .extracting(Supplier::get)
       .containsExactly(Optional.of(newQualityGate));
-    verify(qGateComputer).loadQualityGate(any(DbSession.class), eq(organization), argThat(p -> p.getUuid().equals(projectDto.getUuid())), eq(branch));
+    verify(qGateComputer).loadQualityGate(any(DbSession.class), argThat(p -> p.getUuid().equals(projectDto.getUuid())), eq(branch));
     verify(qGateComputer).getMetricsRelatedTo(qualityGate);
     verify(qGateComputer).refreshGateStatus(eq(project), same(qualityGate), any(MeasureMatrix.class));
   }
@@ -395,7 +392,7 @@ public class LiveMeasureComputerImplTest {
   private List<QGChangeEvent> run(Collection<ComponentDto> components, IssueMetricFormula... formulas) {
     IssueMetricFormulaFactory formulaFactory = new TestIssueMetricFormulaFactory(asList(formulas));
 
-    when(qGateComputer.loadQualityGate(any(DbSession.class), any(OrganizationDto.class), any(ProjectDto.class), any(BranchDto.class)))
+    when(qGateComputer.loadQualityGate(any(DbSession.class), any(ProjectDto.class), any(BranchDto.class)))
       .thenReturn(qualityGate);
     when(qGateComputer.getMetricsRelatedTo(qualityGate)).thenReturn(singleton(CoreMetrics.ALERT_STATUS_KEY));
     when(qGateComputer.refreshGateStatus(eq(project), same(qualityGate), any(MeasureMatrix.class)))
@@ -450,7 +447,7 @@ public class LiveMeasureComputerImplTest {
     assertThat(measure.getComponentUuid()).isEqualTo(component.uuid());
     assertThat(measure.getProjectUuid()).isEqualTo(component.projectUuid());
     assertThat(measure.getMetricUuid()).isEqualTo(ratingMetric.getUuid());
-    assertThat(measure.getVariation()).isEqualTo((double) expectedValue.getIndex());
+    assertThat(measure.getVariation()).isEqualTo(expectedValue.getIndex());
   }
 
   private IssueMetricFormula newIncrementalFormula() {
@@ -507,6 +504,6 @@ public class LiveMeasureComputerImplTest {
 
   private void assertThatProjectNotChanged(List<QGChangeEvent> events, ComponentDto project) {
     assertThat(projectIndexer.hasBeenCalled(project.uuid(), ProjectIndexer.Cause.MEASURE_CHANGE)).isFalse();
-    assertThat(events).hasSize(0);
+    assertThat(events).isEmpty();
   }
 }

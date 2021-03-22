@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,18 +21,19 @@ package org.sonar.server.platform.monitoring;
 
 import org.sonar.api.server.ServerSide;
 import org.sonar.core.platform.PluginInfo;
-import org.sonar.core.platform.PluginRepository;
 import org.sonar.process.systeminfo.SystemInfoSection;
 import org.sonar.process.systeminfo.protobuf.ProtobufSystemInfo;
+import org.sonar.server.plugins.PluginType;
+import org.sonar.server.plugins.ServerPluginRepository;
 import org.sonar.updatecenter.common.Version;
 
 import static org.sonar.process.systeminfo.SystemInfoUtils.setAttribute;
 
 @ServerSide
 public class PluginsSection implements SystemInfoSection {
-  private final PluginRepository repository;
+  private final ServerPluginRepository repository;
 
-  public PluginsSection(PluginRepository repository) {
+  public PluginsSection(ServerPluginRepository repository) {
     this.repository = repository;
   }
 
@@ -40,12 +41,15 @@ public class PluginsSection implements SystemInfoSection {
   public ProtobufSystemInfo.Section toProtobuf() {
     ProtobufSystemInfo.Section.Builder protobuf = ProtobufSystemInfo.Section.newBuilder();
     protobuf.setName("Plugins");
-    for (PluginInfo plugin : repository.getPluginInfos()) {
-      String label = "[" + plugin.getName() + "]";
+
+    for (PluginInfo plugin : repository.getPluginsInfoByType(PluginType.EXTERNAL)) {
+      String label = "";
       Version version = plugin.getVersion();
       if (version != null) {
-        label = version.getName() + " " + label;
+        label = version.getName() + " ";
       }
+      label += String.format("[%s]", plugin.getName());
+
       setAttribute(protobuf, plugin.getKey(), label);
     }
     return protobuf.build();

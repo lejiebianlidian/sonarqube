@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,20 +19,38 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { ComponentQualifier } from '../../../../types/component';
-import { Project } from '../../types';
+import { mockProject } from '../../../../helpers/mocks/projects';
 import Risk from '../Risk';
 
 it('renders', () => {
-  const project1: Project = {
-    key: 'foo',
-    measures: { complexity: '17.2', coverage: '53.5', ncloc: '1734' },
-    name: 'Foo',
-    qualifier: ComponentQualifier.Project,
-    tags: [],
-    visibility: 'public'
-  };
-  expect(
-    shallow(<Risk displayOrganizations={false} helpText="foobar" projects={[project1]} />)
-  ).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot();
 });
+
+it('should handle filtering', () => {
+  const wrapper = shallowRender();
+
+  wrapper.instance().handleRatingFilterClick(2);
+
+  expect(wrapper.state().ratingFilters).toEqual({ 2: true });
+});
+
+function shallowRender(overrides: Partial<Risk['props']> = {}) {
+  const project1 = mockProject({
+    key: 'foo',
+    measures: {
+      complexity: '17.2',
+      coverage: '53.5',
+      ncloc: '1734',
+      sqale_index: '1',
+      reliability_rating: '3',
+      security_rating: '2'
+    },
+    name: 'Foo'
+  });
+  const project2 = mockProject({
+    key: 'bar',
+    name: 'Bar',
+    measures: {}
+  });
+  return shallow<Risk>(<Risk helpText="foobar" projects={[project1, project2]} {...overrides} />);
+}

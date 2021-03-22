@@ -13,7 +13,6 @@
     and proj.enabled = ${_true}
     and proj.main_branch_project_uuid is null
     and proj.copy_component_uuid is null
-    and proj.organization_uuid=#{query.organizationUuid, jdbcType=VARCHAR}
     <choose>
       <when test="query.membership() == 'selected'">
         and qg.uuid IS NOT NULL
@@ -25,7 +24,7 @@
     <if test="query.projectSearch() != null">
       and (proj.kee = #{query.projectSearch} or upper(proj.name) like #{query.projectSearchUpperLikeSql} escape '/')
     </if>
-    order by proj.name
+    order by proj.name, proj.kee
   </select>
 
   <select id="selectQGateUuidByProjectUuid" parameterType="String" resultType="string">

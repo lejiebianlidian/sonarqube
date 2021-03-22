@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ import { ComponentQualifier, isPortfolioLike } from '../../../../types/component
 import './Menu.css';
 
 const SETTINGS_URLS = [
+  '/application/console',
   '/project/admin',
   '/project/baseline',
   '/project/branches',
@@ -265,7 +266,8 @@ export class Menu extends React.PureComponent<Props> {
         {({ onToggleClick, open }) => (
           <a
             aria-expanded={open}
-            aria-haspopup="true"
+            aria-haspopup="menu"
+            role="button"
             className={classNames('dropdown-toggle', { active: isSettingsActive || open })}
             href="#"
             id="component-navigation-admin"
@@ -290,6 +292,8 @@ export class Menu extends React.PureComponent<Props> {
       this.renderSettingsLink(query, isApplication, isPortfolio),
       this.renderBranchesLink(query, isProject),
       this.renderBaselineLink(query, isApplication, isPortfolio),
+      this.renderConsoleAppLink(query, isApplication),
+      ...this.renderAdminExtensions(query, isApplication),
       this.renderProfilesLink(query),
       this.renderQualityGateLink(query),
       this.renderCustomMeasuresLink(query),
@@ -298,7 +302,6 @@ export class Menu extends React.PureComponent<Props> {
       this.renderBackgroundTasksLink(query),
       this.renderUpdateKeyLink(query),
       this.renderWebhooksLink(query, isProject),
-      ...this.renderAdminExtensions(query),
       this.renderDeletionLink(query)
     ];
   };
@@ -367,6 +370,19 @@ export class Menu extends React.PureComponent<Props> {
       <li key="baseline">
         <Link activeClassName="active" to={{ pathname: '/project/baseline', query }}>
           {translate('project_baseline.page')}
+        </Link>
+      </li>
+    );
+  };
+
+  renderConsoleAppLink = (query: Query, isApplication: boolean) => {
+    if (!isApplication) {
+      return null;
+    }
+    return (
+      <li key="app-console">
+        <Link activeClassName="active" to={{ pathname: '/application/console', query }}>
+          {translate('application_console.page')}
         </Link>
       </li>
     );
@@ -514,9 +530,11 @@ export class Menu extends React.PureComponent<Props> {
     );
   };
 
-  renderAdminExtensions = (query: Query) => {
+  renderAdminExtensions = (query: Query, isApplication: boolean) => {
     const extensions = this.getConfiguration().extensions || [];
-    return extensions.map(e => this.renderExtension(e, true, query));
+    return extensions
+      .filter(e => !isApplication || e.key !== 'governance/console')
+      .map(e => this.renderExtension(e, true, query));
   };
 
   renderExtensions = (query: Query) => {
@@ -541,7 +559,8 @@ export class Menu extends React.PureComponent<Props> {
         {({ onToggleClick, open }) => (
           <a
             aria-expanded={open}
-            aria-haspopup="true"
+            aria-haspopup="menu"
+            role="button"
             className={classNames('dropdown-toggle', { active: open })}
             href="#"
             id="component-navigation-more"

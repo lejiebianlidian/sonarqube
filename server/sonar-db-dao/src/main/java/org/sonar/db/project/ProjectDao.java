@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,11 +50,22 @@ public class ProjectDao implements Dao {
     return Optional.ofNullable(mapper(session).selectProjectOrAppByKey(key));
   }
 
+  public List<ProjectDto> selectAllApplications(DbSession session) {
+    return mapper(session).selectAllApplications();
+  }
+
   public List<ProjectDto> selectProjectsByKeys(DbSession session, Set<String> keys) {
     if (keys.isEmpty()) {
       return Collections.emptyList();
     }
     return mapper(session).selectProjectsByKeys(keys);
+  }
+
+  public List<ProjectDto> selectApplicationsByKeys(DbSession session, Set<String> keys) {
+    if (keys.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return mapper(session).selectApplicationsByKeys(keys);
   }
 
   public List<ProjectDto> selectProjects(DbSession session) {
@@ -65,12 +76,8 @@ public class ProjectDao implements Dao {
     return Optional.ofNullable(mapper(session).selectByUuid(uuid));
   }
 
-  public List<ProjectDto> selectByOrganizationUuid(DbSession session, String organizationUuid) {
-    return mapper(session).selectByOrganizationUuid(organizationUuid);
-  }
-
-  public List<ProjectDto> selectProjectsByOrganizationUuid(DbSession session, String organizationUuid) {
-    return mapper(session).selectProjectsByOrganizationUuid(organizationUuid);
+  public List<ProjectDto> selectAll(DbSession session) {
+    return mapper(session).selectAll();
   }
 
   public List<ProjectDto> selectByUuids(DbSession session, Set<String> uuids) {
@@ -99,4 +106,5 @@ public class ProjectDao implements Dao {
   private static ProjectMapper mapper(DbSession session) {
     return session.getMapper(ProjectMapper.class);
   }
+
 }

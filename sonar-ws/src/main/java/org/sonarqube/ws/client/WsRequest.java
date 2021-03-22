@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,8 @@ public interface WsRequest {
   String getMediaType();
 
   OptionalInt getTimeOutInMs();
+
+  OptionalInt getWriteTimeOutInMs();
 
   /**
    *

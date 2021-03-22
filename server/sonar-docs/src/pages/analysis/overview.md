@@ -6,7 +6,7 @@ url: /analysis/overview/
 Once the SonarQube platform has been installed, you're ready to install a scanner and begin creating projects. To do that, you must install and configure the scanner that is most appropriate for your needs. Do you build with:
 
 * Gradle - [SonarScanner for Gradle](/analysis/scan/sonarscanner-for-gradle/)
-* MSBuild - [SonarScanner for MSBuild](/analysis/scan/sonarscanner-for-msbuild/)
+* .NET - [SonarScanner for .NET](/analysis/scan/sonarscanner-for-msbuild/)
 * Maven - use the [SonarScanner for Maven](/analysis/scan/sonarscanner-for-maven/)
 * Jenkins - [SonarScanner for Jenkins](/analysis/scan/sonarscanner-for-jenkins/)
 * Azure DevOps - [SonarQube Extension for Azure DevOps](/analysis/scan/sonarscanner-for-azure-devops/)
@@ -14,7 +14,7 @@ Once the SonarQube platform has been installed, you're ready to install a scanne
 * anything else (CLI) - [SonarScanner](/analysis/scan/sonarscanner/)
 
 [[info]]
-| SonarQube integrations are supported for popular ALMs: GitHub Enterprise and GitHub.com, BitBucket Server, and Azure Devops Server. 
+| SonarQube integrations are supported for popular ALMs: GitHub Enterprise and GitHub.com, BitBucket Server, Azure Devops Server and Azure DevOps Services.
 
 [[warning]]
 | We do not recommend running an antivirus scanner on the machine where a SonarQube analysis runs, it could result in unpredictable behavior.
@@ -24,7 +24,7 @@ A project is created in SonarQube automatically on its first analysis. However, 
 
 
 ## What does analysis produce? 
-{instance} can perform analysis on up to 27 different languages depending on your edition. The outcome of this analysis will be quality measures and issues (instances where coding rules were broken). However, what gets analyzed will vary depending on the language:
+SonarQube can analyze up to 27 different languages depending on your edition. The outcome of this analysis will be quality measures and issues (instances where coding rules were broken). However, what gets analyzed will vary depending on the language:
 
 * On all languages, "blame" data will automatically be imported from supported SCM providers. [Git and SVN are supported automatically](/analysis/scm-integration/). Other providers require additional plugins.
 * On all languages, a static analysis of source code is performed (Java files, COBOL programs, etc.)
@@ -32,7 +32,7 @@ A project is created in SonarQube automatically on its first analysis. However, 
 
 
 ## Will all files be analyzed?
-By default, only files that are recognized by a language analyzer are loaded into the project during analysis. 
+By default, only files that are recognized by your edition of SonarQube are loaded into the project during analysis. 
 For example if you're using SonarQube Community Edition, which includes analysis of Java and JavaScript, but not C++, all `.java` and `.js` files would be loaded, but `.cpp` files would be ignored.
 
 ## What about branches and pull requests?
@@ -55,3 +55,6 @@ The icon goes away once processing is complete, but if analysis report processin
 
 **Q.** Analysis errors out with `java.lang.OutOfMemoryError: GC overhead limit exceeded`. What do I do?  
 **A.** This means your project is too large or too intricate for the scanner to analyze with the default memory allocation. To fix this you'll want to allocate a larger heap (using `-Xmx[numeric value here]`) to the process running the analysis. Some CI engines may give you an input to specify the necessary values, for instance if you're using a Maven Build Step in a Jenkins job to run analysis. Otherwise, use Java Options to set a higher value. Note that details of setting Java Options are omitted here because they vary depending on the environment.
+
+**Q.** Analysis errors out with `PKIX path building failed`. What do I do? 
+**A.** This error tells you that your SonarQube server is configured with HTTPS and a custom SSL certificate. However, the certificate is not correctly configured in the scanner machine’s JVM. This configuration is outside of SonarQube scope. The server certificate is unknown and could not be validated with the provided truststore. You need to add the SonarQube server certificate to the Java truststore. See [Oracle's documentation](https://docs.oracle.com/cd/E19830-01/819-4712/ablqw/index.html) for more information.

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ export class SystemUpgradeForm extends React.PureComponent<Props, State> {
           {upgrading && <i className="spinner spacer-right" />}
           <a
             className="pull-left"
-            href="https://www.sonarqube.org/downloads/"
+            href="https://www.sonarqube.org/downloads/?referrer=sonarqube"
             rel="noopener noreferrer"
             target="_blank">
             {translate('system.see_sonarqube_downloads')}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ public class PersistCrossProjectDuplicationIndexStepTest {
     TestComputationStepContext context = new TestComputationStepContext();
     underTest.execute(context);
 
-    assertThat(dbTester.countRowsOfTable("duplications_index")).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable("duplications_index")).isZero();
     context.getStatistics().assertValue("inserts", 0);
   }
 
@@ -153,7 +153,7 @@ public class PersistCrossProjectDuplicationIndexStepTest {
     TestComputationStepContext context = new TestComputationStepContext();
     underTest.execute(context);
 
-    assertThat(dbTester.countRowsOfTable("duplications_index")).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable("duplications_index")).isZero();
     context.getStatistics().assertValue("inserts", null);
   }
 

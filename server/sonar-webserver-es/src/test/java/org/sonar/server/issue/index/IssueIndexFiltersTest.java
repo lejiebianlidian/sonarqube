@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,16 +32,17 @@ import org.junit.rules.ExpectedException;
 import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.api.issue.Issue;
 import org.sonar.api.rule.Severity;
+import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.SearchOptions;
 import org.sonar.server.permission.index.IndexPermissions;
 import org.sonar.server.permission.index.PermissionIndexerTester;
 import org.sonar.server.permission.index.WebAuthorizationTypeSupport;
+import org.sonar.server.security.SecurityStandards.SQCategory;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.view.index.ViewDoc;
 import org.sonar.server.view.index.ViewIndexer;
@@ -62,7 +63,6 @@ import static org.sonar.api.utils.DateUtils.parseDateTime;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
 import static org.sonar.db.component.ComponentTesting.newModuleDto;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 import static org.sonar.db.rule.RuleTesting.newRule;
 import static org.sonar.server.issue.IssueDocTesting.newDoc;
 
@@ -74,19 +74,18 @@ public class IssueIndexFiltersTest {
   public UserSessionRule userSessionRule = UserSessionRule.standalone();
   @Rule
   public ExpectedException expectedException = none();
-  private System2 system2 = new TestSystem2().setNow(1_500_000_000_000L).setDefaultTimeZone(getTimeZone("GMT-01:00"));
+  private final System2 system2 = new TestSystem2().setNow(1_500_000_000_000L).setDefaultTimeZone(getTimeZone("GMT-01:00"));
   @Rule
   public DbTester db = DbTester.create(system2);
 
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
-  private ViewIndexer viewIndexer = new ViewIndexer(db.getDbClient(), es.client());
-  private PermissionIndexerTester authorizationIndexer = new PermissionIndexerTester(es, issueIndexer);
-
-  private IssueIndex underTest = new IssueIndex(es.client(), system2, userSessionRule, new WebAuthorizationTypeSupport(userSessionRule));
+  private final IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
+  private final ViewIndexer viewIndexer = new ViewIndexer(db.getDbClient(), es.client());
+  private final PermissionIndexerTester authorizationIndexer = new PermissionIndexerTester(es, issueIndexer);
+  private final IssueIndex underTest = new IssueIndex(es.client(), system2, userSessionRule, new WebAuthorizationTypeSupport(userSessionRule));
 
   @Test
   public void filter_by_keys() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
 
     indexIssues(
       newDoc("I1", newFileDto(project, null)),
@@ -99,7 +98,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_projects() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto module = newModuleDto(project);
     ComponentDto subModule = newModuleDto(module);
 
@@ -117,7 +116,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_modules() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto module = newModuleDto(project);
     ComponentDto subModule = newModuleDto(module);
     ComponentDto file = newFileDto(subModule, null);
@@ -136,14 +135,14 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_components_on_contextualized_search() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto module = newModuleDto(project);
     ComponentDto subModule = newModuleDto(module);
     ComponentDto file1 = newFileDto(project, null);
     ComponentDto file2 = newFileDto(module, null);
     ComponentDto file3 = newFileDto(subModule, null);
     String view = "ABCD";
-    indexView(view, asList(project.uuid()));
+    indexView(view, singletonList(project.uuid()));
 
     indexIssues(
       newDoc("I1", project),
@@ -153,8 +152,8 @@ public class IssueIndexFiltersTest {
       newDoc("I5", subModule),
       newDoc("I6", file3));
 
-    assertThatSearchReturnsOnly(IssueQuery.builder().fileUuids(asList(file1.uuid(), file2.uuid(), file3.uuid())), "I2", "I4", "I6");
-    assertThatSearchReturnsOnly(IssueQuery.builder().fileUuids(singletonList(file1.uuid())), "I2");
+    assertThatSearchReturnsOnly(IssueQuery.builder().files(asList(file1.path(), file2.path(), file3.path())), "I2", "I4", "I6");
+    assertThatSearchReturnsOnly(IssueQuery.builder().files(singletonList(file1.path())), "I2");
     assertThatSearchReturnsOnly(IssueQuery.builder().moduleRootUuids(singletonList(subModule.uuid())), "I5", "I6");
     assertThatSearchReturnsOnly(IssueQuery.builder().moduleRootUuids(singletonList(module.uuid())), "I3", "I4", "I5", "I6");
     assertThatSearchReturnsOnly(IssueQuery.builder().projectUuids(singletonList(project.uuid())), "I1", "I2", "I3", "I4", "I5", "I6");
@@ -164,14 +163,14 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_components_on_non_contextualized_search() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto(), "project");
+    ComponentDto project = newPrivateProjectDto("project");
     ComponentDto file1 = newFileDto(project, null, "file1");
     ComponentDto module = newModuleDto(project).setUuid("module");
     ComponentDto file2 = newFileDto(module, null, "file2");
     ComponentDto subModule = newModuleDto(module).setUuid("subModule");
     ComponentDto file3 = newFileDto(subModule, null, "file3");
     String view = "ABCD";
-    indexView(view, asList(project.uuid()));
+    indexView(view, singletonList(project.uuid()));
 
     indexIssues(
       newDoc("I1", project),
@@ -186,13 +185,13 @@ public class IssueIndexFiltersTest {
     assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(view)), "I1", "I2", "I3", "I4", "I5", "I6");
     assertThatSearchReturnsOnly(IssueQuery.builder().moduleUuids(singletonList(module.uuid())), "I3", "I4");
     assertThatSearchReturnsOnly(IssueQuery.builder().moduleUuids(singletonList(subModule.uuid())), "I5", "I6");
-    assertThatSearchReturnsOnly(IssueQuery.builder().fileUuids(singletonList(file1.uuid())), "I2");
-    assertThatSearchReturnsOnly(IssueQuery.builder().fileUuids(asList(file1.uuid(), file2.uuid(), file3.uuid())), "I2", "I4", "I6");
+    assertThatSearchReturnsOnly(IssueQuery.builder().files(singletonList(file1.path())), "I2");
+    assertThatSearchReturnsOnly(IssueQuery.builder().files(asList(file1.path(), file2.path(), file3.path())), "I2", "I4", "I6");
   }
 
   @Test
   public void filter_by_directories() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file1 = newFileDto(project, null).setPath("src/main/xoo/F1.xoo");
     ComponentDto file2 = newFileDto(project, null).setPath("F2.xoo");
 
@@ -207,8 +206,8 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_portfolios() {
-    ComponentDto portfolio1 = db.components().insertPrivateApplication(db.getDefaultOrganization());
-    ComponentDto portfolio2 = db.components().insertPrivateApplication(db.getDefaultOrganization());
+    ComponentDto portfolio1 = db.components().insertPrivateApplication();
+    ComponentDto portfolio2 = db.components().insertPrivateApplication();
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project1));
     ComponentDto project2 = db.components().insertPrivateProject();
@@ -226,14 +225,13 @@ public class IssueIndexFiltersTest {
     assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(asList(portfolio1.uuid(), portfolio2.uuid())), issueOnProject1.key(), issueOnFile.key(), issueOnProject2.key());
     assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(portfolio1.uuid())).projectUuids(singletonList(project1.uuid())), issueOnProject1.key(),
       issueOnFile.key());
-    assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(portfolio1.uuid())).fileUuids(singletonList(file.uuid())), issueOnFile.key());
+    assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(portfolio1.uuid())).files(singletonList(file.path())), issueOnFile.key());
     assertThatSearchReturnsEmpty(IssueQuery.builder().viewUuids(singletonList("unknown")));
   }
 
   @Test
   public void filter_by_portfolios_not_having_projects() {
-    OrganizationDto organizationDto = newOrganizationDto();
-    ComponentDto project1 = newPrivateProjectDto(organizationDto);
+    ComponentDto project1 = newPrivateProjectDto();
     ComponentDto file1 = newFileDto(project1, null);
     indexIssues(newDoc("I2", file1));
     String view1 = "ABCD";
@@ -244,7 +242,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void do_not_return_issues_from_project_branch_when_filtering_by_portfolios() {
-    ComponentDto portfolio = db.components().insertPrivateApplication(db.getDefaultOrganization());
+    ComponentDto portfolio = db.components().insertPrivateApplication();
     ComponentDto project = db.components().insertPublicProject();
     ComponentDto projectBranch = db.components().insertProjectBranch(project);
     ComponentDto fileOnProjectBranch = db.components().insertComponent(newFileDto(projectBranch));
@@ -300,8 +298,8 @@ public class IssueIndexFiltersTest {
 
     assertThatSearchReturnsOnly(IssueQuery.builder().branchUuid(branch.uuid()).mainBranch(false), "I4", "I5", "I6");
     assertThatSearchReturnsOnly(IssueQuery.builder().moduleUuids(singletonList(branchModule.uuid())).branchUuid(branch.uuid()).mainBranch(false), "I5", "I6");
-    assertThatSearchReturnsOnly(IssueQuery.builder().fileUuids(singletonList(branchFile.uuid())).branchUuid(branch.uuid()).mainBranch(false), "I6");
-    assertThatSearchReturnsEmpty(IssueQuery.builder().fileUuids(singletonList(branchFile.uuid())).mainBranch(false).branchUuid("unknown"));
+    assertThatSearchReturnsOnly(IssueQuery.builder().files(singletonList(branchFile.path())).branchUuid(branch.uuid()).mainBranch(false), "I6");
+    assertThatSearchReturnsEmpty(IssueQuery.builder().files(singletonList(branchFile.uuid())).mainBranch(false).branchUuid("unknown"));
   }
 
   @Test
@@ -335,8 +333,8 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_main_application() {
-    ComponentDto application1 = db.components().insertPrivateApplication(db.getDefaultOrganization());
-    ComponentDto application2 = db.components().insertPrivateApplication(db.getDefaultOrganization());
+    ComponentDto application1 = db.components().insertPrivateApplication();
+    ComponentDto application2 = db.components().insertPrivateApplication();
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project1));
     ComponentDto project2 = db.components().insertPrivateProject();
@@ -353,7 +351,7 @@ public class IssueIndexFiltersTest {
     assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(asList(application1.uuid(), application2.uuid())), issueOnProject1.key(), issueOnFile.key(), issueOnProject2.key());
     assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(application1.uuid())).projectUuids(singletonList(project1.uuid())), issueOnProject1.key(),
       issueOnFile.key());
-    assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(application1.uuid())).fileUuids(singletonList(file.uuid())), issueOnFile.key());
+    assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(application1.uuid())).files(singletonList(file.path())), issueOnFile.key());
     assertThatSearchReturnsEmpty(IssueQuery.builder().viewUuids(singletonList("unknown")));
   }
 
@@ -378,7 +376,7 @@ public class IssueIndexFiltersTest {
     assertThatSearchReturnsOnly(
       IssueQuery.builder().viewUuids(singletonList(branch1.uuid())).projectUuids(singletonList(project1.uuid())).branchUuid(branch1.uuid()).mainBranch(false),
       issueOnProject1.key(), issueOnFile.key());
-    assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(branch1.uuid())).fileUuids(singletonList(file.uuid())).branchUuid(branch1.uuid()).mainBranch(false),
+    assertThatSearchReturnsOnly(IssueQuery.builder().viewUuids(singletonList(branch1.uuid())).files(singletonList(file.path())).branchUuid(branch1.uuid()).mainBranch(false),
       issueOnFile.key());
     assertThatSearchReturnsEmpty(IssueQuery.builder().branchUuid("unknown"));
   }
@@ -409,7 +407,7 @@ public class IssueIndexFiltersTest {
       IssueQuery.builder().viewUuids(singletonList(applicationBranch1.uuid())).projectUuids(singletonList(project1.uuid())).branchUuid(applicationBranch1.uuid()).mainBranch(false),
       issueOnProject1Branch1.key(), issueOnFileOnProject1Branch1.key());
     assertThatSearchReturnsOnly(
-      IssueQuery.builder().viewUuids(singletonList(applicationBranch1.uuid())).fileUuids(singletonList(fileOnProject1Branch1.uuid())).branchUuid(applicationBranch1.uuid())
+      IssueQuery.builder().viewUuids(singletonList(applicationBranch1.uuid())).files(singletonList(fileOnProject1Branch1.path())).branchUuid(applicationBranch1.uuid())
         .mainBranch(false),
       issueOnFileOnProject1Branch1.key());
     assertThatSearchReturnsEmpty(
@@ -419,11 +417,10 @@ public class IssueIndexFiltersTest {
   @Test
   public void filter_by_created_after_by_projects() {
     Date now = new Date();
-    OrganizationDto organizationDto = newOrganizationDto();
-    ComponentDto project1 = newPrivateProjectDto(organizationDto);
+    ComponentDto project1 = newPrivateProjectDto();
     IssueDoc project1Issue1 = newDoc(project1).setFuncCreationDate(addDays(now, -10));
     IssueDoc project1Issue2 = newDoc(project1).setFuncCreationDate(addDays(now, -20));
-    ComponentDto project2 = newPrivateProjectDto(organizationDto);
+    ComponentDto project2 = newPrivateProjectDto();
     IssueDoc project2Issue1 = newDoc(project2).setFuncCreationDate(addDays(now, -15));
     IssueDoc project2Issue2 = newDoc(project2).setFuncCreationDate(addDays(now, -30));
     indexIssues(project1Issue1, project1Issue2, project2Issue1, project2Issue2);
@@ -454,8 +451,61 @@ public class IssueIndexFiltersTest {
   }
 
   @Test
+  public void filter_by_created_after_by_project_branches() {
+    Date now = new Date();
+
+    ComponentDto project1 = newPrivateProjectDto();
+    IssueDoc project1Issue1 = newDoc(project1).setFuncCreationDate(addDays(now, -10));
+    IssueDoc project1Issue2 = newDoc(project1).setFuncCreationDate(addDays(now, -20));
+
+    ComponentDto project1Branch1 = db.components().insertProjectBranch(project1);
+    IssueDoc project1Branch1Issue1 = newDoc(project1Branch1).setFuncCreationDate(addDays(now, -10));
+    IssueDoc project1Branch1Issue2 = newDoc(project1Branch1).setFuncCreationDate(addDays(now, -20));
+
+    ComponentDto project2 = newPrivateProjectDto();
+
+    IssueDoc project2Issue1 = newDoc(project2).setFuncCreationDate(addDays(now, -15));
+    IssueDoc project2Issue2 = newDoc(project2).setFuncCreationDate(addDays(now, -30));
+
+    ComponentDto project2Branch1 = db.components().insertProjectBranch(project2);
+    IssueDoc project2Branch1Issue1 = newDoc(project2Branch1).setFuncCreationDate(addDays(now, -15));
+    IssueDoc project2Branch1Issue2 = newDoc(project2Branch1).setFuncCreationDate(addDays(now, -30));
+
+    indexIssues(project1Issue1, project1Issue2, project2Issue1, project2Issue2,
+      project1Branch1Issue1, project1Branch1Issue2, project2Branch1Issue1, project2Branch1Issue2);
+
+    // Search for issues of project 1 branch 1 having less than 15 days
+    assertThatSearchReturnsOnly(IssueQuery.builder()
+      .mainBranch(false)
+      .createdAfterByProjectUuids(ImmutableMap.of(project1Branch1.uuid(), new IssueQuery.PeriodStart(addDays(now, -15), true))),
+      project1Branch1Issue1.key());
+
+    // Search for issues of project 1 branch 1 having less than 14 days and project 2 branch 1 having less then 25 days
+    assertThatSearchReturnsOnly(IssueQuery.builder()
+      .mainBranch(false)
+      .createdAfterByProjectUuids(ImmutableMap.of(
+        project1Branch1.uuid(), new IssueQuery.PeriodStart(addDays(now, -14), true),
+        project2Branch1.uuid(), new IssueQuery.PeriodStart(addDays(now, -25), true))),
+      project1Branch1Issue1.key(), project2Branch1Issue1.key());
+
+    // Search for issues of project 1 branch 1 having less than 30 days
+    assertThatSearchReturnsOnly(IssueQuery.builder()
+      .mainBranch(false)
+      .createdAfterByProjectUuids(ImmutableMap.of(
+        project1Branch1.uuid(), new IssueQuery.PeriodStart(addDays(now, -30), true))),
+      project1Branch1Issue1.key(), project1Branch1Issue2.key());
+
+    // Search for issues of project 1 branch 1 and project 2 branch 2 having less than 5 days
+    assertThatSearchReturnsOnly(IssueQuery.builder()
+      .mainBranch(false)
+      .createdAfterByProjectUuids(ImmutableMap.of(
+        project1Branch1.uuid(), new IssueQuery.PeriodStart(addDays(now, -5), true),
+        project2Branch1.uuid(), new IssueQuery.PeriodStart(addDays(now, -5), true))));
+  }
+
+  @Test
   public void filter_by_severities() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -469,7 +519,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_statuses() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -483,7 +533,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_resolutions() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -497,7 +547,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_resolved() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -512,7 +562,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_rules() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
     RuleDefinitionDto ruleDefinitionDto = newRule();
     db.rules().insert(ruleDefinitionDto);
@@ -525,7 +575,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_languages() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
     RuleDefinitionDto ruleDefinitionDto = newRule();
     db.rules().insert(ruleDefinitionDto);
@@ -538,7 +588,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_assignees() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -553,7 +603,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_assigned() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -568,7 +618,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_authors() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -583,7 +633,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_created_after() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -599,7 +649,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_created_before() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -615,7 +665,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_created_after_and_before() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -655,7 +705,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_created_after_and_before_take_into_account_timezone() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(
@@ -699,7 +749,7 @@ public class IssueIndexFiltersTest {
 
   @Test
   public void filter_by_created_at() {
-    ComponentDto project = newPrivateProjectDto(newOrganizationDto());
+    ComponentDto project = newPrivateProjectDto();
     ComponentDto file = newFileDto(project, null);
 
     indexIssues(newDoc("I1", file).setFuncCreationDate(parseDate("2014-09-20")));
@@ -709,40 +759,55 @@ public class IssueIndexFiltersTest {
   }
 
   @Test
-  public void filter_by_organization() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto projectInOrg1 = newPrivateProjectDto(org1);
-    OrganizationDto org2 = newOrganizationDto();
-    ComponentDto projectInOrg2 = newPrivateProjectDto(org2);
+  public void filter_by_cwe() {
+    ComponentDto project = newPrivateProjectDto();
+    ComponentDto file = newFileDto(project, null);
 
-    indexIssues(newDoc("issueInOrg1", projectInOrg1), newDoc("issue1InOrg2", projectInOrg2), newDoc("issue2InOrg2", projectInOrg2));
+    indexIssues(
+      newDoc("I1", file).setType(RuleType.VULNERABILITY).setCwe(asList("20", "564", "89", "943")),
+      newDoc("I2", file).setType(RuleType.VULNERABILITY).setCwe(singletonList("943")),
+      newDoc("I3", file));
 
-    verifyOrganizationFilter(org1.getUuid(), "issueInOrg1");
-    verifyOrganizationFilter(org2.getUuid(), "issue1InOrg2", "issue2InOrg2");
-    verifyOrganizationFilter("does_not_exist");
+    assertThatSearchReturnsOnly(IssueQuery.builder().cwe(singletonList("20")), "I1");
   }
 
   @Test
-  public void filter_by_organization_and_project() {
-    OrganizationDto org1 = newOrganizationDto();
-    ComponentDto projectInOrg1 = newPrivateProjectDto(org1);
-    OrganizationDto org2 = newOrganizationDto();
-    ComponentDto projectInOrg2 = newPrivateProjectDto(org2);
+  public void filter_by_owaspTop10() {
+    ComponentDto project = newPrivateProjectDto();
+    ComponentDto file = newFileDto(project, null);
 
-    indexIssues(newDoc("issueInOrg1", projectInOrg1), newDoc("issue1InOrg2", projectInOrg2), newDoc("issue2InOrg2", projectInOrg2));
+    indexIssues(
+      newDoc("I1", file).setType(RuleType.VULNERABILITY).setOwaspTop10(asList("a1", "a2")),
+      newDoc("I2", file).setType(RuleType.VULNERABILITY).setCwe(singletonList("a3")),
+      newDoc("I3", file));
 
-    // no conflict
-    IssueQuery.Builder query = IssueQuery.builder().organizationUuid(org1.getUuid()).projectUuids(singletonList(projectInOrg1.uuid()));
-    assertThatSearchReturnsOnly(query, "issueInOrg1");
-
-    // conflict
-    query = IssueQuery.builder().organizationUuid(org1.getUuid()).projectUuids(singletonList(projectInOrg2.uuid()));
-    assertThatSearchReturnsEmpty(query);
+    assertThatSearchReturnsOnly(IssueQuery.builder().owaspTop10(singletonList("a1")), "I1");
   }
 
-  private void verifyOrganizationFilter(String organizationUuid, String... expectedIssueKeys) {
-    IssueQuery.Builder query = IssueQuery.builder().organizationUuid(organizationUuid);
-    assertThatSearchReturnsOnly(query, expectedIssueKeys);
+  @Test
+  public void filter_by_sansTop25() {
+    ComponentDto project = newPrivateProjectDto();
+    ComponentDto file = newFileDto(project, null);
+
+    indexIssues(
+      newDoc("I1", file).setType(RuleType.VULNERABILITY).setSansTop25(asList("porous-defenses", "risky-resource", "insecure-interaction")),
+      newDoc("I2", file).setType(RuleType.VULNERABILITY).setSansTop25(singletonList("porous-defenses")),
+      newDoc("I3", file));
+
+    assertThatSearchReturnsOnly(IssueQuery.builder().sansTop25(singletonList("risky-resource")), "I1");
+  }
+
+  @Test
+  public void filter_by_sonarSecurity() {
+    ComponentDto project = newPrivateProjectDto();
+    ComponentDto file = newFileDto(project, null);
+
+    indexIssues(
+      newDoc("I1", file).setType(RuleType.VULNERABILITY).setSonarSourceSecurityCategory(SQCategory.BUFFER_OVERFLOW),
+      newDoc("I2", file).setType(RuleType.VULNERABILITY).setSonarSourceSecurityCategory(SQCategory.DOS),
+      newDoc("I3", file));
+
+    assertThatSearchReturnsOnly(IssueQuery.builder().sonarsourceSecurity(singletonList("buffer-overflow")), "I1");
   }
 
   private void indexIssues(IssueDoc... issues) {

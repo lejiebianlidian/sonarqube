@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@ import static java.util.Arrays.stream;
 import static org.sonar.db.almsettings.AlmSettingsTesting.newAzureAlmSettingDto;
 import static org.sonar.db.almsettings.AlmSettingsTesting.newAzureProjectAlmSettingDto;
 import static org.sonar.db.almsettings.AlmSettingsTesting.newBitbucketAlmSettingDto;
+import static org.sonar.db.almsettings.AlmSettingsTesting.newBitbucketCloudAlmSettingDto;
+import static org.sonar.db.almsettings.AlmSettingsTesting.newBitbucketCloudProjectAlmSettingDto;
 import static org.sonar.db.almsettings.AlmSettingsTesting.newBitbucketProjectAlmSettingDto;
 import static org.sonar.db.almsettings.AlmSettingsTesting.newGithubAlmSettingDto;
 import static org.sonar.db.almsettings.AlmSettingsTesting.newGithubProjectAlmSettingDto;
@@ -64,6 +66,11 @@ public class AlmSettingsDbTester {
   }
 
   @SafeVarargs
+  public final AlmSettingDto insertBitbucketCloudAlmSetting(Consumer<AlmSettingDto>... populators) {
+    return insert(newBitbucketCloudAlmSettingDto(), populators);
+  }
+
+  @SafeVarargs
   public final ProjectAlmSettingDto insertGitHubProjectAlmSetting(AlmSettingDto githubAlmSetting, ProjectDto project, Consumer<ProjectAlmSettingDto>... populators) {
     return insertProjectAlmSetting(newGithubProjectAlmSettingDto(githubAlmSetting, project), populators);
   }
@@ -72,8 +79,27 @@ public class AlmSettingsDbTester {
     return insertProjectAlmSetting(newAzureProjectAlmSettingDto(azureAlmSetting, project));
   }
 
+  public ProjectAlmSettingDto insertAzureMonoRepoProjectAlmSetting(AlmSettingDto azureAlmSetting, ProjectDto project) {
+    return insertProjectAlmSetting(newAzureProjectAlmSettingDto(azureAlmSetting, project), d -> d.setMonorepo(true));
+  }
+
   public ProjectAlmSettingDto insertGitlabProjectAlmSetting(AlmSettingDto gitlabAlmSetting, ProjectDto project) {
     return insertProjectAlmSetting(newGitlabProjectAlmSettingDto(gitlabAlmSetting, project));
+  }
+
+  @SafeVarargs
+  public final ProjectAlmSettingDto insertAzureProjectAlmSetting(AlmSettingDto azureAlmSetting, ProjectDto project, Consumer<ProjectAlmSettingDto>... populators) {
+    return insertProjectAlmSetting(newAzureProjectAlmSettingDto(azureAlmSetting, project), populators);
+  }
+
+  @SafeVarargs
+  public final ProjectAlmSettingDto insertGitlabProjectAlmSetting(AlmSettingDto gitlabAlmSetting, ProjectDto project, Consumer<ProjectAlmSettingDto>... populators) {
+    return insertProjectAlmSetting(newGitlabProjectAlmSettingDto(gitlabAlmSetting, project), populators);
+  }
+
+  @SafeVarargs
+  public final ProjectAlmSettingDto insertBitbucketCloudProjectAlmSetting(AlmSettingDto bbCloudAlmSetting, ProjectDto project, Consumer<ProjectAlmSettingDto>... populators) {
+    return insertProjectAlmSetting(newBitbucketCloudProjectAlmSettingDto(bbCloudAlmSetting, project), populators);
   }
 
   @SafeVarargs

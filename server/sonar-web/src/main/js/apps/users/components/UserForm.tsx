@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@ import * as React from 'react';
 import { Button, ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import SimpleModal from 'sonar-ui-common/components/controls/SimpleModal';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { parseError } from 'sonar-ui-common/helpers/request';
 import { createUser, updateUser } from '../../../api/users';
@@ -165,11 +167,13 @@ export default class UserForm extends React.PureComponent<Props, State> {
                 <Alert variant="warning">{translate('users.cannot_update_delegated_user')}</Alert>
               )}
 
+              <MandatoryFieldsExplanation className="modal-field" />
+
               {!user && (
                 <div className="modal-field">
                   <label htmlFor="create-user-login">
                     {translate('login')}
-                    <em className="mandatory">*</em>
+                    <MandatoryFieldMarker />
                   </label>
                   {/* keep this fake field to hack browser autofill */}
                   <input className="hidden" name="login-fake" type="text" />
@@ -190,7 +194,7 @@ export default class UserForm extends React.PureComponent<Props, State> {
               <div className="modal-field">
                 <label htmlFor="create-user-name">
                   {translate('name')}
-                  <em className="mandatory">*</em>
+                  <MandatoryFieldMarker />
                 </label>
                 {/* keep this fake field to hack browser autofill */}
                 <input className="hidden" name="name-fake" type="text" />
@@ -224,13 +228,12 @@ export default class UserForm extends React.PureComponent<Props, State> {
                 <div className="modal-field">
                   <label htmlFor="create-user-password">
                     {translate('password')}
-                    <em className="mandatory">*</em>
+                    <MandatoryFieldMarker />
                   </label>
                   {/* keep this fake field to hack browser autofill */}
                   <input className="hidden" name="password-fake" type="password" />
                   <input
                     id="create-user-password"
-                    maxLength={50}
                     name="password"
                     onChange={this.handlePasswordChange}
                     required={true}

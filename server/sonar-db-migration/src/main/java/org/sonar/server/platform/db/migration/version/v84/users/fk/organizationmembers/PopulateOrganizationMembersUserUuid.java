@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -51,16 +51,17 @@ public class PopulateOrganizationMembersUserUuid extends DataChange {
       return true;
     });
 
+    MassUpdate.Handler removeOrphanHandler = (row, update) -> {
+      update.setString(1, row.getString(1));
+      update.setLong(2, row.getLong(2));
+
+      return true;
+    };
     massUpdate = context.prepareMassUpdate();
 
     massUpdate.select("select organization_uuid, user_id from organization_members where user_uuid is null");
     massUpdate.update("delete from organization_members where organization_uuid = ? and user_id = ?");
 
-    massUpdate.execute((row, update) -> {
-      update.setString(1, row.getString(1));
-      update.setLong(2, row.getLong(2));
-
-      return true;
-    });
+    massUpdate.execute(removeOrphanHandler);
   }
 }

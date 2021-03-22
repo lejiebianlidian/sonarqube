@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,9 @@ final class LogsIteratorInputStream extends InputStream {
         return END_OF_STREAM;
       }
     }
-    return buf[nextChar++];
+    byte signedByte = buf[nextChar];
+    nextChar++;
+    return signedByte & 0xFF;
   }
 
   private void fill() {

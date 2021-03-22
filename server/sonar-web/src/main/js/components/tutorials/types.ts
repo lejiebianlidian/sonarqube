@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +19,25 @@
  */
 export enum TutorialModes {
   Manual = 'manual',
-  Jenkins = 'jenkins'
+  Jenkins = 'jenkins',
+  GitLabCI = 'gitlab-ci',
+  AzurePipelines = 'azure-pipelines'
 }
 
-export interface LanguageConfig {
-  language?: string;
-  javaBuild?: string;
-  cFamilyCompiler?: string;
-  os?: string;
-  projectKey?: string;
+export enum BuildTools {
+  Maven = 'maven',
+  Gradle = 'gradle',
+  CFamily = 'cfamily',
+  DotNet = 'dotnet',
+  Other = 'other'
 }
+
+export enum OSs {
+  Linux = 'linux',
+  Windows = 'win',
+  MacOS = 'mac'
+}
+
+export type ManualTutorialConfig =
+  | { buildTool?: BuildTools.Maven | BuildTools.Gradle | BuildTools.DotNet }
+  | { buildTool: BuildTools.Other | BuildTools.CFamily; os?: OSs };

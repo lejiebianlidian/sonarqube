@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ public abstract class DropIdColumn extends DdlChange {
   private Database db;
   private String tableName;
 
-  public DropIdColumn(Database db, String tableName) {
+  protected DropIdColumn(Database db, String tableName) {
     super(db);
     this.db = db;
     this.tableName = tableName;

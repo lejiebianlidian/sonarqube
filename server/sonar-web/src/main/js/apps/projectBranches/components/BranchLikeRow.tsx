@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -60,9 +60,7 @@ export function BranchLikeRow(props: BranchLikeRowProps) {
       <td className="nowrap">
         <BranchStatus branchLike={branchLike} component={component.key} />
       </td>
-      <td className="nowrap">
-        {branchLike.analysisDate && <DateFromNow date={branchLike.analysisDate} />}
-      </td>
+      <td className="nowrap">{<DateFromNow date={branchLike.analysisDate} />}</td>
       {displayPurgeSetting && isBranch(branchLike) && (
         <td className="nowrap js-test-purge-toggle-container">
           <BranchPurgeSetting branch={branchLike} component={component} />

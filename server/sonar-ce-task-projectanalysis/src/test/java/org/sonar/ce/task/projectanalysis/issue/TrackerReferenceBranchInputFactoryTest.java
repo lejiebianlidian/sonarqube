@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ public class TrackerReferenceBranchInputFactoryTest {
     DefaultIssue issue1 = new DefaultIssue();
     when(referenceBranchComponentUuids.getComponentUuid(COMPONENT_KEY)).thenReturn(COMPONENT_UUID);
     when(componentIssuesLoader.loadOpenIssuesWithChanges(COMPONENT_UUID)).thenReturn(Collections.singletonList(issue1));
-    ComponentDto fileDto = ComponentTesting.newFileDto(ComponentTesting.newPublicProjectDto(db.getDefaultOrganization())).setUuid(COMPONENT_UUID);
+    ComponentDto fileDto = ComponentTesting.newFileDto(ComponentTesting.newPublicProjectDto()).setUuid(COMPONENT_UUID);
     db.fileSources().insertFileSource(fileDto, 3);
 
     Component component = mock(Component.class);
@@ -76,6 +76,6 @@ public class TrackerReferenceBranchInputFactoryTest {
     Input<DefaultIssue> input = underTest.create(component);
 
     assertThat(input.getIssues()).isEmpty();
-    assertThat(input.getLineHashSequence().length()).isEqualTo(0);
+    assertThat(input.getLineHashSequence().length()).isZero();
   }
 }

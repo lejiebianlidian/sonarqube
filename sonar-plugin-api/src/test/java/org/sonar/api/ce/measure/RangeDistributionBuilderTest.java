@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ public class RangeDistributionBuilderTest {
 
     assertThat(limits[0]).isEqualTo(4);
     assertThat(limits[1]).isEqualTo(2);
-    assertThat(limits[2]).isEqualTo(0);
+    assertThat(limits[2]).isZero();
   }
 
   @Test

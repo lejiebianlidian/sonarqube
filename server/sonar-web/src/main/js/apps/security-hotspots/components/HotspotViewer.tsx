@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import * as React from 'react';
 import { scrollToElement } from 'sonar-ui-common/helpers/scrolling';
 import { getSecurityHotspotDetails } from '../../../api/security-hotspots';
@@ -80,12 +79,14 @@ export default class HotspotViewer extends React.PureComponent<Props, State> {
       .catch(() => this.mounted && this.setState({ loading: false }));
   };
 
-  handleHotspotUpdate = () => {
-    return this.fetchHotspot().then((hotspot?: Hotspot) => {
-      if (hotspot) {
-        return this.props.onUpdateHotspot(hotspot.key);
-      }
-    });
+  handleHotspotUpdate = async (statusUpdate = false) => {
+    const { hotspotKey } = this.props;
+
+    if (statusUpdate) {
+      await this.props.onUpdateHotspot(hotspotKey);
+    } else {
+      await this.fetchHotspot();
+    }
   };
 
   handleOpenComment = () => {

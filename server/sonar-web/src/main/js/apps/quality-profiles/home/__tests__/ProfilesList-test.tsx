@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@ function shallowRender(props: Partial<ProfilesList['props']> = {}) {
     <ProfilesList
       languages={[mockLanguage(), mockLanguage({ key: 'js', name: 'JS' })]}
       location={mockLocation()}
-      organization="foo"
       profiles={[
         mockQualityProfile(),
         mockQualityProfile({ language: 'css', languageName: 'CSS' })

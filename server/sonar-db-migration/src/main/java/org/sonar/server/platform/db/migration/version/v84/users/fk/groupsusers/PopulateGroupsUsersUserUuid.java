@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,11 @@ public class PopulateGroupsUsersUserUuid extends DataChange {
       return true;
     });
 
-    massUpdate = context.prepareMassUpdate();
+    remoteOrphanEntries(context);
+  }
+
+  private static void remoteOrphanEntries(Context context) throws SQLException {
+    MassUpdate massUpdate = context.prepareMassUpdate();
 
     massUpdate.select("select group_uuid, user_id from groups_users where user_uuid is null");
     massUpdate.update("delete from groups_users where group_uuid = ? and user_id = ?");
@@ -58,7 +62,6 @@ public class PopulateGroupsUsersUserUuid extends DataChange {
     massUpdate.execute((row, update) -> {
       update.setString(1, row.getString(1));
       update.setLong(2, row.getLong(2));
-
       return true;
     });
   }

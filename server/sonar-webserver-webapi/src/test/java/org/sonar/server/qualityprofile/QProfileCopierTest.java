@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@ import org.sonar.api.impl.utils.JUnitTempFolder;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualityprofile.QProfileDto;
 import org.sonar.db.qualityprofile.QualityProfileTesting;
 
@@ -44,7 +43,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 public class QProfileCopierTest {
 
   private static final String BACKUP = "<backup/>";
-  private System2 system2 = new AlwaysIncreasingSystem2();
+  private final System2 system2 = new AlwaysIncreasingSystem2();
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -53,14 +52,13 @@ public class QProfileCopierTest {
   @Rule
   public JUnitTempFolder temp = new JUnitTempFolder();
 
-  private DummyProfileFactory profileFactory = new DummyProfileFactory();
-  private QProfileBackuper backuper = mock(QProfileBackuper.class);
-  private QProfileCopier underTest = new QProfileCopier(db.getDbClient(), profileFactory, backuper);
+  private final DummyProfileFactory profileFactory = new DummyProfileFactory();
+  private final QProfileBackuper backuper = mock(QProfileBackuper.class);
+  private final QProfileCopier underTest = new QProfileCopier(db.getDbClient(), profileFactory, backuper);
 
   @Test
   public void create_target_profile_and_copy_rules() {
-    OrganizationDto organization = db.organizations().insert();
-    QProfileDto source = db.qualityProfiles().insert(organization);
+    QProfileDto source = db.qualityProfiles().insert();
 
     QProfileDto target = underTest.copyToName(db.getSession(), source, "foo");
 
@@ -73,9 +71,8 @@ public class QProfileCopierTest {
 
   @Test
   public void create_target_profile_with_same_parent_than_source_profile() {
-    OrganizationDto organization = db.organizations().insert();
-    QProfileDto parent = db.qualityProfiles().insert(organization);
-    QProfileDto source = db.qualityProfiles().insert(organization, p -> p.setParentKee(parent.getKee()));
+    QProfileDto parent = db.qualityProfiles().insert();
+    QProfileDto source = db.qualityProfiles().insert(p -> p.setParentKee(parent.getKee()));
 
     QProfileDto target = underTest.copyToName(db.getSession(), source, "foo");
 
@@ -88,8 +85,7 @@ public class QProfileCopierTest {
 
   @Test
   public void fail_to_copy_on_self() {
-    OrganizationDto organization = db.organizations().insert();
-    QProfileDto source = db.qualityProfiles().insert(organization);
+    QProfileDto source = db.qualityProfiles().insert();
 
     try {
       underTest.copyToName(db.getSession(), source, source.getName());
@@ -102,9 +98,8 @@ public class QProfileCopierTest {
 
   @Test
   public void copy_to_existing_profile() {
-    OrganizationDto organization = db.organizations().insert();
-    QProfileDto profile1 = db.qualityProfiles().insert(organization);
-    QProfileDto profile2 = db.qualityProfiles().insert(organization, p -> p.setLanguage(profile1.getLanguage()));
+    QProfileDto profile1 = db.qualityProfiles().insert();
+    QProfileDto profile2 = db.qualityProfiles().insert(p -> p.setLanguage(profile1.getLanguage()));
 
     QProfileDto target = underTest.copyToName(db.getSession(), profile1, profile2.getName());
 
@@ -119,18 +114,18 @@ public class QProfileCopierTest {
     private QProfileDto createdProfile;
 
     @Override
-    public QProfileDto getOrCreateCustom(DbSession dbSession, OrganizationDto organization, QProfileName key) {
+    public QProfileDto getOrCreateCustom(DbSession dbSession, QProfileName key) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public QProfileDto checkAndCreateCustom(DbSession dbSession, OrganizationDto organization, QProfileName key) {
+    public QProfileDto checkAndCreateCustom(DbSession dbSession, QProfileName key) {
       throw new UnsupportedOperationException();
     }
 
-    @Override public QProfileDto createCustom(DbSession dbSession, OrganizationDto organization, QProfileName key, @Nullable String parentKey) {
+    @Override
+    public QProfileDto createCustom(DbSession dbSession, QProfileName key, @Nullable String parentKey) {
       createdProfile = QualityProfileTesting.newQualityProfileDto()
-        .setOrganizationUuid(organization.getUuid())
         .setLanguage(key.getLanguage())
         .setParentKee(parentKey)
         .setName(key.getName());

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
  */
 import * as React from 'react';
 import ConfirmModal from 'sonar-ui-common/components/controls/ConfirmModal';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { copyQualityGate } from '../../../api/quality-gates';
 import { Router, withRouter } from '../../../components/hoc/withRouter';
@@ -27,7 +29,6 @@ import { getQualityGateUrl } from '../../../helpers/urls';
 interface Props {
   onClose: () => void;
   onCopy: () => Promise<void>;
-  organization?: string;
   qualityGate: T.QualityGate;
   router: Pick<Router, 'push'>;
 }
@@ -36,7 +37,7 @@ interface State {
   name: string;
 }
 
-class CopyQualityGateForm extends React.PureComponent<Props, State> {
+export class CopyQualityGateForm extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { name: props.qualityGate.name };
@@ -47,16 +48,16 @@ class CopyQualityGateForm extends React.PureComponent<Props, State> {
   };
 
   handleCopy = () => {
-    const { qualityGate, organization } = this.props;
+    const { qualityGate } = this.props;
     const { name } = this.state;
 
     if (!name) {
       return undefined;
     }
 
-    return copyQualityGate({ id: qualityGate.id, name, organization }).then(qualityGate => {
+    return copyQualityGate({ id: qualityGate.id, name }).then(newQualityGate => {
       this.props.onCopy();
-      this.props.router.push(getQualityGateUrl(String(qualityGate.id), this.props.organization));
+      this.props.router.push(getQualityGateUrl(String(newQualityGate.id)));
     });
   };
 
@@ -73,10 +74,11 @@ class CopyQualityGateForm extends React.PureComponent<Props, State> {
         onClose={this.props.onClose}
         onConfirm={this.handleCopy}
         size="small">
+        <MandatoryFieldsExplanation className="modal-field" />
         <div className="modal-field">
           <label htmlFor="quality-gate-form-name">
             {translate('name')}
-            <em className="mandatory">*</em>
+            <MandatoryFieldMarker />
           </label>
           <input
             autoFocus={true}

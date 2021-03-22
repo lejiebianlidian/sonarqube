@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -239,4 +239,8 @@
 .issue .menu:not(.issues-similar-issues-menu):not(.issue-changelog) {
   max-height: 120px;
   overflow: auto;
+}
+
+.issue .badge-error {
+  background-color: var(--badgeRedBackgroundOnIssue);
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,12 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { invert, uniq } from 'lodash';
+import { invert } from 'lodash';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { RequestData } from 'sonar-ui-common/helpers/request';
 import { Facet, searchProjects } from '../../api/components';
 import { getMeasuresForProjects } from '../../api/measures';
-import { getOrganizations } from '../../api/organizations';
-import { getPeriodValue, isDiffMetric } from '../../helpers/measures';
+import { isDiffMetric } from '../../helpers/measures';
 import { MetricKey } from '../../types/metrics';
 import { convertToFilter, Query } from './query';
 
@@ -41,6 +40,7 @@ export const SORTING_METRICS: SortingOption[] = [
   { value: 'analysis_date' },
   { value: 'reliability' },
   { value: 'security' },
+  { value: 'security_review' },
   { value: 'maintainability' },
   { value: 'coverage' },
   { value: 'duplications' },
@@ -52,6 +52,7 @@ export const SORTING_LEAK_METRICS: SortingOption[] = [
   { value: 'analysis_date' },
   { value: 'new_reliability', class: 'projects-leak-sorting-option' },
   { value: 'new_security', class: 'projects-leak-sorting-option' },
+  { value: 'new_security_review', class: 'projects-leak-sorting-option' },
   { value: 'new_maintainability', class: 'projects-leak-sorting-option' },
   { value: 'new_coverage', class: 'projects-leak-sorting-option' },
   { value: 'new_duplications', class: 'projects-leak-sorting-option' },
@@ -63,12 +64,14 @@ export const SORTING_SWITCH: T.Dict<string> = {
   name: 'name',
   reliability: 'new_reliability',
   security: 'new_security',
+  security_review: 'new_security_review',
   maintainability: 'new_maintainability',
   coverage: 'new_coverage',
   duplications: 'new_duplications',
   size: 'new_lines',
   new_reliability: 'reliability',
   new_security: 'security',
+  new_security_review: 'security_review',
   new_maintainability: 'maintainability',
   new_coverage: 'coverage',
   new_duplications: 'duplications',
@@ -195,14 +198,9 @@ export function parseSorting(sort: string): { sortValue: string; sortDesc: boole
   return { sortValue: desc ? sort.substr(1) : sort, sortDesc: desc };
 }
 
-export function fetchProjects(
-  query: Query,
-  isFavorite: boolean,
-  organization: T.Organization | undefined,
-  pageIndex = 1
-) {
+export function fetchProjects(query: Query, isFavorite: boolean, pageIndex = 1) {
   const ps = query.view === 'visualizations' ? PAGE_SIZE_VISUALIZATIONS : PAGE_SIZE;
-  const data = convertToQueryData(query, isFavorite, organization && organization.key, {
+  const data = convertToQueryData(query, isFavorite, {
     p: pageIndex > 1 ? pageIndex : undefined,
     ps,
     facets: defineFacets(query).join(),
@@ -210,34 +208,23 @@ export function fetchProjects(
   });
   return searchProjects(data)
     .then(response =>
-      Promise.all([
-        fetchProjectMeasures(response.components, query),
-        fetchProjectOrganizations(response.components, organization),
-        Promise.resolve(response)
-      ])
+      Promise.all([fetchProjectMeasures(response.components, query), Promise.resolve(response)])
     )
-    .then(([measures, organizations, { components, facets, paging }]) => {
+    .then(([measures, { components, facets, paging }]) => {
       return {
         facets: getFacetsMap(facets),
-        projects: components
-          .map(component => {
-            const componentMeasures: T.Dict<string> = {};
-            measures
-              .filter(measure => measure.component === component.key)
-              .forEach(measure => {
-                const value = isDiffMetric(measure.metric)
-                  ? getPeriodValue(measure, 1)
-                  : measure.value;
-                if (value !== undefined) {
-                  componentMeasures[measure.metric] = value;
-                }
-              });
-            return { ...component, measures: componentMeasures };
-          })
-          .map(component => {
-            const organization = organizations.find(o => o.key === component.organization);
-            return { ...component, organization };
-          }),
+        projects: components.map(component => {
+          const componentMeasures: T.Dict<string> = {};
+          measures
+            .filter(measure => measure.component === component.key)
+            .forEach(measure => {
+              const value = isDiffMetric(measure.metric) ? measure.period?.value : measure.value;
+              if (value !== undefined) {
+                componentMeasures[measure.metric] = value;
+              }
+            });
+          return { ...component, measures: componentMeasures };
+        }),
         total: paging.total
       };
     });
@@ -261,13 +248,8 @@ function defineFacets(query: Query): string[] {
   return FACETS;
 }
 
-function convertToQueryData(
-  query: Query,
-  isFavorite: boolean,
-  organization?: string,
-  defaultData = {}
-) {
-  const data: RequestData = { ...defaultData, organization };
+function convertToQueryData(query: Query, isFavorite: boolean, defaultData = {}) {
+  const data: RequestData = { ...defaultData };
   const filter = convertToFilter(query, isFavorite);
   const sort = convertToSorting(query);
 
@@ -293,21 +275,6 @@ export function fetchProjectMeasures(projects: Array<{ key: string }>, query: Qu
   return getMeasuresForProjects(projectKeys, metrics);
 }
 
-export function fetchProjectOrganizations(
-  projects: Array<{ organization: string }>,
-  organization: T.Organization | undefined
-) {
-  if (organization) {
-    return Promise.resolve([organization]);
-  }
-  if (!projects.length) {
-    return Promise.resolve([]);
-  }
-
-  const organizations = uniq(projects.map(project => project.organization));
-  return getOrganizations({ organizations: organizations.join() }).then(r => r.organizations);
-}
-
 function mapFacetValues(values: Array<{ val: string; count: number }>) {
   const map: T.Dict<number> = {};
   values.forEach(value => {
@@ -322,8 +289,8 @@ const propertyToMetricMap: T.Dict<string | undefined> = {
   new_reliability: 'new_reliability_rating',
   security: 'security_rating',
   new_security: 'new_security_rating',
-  security_review_rating: 'security_review_rating',
-  new_security_review_rating: 'new_security_review_rating',
+  security_review: 'security_review_rating',
+  new_security_review: 'new_security_review_rating',
   maintainability: 'sqale_rating',
   new_maintainability: 'new_maintainability_rating',
   coverage: 'coverage',

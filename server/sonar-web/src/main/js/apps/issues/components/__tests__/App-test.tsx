@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,8 +18,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { shallow } from 'enzyme';
+import * as key from 'keymaster';
 import * as React from 'react';
 import handleRequiredAuthentication from 'sonar-ui-common/helpers/handleRequiredAuthentication';
+import { KeyCodes } from 'sonar-ui-common/helpers/keycodes';
+import {
+  addSideBarClass,
+  addWhitePageClass,
+  removeSideBarClass,
+  removeWhitePageClass
+} from 'sonar-ui-common/helpers/pages';
 import { KEYCODE_MAP, keydown, waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { mockPullRequest } from '../../../../helpers/mocks/branch-like';
 import {
@@ -32,6 +40,7 @@ import {
   mockRouter
 } from '../../../../helpers/testMocks';
 import {
+  disableLocationsNavigator,
   enableLocationsNavigator,
   selectNextFlow,
   selectNextLocation,
@@ -39,6 +48,14 @@ import {
   selectPreviousLocation
 } from '../../actions';
 import App from '../App';
+import BulkChangeModal from '../BulkChangeModal';
+
+jest.mock('sonar-ui-common/helpers/pages', () => ({
+  addSideBarClass: jest.fn(),
+  addWhitePageClass: jest.fn(),
+  removeSideBarClass: jest.fn(),
+  removeWhitePageClass: jest.fn()
+}));
 
 jest.mock('sonar-ui-common/helpers/handleRequiredAuthentication', () => ({
   default: jest.fn()
@@ -53,10 +70,13 @@ jest.mock('keymaster', () => {
       return true;
     });
   };
+  let scope = 'issues';
 
-  key.getScope = () => 'issues';
-  key.setScope = () => {};
-  key.deleteScope = () => {};
+  key.getScope = () => scope;
+  key.setScope = (newScope: string) => {
+    scope = newScope;
+  };
+  key.deleteScope = jest.fn();
 
   return key;
 });
@@ -70,7 +90,28 @@ const ISSUES = [
 const FACETS = [{ property: 'severities', values: [{ val: 'MINOR', count: 4 }] }];
 const PAGING = { pageIndex: 1, pageSize: 100, total: 4 };
 
-const referencedComponent = { key: 'foo-key', name: 'bar', organization: 'John', uuid: 'foo-uuid' };
+const referencedComponent = { key: 'foo-key', name: 'bar', uuid: 'foo-uuid' };
+
+const originalAddEventListener = window.addEventListener;
+const originalRemoveEventListener = window.removeEventListener;
+
+beforeEach(() => {
+  Object.defineProperty(window, 'addEventListener', {
+    value: jest.fn()
+  });
+  Object.defineProperty(window, 'removeEventListener', {
+    value: jest.fn()
+  });
+});
+
+afterEach(() => {
+  Object.defineProperty(window, 'addEventListener', {
+    value: originalAddEventListener
+  });
+  Object.defineProperty(window, 'removeEventListener', {
+    value: originalRemoveEventListener
+  });
+});
 
 it('should render a list of issue', async () => {
   const wrapper = shallowRender();
@@ -78,12 +119,15 @@ it('should render a list of issue', async () => {
   expect(wrapper.state().issues.length).toBe(4);
   expect(wrapper.state().referencedComponentsById).toEqual({ 'foo-uuid': referencedComponent });
   expect(wrapper.state().referencedComponentsByKey).toEqual({ 'foo-key': referencedComponent });
+
+  expect(addSideBarClass).toBeCalled();
+  expect(addWhitePageClass).toBeCalled();
 });
 
 it('should not render for anonymous user', () => {
   shallowRender({
     currentUser: mockCurrentUser({ isLoggedIn: false }),
-    myIssues: true
+    location: mockLocation({ query: { myIssues: true.toString() } })
   });
   expect(handleRequiredAuthentication).toBeCalled();
 });
@@ -129,26 +173,57 @@ it('should correctly bind key events for issue navigation', async () => {
 
   expect(wrapper.state('selected')).toBe(ISSUES[0].key);
 
-  keydown('down');
+  keydown(KeyCodes.DownArrow);
   expect(wrapper.state('selected')).toBe(ISSUES[1].key);
 
-  keydown('up');
-  keydown('up');
+  keydown(KeyCodes.UpArrow);
+  keydown(KeyCodes.UpArrow);
   expect(wrapper.state('selected')).toBe(ISSUES[0].key);
 
-  keydown('down');
-  keydown('down');
-  keydown('down');
-  keydown('down');
-  keydown('down');
-  keydown('down');
+  keydown(KeyCodes.DownArrow);
+  keydown(KeyCodes.DownArrow);
+  keydown(KeyCodes.DownArrow);
+  keydown(KeyCodes.DownArrow);
+  keydown(KeyCodes.DownArrow);
+  keydown(KeyCodes.DownArrow);
   expect(wrapper.state('selected')).toBe(ISSUES[3].key);
 
-  keydown('right');
+  keydown(KeyCodes.RightArrow);
   expect(push).toBeCalledTimes(1);
 
-  keydown('left');
+  keydown(KeyCodes.LeftArrow);
   expect(push).toBeCalledTimes(2);
+  expect(window.addEventListener).toBeCalledTimes(2);
+});
+
+it('should correctly clean up on unmount', () => {
+  const wrapper = shallowRender();
+
+  wrapper.unmount();
+  expect(key.deleteScope).toBeCalled();
+  expect(removeSideBarClass).toBeCalled();
+  expect(removeWhitePageClass).toBeCalled();
+  expect(window.removeEventListener).toBeCalledTimes(2);
+});
+
+it('should be able to bulk change specific issues', async () => {
+  const wrapper = shallowRender({ currentUser: mockLoggedInUser() });
+  await waitAndUpdate(wrapper);
+
+  const instance = wrapper.instance();
+  expect(wrapper.state().checked.length).toBe(0);
+  instance.handleIssueCheck('foo');
+  instance.handleIssueCheck('bar');
+  expect(wrapper.state().checked.length).toBe(2);
+
+  instance.handleOpenBulkChange();
+  wrapper.update();
+  expect(wrapper.find(BulkChangeModal).exists()).toBe(true);
+  const { issues } = await wrapper
+    .find(BulkChangeModal)
+    .props()
+    .fetchIssues({});
+  expect(issues).toHaveLength(2);
 });
 
 it('should be able to uncheck all issue with global checkbox', async () => {
@@ -308,6 +383,10 @@ describe('keydown event handler', () => {
     jest.resetAllMocks();
   });
 
+  afterEach(() => {
+    key.setScope('issues');
+  });
+
   it('should handle alt', () => {
     instance.handleKeyDown(mockEvent({ keyCode: 18 }));
     expect(instance.setState).toHaveBeenCalledWith(enableLocationsNavigator);
@@ -327,6 +406,36 @@ describe('keydown event handler', () => {
   it('should handle alt+→', () => {
     instance.handleKeyDown(mockEvent({ altKey: true, keyCode: 39 }));
     expect(instance.setState).toHaveBeenCalledWith(selectNextFlow);
+  });
+  it('should ignore different scopes', () => {
+    key.setScope('notissues');
+    instance.handleKeyDown(mockEvent({ keyCode: 18 }));
+    expect(instance.setState).not.toHaveBeenCalled();
+  });
+});
+
+describe('keyup event handler', () => {
+  const wrapper = shallowRender();
+  const instance = wrapper.instance();
+  jest.spyOn(instance, 'setState');
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    key.setScope('issues');
+  });
+
+  it('should handle alt', () => {
+    instance.handleKeyUp(mockEvent({ keyCode: 18 }));
+    expect(instance.setState).toHaveBeenCalledWith(disableLocationsNavigator);
+  });
+
+  it('should ignore different scopes', () => {
+    key.setScope('notissues');
+    instance.handleKeyUp(mockEvent({ keyCode: 18 }));
+    expect(instance.setState).not.toHaveBeenCalled();
   });
 });
 
@@ -352,7 +461,7 @@ it('should refresh branch status if issues are updated', async () => {
 
   const updatedIssue: T.Issue = { ...ISSUES[0], type: 'SECURITY_HOTSPOT' };
   instance.handleIssueChange(updatedIssue);
-  expect(wrapper.state('issues')).toEqual([updatedIssue, ISSUES[1], ISSUES[2], ISSUES[3]]);
+  expect(wrapper.state().issues).toEqual([updatedIssue, ISSUES[1], ISSUES[2], ISSUES[3]]);
   expect(fetchBranchStatus).toBeCalledWith(branchLike, component.key);
 
   fetchBranchStatus.mockClear();
@@ -364,8 +473,40 @@ it('should refresh branch status if issues are updated', async () => {
   expect(fetchBranchStatus).toBeCalled();
 });
 
+it('should update the open issue when it is changed', async () => {
+  const wrapper = shallowRender();
+  await waitAndUpdate(wrapper);
+
+  wrapper.setState({ openIssue: ISSUES[0] });
+
+  const updatedIssue: T.Issue = { ...ISSUES[0], type: 'SECURITY_HOTSPOT' };
+  wrapper.instance().handleIssueChange(updatedIssue);
+
+  expect(wrapper.state().openIssue).toBe(updatedIssue);
+});
+
+it('should handle createAfter query param with time', async () => {
+  const fetchIssues = fetchIssuesMockFactory();
+  const wrapper = shallowRender({
+    fetchIssues,
+    location: mockLocation({ query: { createdAfter: '2020-10-21' } })
+  });
+  expect(wrapper.instance().createdAfterIncludesTime()).toBe(false);
+  await waitAndUpdate(wrapper);
+
+  wrapper.setProps({ location: mockLocation({ query: { createdAfter: '2020-10-21T17:21:00Z' } }) });
+  expect(wrapper.instance().createdAfterIncludesTime()).toBe(true);
+
+  fetchIssues.mockClear();
+
+  wrapper.instance().fetchIssues({});
+  expect(fetchIssues).toBeCalledWith(
+    expect.objectContaining({ createdAfter: '2020-10-21T17:21:00+0000' })
+  );
+});
+
 function fetchIssuesMockFactory(keyCount = 0, lineCount = 1) {
-  return jest.fn().mockImplementation(({ p }: any) =>
+  return jest.fn().mockImplementation(({ p }: { p: number }) =>
     Promise.resolve({
       components: [referencedComponent],
       effortTotal: 1,
@@ -405,7 +546,6 @@ function shallowRender(props: Partial<App['props']> = {}) {
         breadcrumbs: [],
         key: 'foo',
         name: 'bar',
-        organization: 'John',
         qualifier: 'Doe'
       }}
       currentUser={mockLoggedInUser()}
@@ -422,9 +562,7 @@ function shallowRender(props: Partial<App['props']> = {}) {
       })}
       location={mockLocation({ pathname: '/issues', query: {} })}
       onBranchesChange={() => {}}
-      organization={{ key: 'foo' }}
       router={mockRouter()}
-      userOrganizations={[]}
       {...props}
     />
   );

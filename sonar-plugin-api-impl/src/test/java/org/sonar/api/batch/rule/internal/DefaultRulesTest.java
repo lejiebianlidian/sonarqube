@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@ public class DefaultRulesTest {
     newRules.add(createRule("key2", "repo", "internal"));
     
     DefaultRules rules = new DefaultRules(newRules);
-    assertThat(rules.findByInternalKey("xx", "xx")).hasSize(0);
+    assertThat(rules.findByInternalKey("xx", "xx")).isEmpty();
     assertThat(rules.find(RuleKey.of("xxx", "xx"))).isNull();
-    assertThat(rules.findByRepository("xxxx")).hasSize(0);
+    assertThat(rules.findByRepository("xxxx")).isEmpty();
   }
   
   @Test

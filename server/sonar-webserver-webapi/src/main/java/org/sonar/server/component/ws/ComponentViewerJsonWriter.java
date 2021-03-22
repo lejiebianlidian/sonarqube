@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -98,10 +98,10 @@ public class ComponentViewerJsonWriter {
     writeComponentWithoutFav(json, component, session, true);
 
     List<PropertyDto> propertyDtos = dbClient.propertiesDao().selectByQuery(PropertyQuery.builder()
-        .setKey("favourite")
-        .setComponentUuid(component.uuid())
+      .setKey("favourite")
+      .setComponentUuid(component.uuid())
       .setUserUuid(userSession.getUuid())
-        .build(),
+      .build(),
       session);
     boolean isFavourite = propertyDtos.size() == 1;
     json.prop("fav", isFavourite);

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -125,25 +125,6 @@ public class FileSystemMediumTest {
         .put("sonar.sources", "src")
         .build())
       .execute();
-  }
-
-  @Test
-  public void dontLogInvalidOrganization() throws IOException {
-    File srcDir = new File(baseDir, "src");
-    srcDir.mkdir();
-
-    File xooFile = new File(srcDir, "sample.xoo");
-    FileUtils.write(xooFile, "Sample xoo\ncontent", StandardCharsets.UTF_8);
-
-    tester.newAnalysis()
-      .properties(builder
-        .put("sonar.sources", "src")
-        .build())
-      .execute();
-
-    assertThat(logTester.logs()).contains("Project key: com.foo.project");
-    assertThat(logTester.logs().stream().collect(joining("\n"))).doesNotContain("Organization key");
-    assertThat(logTester.logs().stream().collect(joining("\n"))).doesNotContain("Branch key");
   }
 
   @Test
@@ -751,6 +732,7 @@ public class FileSystemMediumTest {
       .newAnalysis(new File(projectDir, "sonar-project.properties"))
       .property("sonar.exclusions", "**/*.xoo.measures,**/*.xoo.scm")
       .property("sonar.test.exclusions", "**/*.xoo.measures,**/*.xoo.scm")
+      .property("sonar.scm.exclusions.disabled", "true")
       .execute();
 
     assertThat(result.inputFiles()).hasSize(3);
@@ -766,7 +748,8 @@ public class FileSystemMediumTest {
     ScannerMediumTester.AnalysisBuilder analysis = tester
       .newAnalysis(new File(projectDir, "sonar-project.properties"))
       .property("sonar.sources", "XOURCES")
-      .property("sonar.tests", "TESTX");
+      .property("sonar.tests", "TESTX")
+      .property("sonar.scm.exclusions.disabled", "true");
 
     if (System2.INSTANCE.isOsWindows()) { // Windows is file path case-insensitive
       AnalysisResult result = analysis.execute();

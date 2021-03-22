@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ function shallowRender(props?: Partial<Props>) {
     { branchLike: undefined, key: 'foo' },
     { branchLike: undefined, key: 'bar' }
   ];
-  const rules = [{ key: 'qux', organization: 'org' }];
+  const rules = [{ key: 'qux' }];
   return shallow(
     <WorkspaceNav
       components={components}

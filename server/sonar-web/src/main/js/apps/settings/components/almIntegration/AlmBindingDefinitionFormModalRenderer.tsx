@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ export interface AlmBindingDefinitionFormModalProps {
   canSubmit: () => boolean;
   children: React.ReactNode;
   help?: React.ReactNode;
+  isSecondInstance: boolean;
   onCancel: () => void;
   onSubmit: () => void;
 }
@@ -36,7 +37,7 @@ export interface AlmBindingDefinitionFormModalProps {
 export default function AlmBindingDefinitionFormModalRenderer(
   props: AlmBindingDefinitionFormModalProps
 ) {
-  const { action, children, help } = props;
+  const { action, children, help, isSecondInstance } = props;
   const header = translate('settings.almintegration.form.header', action);
 
   return (
@@ -48,13 +49,21 @@ export default function AlmBindingDefinitionFormModalRenderer(
           </div>
 
           <div className="modal-body modal-container">
+            {isSecondInstance && action === 'create' && (
+              <Alert className="big-spacer-bottom" variant="warning">
+                {translate('settings.almintegration.form.second_instance_warning')}
+              </Alert>
+            )}
+
             <div className="display-flex-start">
               <div className="flex-1">{children}</div>
 
-              {help && (
+              {help ? (
                 <Alert className="huge-spacer-left flex-1" variant="info">
                   {help}
                 </Alert>
+              ) : (
+                <div className="flex-1" />
               )}
             </div>
           </div>

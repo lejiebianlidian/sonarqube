@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ public class SystemInfoWriterModuleTest {
 
     Collection<ComponentAdapter<?>> adapters = container.getPicoContainer().getComponentAdapters();
     assertThat(adapters)
-      .hasSize(COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER + 17);
+      .hasSize(COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER + 19);
   }
 
   @Test
@@ -54,7 +54,7 @@ public class SystemInfoWriterModuleTest {
 
     Collection<ComponentAdapter<?>> adapters = container.getPicoContainer().getComponentAdapters();
     assertThat(adapters)
-      .hasSize(COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER + 11);
+      .hasSize(COMPONENTS_IN_EMPTY_COMPONENT_CONTAINER + 13);
   }
 
 }

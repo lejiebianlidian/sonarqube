@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ public class EnsureHotspotDefaultStatusIsToReviewTest {
   public void does_not_fail_if_table_is_empty() throws SQLException {
     underTest.execute();
 
-    assertThat(db.countRowsOfTable("issues")).isEqualTo(0);
+    assertThat(db.countRowsOfTable("issues")).isZero();
   }
 
   @Test

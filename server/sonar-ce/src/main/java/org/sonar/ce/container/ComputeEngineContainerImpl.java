@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,8 +76,8 @@ import org.sonar.core.platform.ComponentContainer;
 import org.sonar.core.platform.EditionProvider;
 import org.sonar.core.platform.Module;
 import org.sonar.core.platform.PlatformEditionProvider;
+import org.sonar.core.platform.PluginClassLoader;
 import org.sonar.core.platform.PluginClassloaderFactory;
-import org.sonar.core.platform.PluginLoader;
 import org.sonar.core.util.UuidFactoryImpl;
 import org.sonar.db.DBSessionsImpl;
 import org.sonar.db.DaoModule;
@@ -111,12 +111,10 @@ import org.sonar.server.log.ServerLogging;
 import org.sonar.server.measure.index.ProjectMeasuresIndexer;
 import org.sonar.server.metric.CoreCustomMetrics;
 import org.sonar.server.metric.DefaultMetricFinder;
+import org.sonar.server.metric.UnanalyzedLanguageMetrics;
 import org.sonar.server.notification.DefaultNotificationManager;
 import org.sonar.server.notification.NotificationService;
 import org.sonar.server.notification.email.EmailNotificationChannel;
-import org.sonar.server.organization.BillingValidationsProxyImpl;
-import org.sonar.server.organization.DefaultOrganizationProviderImpl;
-import org.sonar.server.organization.OrganizationFlagsImpl;
 import org.sonar.server.platform.OfficialDistribution;
 import org.sonar.server.platform.ServerFileSystemImpl;
 import org.sonar.server.platform.ServerImpl;
@@ -335,7 +333,7 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
       // plugins
       PluginClassloaderFactory.class,
       CePluginJarExploder.class,
-      PluginLoader.class,
+      PluginClassLoader.class,
       CePluginRepository.class,
       InstalledPluginReferentialFactory.class,
       ComputeEngineExtensionInstaller.class,
@@ -353,16 +351,13 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
       ServerIdChecksum.class,
       UriReader.class,
       ServerImpl.class,
-      DefaultOrganizationProviderImpl.class,
-      SynchronousAsyncExecution.class,
-      OrganizationFlagsImpl.class);
+      SynchronousAsyncExecution.class);
   }
 
   private static void populateLevel4(ComponentContainer container, Props props) {
     container.add(
       ResourceTypes.class,
       DefaultResourceTypes.get(),
-      BillingValidationsProxyImpl.class,
 
       // quality profile
       ActiveRuleIndexer.class,
@@ -386,6 +381,7 @@ public class ComputeEngineContainerImpl implements ComputeEngineContainer {
       // measure
       CoreCustomMetrics.class,
       DefaultMetricFinder.class,
+      UnanalyzedLanguageMetrics.class,
 
       UserIndexer.class,
       UserIndex.class,

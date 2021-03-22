@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import ComparisonForm from './ComparisonForm';
 import ComparisonResults from './ComparisonResults';
 
 interface Props extends WithRouterProps {
-  organization?: string;
   profile: Profile;
   profiles: Profile[];
 }
@@ -79,7 +78,6 @@ class ComparisonContainer extends React.PureComponent<Props, State> {
     const path = getProfileComparePath(
       this.props.profile.name,
       this.props.profile.language,
-      this.props.organization,
       withKey
     );
     this.props.router.push(path);
@@ -114,7 +112,6 @@ class ComparisonContainer extends React.PureComponent<Props, State> {
               left={this.state.left}
               leftProfile={profile}
               modified={this.state.modified}
-              organization={this.props.organization}
               refresh={this.loadResults}
               right={this.state.right}
               rightProfile={profiles.find(p => p.key === withKey)}

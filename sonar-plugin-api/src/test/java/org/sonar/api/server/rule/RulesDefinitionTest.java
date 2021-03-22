@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,11 @@ import java.net.URL;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.sonar.api.rule.RuleKey;
@@ -44,7 +46,9 @@ import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.impl.server.RulesDefinitionContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.useDefaultDateFormatsOnly;
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(DataProviderRunner.class)
 public class RulesDefinitionTest {
@@ -80,10 +84,14 @@ public class RulesDefinitionTest {
     assertThat(checkstyle.name()).isEqualTo("checkstyle");
     assertThat(checkstyle.rules()).isEmpty();
     assertThat(context.repository("unknown")).isNull();
+  }
 
-    // test equals() and hashCode()
-    assertThat(findbugs).isEqualTo(findbugs).isNotEqualTo(checkstyle).isNotEqualTo("findbugs").isNotEqualTo(null);
-    assertThat(findbugs.hashCode()).isEqualTo(findbugs.hashCode());
+  @Test
+  public void override_sonaranalyzer_repositories_name() {
+    context.createRepository("k", "java").setName("SonarAnalyzer").done();
+    RulesDefinition.Repository repo = context.repository("k");
+    assertThat(repo).isNotNull();
+    assertThat(repo.name()).isEqualTo("SonarQube");
   }
 
   @Test
@@ -109,6 +117,7 @@ public class RulesDefinitionTest {
     assertThat(repo.isExternal()).isFalse();
 
     RulesDefinition.Rule rule = repo.rule("NPE");
+    assertThat(rule).isNotNull();
     assertThat(rule.scope()).isEqualTo(RuleScope.ALL);
     assertThat(rule.key()).isEqualTo("NPE");
     assertThat(rule.name()).isEqualTo("Detect NPE");
@@ -121,16 +130,12 @@ public class RulesDefinitionTest {
     assertThat(rule.internalKey()).isEqualTo("/something");
     assertThat(rule.template()).isFalse();
     assertThat(rule.status()).isEqualTo(RuleStatus.BETA);
-    assertThat(rule.toString()).isEqualTo("[repository=findbugs, key=NPE]");
+    assertThat(rule.toString()).hasToString("[repository=findbugs, key=NPE]");
     assertThat(rule.repository()).isSameAs(repo);
 
     RulesDefinition.Rule otherRule = repo.rule("ABC");
     assertThat(otherRule.htmlDescription()).isNull();
     assertThat(otherRule.markdownDescription()).isEqualTo("ABC");
-
-    // test equals() and hashCode()
-    assertThat(rule).isEqualTo(rule).isNotEqualTo(otherRule).isNotEqualTo("NPE").isNotEqualTo(null);
-    assertThat(rule.hashCode()).isEqualTo(rule.hashCode());
   }
 
   @Test
@@ -195,6 +200,7 @@ public class RulesDefinitionTest {
     assertThat(repo.isExternal()).isTrue();
 
     RulesDefinition.Rule rule = repo.rule("NPE");
+    assertThat(rule).isNotNull();
     assertThat(rule.scope()).isEqualTo(RuleScope.ALL);
     assertThat(rule.key()).isEqualTo("NPE");
     assertThat(rule.name()).isEqualTo("Detect NPE");
@@ -207,16 +213,12 @@ public class RulesDefinitionTest {
     assertThat(rule.internalKey()).isEqualTo("/something");
     assertThat(rule.template()).isFalse();
     assertThat(rule.status()).isEqualTo(RuleStatus.BETA);
-    assertThat(rule.toString()).isEqualTo("[repository=external_eslint, key=NPE]");
+    assertThat(rule.toString()).hasToString("[repository=external_eslint, key=NPE]");
     assertThat(rule.repository()).isSameAs(repo);
 
     RulesDefinition.Rule otherRule = repo.rule("ABC");
     assertThat(otherRule.htmlDescription()).isNull();
     assertThat(otherRule.markdownDescription()).isEqualTo("ABC");
-
-    // test equals() and hashCode()
-    assertThat(rule).isEqualTo(rule).isNotEqualTo(otherRule).isNotEqualTo("NPE").isNotEqualTo(null);
-    assertThat(rule.hashCode()).isEqualTo(rule.hashCode());
   }
 
   @Test
@@ -231,6 +233,7 @@ public class RulesDefinitionTest {
     assertThat(rule.params()).hasSize(2);
 
     RulesDefinition.Param level = rule.param("level");
+    assertThat(level).isNotNull();
     assertThat(level.key()).isEqualTo("level");
     assertThat(level.name()).isEqualTo("Level");
     assertThat(level.description()).isEqualTo("The level");
@@ -242,10 +245,6 @@ public class RulesDefinitionTest {
     assertThat(effort.description()).isNull();
     assertThat(effort.defaultValue()).isNull();
     assertThat(effort.type()).isEqualTo(RuleParamType.STRING);
-
-    // test equals() and hashCode()
-    assertThat(level).isEqualTo(level).isNotEqualTo(effort).isNotEqualTo("level").isNotEqualTo(null);
-    assertThat(level.hashCode()).isEqualTo(level.hashCode());
   }
 
   @Test
@@ -293,7 +292,7 @@ public class RulesDefinitionTest {
 
   @DataProvider
   public static Object[][] nullOrEmpty() {
-    return new Object[][] {
+    return new Object[][]{
       {null},
       {""}
     };

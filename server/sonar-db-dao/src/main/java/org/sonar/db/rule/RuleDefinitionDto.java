@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -104,12 +104,12 @@ public class RuleDefinitionDto {
     return deserializeStringSet(securityStandards);
   }
 
-  private static Set<String> deserializeStringSet(@Nullable String securityStandards) {
-    if (securityStandards == null || securityStandards.isEmpty()) {
+  private static Set<String> deserializeStringSet(@Nullable String str) {
+    if (str == null || str.isEmpty()) {
       return ImmutableSet.of();
     }
 
-    return ImmutableSet.copyOf(SPLITTER.split(securityStandards));
+    return ImmutableSet.copyOf(SPLITTER.split(str));
   }
 
   private static String serializeStringSet(@Nullable Set<String> strings) {

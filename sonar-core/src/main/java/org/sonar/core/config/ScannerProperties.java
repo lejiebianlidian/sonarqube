@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,6 @@ import static org.sonar.api.PropertyType.BOOLEAN;
 public class ScannerProperties {
 
   public static final String BRANCHES_DOC_LINK = "https://redirect.sonarsource.com/doc/branches.html";
-
-  public static final String ORGANIZATION = "sonar.organization";
 
   public static final String BRANCH_NAME = "sonar.branch.name";
   @Deprecated
@@ -64,11 +62,6 @@ public class ScannerProperties {
         .category(CoreProperties.CATEGORY_SCM)
         .onlyOnQualifiers(Qualifiers.PROJECT)
         .build(),
-      PropertyDefinition.builder(ORGANIZATION)
-        .name("Organization key")
-        .description("Key of the organization that contains the project being analyzed. If unset, then the organization marked as default is used.")
-        .hidden()
-        .build(),
       PropertyDefinition.builder(BRANCH_NAME)
         .name("Optional name of SonarQube/SCM branch")
         .description("Provide a name for the branch being analyzed. It might match an existing branch of the project, otherwise a new branch will be created.")
@@ -87,8 +80,8 @@ public class ScannerProperties {
         .hidden()
         .build(),
       PropertyDefinition.builder(DISABLE_PROJECT_AND_ORG_AUTODETECTION)
-        .name("Disables project and organization auto-detection")
-        .description("Disables auto-detection of project and organization keys from scanner execution environment.")
+        .name("Disables project auto-detection")
+        .description("Disables auto-detection of project keys from scanner execution environment.")
         .type(BOOLEAN)
         .hidden()
         .build());

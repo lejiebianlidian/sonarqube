@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ public class ScannerPluginJarExploder extends PluginJarExploder {
   public ExplodedPlugin explode(PluginInfo info) {
     try {
       File dir = unzipFile(info.getNonNullJarFile());
-      return explodeFromUnzippedDir(info.getKey(), info.getNonNullJarFile(), dir);
+      return explodeFromUnzippedDir(info, info.getNonNullJarFile(), dir);
     } catch (Exception e) {
       throw new IllegalStateException(String.format("Fail to open plugin [%s]: %s", info.getKey(), info.getNonNullJarFile().getAbsolutePath()), e);
     }

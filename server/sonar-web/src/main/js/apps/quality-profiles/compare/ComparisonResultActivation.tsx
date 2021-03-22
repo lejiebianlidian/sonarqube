@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ const ActivationFormModal = lazyLoadComponent(
 
 interface Props {
   onDone: () => Promise<void>;
-  organization?: string;
   profile: Profile;
   ruleKey: string;
 }
@@ -56,7 +55,7 @@ export default class ComparisonResultActivation extends React.PureComponent<Prop
 
   handleButtonClick = () => {
     this.setState({ state: 'opening' });
-    getRuleDetails({ key: this.props.ruleKey, organization: this.props.organization }).then(
+    getRuleDetails({ key: this.props.ruleKey }).then(
       ({ rule }) => {
         if (this.mounted) {
           this.setState({ rule, state: 'open' });
@@ -97,7 +96,6 @@ export default class ComparisonResultActivation extends React.PureComponent<Prop
             modalHeader={translate('coding_rules.activate_in_quality_profile')}
             onClose={this.handleCloseModal}
             onDone={this.props.onDone}
-            organization={this.props.organization}
             profiles={[profile]}
             rule={this.state.rule}
           />

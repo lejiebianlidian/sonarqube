@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ public class SetGitlabBindingRequest {
   private String almSetting;
   private String project;
   private String repository;
-
+  private String monorepo;
 
   public String getRepository() {
     return repository;
@@ -65,6 +65,15 @@ public class SetGitlabBindingRequest {
 
   public String getProject() {
     return project;
+  }
+
+  public String getMonorepo() {
+    return monorepo;
+  }
+
+  public SetGitlabBindingRequest setMonorepo(String monorepo) {
+    this.monorepo = monorepo;
+    return this;
   }
 
 }

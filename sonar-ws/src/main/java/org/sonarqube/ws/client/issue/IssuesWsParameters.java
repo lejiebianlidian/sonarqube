@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -58,11 +58,10 @@ public class IssuesWsParameters {
   public static final String PARAM_MODULE_UUIDS = "moduleUuids";
   public static final String PARAM_PROJECTS = "projects";
   public static final String PARAM_DIRECTORIES = "directories";
-  public static final String PARAM_FILE_UUIDS = "fileUuids";
+  public static final String PARAM_FILES = "files";
   public static final String PARAM_ON_COMPONENT_ONLY = "onComponentOnly";
   public static final String PARAM_BRANCH = "branch";
   public static final String PARAM_PULL_REQUEST = "pullRequest";
-  public static final String PARAM_ORGANIZATION = "organization";
   public static final String PARAM_RULES = "rules";
   public static final String PARAM_ASSIGN = "assign";
   public static final String PARAM_SET_SEVERITY = "set_severity";
@@ -80,11 +79,14 @@ public class IssuesWsParameters {
   public static final String DEPRECATED_PARAM_AUTHORS = "authors";
 
   public static final String PARAM_AUTHOR = "author";
+  public static final String PARAM_SCOPES = "scopes";
   public static final String PARAM_LANGUAGES = "languages";
   public static final String PARAM_TAGS = "tags";
   public static final String PARAM_TYPES = "types";
   public static final String PARAM_OWASP_TOP_10 = "owaspTop10";
+  @Deprecated
   public static final String PARAM_SANS_TOP_25 = "sansTop25";
+  public static final String PARAM_CWE_TOP_25 = "cweTop25";
   public static final String PARAM_SONARSOURCE_SECURITY = "sonarsourceSecurity";
   public static final String PARAM_CWE = "cwe";
   public static final String PARAM_ASSIGNED = "assigned";
@@ -98,6 +100,7 @@ public class IssuesWsParameters {
   public static final String PARAM_PAGE_INDEX = "pageIndex";
   public static final String PARAM_ASC = "asc";
   public static final String PARAM_ADDITIONAL_FIELDS = "additionalFields";
+  public static final String PARAM_TIMEZONE = "timeZone";
 
   /**
    * @deprecated since 7.9

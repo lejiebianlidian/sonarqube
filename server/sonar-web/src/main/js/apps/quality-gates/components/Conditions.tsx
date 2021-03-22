@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import ModalButton from 'sonar-ui-common/components/controls/ModalButton';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { getLocalizedMetricName, translate } from 'sonar-ui-common/helpers/l10n';
 import { isDiffMetric } from 'sonar-ui-common/helpers/measures';
-import DocTooltip from '../../../components/docs/DocTooltip';
+import DocumentationTooltip from '../../../components/common/DocumentationTooltip';
 import { withAppState } from '../../../components/hoc/withAppState';
 import { MetricKey } from '../../../types/metrics';
 import Condition from './Condition';
@@ -38,7 +38,6 @@ interface Props {
   onAddCondition: (condition: T.Condition) => void;
   onRemoveCondition: (Condition: T.Condition) => void;
   onSaveCondition: (newCondition: T.Condition, oldCondition: T.Condition) => void;
-  organization?: string;
   qualityGate: T.QualityGate;
   updatedConditionId?: number;
 }
@@ -59,7 +58,6 @@ export class Conditions extends React.PureComponent<Props> {
       canEdit,
       onRemoveCondition,
       onSaveCondition,
-      organization,
       updatedConditionId
     } = this.props;
     return (
@@ -88,7 +86,6 @@ export class Conditions extends React.PureComponent<Props> {
               metric={metrics[condition.metric]}
               onRemoveCondition={onRemoveCondition}
               onSaveCondition={onSaveCondition}
-              organization={organization}
               qualityGate={qualityGate}
               updated={condition.id === updatedConditionId}
             />
@@ -150,7 +147,6 @@ export class Conditions extends React.PureComponent<Props> {
                   metrics={availableMetrics}
                   onAddCondition={this.props.onAddCondition}
                   onClose={onClose}
-                  organization={this.props.organization}
                   qualityGate={this.props.qualityGate}
                 />
               )}>
@@ -165,11 +161,15 @@ export class Conditions extends React.PureComponent<Props> {
 
         <header className="display-flex-center spacer-bottom">
           <h3>{translate('quality_gates.conditions')}</h3>
-          <DocTooltip
+          <DocumentationTooltip
             className="spacer-left"
-            doc={import(
-              /* webpackMode: "eager" */ 'Docs/tooltips/quality-gates/quality-gate-conditions.md'
-            )}
+            content={translate('quality_gates.conditions.help')}
+            links={[
+              {
+                href: '/documentation/user-guide/clean-as-you-code/',
+                label: translate('quality_gates.conditions.help.link')
+              }
+            ]}
           />
         </header>
 

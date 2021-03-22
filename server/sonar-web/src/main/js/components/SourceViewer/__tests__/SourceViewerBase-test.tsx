@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -144,6 +144,13 @@ it('should load sources after', async () => {
 
   expect(wrapper.state().loadingSourcesAfter).toBe(false);
   expect(wrapper.state().issues).toHaveLength(2);
+});
+
+it('should handle no sources when checking ranges', () => {
+  const wrapper = shallowRender();
+
+  wrapper.setState({ sources: undefined });
+  expect(wrapper.instance().isLineOutsideOfRange(12)).toBe(true);
 });
 
 function shallowRender(overrides: Partial<SourceViewerBase['props']> = {}) {

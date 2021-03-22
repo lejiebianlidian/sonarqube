@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,59 +18,24 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import { FormattedMessage } from 'react-intl';
-import { translate } from 'sonar-ui-common/helpers/l10n';
-import CodeSnippet from '../../../common/CodeSnippet';
-import InstanceMessage from '../../../common/InstanceMessage';
-import { quote } from '../../utils';
-import SQScanner from './SQScanner';
+import { OSs } from '../../types';
+import DownloadScanner from './DownloadScanner';
+import ExecScanner from './ExecScanner';
 
-export interface Props {
+export interface OtherProps {
   host: string;
-  organization?: string;
-  os: string;
+  os: OSs;
   projectKey: string;
   token: string;
 }
 
-export default function Other(props: Props) {
-  const q = quote(props.os);
-  const command = [
-    props.os === 'win' ? 'sonar-scanner.bat' : 'sonar-scanner',
-    '-D' + q(`sonar.projectKey=${props.projectKey}`),
-    props.organization && '-D' + q(`sonar.organization=${props.organization}`),
-    '-D' + q('sonar.sources=.'),
-    '-D' + q(`sonar.host.url=${props.host}`),
-    '-D' + q(`sonar.login=${props.token}`)
-  ];
+export default function Other(props: OtherProps) {
+  const { host, os, projectKey, token } = props;
 
   return (
     <div>
-      <SQScanner os={props.os} />
-
-      <h4 className="huge-spacer-top spacer-bottom">
-        {translate('onboarding.analysis.sq_scanner.execute')}
-      </h4>
-      <InstanceMessage message={translate('onboarding.analysis.sq_scanner.execute.text')}>
-        {transformedMessage => <p className="spacer-bottom markdown">{transformedMessage}</p>}
-      </InstanceMessage>
-      <CodeSnippet isOneLine={props.os === 'win'} snippet={command} />
-      <p className="big-spacer-top markdown">
-        <FormattedMessage
-          defaultMessage={translate('onboarding.analysis.sq_scanner.docs')}
-          id="onboarding.analysis.sq_scanner.docs"
-          values={{
-            link: (
-              <a
-                href="http://redirect.sonarsource.com/doc/install-configure-scanner.html"
-                rel="noopener noreferrer"
-                target="_blank">
-                {translate('onboarding.analysis.sq_scanner.docs_link')}
-              </a>
-            )
-          }}
-        />
-      </p>
+      <DownloadScanner os={os} />
+      <ExecScanner host={host} os={os} projectKey={projectKey} token={token} />
     </div>
   );
 }

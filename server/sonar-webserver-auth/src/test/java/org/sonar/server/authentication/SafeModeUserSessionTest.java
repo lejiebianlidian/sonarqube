@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,10 +21,9 @@ package org.sonar.server.authentication;
 
 import org.junit.Test;
 import org.sonar.api.web.UserRole;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 
 public class SafeModeUserSessionTest {
 
@@ -35,16 +34,17 @@ public class SafeModeUserSessionTest {
     assertThat(underTest.getLogin()).isNull();
     assertThat(underTest.getUuid()).isNull();
     assertThat(underTest.isLoggedIn()).isFalse();
+    assertThat(underTest.shouldResetPassword()).isFalse();
     assertThat(underTest.getName()).isNull();
     assertThat(underTest.getGroups()).isEmpty();
   }
 
   @Test
   public void session_has_no_permissions() {
+    assertThat(underTest.shouldResetPassword()).isFalse();
     assertThat(underTest.isRoot()).isFalse();
     assertThat(underTest.isSystemAdministrator()).isFalse();
-    assertThat(underTest.hasPermissionImpl(OrganizationPermission.ADMINISTER, "foo")).isFalse();
+    assertThat(underTest.hasPermissionImpl(GlobalPermission.ADMINISTER)).isFalse();
     assertThat(underTest.hasProjectUuidPermission(UserRole.USER, "foo")).isFalse();
-    assertThat(underTest.hasMembership(newOrganizationDto())).isFalse();
   }
 }

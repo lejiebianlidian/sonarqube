@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ import org.picocontainer.injectors.ProviderAdapter;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.api.utils.log.Profiler;
-import org.sonar.scanner.bootstrap.ProcessedScannerProperties;
+import org.sonar.scanner.bootstrap.ScannerProperties;
 
 public class ProjectBranchesProvider extends ProviderAdapter {
 
@@ -34,7 +34,7 @@ public class ProjectBranchesProvider extends ProviderAdapter {
 
   private ProjectBranches branches = null;
 
-  public ProjectBranches provide(@Nullable ProjectBranchesLoader loader, ProcessedScannerProperties scannerProperties) {
+  public ProjectBranches provide(@Nullable ProjectBranchesLoader loader, ScannerProperties scannerProperties) {
     if (this.branches != null) {
       return this.branches;
     }

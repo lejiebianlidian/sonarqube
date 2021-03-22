@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,10 @@
  */
 package org.sonar.ce.task.projectanalysis.step;
 
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolder;
 import org.sonar.ce.task.projectanalysis.batch.BatchReportReader;
 import org.sonar.ce.task.step.ComputationStep;
@@ -32,14 +34,16 @@ import org.sonar.db.component.AnalysisPropertyDto;
 import org.sonar.scanner.protocol.output.ScannerReport;
 
 import static org.sonar.core.config.CorePropertyDefinitions.SONAR_ANALYSIS;
+import static org.sonar.core.config.CorePropertyDefinitions.SONAR_ANALYSIS_DETECTEDCI;
+import static org.sonar.core.config.CorePropertyDefinitions.SONAR_ANALYSIS_DETECTEDSCM;
 
 /**
  * Persist analysis properties
- * Only properties starting with "sonar.analysis" or "sonar.pullrequest" will be persisted in database
  */
 public class PersistAnalysisPropertiesStep implements ComputationStep {
 
   private static final String SONAR_PULL_REQUEST = "sonar.pullrequest.";
+  private static final Set<String> ANALYSIS_PROPERTIES_TO_PERSIST = ImmutableSet.of(SONAR_ANALYSIS_DETECTEDSCM, SONAR_ANALYSIS_DETECTEDCI);
 
   private final DbClient dbClient;
   private final AnalysisMetadataHolder analysisMetadataHolder;
@@ -47,7 +51,7 @@ public class PersistAnalysisPropertiesStep implements ComputationStep {
   private final UuidFactory uuidFactory;
 
   public PersistAnalysisPropertiesStep(DbClient dbClient, AnalysisMetadataHolder analysisMetadataHolder,
-    BatchReportReader reportReader, UuidFactory uuidFactory) {
+                                       BatchReportReader reportReader, UuidFactory uuidFactory) {
     this.dbClient = dbClient;
     this.analysisMetadataHolder = analysisMetadataHolder;
     this.reportReader = reportReader;
@@ -61,7 +65,8 @@ public class PersistAnalysisPropertiesStep implements ComputationStep {
       it.forEachRemaining(
         contextProperty -> {
           String propertyKey = contextProperty.getKey();
-          if (propertyKey.startsWith(SONAR_ANALYSIS) || propertyKey.startsWith(SONAR_PULL_REQUEST)) {
+          if (propertyKey.startsWith(SONAR_ANALYSIS) || propertyKey.startsWith(SONAR_PULL_REQUEST) ||
+            ANALYSIS_PROPERTIES_TO_PERSIST.contains(propertyKey)) {
             analysisPropertyDtos.add(new AnalysisPropertyDto()
               .setUuid(uuidFactory.create())
               .setKey(propertyKey)

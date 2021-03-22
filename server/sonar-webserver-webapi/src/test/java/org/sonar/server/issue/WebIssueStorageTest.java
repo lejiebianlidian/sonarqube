@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.junit.Test;
+import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.DateUtils;
 import org.sonar.api.utils.Duration;
 import org.sonar.api.utils.System2;
-import org.sonar.api.impl.utils.TestSystem2;
 import org.sonar.core.issue.DefaultIssue;
 import org.sonar.core.issue.DefaultIssueComment;
 import org.sonar.core.issue.IssueChangeContext;
@@ -37,10 +37,8 @@ import org.sonar.db.DbClient;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.issue.IssueDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.issue.index.IssueIndexer;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.rule.DefaultRuleFinder;
 
 import static java.util.Collections.singletonList;
@@ -53,23 +51,19 @@ import static org.sonar.db.issue.IssueTesting.newIssue;
 
 public class WebIssueStorageTest {
 
-  private System2 system2 = new TestSystem2().setNow(2_000_000_000L);
+  private final System2 system2 = new TestSystem2().setNow(2_000_000_000L);
 
   @org.junit.Rule
   public DbTester db = DbTester.create(system2);
 
-  private DbClient dbClient = db.getDbClient();
-
-  private TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-
-  private IssueIndexer issueIndexer = mock(IssueIndexer.class);
-  private WebIssueStorage underTest = new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(db.getDbClient(), defaultOrganizationProvider), issueIndexer,
+  private final DbClient dbClient = db.getDbClient();
+  private final IssueIndexer issueIndexer = mock(IssueIndexer.class);
+  private final WebIssueStorage underTest = new WebIssueStorage(system2, dbClient, new DefaultRuleFinder(db.getDbClient()), issueIndexer,
     new SequenceUuidFactory());
 
   @Test
   public void load_component_id_from_db() {
-    OrganizationDto organizationDto = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organizationDto);
+    ComponentDto project = db.components().insertPrivateProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project));
 
     String componentUuid = underTest.component(db.getSession(), new DefaultIssue().setComponentUuid(file.uuid())).uuid();
@@ -79,8 +73,7 @@ public class WebIssueStorageTest {
 
   @Test
   public void load_project_id_from_db() {
-    OrganizationDto organizationDto = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organizationDto);
+    ComponentDto project = db.components().insertPrivateProject();
     ComponentDto file = db.components().insertComponent(newFileDto(project));
 
     String projectUuid = underTest.project(db.getSession(), new DefaultIssue().setProjectUuid(project.uuid())).uuid();
@@ -166,7 +159,7 @@ public class WebIssueStorageTest {
     underTest.save(db.getSession(), singletonList(issue));
 
     assertThat(db.countRowsOfTable("issues")).isEqualTo(1);
-    assertThat(db.countRowsOfTable("issue_changes")).isEqualTo(0);
+    assertThat(db.countRowsOfTable("issue_changes")).isZero();
 
     DefaultIssue updated = new DefaultIssue()
       .setKey(issue.key())

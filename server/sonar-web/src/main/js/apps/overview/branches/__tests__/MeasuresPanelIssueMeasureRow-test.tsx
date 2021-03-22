@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@ import * as React from 'react';
 import { mockMainBranch } from '../../../../helpers/mocks/branch-like';
 import { mockComponent, mockMeasureEnhanced, mockMetric } from '../../../../helpers/testMocks';
 import { ComponentQualifier } from '../../../../types/component';
+import { IssueType } from '../../../../types/issues';
 import { MetricKey } from '../../../../types/metrics';
-import { IssueType } from '../../utils';
 import MeasuresPanelIssueMeasureRow, {
   MeasuresPanelIssueMeasureRowProps
 } from '../MeasuresPanelIssueMeasureRow';

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ package org.sonar.server.permission;
 
 import org.junit.Test;
 import org.sonar.db.component.ResourceTypesRule;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,9 +31,9 @@ public class PermissionServiceImplTest {
   private PermissionServiceImpl underTest = new PermissionServiceImpl(resourceTypesRule);
 
   @Test
-  public void organizationPermissions_must_be_ordered() {
-    assertThat(underTest.getAllOrganizationPermissions())
-      .extracting(OrganizationPermission::getKey)
+  public void globalPermissions_must_be_ordered() {
+    assertThat(underTest.getGlobalPermissions())
+      .extracting(GlobalPermission::getKey)
       .containsExactly("admin", "gateadmin", "profileadmin", "provisioning", "scan", "applicationcreator", "portfoliocreator");
   }
 

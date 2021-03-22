@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { getAlmSettings } from '../../../../api/alm-settings';
@@ -27,7 +26,7 @@ import { CreateProjectPage } from '../CreateProjectPage';
 import { CreateProjectModes } from '../types';
 
 jest.mock('../../../../api/alm-settings', () => ({
-  getAlmSettings: jest.fn().mockResolvedValue([{ alm: AlmKeys.Bitbucket, key: 'foo' }])
+  getAlmSettings: jest.fn().mockResolvedValue([{ alm: AlmKeys.BitbucketServer, key: 'foo' }])
 }));
 
 beforeEach(jest.clearAllMocks);
@@ -37,15 +36,18 @@ it('should render correctly', () => {
   expect(getAlmSettings).toBeCalled();
 });
 
-it('should render correctly if no branch support', () => {
-  expect(shallowRender({ appState: { branchesEnabled: false } })).toMatchSnapshot();
-  expect(getAlmSettings).not.toBeCalled();
-});
-
 it('should render correctly if the manual method is selected', () => {
   expect(
     shallowRender({
       location: mockLocation({ query: { mode: CreateProjectModes.Manual } })
+    })
+  ).toMatchSnapshot();
+});
+
+it('should render correctly if the Azure method is selected', () => {
+  expect(
+    shallowRender({
+      location: mockLocation({ query: { mode: CreateProjectModes.AzureDevOps } })
     })
   ).toMatchSnapshot();
 });
@@ -65,10 +67,17 @@ it('should render correctly if the GitHub method is selected', () => {
   expect(wrapper).toMatchSnapshot();
 });
 
+it('should render correctly if the GitLab method is selected', () => {
+  const wrapper = shallowRender({
+    location: mockLocation({ query: { mode: CreateProjectModes.GitLab } })
+  });
+  expect(wrapper).toMatchSnapshot();
+});
+
 function shallowRender(props: Partial<CreateProjectPage['props']> = {}) {
   return shallow<CreateProjectPage>(
     <CreateProjectPage
-      appState={{ branchesEnabled: true }}
+      appState={{}}
       currentUser={mockLoggedInUser()}
       location={mockLocation()}
       router={mockRouter()}

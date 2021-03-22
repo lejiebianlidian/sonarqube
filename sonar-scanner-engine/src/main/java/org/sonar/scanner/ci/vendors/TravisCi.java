@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 
 /**
  * Support of https://travis-ci.com
- *
+ * <p>
  * Environment variables: https://docs.travis-ci.com/user/environment-variables/
  */
 public class TravisCi implements CiVendor {
@@ -58,6 +58,6 @@ public class TravisCi implements CiVendor {
       revision = system.envVariable("TRAVIS_PULL_REQUEST_SHA");
 
     }
-    return new CiConfigurationImpl(revision);
+    return new CiConfigurationImpl(revision, getName());
   }
 }

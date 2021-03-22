@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -88,6 +88,8 @@ public class LogListenerTest {
 
   @Before
   public void prepare() {
+    System.out.flush();
+    System.err.flush();
     stdOutTarget = new ByteArrayOutputStream();
     stdErrTarget = new ByteArrayOutputStream();
     System.setOut(new PrintStream(stdOutTarget));
@@ -144,8 +146,10 @@ public class LogListenerTest {
         .build())
       .execute();
 
-    for (LogEvent e : logOutput) {
-      savedStdOut.println("[captured]" + e.level + " " + e.msg);
+    synchronized (logOutput) {
+      for (LogEvent e : logOutput) {
+        savedStdOut.println("[captured]" + e.level + " " + e.msg);
+      }
     }
 
     // only done in DEBUG during analysis

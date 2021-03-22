@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,4 +37,11 @@ export interface ProfileChangelogEvent {
   params?: T.Dict<string | null>;
   ruleKey: string;
   ruleName: string;
+}
+
+export enum ProfileActionModals {
+  Copy,
+  Extend,
+  Rename,
+  Delete
 }

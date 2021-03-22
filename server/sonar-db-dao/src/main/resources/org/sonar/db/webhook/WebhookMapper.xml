@@ -8,7 +8,6 @@
     uuid,
     name,
     url,
-    organization_uuid as organizationUuid,
     project_uuid as projectUuid,
     secret,
     created_at as createdAt,
@@ -21,10 +20,16 @@
     where uuid = #{webhookUuid,jdbcType=VARCHAR}
   </select>
 
-  <select id="selectForOrganizationUuidOrderedByName" parameterType="String" resultType="org.sonar.db.webhook.WebhookDto">
+  <select id="selectAllOrderedByName" parameterType="String" resultType="org.sonar.db.webhook.WebhookDto">
     select <include refid="sqlColumns" />
     from webhooks
-    where organization_uuid = #{organizationUuid,jdbcType=VARCHAR}
+    order by name asc
+  </select>
+
+  <select id="selectGlobalWebhooksOrderedByName" parameterType="String" resultType="org.sonar.db.webhook.WebhookDto">
+    select <include refid="sqlColumns" />
+    from webhooks
+    where project_uuid is null
     order by name asc
   </select>
 
@@ -40,7 +45,6 @@
     uuid,
     name,
     url,
-    organization_uuid,
     project_uuid,
     secret,
     created_at,
@@ -49,7 +53,6 @@
     #{uuid,jdbcType=VARCHAR},
     #{name,jdbcType=VARCHAR},
     #{url,jdbcType=VARCHAR},
-    #{organizationUuid,jdbcType=VARCHAR},
     #{projectUuid,jdbcType=VARCHAR},
     #{secret,jdbcType=VARCHAR},
     #{createdAt,jdbcType=BIGINT},
@@ -70,12 +73,6 @@
     delete from webhooks
     where
     uuid = #{uuid,jdbcType=VARCHAR}
-  </delete>
-
-  <delete id="deleteForOrganizationUuid" parameterType="String">
-    delete from webhooks
-    where
-    organization_uuid = #{organizationUuid,jdbcType=VARCHAR}
   </delete>
 
   <delete id="deleteForProjectUuid" parameterType="String">

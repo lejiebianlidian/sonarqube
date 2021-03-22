@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,14 +20,15 @@
 package org.sonar.server.permission;
 
 import javax.annotation.Nullable;
+import org.sonar.db.component.ComponentDto;
 
 public class GroupPermissionChange extends PermissionChange {
 
   private final GroupUuidOrAnyone group;
 
-  public GroupPermissionChange(Operation operation, String permission, @Nullable ProjectUuid projectUuid,
+  public GroupPermissionChange(Operation operation, String permission, @Nullable ComponentDto project,
     GroupUuidOrAnyone group, PermissionService permissionService) {
-    super(operation, group.getOrganizationUuid(), permission, projectUuid, permissionService);
+    super(operation, permission, project, permissionService);
     this.group = group;
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 import { shallow, ShallowWrapper } from 'enzyme';
 import * as React from 'react';
 import { click } from 'sonar-ui-common/helpers/testUtils';
+import { SettingCategoryDefinition } from '../../../../../types/settings';
 import { DefaultInputProps } from '../../../utils';
 import MultiValueInput from '../MultiValueInput';
 import PrimitiveInput from '../PrimitiveInput';
@@ -28,7 +29,7 @@ const settingValue = {
   key: 'example'
 };
 
-const settingDefinition: T.SettingCategoryDefinition = {
+const settingDefinition: SettingCategoryDefinition = {
   category: 'general',
   fields: [],
   key: 'example',

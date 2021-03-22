@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.session.ResultHandler;
 import org.sonar.db.component.BranchType;
-import org.sonar.db.component.KeyType;
 
 public interface LiveMeasureMapper {
 
@@ -58,11 +57,12 @@ public interface LiveMeasureMapper {
 
   Long sumNclocOfBiggestBranch(
     @Param("ncloc") String nclocKey,
-    @Param("branch") KeyType branchOrPullRequest,
     @Param("branchType") BranchType branchType,
-    @Param("organizationUuid") String organizationUuid,
     @Param("private") Boolean privateProject,
     @Nullable @Param("projectUuidToExclude") String projectUuidToExclude);
+
+  Long countProjectsHavingMeasure(
+    @Param("metric") String metric);
 
   void insert(
     @Param("dto") LiveMeasureDto dto,

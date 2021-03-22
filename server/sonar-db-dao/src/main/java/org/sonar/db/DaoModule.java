@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,9 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.sonar.core.platform.Module;
-import org.sonar.db.alm.AlmAppInstallDao;
-import org.sonar.db.alm.OrganizationAlmBindingDao;
-import org.sonar.db.alm.ProjectAlmBindingDao;
 import org.sonar.db.alm.pat.AlmPatDao;
 import org.sonar.db.alm.setting.AlmSettingDao;
 import org.sonar.db.alm.setting.ProjectAlmSettingDao;
@@ -36,6 +33,7 @@ import org.sonar.db.ce.CeTaskCharacteristicDao;
 import org.sonar.db.ce.CeTaskInputDao;
 import org.sonar.db.ce.CeTaskMessageDao;
 import org.sonar.db.component.AnalysisPropertiesDao;
+import org.sonar.db.component.ApplicationProjectsDao;
 import org.sonar.db.component.BranchDao;
 import org.sonar.db.component.ComponentDao;
 import org.sonar.db.component.ComponentKeyUpdaterDao;
@@ -54,8 +52,6 @@ import org.sonar.db.measure.custom.CustomMeasureDao;
 import org.sonar.db.metric.MetricDao;
 import org.sonar.db.newcodeperiod.NewCodePeriodDao;
 import org.sonar.db.notification.NotificationQueueDao;
-import org.sonar.db.organization.OrganizationDao;
-import org.sonar.db.organization.OrganizationMemberDao;
 import org.sonar.db.permission.AuthorizationDao;
 import org.sonar.db.permission.GroupPermissionDao;
 import org.sonar.db.permission.UserPermissionDao;
@@ -87,6 +83,7 @@ import org.sonar.db.user.RoleDao;
 import org.sonar.db.user.SamlMessageIdDao;
 import org.sonar.db.user.SessionTokensDao;
 import org.sonar.db.user.UserDao;
+import org.sonar.db.user.UserDismissedMessagesDao;
 import org.sonar.db.user.UserGroupDao;
 import org.sonar.db.user.UserPropertiesDao;
 import org.sonar.db.user.UserTokenDao;
@@ -101,6 +98,7 @@ public class DaoModule extends Module {
     ActiveRuleDao.class,
     AnalysisPropertiesDao.class,
     AuthorizationDao.class,
+    ApplicationProjectsDao.class,
     BranchDao.class,
     CeActivityDao.class,
     CeQueueDao.class,
@@ -120,11 +118,9 @@ public class DaoModule extends Module {
     GroupDao.class,
     GroupMembershipDao.class,
     GroupPermissionDao.class,
-    AlmAppInstallDao.class,
     AlmSettingDao.class,
     AlmPatDao.class,
     ProjectAlmSettingDao.class,
-    ProjectAlmBindingDao.class,
     InternalComponentPropertiesDao.class,
     InternalPropertiesDao.class,
     IssueChangeDao.class,
@@ -134,9 +130,6 @@ public class DaoModule extends Module {
     MetricDao.class,
     NewCodePeriodDao.class,
     NotificationQueueDao.class,
-    OrganizationAlmBindingDao.class,
-    OrganizationDao.class,
-    OrganizationMemberDao.class,
     PermissionTemplateCharacteristicDao.class,
     PermissionTemplateDao.class,
     PluginDao.class,
@@ -161,6 +154,7 @@ public class DaoModule extends Module {
     SchemaMigrationDao.class,
     SessionTokensDao.class,
     UserDao.class,
+    UserDismissedMessagesDao.class,
     UserGroupDao.class,
     UserPermissionDao.class,
     UserPropertiesDao.class,

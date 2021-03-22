@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,90 +22,61 @@ import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/contro
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
-import { deleteProfile } from '../../../api/quality-profiles';
 import { Profile } from '../types';
 
-interface Props {
+export interface DeleteProfileFormProps {
+  loading: boolean;
   onClose: () => void;
   onDelete: () => void;
   profile: Profile;
 }
 
-interface State {
-  loading: boolean;
-}
+export default function DeleteProfileForm(props: DeleteProfileFormProps) {
+  const { loading, profile } = props;
+  const header = translate('quality_profiles.delete_confirm_title');
 
-export default class DeleteProfileForm extends React.PureComponent<Props, State> {
-  mounted = false;
-  state: State = { loading: false };
-
-  componentDidMount() {
-    this.mounted = true;
-  }
-
-  componentWillUnmount() {
-    this.mounted = false;
-  }
-
-  handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    this.setState({ loading: true });
-    deleteProfile(this.props.profile).then(this.props.onDelete, () => {
-      if (this.mounted) {
-        this.setState({ loading: false });
-      }
-    });
-  };
-
-  render() {
-    const { profile } = this.props;
-    const header = translate('quality_profiles.delete_confirm_title');
-
-    return (
-      <Modal contentLabel={header} onRequestClose={this.props.onClose}>
-        <form id="delete-profile-form" onSubmit={this.handleFormSubmit}>
-          <div className="modal-head">
-            <h2>{header}</h2>
-          </div>
-          <div className="modal-body">
-            <div className="js-modal-messages" />
-            {profile.childrenCount > 0 ? (
-              <div>
-                <Alert variant="warning">
-                  {translate('quality_profiles.this_profile_has_descendants')}
-                </Alert>
-                <p>
-                  {translateWithParameters(
-                    'quality_profiles.are_you_sure_want_delete_profile_x_and_descendants',
-                    profile.name,
-                    profile.languageName
-                  )}
-                </p>
-              </div>
-            ) : (
+  return (
+    <Modal contentLabel={header} onRequestClose={props.onClose}>
+      <form
+        onSubmit={(e: React.SyntheticEvent<HTMLFormElement>) => {
+          e.preventDefault();
+          props.onDelete();
+        }}>
+        <div className="modal-head">
+          <h2>{header}</h2>
+        </div>
+        <div className="modal-body">
+          {profile.childrenCount > 0 ? (
+            <div>
+              <Alert variant="warning">
+                {translate('quality_profiles.this_profile_has_descendants')}
+              </Alert>
               <p>
                 {translateWithParameters(
-                  'quality_profiles.are_you_sure_want_delete_profile_x',
+                  'quality_profiles.are_you_sure_want_delete_profile_x_and_descendants',
                   profile.name,
                   profile.languageName
                 )}
               </p>
-            )}
-          </div>
-          <div className="modal-foot">
-            {this.state.loading && <i className="spinner spacer-right" />}
-            <SubmitButton
-              className="button-red"
-              disabled={this.state.loading}
-              id="delete-profile-submit">
-              {translate('delete')}
-            </SubmitButton>
-            <ResetButtonLink id="delete-profile-cancel" onClick={this.props.onClose}>
-              {translate('cancel')}
-            </ResetButtonLink>
-          </div>
-        </form>
-      </Modal>
-    );
-  }
+            </div>
+          ) : (
+            <p>
+              {translateWithParameters(
+                'quality_profiles.are_you_sure_want_delete_profile_x',
+                profile.name,
+                profile.languageName
+              )}
+            </p>
+          )}
+        </div>
+        <div className="modal-foot">
+          {loading && <i className="spinner spacer-right" />}
+          <SubmitButton className="button-red" disabled={loading}>
+            {translate('delete')}
+          </SubmitButton>
+          <ResetButtonLink onClick={props.onClose}>{translate('cancel')}</ResetButtonLink>
+        </div>
+      </form>
+    </Modal>
+  );
 }

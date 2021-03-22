@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -144,6 +144,22 @@ public class CeService extends BaseService {
   /**
    *
    * This is part of the internal API.
+   * This is a POST request.
+   * @see <a href="https://next.sonarqube.com/sonarqube/web_api/api/ce/dismiss_analysis_warning">Further information about this action online (including a response example)</a>
+   * @since 8.5
+   */
+  public void dismissAnalysisWarning(DismissAnalysisWarningRequest request) {
+    call(
+      new PostRequest(path("dismiss_analysis_warning"))
+        .setParam("component", request.getComponent())
+        .setParam("warning", request.getWarning())
+        .setMediaType(MediaTypes.JSON)
+    ).content();
+  }
+
+  /**
+   *
+   * This is part of the internal API.
    * This is a GET request.
    * @see <a href="https://next.sonarqube.com/sonarqube/web_api/api/ce/info">Further information about this action online (including a response example)</a>
    * @since 7.2
@@ -191,7 +207,6 @@ public class CeService extends BaseService {
     return call(
       new PostRequest(path("submit"))
         .setParam("characteristic", request.getCharacteristic())
-        .setParam("organization", request.getOrganization())
         .setParam("projectBranch", request.getProjectBranch())
         .setParam("projectKey", request.getProjectKey())
         .setParam("projectName", request.getProjectName())

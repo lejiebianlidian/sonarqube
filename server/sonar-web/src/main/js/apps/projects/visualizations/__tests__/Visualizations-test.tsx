@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,20 +22,11 @@ import * as React from 'react';
 import Visualizations from '../Visualizations';
 
 it('renders', () => {
-  expect(
-    shallow(<Visualizations displayOrganizations={false} projects={[]} visualization="coverage" />)
-  ).toMatchSnapshot();
+  expect(shallow(<Visualizations projects={[]} visualization="coverage" />)).toMatchSnapshot();
 });
 
 it('renders when limit is reached', () => {
   expect(
-    shallow(
-      <Visualizations
-        displayOrganizations={false}
-        projects={[]}
-        total={1000}
-        visualization="coverage"
-      />
-    )
+    shallow(<Visualizations projects={[]} total={1000} visualization="coverage" />)
   ).toMatchSnapshot();
 });

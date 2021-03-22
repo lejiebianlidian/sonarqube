@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,9 +48,8 @@ public class ClobColumnDef extends AbstractColumnDef {
       case MsSql.ID:
         return "NVARCHAR (MAX)";
       case Oracle.ID:
-        return "CLOB";
       case H2.ID:
-        return "CLOB(2147483647)";
+        return "CLOB";
       case PostgreSql.ID:
         return "TEXT";
       default:

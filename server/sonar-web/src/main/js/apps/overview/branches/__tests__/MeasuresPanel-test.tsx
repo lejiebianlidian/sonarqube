@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ it('should render correctly if there is no new code measures', () => {
 
 it('should render correctly if branch is misconfigured', () => {
   const wrapper = shallowRender({
-    branchLike: mockBranch({ name: 'own-reference' }),
+    branch: mockBranch({ name: 'own-reference' }),
     measures: [
       mockMeasureEnhanced({ metric: mockMetric({ key: MetricKey.coverage }) }),
       mockMeasureEnhanced({ metric: mockMetric({ key: MetricKey.bugs }) })
@@ -92,7 +92,7 @@ it('should render correctly if the data is still loading', () => {
 function shallowRender(props: Partial<MeasuresPanelProps> = {}) {
   return shallow<MeasuresPanelProps>(
     <MeasuresPanel
-      branchLike={mockMainBranch()}
+      branch={mockMainBranch()}
       component={mockComponent()}
       measures={[
         mockMeasureEnhanced({ metric: mockMetric({ key: MetricKey.coverage }) }),

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -116,6 +116,17 @@ public class ValidateActionTest {
   @Test
   public void return_false_when_no_jwt_nor_basic_auth_and_force_authentication_is_true() throws Exception {
     settings.setProperty("sonar.forceAuthentication", "true");
+    when(jwtHttpHandler.validateToken(request, response)).thenReturn(Optional.empty());
+    when(basicAuthentication.authenticate(request)).thenReturn(Optional.empty());
+
+    underTest.doFilter(request, response, chain);
+
+    verify(response).setContentType(MediaTypes.JSON);
+    JsonAssert.assertJson(stringWriter.toString()).isSimilarTo("{\"valid\":false}");
+  }
+
+  @Test
+  public void return_false_when_no_jwt_nor_basic_auth_and_force_authentication_fallback_to_default() throws Exception {
     when(jwtHttpHandler.validateToken(request, response)).thenReturn(Optional.empty());
     when(basicAuthentication.authenticate(request)).thenReturn(Optional.empty());
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -58,20 +58,6 @@ public class GenericCoverageSensor implements ProjectSensor {
         .multiValues(true)
         .build());
 
-  }
-
-  private void loadArrayDeprecated(Set<String> reportPaths, String propertyKey) {
-    if (config.getOriginalProperties().containsKey(propertyKey)) {
-      LOG.warn("Property '{}' is deprecated. Please use '{}' instead.", propertyKey, REPORT_PATHS_PROPERTY_KEY);
-      reportPaths.addAll(Arrays.asList(config.getStringArray(propertyKey)));
-    }
-  }
-
-  private void loadDeprecated(Set<String> reportPaths, String propertyKey) {
-    if (config.getOriginalProperties().containsKey(propertyKey)) {
-      LOG.warn("Property '{}' is deprecated. Please use '{}' instead.", propertyKey, REPORT_PATHS_PROPERTY_KEY);
-      config.get(propertyKey).ifPresent(reportPaths::add);
-    }
   }
 
   @Override

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,6 @@ public class BranchCoverageRuleTest extends CoverageRuleTest {
 
   @Override
   protected String getExpectedIssueMessage() {
-    return "23 more branches need to be covered by tests to reach the minimum threshold of 65.0% branch coverage.";
+    return "23 more conditions need to be covered by tests to reach the minimum threshold of 65.0% condition coverage.";
   }
 }

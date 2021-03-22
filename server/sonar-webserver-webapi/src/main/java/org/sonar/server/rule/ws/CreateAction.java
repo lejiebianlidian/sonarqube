@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ public class CreateAction implements RulesWsAction {
 
   @Override
   public void handle(Request request, Response response) throws Exception {
-    ruleWsSupport.checkQProfileAdminPermissionOnDefaultOrganization();
+    ruleWsSupport.checkQProfileAdminPermission();
     String customKey = request.mandatoryParam(PARAM_CUSTOM_KEY);
     try (DbSession dbSession = dbClient.openSession(false)) {
       try {

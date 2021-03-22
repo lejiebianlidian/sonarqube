@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -206,8 +206,7 @@ public class PropertiesDao implements Dao {
     save(getMapper(session), property.getKey(), property.getUserUuid(), property.getComponentUuid(), property.getValue());
   }
 
-  private void save(PropertiesMapper mapper, String key,
-                    @Nullable String userUuid, @Nullable String componentUuid, @Nullable String value) {
+  private void save(PropertiesMapper mapper, String key, @Nullable String userUuid, @Nullable String componentUuid, @Nullable String value) {
     checkKey(key);
 
     long now = system2.now();
@@ -289,13 +288,13 @@ public class PropertiesDao implements Dao {
     }
   }
 
-  public void deleteByOrganizationAndUser(DbSession dbSession, String organizationUuid, String userUuid) {
-    List<String> uuids = getMapper(dbSession).selectUuidsByOrganizationAndUser(organizationUuid, userUuid);
+  public void deleteByUser(DbSession dbSession, String userUuid) {
+    List<String> uuids = getMapper(dbSession).selectUuidsByUser(userUuid);
     executeLargeInputsWithoutOutput(uuids, subList -> getMapper(dbSession).deleteByUuids(subList));
   }
 
-  public void deleteByOrganizationAndMatchingLogin(DbSession dbSession, String organizationUuid, String login, List<String> propertyKeys) {
-    List<String> uuids = getMapper(dbSession).selectIdsByOrganizationAndMatchingLogin(organizationUuid, login, propertyKeys);
+  public void deleteByMatchingLogin(DbSession dbSession, String login, List<String> propertyKeys) {
+    List<String> uuids = getMapper(dbSession).selectIdsByMatchingLogin(login, propertyKeys);
     executeLargeInputsWithoutOutput(uuids, list -> getMapper(dbSession).deleteByUuids(list));
   }
 

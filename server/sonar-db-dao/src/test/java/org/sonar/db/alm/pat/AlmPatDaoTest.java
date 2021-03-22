@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ public class AlmPatDaoTest {
 
     underTest.delete(dbSession, almPat);
 
-    assertThat(underTest.selectByUuid(dbSession, almPat.getUuid()).isPresent()).isFalse();
+    assertThat(underTest.selectByUuid(dbSession, almPat.getUuid())).isNotPresent();
   }
 
   @Test
@@ -134,7 +134,7 @@ public class AlmPatDaoTest {
 
     underTest.deleteByUser(dbSession, userDto);
 
-    assertThat(underTest.selectByUuid(dbSession, almPat.getUuid()).isPresent()).isFalse();
+    assertThat(underTest.selectByUuid(dbSession, almPat.getUuid())).isNotPresent();
   }
 
   @Test
@@ -147,7 +147,7 @@ public class AlmPatDaoTest {
 
     underTest.deleteByAlmSetting(dbSession, almSettingDto);
 
-    assertThat(underTest.selectByUuid(dbSession, almPat.getUuid()).isPresent()).isFalse();
+    assertThat(underTest.selectByUuid(dbSession, almPat.getUuid())).isNotPresent();
   }
 
 }

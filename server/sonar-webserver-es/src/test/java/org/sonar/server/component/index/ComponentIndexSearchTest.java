@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
+import org.sonar.db.component.ComponentTesting;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.SearchIdResult;
 import org.sonar.server.es.SearchOptions;
@@ -38,9 +38,9 @@ import org.sonar.server.permission.index.PermissionIndexerTester;
 import org.sonar.server.permission.index.WebAuthorizationTypeSupport;
 import org.sonar.server.tester.UserSessionRule;
 
-import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.server.component.index.ComponentIndexDefinition.TYPE_COMPONENT;
 
 public class ComponentIndexSearchTest {
   @Rule
@@ -52,10 +52,9 @@ public class ComponentIndexSearchTest {
   @Rule
   public ComponentTextSearchFeatureRule features = new ComponentTextSearchFeatureRule();
 
-  private ComponentIndexer indexer = new ComponentIndexer(db.getDbClient(), es.client());
-  private PermissionIndexerTester authorizationIndexerTester = new PermissionIndexerTester(es, indexer);
-
-  private ComponentIndex underTest = new ComponentIndex(es.client(), new WebAuthorizationTypeSupport(userSession), System2.INSTANCE);
+  private final ComponentIndexer indexer = new ComponentIndexer(db.getDbClient(), es.client());
+  private final PermissionIndexerTester authorizationIndexerTester = new PermissionIndexerTester(es, indexer);
+  private final ComponentIndex underTest = new ComponentIndex(es.client(), new WebAuthorizationTypeSupport(userSession), System2.INSTANCE);
 
   @Test
   public void filter_by_name() {
@@ -93,19 +92,6 @@ public class ComponentIndexSearchTest {
   }
 
   @Test
-  public void filter_by_organization() {
-    OrganizationDto organization = db.organizations().insert();
-    OrganizationDto anotherOrganization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
-    ComponentDto anotherProject = db.components().insertPrivateProject(anotherOrganization);
-    index(project, anotherProject);
-
-    SearchIdResult<String> result = underTest.search(ComponentQuery.builder().setOrganization(organization.getUuid()).build(), new SearchOptions());
-
-    assertThat(result.getUuids()).containsExactlyInAnyOrder(project.uuid());
-  }
-
-  @Test
   public void order_by_name_case_insensitive() {
     ComponentDto project2 = db.components().insertPrivateProject(p -> p.setName("PROJECT 2"));
     ComponentDto project3 = db.components().insertPrivateProject(p -> p.setName("project 3"));
@@ -130,11 +116,23 @@ public class ComponentIndexSearchTest {
   }
 
   @Test
+  public void returns_correct_total_number_if_default_index_window_exceeded() {
+    userSession.logIn().setRoot();
+
+    index(IntStream.range(0, 12_000)
+      .mapToObj(i -> newDoc(ComponentTesting.newPrivateProjectDto()))
+      .toArray(ComponentDoc[]::new));
+
+    SearchIdResult<String> result = underTest.search(ComponentQuery.builder().build(), new SearchOptions().setPage(2, 3));
+    assertThat(result.getTotal()).isEqualTo(12_000);
+  }
+
+  @Test
   public void filter_unauthorized_components() {
     ComponentDto unauthorizedProject = db.components().insertPrivateProject();
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto project2 = db.components().insertPrivateProject();
-    indexer.indexOnStartup(emptySet());
+    indexer.indexAll();
     authorizationIndexerTester.allowOnlyAnyone(project1);
     authorizationIndexerTester.allowOnlyAnyone(project2);
 
@@ -145,7 +143,20 @@ public class ComponentIndexSearchTest {
   }
 
   private void index(ComponentDto... components) {
-    indexer.indexOnStartup(emptySet());
-    Arrays.stream(components).forEach(c -> authorizationIndexerTester.allowOnlyAnyone(c));
+    indexer.indexAll();
+    Arrays.stream(components).forEach(authorizationIndexerTester::allowOnlyAnyone);
+  }
+
+  private void index(ComponentDoc... componentDocs) {
+    es.putDocuments(TYPE_COMPONENT.getMainType(), componentDocs);
+  }
+
+  private ComponentDoc newDoc(ComponentDto componentDoc) {
+    return new ComponentDoc()
+      .setId(componentDoc.uuid())
+      .setKey(componentDoc.getKey())
+      .setName(componentDoc.name())
+      .setProjectUuid(componentDoc.projectUuid())
+      .setQualifier(componentDoc.qualifier());
   }
 }

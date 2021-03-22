@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,19 +27,12 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableCollection;
 
 public class ComponentQuery {
-  private final String organizationUuid;
   private final String query;
   private final Collection<String> qualifiers;
 
   private ComponentQuery(Builder builder) {
-    this.organizationUuid = builder.organizationUuid;
     this.query = builder.query;
     this.qualifiers = builder.qualifiers;
-  }
-
-  @CheckForNull
-  public String getOrganizationUuid() {
-    return organizationUuid;
   }
 
   @CheckForNull
@@ -56,17 +49,11 @@ public class ComponentQuery {
   }
 
   public static class Builder {
-    private String organizationUuid;
     private String query;
     private Collection<String> qualifiers = emptySet();
 
     private Builder() {
       // enforce static factory method
-    }
-
-    public Builder setOrganization(@Nullable String organizationUuid) {
-      this.organizationUuid = organizationUuid;
-      return this;
     }
 
     public Builder setQuery(@Nullable String query) {

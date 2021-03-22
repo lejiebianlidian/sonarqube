@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,11 +31,11 @@ import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
 import org.sonar.db.component.ResourceTypesRule;
 import org.sonar.db.metric.MetricDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.component.ComponentFinder;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.exceptions.NotFoundException;
+import org.sonar.server.issue.index.AsyncIssueIndexing;
 import org.sonar.server.issue.index.IssueIndexer;
 import org.sonar.server.issue.index.IssueIteratorFactory;
 import org.sonar.server.permission.index.PermissionIndexerTester;
@@ -47,9 +47,9 @@ import org.sonarqube.ws.ProjectBranches.Branch;
 import org.sonarqube.ws.ProjectBranches.ListWsResponse;
 
 import static java.lang.String.format;
-import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.mock;
 import static org.sonar.api.measures.CoreMetrics.ALERT_STATUS_KEY;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.api.rules.RuleType.BUG;
@@ -72,9 +72,10 @@ public class ListActionTest {
   @Rule
   public UserSessionRule userSession = UserSessionRule.standalone();
 
-  private ResourceTypes resourceTypes = new ResourceTypesRule().setRootQualifiers(PROJECT);
-  private IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), null);
-  private PermissionIndexerTester permissionIndexerTester = new PermissionIndexerTester(es, issueIndexer);
+  private final AsyncIssueIndexing asyncIssueIndexing = mock(AsyncIssueIndexing.class);
+  private final ResourceTypes resourceTypes = new ResourceTypesRule().setRootQualifiers(PROJECT);
+  private final IssueIndexer issueIndexer = new IssueIndexer(es.client(), db.getDbClient(), new IssueIteratorFactory(db.getDbClient()), asyncIssueIndexing);
+  private final PermissionIndexerTester permissionIndexerTester = new PermissionIndexerTester(es, issueIndexer);
 
   private MetricDto qualityGateStatus;
 
@@ -167,8 +168,7 @@ public class ListActionTest {
 
   @Test
   public void main_branch_with_specified_name() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+    ComponentDto project = db.components().insertPrivateProject();
     db.getDbClient().branchDao().updateMainBranchName(db.getSession(), project.uuid(), "head");
     db.commit();
     userSession.logIn().addProjectPermission(USER, project);
@@ -248,7 +248,7 @@ public class ListActionTest {
 
   @Test
   public void application_branches() {
-    ComponentDto application = db.components().insertPrivateApplication(db.getDefaultOrganization());
+    ComponentDto application = db.components().insertPrivateApplication();
     db.components().insertProjectBranch(application, b -> b.setKey("feature/bar"));
     db.components().insertProjectBranch(application, b -> b.setKey("feature/foo"));
     userSession.logIn().addProjectPermission(USER, application);
@@ -266,9 +266,8 @@ public class ListActionTest {
   }
 
   @Test
-  public void fail_when_using_branch_db_key() throws Exception {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+  public void fail_when_using_branch_db_key() {
+    ComponentDto project = db.components().insertPrivateProject();
     userSession.logIn().addProjectPermission(USER, project);
     ComponentDto branch = db.components().insertProjectBranch(project);
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,16 +29,13 @@ import org.sonar.core.util.Uuids;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.SearchOptions;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.server.user.index.UserIndexDefinition.TYPE_USER;
 
 public class UserIndexTest {
 
-  private static final String ORGANIZATION_UUID = "my-organization";
   private static final String USER1_LOGIN = "user1";
   private static final String USER2_LOGIN = "user2";
 
@@ -57,14 +54,14 @@ public class UserIndexTest {
     es.putDocuments(TYPE_USER, user2);
     es.putDocuments(TYPE_USER, user3);
 
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user1.scmAccounts().get(0), ORGANIZATION_UUID)).extractingResultOf("login").containsOnly(user1.login());
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user1.login(), ORGANIZATION_UUID)).extractingResultOf("login").containsOnly(user1.login());
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user1.scmAccounts().get(0))).extractingResultOf("login").containsOnly(user1.login());
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user1.login())).extractingResultOf("login").containsOnly(user1.login());
 
     // both users share the same email
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user1.email(), ORGANIZATION_UUID)).extracting(UserDoc::login).containsOnly(user1.login(), user2.login());
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user1.email())).extracting(UserDoc::login).containsOnly(user1.login(), user2.login());
 
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("", ORGANIZATION_UUID)).isEmpty();
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("unknown", ORGANIZATION_UUID)).isEmpty();
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("")).isEmpty();
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("unknown")).isEmpty();
   }
 
   @Test
@@ -73,8 +70,8 @@ public class UserIndexTest {
     UserDoc user = newUser(USER1_LOGIN, singletonList(scmAccount)).setActive(false);
     es.putDocuments(TYPE_USER, user);
 
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user.login(), ORGANIZATION_UUID)).isEmpty();
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(scmAccount, ORGANIZATION_UUID)).isEmpty();
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(user.login())).isEmpty();
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(scmAccount)).isEmpty();
   }
 
   @Test
@@ -90,7 +87,7 @@ public class UserIndexTest {
     es.putDocuments(TYPE_USER, user4);
 
     // restrict results to 3 users
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(email, ORGANIZATION_UUID)).hasSize(3);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount(email)).hasSize(3);
   }
 
   @Test
@@ -98,8 +95,8 @@ public class UserIndexTest {
     UserDoc user = newUser("the_login", singletonList("John.Smith"));
     es.putDocuments(TYPE_USER, user);
 
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_login", ORGANIZATION_UUID)).hasSize(1);
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_Login", ORGANIZATION_UUID)).isEmpty();
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_login")).hasSize(1);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_Login")).isEmpty();
   }
 
   @Test
@@ -107,9 +104,9 @@ public class UserIndexTest {
     UserDoc user = newUser("the_login", "the_EMAIL@corp.com", singletonList("John.Smith"));
     es.putDocuments(TYPE_USER, user);
 
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_EMAIL@corp.com", ORGANIZATION_UUID)).hasSize(1);
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_email@corp.com", ORGANIZATION_UUID)).hasSize(1);
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("email", ORGANIZATION_UUID)).isEmpty();
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_EMAIL@corp.com")).hasSize(1);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("the_email@corp.com")).hasSize(1);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("email")).isEmpty();
   }
 
   @Test
@@ -117,20 +114,10 @@ public class UserIndexTest {
     UserDoc user = newUser("the_login", singletonList("John.Smith"));
     es.putDocuments(TYPE_USER, user);
 
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("John.Smith", ORGANIZATION_UUID)).hasSize(1);
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("JOHN.SMIth", ORGANIZATION_UUID)).hasSize(1);
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("JOHN.SMITH", ORGANIZATION_UUID)).hasSize(1);
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("JOHN", ORGANIZATION_UUID)).isEmpty();
-  }
-
-  @Test
-  public void getAtMostThreeActiveUsersForScmAccount_search_only_user_within_given_organization() {
-    UserDoc user1 = newUser("user1", singletonList("same_scm")).setOrganizationUuids(singletonList(ORGANIZATION_UUID));
-    UserDoc user2 = newUser("user2", singletonList("same_scm")).setOrganizationUuids(singletonList("another_organization"));
-    es.putDocuments(TYPE_USER, user1);
-    es.putDocuments(TYPE_USER, user2);
-
-    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("same_scm", ORGANIZATION_UUID)).extractingResultOf("login").containsOnly(user1.login());
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("John.Smith")).hasSize(1);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("JOHN.SMIth")).hasSize(1);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("JOHN.SMITH")).hasSize(1);
+    assertThat(underTest.getAtMostThreeActiveUsersForScmAccount("JOHN")).isEmpty();
   }
 
   @Test
@@ -147,30 +134,6 @@ public class UserIndexTest {
     assertThat(underTest.search(userQuery.setTextQuery("EMAIL1").build(), new SearchOptions()).getDocs()).hasSize(1);
   }
 
-  @Test
-  public void search_users_filter_by_organization_uuid() {
-    es.putDocuments(TYPE_USER, newUser(USER1_LOGIN, asList("user_1", "u1")).setEmail("email1")
-      .setOrganizationUuids(newArrayList("O1", "O2")));
-    es.putDocuments(TYPE_USER, newUser(USER2_LOGIN, emptyList()).setEmail("email2")
-      .setOrganizationUuids(newArrayList("O2")));
-
-    assertThat(underTest.search(userQuery.setOrganizationUuid("O42").build(), new SearchOptions()).getDocs()).isEmpty();
-    assertThat(underTest.search(userQuery.setOrganizationUuid("O2").build(), new SearchOptions()).getDocs()).extracting(UserDoc::login).containsOnly(USER1_LOGIN, USER2_LOGIN);
-    assertThat(underTest.search(userQuery.setOrganizationUuid("O1").build(), new SearchOptions()).getDocs()).extracting(UserDoc::login).containsOnly(USER1_LOGIN);
-  }
-
-  @Test
-  public void search_users_filter_by_excluded_organization_uuid() {
-    es.putDocuments(TYPE_USER, newUser(USER1_LOGIN, asList("user_1", "u1")).setEmail("email1")
-      .setOrganizationUuids(newArrayList("O1", "O2")));
-    es.putDocuments(TYPE_USER, newUser(USER2_LOGIN, emptyList()).setEmail("email2")
-      .setOrganizationUuids(newArrayList("O2")));
-
-    assertThat(underTest.search(userQuery.setExcludedOrganizationUuid("O42").build(), new SearchOptions()).getDocs()).hasSize(2);
-    assertThat(underTest.search(userQuery.setExcludedOrganizationUuid("O2").build(), new SearchOptions()).getDocs()).isEmpty();
-    assertThat(underTest.search(userQuery.setExcludedOrganizationUuid("O1").build(), new SearchOptions()).getDocs()).hasSize(1);
-  }
-
   private static UserDoc newUser(String login, List<String> scmAccounts) {
     return new UserDoc()
       .setUuid(Uuids.createFast())
@@ -178,8 +141,7 @@ public class UserIndexTest {
       .setName(login.toUpperCase(Locale.ENGLISH))
       .setEmail(login + "@mail.com")
       .setActive(true)
-      .setScmAccounts(scmAccounts)
-      .setOrganizationUuids(singletonList(ORGANIZATION_UUID));
+      .setScmAccounts(scmAccounts);
   }
 
   private static UserDoc newUser(String login, String email, List<String> scmAccounts) {
@@ -189,7 +151,6 @@ public class UserIndexTest {
       .setName(login.toUpperCase(Locale.ENGLISH))
       .setEmail(email)
       .setActive(true)
-      .setScmAccounts(scmAccounts)
-      .setOrganizationUuids(singletonList(ORGANIZATION_UUID));
+      .setScmAccounts(scmAccounts);
   }
 }

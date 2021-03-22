@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -83,6 +83,10 @@ public class IssueDoc extends BaseDoc {
     return getField(IssueIndexDefinition.FIELD_ISSUE_RULE_UUID);
   }
 
+  public IssueScope scope() {
+    return IssueScope.valueOf(getField(IssueIndexDefinition.FIELD_ISSUE_SCOPE));
+  }
+
   public String language() {
     return getField(IssueIndexDefinition.FIELD_ISSUE_LANGUAGE);
   }
@@ -154,11 +158,6 @@ public class IssueDoc extends BaseDoc {
     return getNullableField(IssueIndexDefinition.FIELD_ISSUE_DIRECTORY_PATH);
   }
 
-  @CheckForNull
-  public String organizationUuid() {
-    return getNullableField(IssueIndexDefinition.FIELD_ISSUE_ORGANIZATION_UUID);
-  }
-
   public IssueDoc setKey(@Nullable String s) {
     setField(IssueIndexDefinition.FIELD_ISSUE_KEY, s);
     return this;
@@ -192,6 +191,11 @@ public class IssueDoc extends BaseDoc {
 
   public IssueDoc setRuleUuid(String s) {
     setField(IssueIndexDefinition.FIELD_ISSUE_RULE_UUID, s);
+    return this;
+  }
+
+  public IssueDoc setScope(IssueScope s) {
+    setField(IssueIndexDefinition.FIELD_ISSUE_SCOPE, s.toString());
     return this;
   }
 
@@ -278,11 +282,6 @@ public class IssueDoc extends BaseDoc {
 
   public IssueDoc setType(RuleType type) {
     setField(IssueIndexDefinition.FIELD_ISSUE_TYPE, type.toString());
-    return this;
-  }
-
-  public IssueDoc setOrganizationUuid(String s) {
-    setField(IssueIndexDefinition.FIELD_ISSUE_ORGANIZATION_UUID, s);
     return this;
   }
 

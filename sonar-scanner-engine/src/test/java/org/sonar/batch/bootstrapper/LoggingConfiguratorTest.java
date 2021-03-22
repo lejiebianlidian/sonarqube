@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ public class LoggingConfiguratorTest {
     logger.error(TEST_STR);
     logger.info(TEST_STR);
     logger.debug(TEST_STR);
-    assertThat(out.size()).isEqualTo(0);
+    assertThat(out.size()).isZero();
   }
 
   @Test

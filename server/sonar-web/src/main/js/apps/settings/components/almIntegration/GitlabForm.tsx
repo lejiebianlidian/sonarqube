@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,34 +24,26 @@ import { AlmBindingDefinitionFormField } from './AlmBindingDefinitionFormField';
 
 export interface GitlabFormProps {
   formData: GitlabBindingDefinition;
-  hideKeyField?: boolean;
   onFieldChange: (fieldId: keyof GitlabBindingDefinition, value: string) => void;
-  readOnly?: boolean;
 }
 
 export default function GitlabForm(props: GitlabFormProps) {
-  const { formData, hideKeyField, onFieldChange, readOnly } = props;
+  const { formData, onFieldChange } = props;
 
   return (
     <>
-      {!hideKeyField && (
-        <AlmBindingDefinitionFormField
-          autoFocus={true}
-          help={translate('settings.almintegration.form.name.gitlab.help')}
-          id="name.gitlab"
-          onFieldChange={onFieldChange}
-          propKey="key"
-          readOnly={readOnly}
-          value={formData.key}
-        />
-      )}
+      <AlmBindingDefinitionFormField
+        autoFocus={true}
+        help={translate('settings.almintegration.form.name.gitlab.help')}
+        id="name.gitlab"
+        onFieldChange={onFieldChange}
+        propKey="key"
+        value={formData.key}
+      />
       <AlmBindingDefinitionFormField
         help={
           <>
-            {translate('settings.almintegration.form.url.gitlab.help1')}
-            <br />
-            <br />
-            {translate('settings.almintegration.form.url.gitlab.help2')}
+            {translate('settings.almintegration.form.url.gitlab.help')}
             <br />
             <em>https://gitlab.com/api/v4</em>
           </>
@@ -59,9 +51,7 @@ export default function GitlabForm(props: GitlabFormProps) {
         id="url.gitlab"
         maxLength={2000}
         onFieldChange={onFieldChange}
-        optional={true}
         propKey="url"
-        readOnly={readOnly}
         value={formData.url || ''}
       />
       <AlmBindingDefinitionFormField
@@ -69,8 +59,8 @@ export default function GitlabForm(props: GitlabFormProps) {
         id="personal_access_token"
         isTextArea={true}
         onFieldChange={onFieldChange}
+        overwriteOnly={Boolean(formData.key)}
         propKey="personalAccessToken"
-        readOnly={readOnly}
         value={formData.personalAccessToken}
       />
     </>

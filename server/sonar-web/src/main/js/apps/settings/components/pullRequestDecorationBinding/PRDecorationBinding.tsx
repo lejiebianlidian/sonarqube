@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,24 +18,33 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { HttpStatus } from 'sonar-ui-common/helpers/request';
 import {
   deleteProjectAlmBinding,
   getAlmSettings,
   getProjectAlmBinding,
   setProjectAzureBinding,
   setProjectBitbucketBinding,
+  setProjectBitbucketCloudBinding,
   setProjectGithubBinding,
   setProjectGitlabBinding
 } from '../../../../api/alm-settings';
 import throwGlobalError from '../../../../app/utils/throwGlobalError';
+import { getAppState, Store } from '../../../../store/rootReducer';
 import {
   AlmKeys,
   AlmSettingsInstance,
   ProjectAlmBindingResponse
 } from '../../../../types/alm-settings';
+import { EditionKey } from '../../../../types/editions';
 import PRDecorationBindingRenderer from './PRDecorationBindingRenderer';
 
 type FormData = T.Omit<ProjectAlmBindingResponse, 'alm'>;
+
+interface StateProps {
+  monorepoEnabled: boolean;
+}
 
 interface Props {
   component: T.Component;
@@ -56,13 +65,14 @@ interface State {
 const REQUIRED_FIELDS_BY_ALM: {
   [almKey in AlmKeys]: Array<keyof T.Omit<FormData, 'key'>>;
 } = {
-  [AlmKeys.Azure]: [],
-  [AlmKeys.Bitbucket]: ['repository', 'slug'],
+  [AlmKeys.Azure]: ['repository', 'slug'],
+  [AlmKeys.BitbucketServer]: ['repository', 'slug'],
+  [AlmKeys.BitbucketCloud]: ['repository'],
   [AlmKeys.GitHub]: ['repository'],
-  [AlmKeys.GitLab]: []
+  [AlmKeys.GitLab]: ['repository']
 };
 
-export default class PRDecorationBinding extends React.PureComponent<Props, State> {
+export class PRDecorationBinding extends React.PureComponent<Props & StateProps, State> {
   mounted = false;
   state: State = {
     formData: { key: '' },
@@ -112,7 +122,7 @@ export default class PRDecorationBinding extends React.PureComponent<Props, Stat
 
   getProjectBinding(project: string): Promise<ProjectAlmBindingResponse | undefined> {
     return getProjectAlmBinding(project).catch((response: Response) => {
-      if (response && response.status === 404) {
+      if (response && response.status === HttpStatus.NotFound) {
         return undefined;
       }
       return throwGlobalError(response);
@@ -137,6 +147,7 @@ export default class PRDecorationBinding extends React.PureComponent<Props, Stat
               repository: '',
               slug: ''
             },
+            orignalData: undefined,
             isChanged: false,
             isConfigured: false,
             saving: false,
@@ -154,49 +165,64 @@ export default class PRDecorationBinding extends React.PureComponent<Props, Stat
   ): Promise<void> {
     const almSetting = key;
     const project = this.props.component.key;
+    const repository = almSpecificFields?.repository;
+    const slug = almSpecificFields?.slug;
+    const monorepo = almSpecificFields?.monorepo ?? false;
+
+    if (!repository) {
+      return Promise.reject();
+    }
 
     switch (alm) {
-      case AlmKeys.Azure:
-        return setProjectAzureBinding({
-          almSetting,
-          project
-        });
-      case AlmKeys.Bitbucket: {
-        if (!almSpecificFields) {
+      case AlmKeys.Azure: {
+        if (!slug) {
           return Promise.reject();
         }
-        const { repository = '', slug = '' } = almSpecificFields;
+        return setProjectAzureBinding({
+          almSetting,
+          project,
+          projectName: slug,
+          repositoryName: repository,
+          monorepo
+        });
+      }
+      case AlmKeys.BitbucketServer: {
+        if (!slug) {
+          return Promise.reject();
+        }
         return setProjectBitbucketBinding({
           almSetting,
           project,
           repository,
-          slug
+          slug,
+          monorepo
+        });
+      }
+      case AlmKeys.BitbucketCloud: {
+        return setProjectBitbucketCloudBinding({
+          almSetting,
+          project,
+          repository
         });
       }
       case AlmKeys.GitHub: {
-        const repository = almSpecificFields?.repository;
         // By default it must remain true.
-        const summaryCommentEnabled =
-          almSpecificFields?.summaryCommentEnabled === undefined
-            ? true
-            : almSpecificFields?.summaryCommentEnabled;
-        if (!repository) {
-          return Promise.reject();
-        }
+        const summaryCommentEnabled = almSpecificFields?.summaryCommentEnabled ?? true;
         return setProjectGithubBinding({
           almSetting,
           project,
           repository,
-          summaryCommentEnabled
+          summaryCommentEnabled,
+          monorepo
         });
       }
 
       case AlmKeys.GitLab: {
-        const repository = almSpecificFields && almSpecificFields.repository;
         return setProjectGitlabBinding({
           almSetting,
           project,
-          repository
+          repository,
+          monorepo
         });
       }
 
@@ -231,19 +257,21 @@ export default class PRDecorationBinding extends React.PureComponent<Props, Stat
   };
 
   isDataSame(
-    { key, repository = '', slug = '', summaryCommentEnabled = false }: FormData,
+    { key, repository = '', slug = '', summaryCommentEnabled = false, monorepo = false }: FormData,
     {
       key: oKey = '',
       repository: oRepository = '',
       slug: oSlug = '',
-      summaryCommentEnabled: osummaryCommentEnabled = false
+      summaryCommentEnabled: osummaryCommentEnabled = false,
+      monorepo: omonorepo = false
     }: FormData
   ) {
     return (
       key === oKey &&
       repository === oRepository &&
       slug === oSlug &&
-      summaryCommentEnabled === osummaryCommentEnabled
+      summaryCommentEnabled === osummaryCommentEnabled &&
+      monorepo === omonorepo
     );
   }
 
@@ -253,6 +281,7 @@ export default class PRDecorationBinding extends React.PureComponent<Props, Stat
         ...formData,
         [id]: value
       };
+
       return {
         formData: newFormData,
         isValid: this.validateForm(newFormData),
@@ -275,13 +304,25 @@ export default class PRDecorationBinding extends React.PureComponent<Props, Stat
   };
 
   render() {
+    const { monorepoEnabled } = this.props;
+
     return (
       <PRDecorationBindingRenderer
         onFieldChange={this.handleFieldChange}
         onReset={this.handleReset}
         onSubmit={this.handleSubmit}
+        monorepoEnabled={monorepoEnabled}
         {...this.state}
       />
     );
   }
 }
+
+const mapStateToProps = (state: Store): StateProps => ({
+  // This feature trigger will be replaced when SONAR-14349 is implemented
+  monorepoEnabled: [EditionKey.enterprise, EditionKey.datacenter].includes(
+    getAppState(state).edition as EditionKey
+  )
+});
+
+export default connect(mapStateToProps)(PRDecorationBinding);

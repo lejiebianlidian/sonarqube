@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -200,8 +200,9 @@ public class ClusterAppStateImpl implements ClusterAppState {
   }
 
   private boolean isElasticSearchAvailable() {
-    ClusterHealthStatus clusterHealthStatus = esConnector.getClusterHealthStatus();
-    return clusterHealthStatus.equals(ClusterHealthStatus.GREEN) || clusterHealthStatus.equals(ClusterHealthStatus.YELLOW);
+    return esConnector.getClusterHealthStatus()
+      .filter(t -> ClusterHealthStatus.GREEN.equals(t) || ClusterHealthStatus.YELLOW.equals(t))
+      .isPresent();
   }
 
   private class OperationalProcessListener implements EntryListener<ClusterProcess, Boolean> {

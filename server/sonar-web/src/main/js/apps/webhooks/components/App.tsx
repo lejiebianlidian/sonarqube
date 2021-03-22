@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ import WebhooksList from './WebhooksList';
 
 interface Props {
   component?: T.LightComponent;
-  organization: T.Organization | undefined;
 }
 
 interface State {
@@ -64,10 +63,8 @@ export default class App extends React.PureComponent<Props, State> {
     );
   };
 
-  getScopeParams = ({ organization, component } = this.props) => {
-    const organizationKey = organization && organization.key;
+  getScopeParams = ({ component } = this.props) => {
     return {
-      organization: component ? component.organization : organizationKey,
       project: component && component.key
     };
   };

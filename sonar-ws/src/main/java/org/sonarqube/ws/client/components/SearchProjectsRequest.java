@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@ public class SearchProjectsRequest {
   private List<String> f;
   private List<String> facets;
   private String filter;
-  private String organization;
   private String p;
   private String ps;
   private String s;
@@ -112,18 +111,6 @@ public class SearchProjectsRequest {
 
   public String getFilter() {
     return filter;
-  }
-
-  /**
-   * This is part of the internal API.
-   */
-  public SearchProjectsRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
   }
 
   /**

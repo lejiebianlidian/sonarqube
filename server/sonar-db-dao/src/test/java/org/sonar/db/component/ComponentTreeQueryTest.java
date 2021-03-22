@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
 import static org.sonar.db.component.ComponentTreeQuery.Strategy.CHILDREN;
 import static org.sonar.db.component.ComponentTreeQuery.Strategy.LEAVES;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 
 public class ComponentTreeQueryTest {
 
@@ -70,10 +69,10 @@ public class ComponentTreeQueryTest {
   @Test
   public void test_getUuidPath() {
     assertThat(ComponentTreeQuery.builder().setBaseUuid(BASE_UUID).setStrategy(CHILDREN)
-      .build().getUuidPath(newPrivateProjectDto(newOrganizationDto(), "PROJECT_UUID"))).isEqualTo(".PROJECT_UUID.");
+      .build().getUuidPath(newPrivateProjectDto("PROJECT_UUID"))).isEqualTo(".PROJECT_UUID.");
 
     assertThat(ComponentTreeQuery.builder().setBaseUuid(BASE_UUID).setStrategy(LEAVES)
-      .build().getUuidPath(newPrivateProjectDto(newOrganizationDto(), "PROJECT_UUID"))).isEqualTo(".PROJECT/_UUID.%");
+      .build().getUuidPath(newPrivateProjectDto("PROJECT_UUID"))).isEqualTo(".PROJECT/_UUID.%");
   }
 
   @Test

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,7 @@ export default class SimilarIssuesFilter extends React.PureComponent<Props> {
           overlay={<SimilarIssuesPopup issue={this.props.issue} onFilter={this.handleFilter} />}>
           <ButtonLink
             aria-label={translate('issue.filter_similar_issues')}
+            aria-expanded={this.props.isOpen}
             className="issue-action issue-action-with-options js-issue-filter"
             onClick={this.togglePopup}
             title={translate('issue.filter_similar_issues')}>

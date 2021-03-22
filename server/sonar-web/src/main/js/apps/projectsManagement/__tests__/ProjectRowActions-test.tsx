@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -119,12 +119,10 @@ function shallowRender(props: Partial<Props> = {}) {
   return shallow<ProjectRowActions>(
     <ProjectRowActions
       currentUser={mockLoggedInUser()}
-      organization="org"
       project={{
         id: 'foo',
         key: 'foo',
         name: 'Foo',
-        organization: 'bar',
         qualifier: 'TRK',
         visibility: 'private'
       }}

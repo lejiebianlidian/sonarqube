@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@ import org.sonar.api.utils.log.Loggers;
 import org.sonar.core.platform.EditionProvider;
 import org.sonar.core.platform.PlatformEditionProvider;
 import org.sonar.server.app.ProcessCommandWrapper;
+import org.sonar.server.authentication.DefaultAdminCredentialsVerifierImpl;
 import org.sonar.server.ce.queue.CeQueueCleaner;
 import org.sonar.server.es.IndexerStartupTask;
-import org.sonar.server.organization.DefaultOrganizationEnforcer;
 import org.sonar.server.platform.ServerLifecycleNotifier;
 import org.sonar.server.platform.web.RegisterServletFilters;
 import org.sonar.server.qualitygate.ProjectsInWarningDaemon;
@@ -42,6 +42,7 @@ import org.sonar.server.startup.RegisterMetrics;
 import org.sonar.server.startup.RegisterPermissionTemplates;
 import org.sonar.server.startup.RegisterPlugins;
 import org.sonar.server.startup.RenameDeprecatedPropertyKeys;
+import org.sonar.server.startup.UpgradeSuggestionsCleaner;
 import org.sonar.server.user.DoPrivileged;
 import org.sonar.server.user.ThreadLocalUserSession;
 
@@ -54,8 +55,7 @@ public class PlatformLevelStartup extends PlatformLevel {
   protected void configureLevel() {
     add(GeneratePluginIndex.class,
       RegisterPlugins.class,
-      ServerLifecycleNotifier.class,
-      DefaultOrganizationEnforcer.class);
+      ServerLifecycleNotifier.class);
 
     addIfStartupLeader(
       IndexerStartupTask.class,
@@ -70,9 +70,11 @@ public class PlatformLevelStartup extends PlatformLevel {
       RegisterQualityProfiles.class,
       RegisterPermissionTemplates.class,
       RenameDeprecatedPropertyKeys.class,
-      CeQueueCleaner.class);
+      CeQueueCleaner.class,
+      UpgradeSuggestionsCleaner.class,
+      DefaultAdminCredentialsVerifierImpl.class);
 
-    // RegisterServletFilters makes the WebService engine of Level4 served by the MasterServletFilter, therefor it
+    // RegisterServletFilters makes the WebService engine of Level4 served by the MasterServletFilter, therefore it
     // must be started after all the other startup tasks
     add(RegisterServletFilters.class);
   }

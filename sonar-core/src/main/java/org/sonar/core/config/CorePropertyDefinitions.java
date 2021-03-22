@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,9 +34,17 @@ import static org.sonar.api.PropertyType.STRING;
 public class CorePropertyDefinitions {
 
   public static final String SONAR_ANALYSIS = "sonar.analysis.";
+  public static final String SONAR_ANALYSIS_DETECTEDSCM = "sonar.analysis.detectedscm";
+  public static final String SONAR_ANALYSIS_DETECTEDCI = "sonar.analysis.detectedci";
 
   private static final String CATEGORY_ORGANIZATIONS = "organizations";
+
+  //TODO remove
+  @Deprecated
   public static final String ORGANIZATIONS_ANYONE_CAN_CREATE = "sonar.organizations.anyoneCanCreate";
+
+  //TODO remove
+  @Deprecated
   public static final String ORGANIZATIONS_CREATE_PERSONAL_ORG = "sonar.organizations.createPersonalOrg";
   public static final String DISABLE_NOTIFICATION_ON_BUILT_IN_QPROFILES = "sonar.builtInQualityProfiles.disableNotificationOnUpdate";
 
@@ -53,6 +61,7 @@ public class CorePropertyDefinitions {
     defs.addAll(PurgeProperties.all());
     defs.addAll(EmailSettings.definitions());
     defs.addAll(ScannerProperties.all());
+    defs.addAll(SvnProperties.all());
 
     defs.addAll(asList(
       PropertyDefinition.builder(CoreProperties.MODULE_LEVEL_ARCHIVED_SETTINGS)
@@ -131,6 +140,16 @@ public class CorePropertyDefinitions {
         .build(),
 
       // ISSUES
+      PropertyDefinition.builder(CoreProperties.DEVELOPER_AGGREGATED_INFO_DISABLED)
+        .name("Disable developer aggregated information")
+        .description("Don't show issue facets aggregating information per developer")
+        .category(CoreProperties.CATEGORY_GENERAL)
+        .subCategory(CoreProperties.SUBCATEGORY_ISSUES)
+        .onQualifiers(Qualifiers.PROJECT)
+        .type(BOOLEAN)
+        .defaultValue(Boolean.toString(false))
+        .build(),
+
       PropertyDefinition.builder(CoreProperties.DEFAULT_ISSUE_ASSIGNEE)
         .name("Default Assignee")
         .description("New issues will be assigned to this user each time it is not possible to determine the user who is the author of the issue.")
@@ -169,13 +188,6 @@ public class CorePropertyDefinitions {
       // ORGANIZATIONS
       PropertyDefinition.builder(ORGANIZATIONS_ANYONE_CAN_CREATE)
         .name("Allow any authenticated user to create organizations.")
-        .defaultValue(Boolean.toString(false))
-        .category(CATEGORY_ORGANIZATIONS)
-        .type(BOOLEAN)
-        .hidden()
-        .build(),
-      PropertyDefinition.builder(ORGANIZATIONS_CREATE_PERSONAL_ORG)
-        .name("Create an organization for each new user.")
         .defaultValue(Boolean.toString(false))
         .category(CATEGORY_ORGANIZATIONS)
         .type(BOOLEAN)

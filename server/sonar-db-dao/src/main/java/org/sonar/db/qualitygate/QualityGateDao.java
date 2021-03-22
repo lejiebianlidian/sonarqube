@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import org.sonar.core.util.UuidFactory;
 import org.sonar.db.Dao;
 import org.sonar.db.DatabaseUtils;
 import org.sonar.db.DbSession;
-import org.sonar.db.organization.OrganizationDto;
 
 public class QualityGateDao implements Dao {
 
@@ -43,12 +42,8 @@ public class QualityGateDao implements Dao {
     return newQualityGate;
   }
 
-  public void associate(DbSession dbSession, String uuid, OrganizationDto organization, QualityGateDto qualityGate) {
-    mapper(dbSession).insertOrgQualityGate(uuid, organization.getUuid(), qualityGate.getUuid());
-  }
-
-  public Collection<QualityGateDto> selectAll(DbSession session, OrganizationDto organization) {
-    return mapper(session).selectAll(organization.getUuid());
+  public Collection<QualityGateDto> selectAll(DbSession session) {
+    return mapper(session).selectAll();
   }
 
   @CheckForNull
@@ -61,32 +56,13 @@ public class QualityGateDao implements Dao {
     return mapper(session).selectByUuid(uuid);
   }
 
-  @CheckForNull
-  public QGateWithOrgDto selectByOrganizationAndUuid(DbSession dbSession, OrganizationDto organization, String qualityGateUuid) {
-    return mapper(dbSession).selectByUuidAndOrganization(qualityGateUuid, organization.getUuid());
-  }
-
-  @CheckForNull
-  public QGateWithOrgDto selectByOrganizationAndName(DbSession session, OrganizationDto organization, String name) {
-    return mapper(session).selectByNameAndOrganization(name, organization.getUuid());
-  }
-
-  public QGateWithOrgDto selectDefault(DbSession dbSession, OrganizationDto organization) {
-    return mapper(dbSession).selectDefault(organization.getUuid());
-  }
-
   public void delete(QualityGateDto qGate, DbSession session) {
     mapper(session).delete(qGate.getUuid());
-    mapper(session).deleteOrgQualityGatesByQualityGateUuid(qGate.getUuid());
   }
 
   public void deleteByUuids(DbSession session, Collection<String> uuids) {
     QualityGateMapper mapper = mapper(session);
     DatabaseUtils.executeLargeUpdates(uuids, mapper::deleteByUuids);
-  }
-
-  public void deleteOrgQualityGatesByOrganization(DbSession session, OrganizationDto organization) {
-    mapper(session).deleteOrgQualityGatesByOrganization(organization.getUuid());
   }
 
   public void update(QualityGateDto qGate, DbSession session) {

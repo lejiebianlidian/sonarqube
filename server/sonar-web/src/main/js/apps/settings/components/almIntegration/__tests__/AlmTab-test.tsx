@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,8 @@ import AlmTab from '../AlmTab';
 
 const DEFAULT_BINDING = {
   key: '',
-  personalAccessToken: ''
+  personalAccessToken: '',
+  url: undefined
 };
 
 it('should render correctly', () => {
@@ -94,13 +95,17 @@ function shallowRender(props: Partial<AlmTab<AzureBindingDefinition>['props']> =
   return shallow<AlmTab<AzureBindingDefinition>>(
     <AlmTab
       alm={AlmKeys.Azure}
+      branchesEnabled={true}
       createConfiguration={jest.fn()}
       defaultBinding={DEFAULT_BINDING}
       definitions={[mockAzureBindingDefinition()]}
+      definitionStatus={{}}
       form={jest.fn()}
+      help={<div />}
       loadingAlmDefinitions={false}
       loadingProjectCount={false}
       multipleAlmEnabled={true}
+      onCheck={jest.fn()}
       onDelete={jest.fn()}
       onUpdateDefinitions={jest.fn()}
       updateConfiguration={jest.fn()}

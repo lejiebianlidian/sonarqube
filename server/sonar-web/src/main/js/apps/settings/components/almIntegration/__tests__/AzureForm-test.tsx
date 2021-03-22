@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@ import { mockAzureBindingDefinition } from '../../../../../helpers/mocks/alm-set
 import AzureForm, { AzureFormProps } from '../AzureForm';
 
 it('should render correctly', () => {
-  expect(shallowRender()).toMatchSnapshot();
-  expect(shallowRender({ formData: mockAzureBindingDefinition() })).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot('create');
+  expect(shallowRender({ formData: mockAzureBindingDefinition() })).toMatchSnapshot('edit');
 });
 
 function shallowRender(props: Partial<AzureFormProps> = {}) {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.MessageException;
 
 public abstract class AbstractPatternInitializer {
-  private Configuration settings;
+  private final Configuration settings;
   private List<IssuePattern> multicriteriaPatterns;
 
   protected AbstractPatternInitializer(Configuration config) {
@@ -63,7 +63,7 @@ public abstract class AbstractPatternInitializer {
       if (StringUtils.isBlank(ruleKeyPattern)) {
         throw MessageException.of("Issue exclusions are misconfigured. Rule key pattern is mandatory for each entry of '" + getMulticriteriaConfigurationKey() + "'");
       }
-      IssuePattern pattern = new IssuePattern(filePathPattern != null ? filePathPattern : "*", ruleKeyPattern != null ? ruleKeyPattern : "*");
+      IssuePattern pattern = new IssuePattern(filePathPattern, ruleKeyPattern);
 
       multicriteriaPatterns.add(pattern);
     }

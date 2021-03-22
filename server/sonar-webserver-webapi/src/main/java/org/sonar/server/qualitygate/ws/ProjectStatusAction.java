@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -90,8 +90,9 @@ public class ProjectStatusAction implements QualityGatesWsAction {
       .setSince("5.3")
       .setHandler(this)
       .setChangelog(
+        new Change("8.5", "The field 'periods' in the response is deprecated. Use 'period' instead"),
         new Change("7.7", "The parameters 'branch' and 'pullRequest' were added"),
-        new Change("7.6", "The field 'warning' is deprecated from the response"),
+        new Change("7.6", "The field 'warning' in the response is deprecated"),
         new Change("6.4", "The field 'ignoredConditions' is added to the response"));
 
     action.createParam(PARAM_ANALYSIS_ID)

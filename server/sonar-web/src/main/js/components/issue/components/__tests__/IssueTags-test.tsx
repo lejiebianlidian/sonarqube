@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ import * as React from 'react';
 import { click } from 'sonar-ui-common/helpers/testUtils';
 import IssueTags from '../IssueTags';
 
-const issue = { key: 'issuekey', projectOrganization: 'foo', tags: ['mytag', 'test'] };
+const issue = { key: 'issuekey', tags: ['mytag', 'test'] };
 
 it('should render without the action when the correct rights are missing', () => {
   expect(shallowRender({ canSetTags: false, issue: { ...issue, tags: [] } })).toMatchSnapshot();

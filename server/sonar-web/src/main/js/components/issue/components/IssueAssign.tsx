@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,7 @@ import SetAssigneePopup from '../popups/SetAssigneePopup';
 
 interface Props {
   isOpen: boolean;
-  issue: Pick<
-    T.Issue,
-    'assignee' | 'assigneeActive' | 'assigneeAvatar' | 'assigneeName' | 'projectOrganization'
-  >;
+  issue: T.Issue;
   canAssign: boolean;
   onAssign: (login: string) => void;
   togglePopup: (popup: string, show?: boolean) => void;
@@ -56,7 +53,7 @@ export default class IssueAssign extends React.PureComponent<Props> {
             <Avatar
               className="little-spacer-right"
               hash={issue.assigneeAvatar}
-              name={issue.assigneeName || issue.assignee}
+              name={assigneeName}
               size={16}
             />
           </span>
@@ -73,15 +70,27 @@ export default class IssueAssign extends React.PureComponent<Props> {
   }
 
   render() {
-    if (this.props.canAssign) {
+    const { canAssign, isOpen, issue } = this.props;
+    const assigneeName = issue.assigneeName || issue.assignee;
+
+    if (canAssign) {
       return (
         <div className="dropdown">
           <Toggler
             closeOnEscape={true}
             onRequestClose={this.handleClose}
-            open={this.props.isOpen && this.props.canAssign}
-            overlay={<SetAssigneePopup issue={this.props.issue} onSelect={this.props.onAssign} />}>
+            open={isOpen}
+            overlay={<SetAssigneePopup onSelect={this.props.onAssign} />}>
             <ButtonLink
+              aria-expanded={isOpen}
+              aria-label={
+                assigneeName
+                  ? translateWithParameters(
+                      'issue.assign.assigned_to_x_click_to_change',
+                      assigneeName
+                    )
+                  : translate('issue.assign.unassigned_click_to_assign')
+              }
               className="issue-action issue-action-with-options js-issue-assign"
               onClick={this.toggleAssign}>
               {this.renderAssignee()}
@@ -90,8 +99,8 @@ export default class IssueAssign extends React.PureComponent<Props> {
           </Toggler>
         </div>
       );
-    } else {
-      return this.renderAssignee();
     }
+
+    return this.renderAssignee();
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { ButtonLink } from 'sonar-ui-common/components/controls/buttons';
 import { click } from 'sonar-ui-common/helpers/testUtils';
+import { RuleStatus } from '../../../../types/rules';
 import IssueMessage, { IssueMessageProps } from '../IssueMessage';
 
 it('should render correctly', () => {
@@ -29,13 +29,19 @@ it('should render correctly', () => {
   expect(shallowRender({ engine: 'js' })).toMatchSnapshot('with engine info');
   expect(shallowRender({ engineName: 'JS' })).toMatchSnapshot('with engine name');
   expect(shallowRender({ manualVulnerability: true })).toMatchSnapshot('is manual vulnerability');
+  expect(shallowRender({ ruleStatus: RuleStatus.Deprecated })).toMatchSnapshot(
+    'is deprecated rule'
+  );
+  expect(shallowRender({ ruleStatus: RuleStatus.Removed })).toMatchSnapshot('is removed rule');
 });
 
 it('should handle click correctly', () => {
   const onOpenRule = jest.fn();
   const wrapper = shallowRender({ onOpenRule });
   click(wrapper.find(ButtonLink));
-  expect(onOpenRule).toBeCalledWith({ key: 'javascript:S1067', organization: 'myorg' });
+  expect(onOpenRule).toBeCalledWith({
+    key: 'javascript:S1067'
+  });
 });
 
 function shallowRender(props: Partial<IssueMessageProps> = {}) {
@@ -44,7 +50,6 @@ function shallowRender(props: Partial<IssueMessageProps> = {}) {
       manualVulnerability={false}
       message="Reduce the number of conditional operators (4) used in the expression"
       onOpenRule={jest.fn()}
-      organization="myorg"
       ruleKey="javascript:S1067"
       {...props}
     />

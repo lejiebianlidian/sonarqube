@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ public class FileMetadataTest {
 
     Metadata metadata = new FileMetadata(analysisWarnings).readMetadata(new FileInputStream(tempFile), StandardCharsets.UTF_8, tempFile.getName());
     assertThat(metadata.lines()).isEqualTo(1);
-    assertThat(metadata.nonBlankLines()).isEqualTo(0);
+    assertThat(metadata.nonBlankLines()).isZero();
     assertThat(metadata.hash()).isNotEmpty();
     assertThat(metadata.originalLineStartOffsets()).containsOnly(0);
     assertThat(metadata.originalLineEndOffsets()).containsOnly(0);

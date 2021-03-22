@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 package org.sonar.server.newcodeperiod.ws;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,7 @@ public class ListAction implements NewCodePeriodsWsAction {
       userSession.checkProjectPermission(UserRole.ADMIN, project);
       Collection<BranchDto> branches = dbClient.branchDao().selectByProject(dbSession, project).stream()
         .filter(b -> b.getBranchType() == BranchType.BRANCH)
+        .sorted(Comparator.comparing(BranchDto::getKey))
         .collect(toList());
 
       List<NewCodePeriodDto> newCodePeriods = newCodePeriodDao.selectAllByProject(dbSession, project.getUuid());

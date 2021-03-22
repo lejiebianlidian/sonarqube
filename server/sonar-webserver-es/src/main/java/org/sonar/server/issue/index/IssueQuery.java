@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 package org.sonar.server.issue.index;
 
 import com.google.common.collect.ImmutableSet;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -31,7 +32,7 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.sonar.db.rule.RuleDefinitionDto;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.sonar.server.es.SearchOptions.MAX_LIMIT;
+import static org.sonar.server.es.SearchOptions.MAX_PAGE_SIZE;
 
 /**
  * @since 3.6
@@ -75,6 +76,7 @@ public class IssueQuery {
   private final Collection<RuleDefinitionDto> rules;
   private final Collection<String> assignees;
   private final Collection<String> authors;
+  private final Collection<String> scopes;
   private final Collection<String> languages;
   private final Collection<String> tags;
   private final Collection<String> types;
@@ -92,9 +94,9 @@ public class IssueQuery {
   private final String sort;
   private final Boolean asc;
   private final String facetMode;
-  private final String organizationUuid;
   private final String branchUuid;
   private final boolean mainBranch;
+  private final ZoneId timeZone;
 
   private IssueQuery(Builder builder) {
     this.issueKeys = defaultCollection(builder.issueKeys);
@@ -111,6 +113,7 @@ public class IssueQuery {
     this.rules = defaultCollection(builder.rules);
     this.assignees = defaultCollection(builder.assigneeUuids);
     this.authors = defaultCollection(builder.authors);
+    this.scopes = defaultCollection(builder.scopes);
     this.languages = defaultCollection(builder.languages);
     this.tags = defaultCollection(builder.tags);
     this.types = defaultCollection(builder.types);
@@ -128,9 +131,9 @@ public class IssueQuery {
     this.sort = builder.sort;
     this.asc = builder.asc;
     this.facetMode = builder.facetMode;
-    this.organizationUuid = builder.organizationUuid;
     this.branchUuid = builder.branchUuid;
     this.mainBranch = builder.mainBranch;
+    this.timeZone = builder.timeZone;
   }
 
   public Collection<String> issueKeys() {
@@ -169,7 +172,7 @@ public class IssueQuery {
     return directories;
   }
 
-  public Collection<String> fileUuids() {
+  public Collection<String> files() {
     return files;
   }
 
@@ -187,6 +190,10 @@ public class IssueQuery {
 
   public Collection<String> authors() {
     return authors;
+  }
+
+  public Collection<String> scopes() {
+    return scopes;
   }
 
   public Collection<String> languages() {
@@ -262,11 +269,6 @@ public class IssueQuery {
   }
 
   @CheckForNull
-  public String organizationUuid() {
-    return organizationUuid;
-  }
-
-  @CheckForNull
   public String branchUuid() {
     return branchUuid;
   }
@@ -288,6 +290,11 @@ public class IssueQuery {
     return new Builder();
   }
 
+  @CheckForNull
+  public ZoneId timeZone() {
+    return timeZone;
+  }
+
   public static class Builder {
     private Collection<String> issueKeys;
     private Collection<String> severities;
@@ -303,6 +310,7 @@ public class IssueQuery {
     private Collection<RuleDefinitionDto> rules;
     private Collection<String> assigneeUuids;
     private Collection<String> authors;
+    private Collection<String> scopes;
     private Collection<String> languages;
     private Collection<String> tags;
     private Collection<String> types;
@@ -320,9 +328,9 @@ public class IssueQuery {
     private String sort;
     private Boolean asc = false;
     private String facetMode;
-    private String organizationUuid;
     private String branchUuid;
     private boolean mainBranch = true;
+    private ZoneId timeZone;
 
     private Builder() {
 
@@ -373,7 +381,7 @@ public class IssueQuery {
       return this;
     }
 
-    public Builder fileUuids(@Nullable Collection<String> l) {
+    public Builder files(@Nullable Collection<String> l) {
       this.files = l;
       return this;
     }
@@ -395,6 +403,11 @@ public class IssueQuery {
 
     public Builder authors(@Nullable Collection<String> l) {
       this.authors = l;
+      return this;
+    }
+
+    public Builder scopes(@Nullable Collection<String> s) {
+      this.scopes = s;
       return this;
     }
 
@@ -500,18 +513,13 @@ public class IssueQuery {
 
     public IssueQuery build() {
       if (issueKeys != null) {
-        checkArgument(issueKeys.size() <= MAX_LIMIT, "Number of issue keys must be less than " + MAX_LIMIT + " (got " + issueKeys.size() + ")");
+        checkArgument(issueKeys.size() <= MAX_PAGE_SIZE, "Number of issue keys must be less than " + MAX_PAGE_SIZE + " (got " + issueKeys.size() + ")");
       }
       return new IssueQuery(this);
     }
 
     public Builder facetMode(String facetMode) {
       this.facetMode = facetMode;
-      return this;
-    }
-
-    public Builder organizationUuid(String s) {
-      this.organizationUuid = s;
       return this;
     }
 
@@ -522,6 +530,11 @@ public class IssueQuery {
 
     public Builder mainBranch(boolean mainBranch) {
       this.mainBranch = mainBranch;
+      return this;
+    }
+
+    public Builder timeZone(ZoneId timeZone) {
+      this.timeZone = timeZone;
       return this;
     }
   }

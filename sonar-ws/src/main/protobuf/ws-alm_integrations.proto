@@ -32,9 +32,19 @@ message SearchBitbucketserverReposWsResponse {
   repeated BBSRepo repositories = 2;
 }
 
+// WS api/alm_integrations/search_azure_repos
+message SearchAzureReposWsResponse {
+  repeated AzureRepo repositories = 2;
+}
+
 // WS api/alm_integrations/list_bibucketserver_projects
 message ListBitbucketserverProjectsWsResponse {
-  repeated BBSProject projects = 1;
+  repeated AlmProject projects = 1;
+}
+
+// WS api/alm_integrations/list_azure_projects
+message ListAzureProjectsWsResponse {
+  repeated AzureProject projects = 1;
 }
 
 message BBSRepo {
@@ -45,9 +55,21 @@ message BBSRepo {
   optional string projectKey = 5;
 }
 
-message BBSProject {
+message AzureRepo {
+  optional string name = 1;
+  optional string projectName = 2;
+  optional string sqProjectKey = 3;
+  optional string sqProjectName = 4;
+}
+
+message AlmProject {
   optional string key = 1;
   optional string name = 2;
+}
+
+message AzureProject {
+  optional string name = 1;
+  optional string description = 2;
 }
 
 // WS api/alm_integrations/get_github_client_id
@@ -78,4 +100,21 @@ message GithubRepository {
   optional string name = 3;
   optional string url = 4;
   optional string sqProjectKey = 5;
+}
+
+// WS api/alm_integrations/search_gitlab_repos
+message SearchGitlabReposWsResponse {
+  optional sonarqube.ws.commons.Paging paging = 1;
+  repeated GitlabRepository repositories = 2;
+}
+
+message GitlabRepository {
+  optional int64 id = 1;
+  optional string name = 2;
+  optional string pathName = 3;
+  optional string slug = 4;
+  optional string pathSlug = 5;
+  optional string url = 6;
+  optional string sqProjectKey = 7;
+  optional string sqProjectName = 8;
 }

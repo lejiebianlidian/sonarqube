@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ public class JwtCsrfVerifierTest {
     verify(response).addCookie(cookieArgumentCaptor.capture());
     Cookie cookie = cookieArgumentCaptor.getValue();
     assertThat(cookie.getValue()).isNull();
-    assertThat(cookie.getMaxAge()).isEqualTo(0);
+    assertThat(cookie.getMaxAge()).isZero();
   }
 
   private void verifyCookie(Cookie cookie) {

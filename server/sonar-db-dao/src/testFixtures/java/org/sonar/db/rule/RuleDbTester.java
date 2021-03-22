@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.rule.RuleParamType;
 import org.sonar.core.util.Uuids;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.user.UserDto;
 
 import static java.util.Arrays.asList;
@@ -129,15 +128,15 @@ public class RuleDbTester {
   }
 
   @SafeVarargs
-  public final RuleMetadataDto insertOrUpdateMetadata(RuleDefinitionDto rule, OrganizationDto organization, Consumer<RuleMetadataDto>... populaters) {
-    RuleMetadataDto dto = RuleTesting.newRuleMetadata(rule, organization);
+  public final RuleMetadataDto insertOrUpdateMetadata(RuleDefinitionDto rule, Consumer<RuleMetadataDto>... populaters) {
+    RuleMetadataDto dto = RuleTesting.newRuleMetadata(rule);
     asList(populaters).forEach(populater -> populater.accept(dto));
     return insertOrUpdateMetadata(dto);
   }
 
   @SafeVarargs
-  public final RuleMetadataDto insertOrUpdateMetadata(RuleDefinitionDto rule, UserDto noteUser, OrganizationDto organization, Consumer<RuleMetadataDto>... populaters) {
-    RuleMetadataDto dto = RuleTesting.newRuleMetadata(rule, noteUser, organization);
+  public final RuleMetadataDto insertOrUpdateMetadata(RuleDefinitionDto rule, UserDto noteUser, Consumer<RuleMetadataDto>... populaters) {
+    RuleMetadataDto dto = RuleTesting.newRuleMetadata(rule, noteUser);
     asList(populaters).forEach(populater -> populater.accept(dto));
     return insertOrUpdateMetadata(dto);
   }
@@ -169,10 +168,8 @@ public class RuleDbTester {
 
     insert(ruleDto.getDefinition());
     RuleMetadataDto metadata = ruleDto.getMetadata();
-    if (metadata.getOrganizationUuid() != null) {
-      db.getDbClient().ruleDao().insertOrUpdate(db.getSession(), metadata.setRuleUuid(ruleDto.getUuid()));
-      db.commit();
-    }
+    db.getDbClient().ruleDao().insertOrUpdate(db.getSession(), metadata.setRuleUuid(ruleDto.getUuid()));
+    db.commit();
     return ruleDto;
   }
 
@@ -185,8 +182,8 @@ public class RuleDbTester {
   }
 
   @SafeVarargs
-  public final RuleDto insertRule(OrganizationDto organization, Consumer<RuleDto>... populaters) {
-    RuleDto ruleDto = newRuleDto(organization);
+  public final RuleDto insertRule(Consumer<RuleDto>... populaters) {
+    RuleDto ruleDto = newRuleDto();
     asList(populaters).forEach(populater -> populater.accept(ruleDto));
     return insertRule(ruleDto);
   }

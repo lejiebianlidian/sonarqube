@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +20,9 @@
 import { Location } from 'history';
 import { groupBy, pick, sortBy } from 'lodash';
 import * as React from 'react';
+import HelpTooltip from 'sonar-ui-common/components/controls/HelpTooltip';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
-import DocTooltip from '../../../components/docs/DocTooltip';
 import { Profile } from '../types';
 import ProfilesListHeader from './ProfilesListHeader';
 import ProfilesListRow from './ProfilesListRow';
@@ -30,7 +30,6 @@ import ProfilesListRow from './ProfilesListRow';
 interface Props {
   languages: T.Language[];
   location: Pick<Location, 'query'>;
-  organization: string | null;
   profiles: Profile[];
   updateProfiles: () => Promise<void>;
 }
@@ -40,7 +39,6 @@ export default class ProfilesList extends React.PureComponent<Props> {
     return profiles.map(profile => (
       <ProfilesListRow
         key={profile.key}
-        organization={this.props.organization}
         profile={profile}
         updateProfiles={this.props.updateProfiles}
       />
@@ -64,11 +62,13 @@ export default class ProfilesList extends React.PureComponent<Props> {
           </th>
           <th className="text-right nowrap">
             {translate('quality_profiles.list.projects')}
-            <DocTooltip
+            <HelpTooltip
               className="table-cell-doc"
-              doc={import(
-                /* webpackMode: "eager" */ 'Docs/tooltips/quality-profiles/quality-profile-projects.md'
-              )}
+              overlay={
+                <div className="big-padded-top big-padded-bottom">
+                  {translate('quality_profiles.list.projects.help')}
+                </div>
+              }
             />
           </th>
           <th className="text-right nowrap">{translate('quality_profiles.list.rules')}</th>
@@ -111,11 +111,7 @@ export default class ProfilesList extends React.PureComponent<Props> {
 
     return (
       <div>
-        <ProfilesListHeader
-          currentFilter={language}
-          languages={languages}
-          organization={this.props.organization}
-        />
+        <ProfilesListHeader currentFilter={language} languages={languages} />
 
         {Object.keys(profilesToShow).length === 0 && (
           <Alert className="spacer-top" variant="warning">

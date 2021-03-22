@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +19,15 @@
  */
 package org.sonar.db;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
@@ -35,7 +39,7 @@ import org.sonar.process.logging.LogbackHelper;
 class TestDbImpl extends CoreTestDb {
   private static TestDbImpl defaultSchemaBaseTestDb;
   // instantiating MyBatis objects is costly => we cache them for default schema
-  private static final Map<MyBatisConfExtension[], TestDbImpl> defaultSchemaTestDbsWithExtensions = new HashMap<>();
+  private static final Map<Set<String>, TestDbImpl> defaultSchemaTestDbsWithExtensions = new HashMap<>();
 
   private boolean isDefault;
   private MyBatis myBatis;
@@ -86,15 +90,18 @@ class TestDbImpl extends CoreTestDb {
   }
 
   static TestDbImpl create(@Nullable String schemaPath, MyBatisConfExtension... confExtensions) {
-    MyBatisConfExtension[] extensionArray = confExtensions.length == 0 ? null : confExtensions;
     if (schemaPath == null) {
       if (defaultSchemaBaseTestDb == null) {
         defaultSchemaBaseTestDb = new TestDbImpl(null);
       }
-      if (extensionArray != null) {
+      if (confExtensions.length > 0) {
+        Set<String> key = Arrays.stream(confExtensions)
+          .flatMap(MyBatisConfExtension::getMapperClasses)
+          .map(Class::getName)
+          .collect(Collectors.toSet());
         return defaultSchemaTestDbsWithExtensions.computeIfAbsent(
-          extensionArray,
-          extensions -> new TestDbImpl(defaultSchemaBaseTestDb, newMyBatis(defaultSchemaBaseTestDb.getDatabase(), extensions)));
+          key,
+          k -> new TestDbImpl(defaultSchemaBaseTestDb, newMyBatis(defaultSchemaBaseTestDb.getDatabase(), confExtensions)));
       }
       return defaultSchemaBaseTestDb;
     }

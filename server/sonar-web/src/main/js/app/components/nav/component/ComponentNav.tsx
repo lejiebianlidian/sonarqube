@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +20,9 @@
 import * as classNames from 'classnames';
 import * as React from 'react';
 import ContextNavBar from 'sonar-ui-common/components/ui/ContextNavBar';
-import { STATUSES } from '../../../../apps/background-tasks/constants';
 import { BranchLike } from '../../../../types/branch-like';
 import { ComponentQualifier } from '../../../../types/component';
+import { Task, TaskStatuses, TaskWarning } from '../../../../types/tasks';
 import { rawSizes } from '../../../theme';
 import RecentHistory from '../../RecentHistory';
 import ComponentNavBgTaskNotif from './ComponentNavBgTaskNotif';
@@ -32,19 +32,20 @@ import Menu from './Menu';
 import InfoDrawer from './projectInformation/InfoDrawer';
 import ProjectInformation from './projectInformation/ProjectInformation';
 
-interface Props {
+export interface ComponentNavProps {
   branchLikes: BranchLike[];
   currentBranchLike: BranchLike | undefined;
   component: T.Component;
-  currentTask?: T.Task;
+  currentTask?: Task;
   currentTaskOnSameBranch?: boolean;
   isInProgress?: boolean;
   isPending?: boolean;
   onComponentChange: (changes: Partial<T.Component>) => void;
-  warnings: string[];
+  onWarningDismiss: () => void;
+  warnings: TaskWarning[];
 }
 
-export default function ComponentNav(props: Props) {
+export default function ComponentNav(props: ComponentNavProps) {
   const {
     branchLikes,
     component,
@@ -60,7 +61,7 @@ export default function ComponentNav(props: Props) {
   const [displayProjectInfo, setDisplayProjectInfo] = React.useState(false);
 
   React.useEffect(() => {
-    const { breadcrumbs, key, name, organization } = component;
+    const { breadcrumbs, key, name } = component;
     const { qualifier } = breadcrumbs[breadcrumbs.length - 1];
     if (
       [
@@ -70,12 +71,12 @@ export default function ComponentNav(props: Props) {
         ComponentQualifier.Developper
       ].includes(qualifier as ComponentQualifier)
     ) {
-      RecentHistory.add(key, name, qualifier.toLowerCase(), organization);
+      RecentHistory.add(key, name, qualifier.toLowerCase());
     }
   }, [component, component.key]);
 
   let notifComponent;
-  if (isInProgress || isPending || (currentTask && currentTask.status === STATUSES.FAILED)) {
+  if (isInProgress || isPending || (currentTask && currentTask.status === TaskStatuses.Failed)) {
     notifComponent = (
       <ComponentNavBgTaskNotif
         component={component}
@@ -100,7 +101,12 @@ export default function ComponentNav(props: Props) {
           component={component}
           currentBranchLike={currentBranchLike}
         />
-        <HeaderMeta branchLike={currentBranchLike} component={component} warnings={warnings} />
+        <HeaderMeta
+          branchLike={currentBranchLike}
+          component={component}
+          onWarningDismiss={props.onWarningDismiss}
+          warnings={warnings}
+        />
       </div>
       <Menu
         branchLike={currentBranchLike}

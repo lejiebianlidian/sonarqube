@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@ import static java.util.Objects.requireNonNull;
 import static org.sonar.server.permission.PermissionPrivilegeChecker.checkGlobalAdmin;
 import static org.sonar.server.permission.ws.WsParameters.createTemplateParameters;
 import static org.sonar.server.permission.ws.WsParameters.createUserLoginParameter;
-import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_ORGANIZATION;
 import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_PERMISSION;
 import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_TEMPLATE_ID;
 import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_TEMPLATE_NAME;
@@ -64,7 +63,6 @@ public class RemoveUserFromTemplateAction implements PermissionsWsAction {
       .setPermission(request.mandatoryParam(PARAM_PERMISSION))
       .setLogin(request.mandatoryParam(PARAM_USER_LOGIN))
       .setTemplateId(request.param(PARAM_TEMPLATE_ID))
-      .setOrganization(request.param(PARAM_ORGANIZATION))
       .setTemplateName(request.param(PARAM_TEMPLATE_NAME));
   }
 
@@ -95,9 +93,8 @@ public class RemoveUserFromTemplateAction implements PermissionsWsAction {
 
     try (DbSession dbSession = dbClient.openSession(false)) {
       requestValidator.validateProjectPermission(permission);
-      PermissionTemplateDto template = wsSupport.findTemplate(dbSession, WsTemplateRef.newTemplateRef(
-        request.getTemplateId(), request.getOrganization(), request.getTemplateName()));
-      checkGlobalAdmin(userSession, template.getOrganizationUuid());
+      PermissionTemplateDto template = wsSupport.findTemplate(dbSession, WsTemplateRef.newTemplateRef(request.getTemplateId(), request.getTemplateName()));
+      checkGlobalAdmin(userSession);
 
       UserId user = wsSupport.findUser(dbSession, userLogin);
 
@@ -110,7 +107,6 @@ public class RemoveUserFromTemplateAction implements PermissionsWsAction {
     private String login;
     private String permission;
     private String templateId;
-    private String organization;
     private String templateName;
 
     public String getLogin() {
@@ -138,16 +134,6 @@ public class RemoveUserFromTemplateAction implements PermissionsWsAction {
 
     public RemoveUserFromTemplateRequest setTemplateId(@Nullable String templateId) {
       this.templateId = templateId;
-      return this;
-    }
-
-    @CheckForNull
-    public String getOrganization() {
-      return organization;
-    }
-
-    public RemoveUserFromTemplateRequest setOrganization(@Nullable String s) {
-      this.organization = s;
       return this;
     }
 

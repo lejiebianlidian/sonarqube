@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -55,6 +55,11 @@ public class IssuePatternTest {
     assertThat(new IssuePattern("*", "pmd:IllegalRegexp").matchRule(rule)).isFalse();
     assertThat(new IssuePattern("*", "pmd:*").matchRule(rule)).isFalse();
     assertThat(new IssuePattern("*", "*:Foo*IllegalRegexp").matchRule(rule)).isFalse();
+  }
+
+  @Test
+  public void toString_should_include_all_fields() {
+    assertThat(new IssuePattern("*", "*:Foo*IllegalRegexp").toString()).isEqualTo("IssuePattern{filePattern=*, rulePattern=*:Foo*IllegalRegexp}");
   }
 
 }

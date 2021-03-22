@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ package org.sonar.server.qualityprofile.ws;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import java.util.Optional;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.rule.RuleKey;
@@ -33,28 +32,23 @@ import org.sonar.api.utils.System2;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualityprofile.ActiveRuleDto;
 import org.sonar.db.qualityprofile.ActiveRuleKey;
 import org.sonar.db.qualityprofile.QProfileDto;
+import org.sonar.db.qualityprofile.QualityProfileTesting;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleTesting;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.es.SearchOptions;
 import org.sonar.server.exceptions.BadRequestException;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
-import org.sonar.server.qualityprofile.QProfileName;
 import org.sonar.server.qualityprofile.QProfileRules;
 import org.sonar.server.qualityprofile.QProfileRulesImpl;
-import org.sonar.server.qualityprofile.QProfileTesting;
 import org.sonar.server.qualityprofile.RuleActivator;
 import org.sonar.server.qualityprofile.index.ActiveRuleIndexer;
 import org.sonar.server.rule.index.RuleIndex;
 import org.sonar.server.rule.index.RuleIndexer;
 import org.sonar.server.rule.index.RuleQuery;
 import org.sonar.server.rule.ws.RuleQueryFactory;
-import org.sonar.server.rule.ws.RuleWsSupport;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.util.TypeValidations;
 import org.sonar.server.ws.WsActionTester;
@@ -81,29 +75,21 @@ public class QProfilesWsMediumTest {
   @Rule
   public DbTester dbTester = DbTester.create();
 
-  private DbClient dbClient = dbTester.getDbClient();
-  private DbSession dbSession = dbTester.getSession();
-  private RuleIndex ruleIndex = new RuleIndex(es.client(), System2.INSTANCE);
-  private RuleIndexer ruleIndexer = new RuleIndexer(es.client(), dbClient);
-  private ActiveRuleIndexer activeRuleIndexer = new ActiveRuleIndexer(dbClient, es.client());
-  private TypeValidations typeValidations = new TypeValidations(emptyList());
-  private RuleActivator ruleActivator = new RuleActivator(System2.INSTANCE, dbClient, typeValidations, userSessionRule);
-  private QProfileRules qProfileRules = new QProfileRulesImpl(dbClient, ruleActivator, ruleIndex, activeRuleIndexer);
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(dbTester);
-  private QProfileWsSupport qProfileWsSupport = new QProfileWsSupport(dbClient, userSessionRule, defaultOrganizationProvider);
-  private RuleWsSupport ruleWsSupport = new RuleWsSupport(dbClient, userSessionRule, defaultOrganizationProvider);
-  private RuleQueryFactory ruleQueryFactory = new RuleQueryFactory(dbClient, ruleWsSupport);
-  private OrganizationDto organization;
+  private final DbClient dbClient = dbTester.getDbClient();
+  private final DbSession dbSession = dbTester.getSession();
+  private final RuleIndex ruleIndex = new RuleIndex(es.client(), System2.INSTANCE);
+  private final RuleIndexer ruleIndexer = new RuleIndexer(es.client(), dbClient);
+  private final ActiveRuleIndexer activeRuleIndexer = new ActiveRuleIndexer(dbClient, es.client());
+  private final TypeValidations typeValidations = new TypeValidations(emptyList());
+  private final RuleActivator ruleActivator = new RuleActivator(System2.INSTANCE, dbClient, typeValidations, userSessionRule);
+  private final QProfileRules qProfileRules = new QProfileRulesImpl(dbClient, ruleActivator, ruleIndex, activeRuleIndexer);
+  private final QProfileWsSupport qProfileWsSupport = new QProfileWsSupport(dbClient, userSessionRule);
+  private final RuleQueryFactory ruleQueryFactory = new RuleQueryFactory(dbClient);
 
-  private WsActionTester wsDeactivateRule = new WsActionTester(new DeactivateRuleAction(dbClient, qProfileRules, userSessionRule, qProfileWsSupport));
-  private WsActionTester wsDeactivateRules = new WsActionTester(new DeactivateRulesAction(ruleQueryFactory, userSessionRule, qProfileRules, qProfileWsSupport, dbClient));
-  private WsActionTester wsActivateRule = new WsActionTester(new ActivateRuleAction(dbClient, qProfileRules, userSessionRule, qProfileWsSupport));
-  private WsActionTester wsActivateRules = new WsActionTester(new ActivateRulesAction(ruleQueryFactory, userSessionRule, qProfileRules, qProfileWsSupport, dbClient));
-
-  @Before
-  public void setUp() {
-    organization = dbTester.organizations().insert();
-  }
+  private final WsActionTester wsDeactivateRule = new WsActionTester(new DeactivateRuleAction(dbClient, qProfileRules, userSessionRule, qProfileWsSupport));
+  private final WsActionTester wsDeactivateRules = new WsActionTester(new DeactivateRulesAction(ruleQueryFactory, userSessionRule, qProfileRules, qProfileWsSupport, dbClient));
+  private final WsActionTester wsActivateRule = new WsActionTester(new ActivateRuleAction(dbClient, qProfileRules, userSessionRule, qProfileWsSupport));
+  private final WsActionTester wsActivateRules = new WsActionTester(new ActivateRulesAction(ruleQueryFactory, userSessionRule, qProfileRules, qProfileWsSupport, dbClient));
 
   @Test
   public void deactivate_rule() {
@@ -111,7 +97,7 @@ public class QProfilesWsMediumTest {
     RuleDefinitionDto rule = createRule(profile.getLanguage(), "toto");
     createActiveRule(rule, profile);
     ruleIndexer.commitAndIndex(dbSession, rule.getUuid());
-    activeRuleIndexer.indexOnStartup(activeRuleIndexer.getIndexTypes());
+    activeRuleIndexer.indexAll();
 
     // 0. Assert No Active Rule for profile
     assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).hasSize(1);
@@ -139,7 +125,7 @@ public class QProfilesWsMediumTest {
     createActiveRule(rule3, profile);
     createActiveRule(rule1, profile);
     dbSession.commit();
-    activeRuleIndexer.indexOnStartup(activeRuleIndexer.getIndexTypes());
+    activeRuleIndexer.indexAll();
 
     // 0. Assert No Active Rule for profile
     assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).hasSize(4);
@@ -165,7 +151,7 @@ public class QProfilesWsMediumTest {
     createActiveRule(rule0, php);
     createActiveRule(rule1, php);
     dbSession.commit();
-    activeRuleIndexer.indexOnStartup(activeRuleIndexer.getIndexTypes());
+    activeRuleIndexer.indexAll();
 
     // 0. Assert No Active Rule for profile
     assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).hasSize(2);
@@ -177,7 +163,7 @@ public class QProfilesWsMediumTest {
     dbSession.clearCache();
 
     // 2. Assert ActiveRule in DAO
-    assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).hasSize(0);
+    assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).isEmpty();
     assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, php.getKee())).hasSize(2);
   }
 
@@ -189,7 +175,7 @@ public class QProfilesWsMediumTest {
     createActiveRule(rule0, profile);
     createActiveRule(rule1, profile);
     dbSession.commit();
-    activeRuleIndexer.indexOnStartup(activeRuleIndexer.getIndexTypes());
+    activeRuleIndexer.indexAll();
 
     // 0. Assert No Active Rule for profile
     assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).hasSize(2);
@@ -341,7 +327,7 @@ public class QProfilesWsMediumTest {
     dbSession.clearCache();
 
     // 2. Assert ActiveRule in DAO
-    assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).hasSize(0);
+    assertThat(dbClient.activeRuleDao().selectByProfileUuid(dbSession, profile.getKee())).isEmpty();
 
     // 1. Activate Rule with query returning 1 hits
     wsActivateRules.newRequest().setMethod("POST")
@@ -377,7 +363,7 @@ public class QProfilesWsMediumTest {
     dbSession.commit();
 
     // 2. Assert ActiveRule with MINOR severity
-    assertThat(dbClient.activeRuleDao().selectByRuleUuid(dbSession, organization, rule0.getUuid()).get(0).getSeverityString()).isEqualTo("MINOR");
+    assertThat(dbClient.activeRuleDao().selectByOrgRuleUuid(dbSession, rule0.getUuid()).get(0).getSeverityString()).isEqualTo("MINOR");
     assertThat(ruleIndex.searchAll(new RuleQuery()
       .setQProfile(profile)
       .setKey(rule0.getKey().toString())
@@ -410,8 +396,8 @@ public class QProfilesWsMediumTest {
 
   @Test
   public void reset() {
-    QProfileDto profile = QProfileTesting.newXooP1(organization);
-    QProfileDto childProfile = QProfileTesting.newXooP2(organization).setParentKee(QProfileTesting.XOO_P1_KEY);
+    QProfileDto profile = QualityProfileTesting.newQualityProfileDto().setLanguage("java");
+    QProfileDto childProfile = QualityProfileTesting.newQualityProfileDto().setParentKee(profile.getKee()).setLanguage("java");
     dbClient.qualityProfileDao().insert(dbSession, profile, childProfile);
 
     RuleDefinitionDto rule = createRule(profile.getLanguage(), "rule");
@@ -423,7 +409,7 @@ public class QProfilesWsMediumTest {
     dbClient.activeRuleDao().insert(dbSession, active2);
 
     dbSession.commit();
-    activeRuleIndexer.indexOnStartup(activeRuleIndexer.getIndexTypes());
+    activeRuleIndexer.indexAll();
 
     // 0. assert rule child rule is minor
     Optional<ActiveRuleDto> activeRuleDto = dbClient.activeRuleDao().selectByKey(dbSession, active2.getKey());
@@ -445,7 +431,7 @@ public class QProfilesWsMediumTest {
   }
 
   private QProfileDto createProfile(String lang) {
-    QProfileDto profile = QProfileTesting.newQProfileDto(organization, new QProfileName(lang, "P" + lang), "p" + lang);
+    QProfileDto profile = QualityProfileTesting.newQualityProfileDto().setName("P" + lang).setLanguage(lang);
     dbClient.qualityProfileDao().insert(dbSession, profile);
     return profile;
   }

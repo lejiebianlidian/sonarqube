@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.ce.task.projectanalysis.analysis.AnalysisMetadataHolder;
-import org.sonar.ce.task.projectanalysis.analysis.Organization;
 import org.sonar.ce.task.projectanalysis.metric.Metric;
 import org.sonar.ce.task.projectanalysis.metric.MetricImpl;
 import org.sonar.ce.task.projectanalysis.qualitygate.Condition;
@@ -49,14 +48,13 @@ public class LoadQualityGateStepTest {
   @Rule
   public MutableQualityGateHolderRule mutableQualityGateHolder = new MutableQualityGateHolderRule();
 
-  private AnalysisMetadataHolder analysisMetadataHolder = mock(AnalysisMetadataHolder.class);
-  private QualityGateService qualityGateService = mock(QualityGateService.class);
+  private final AnalysisMetadataHolder analysisMetadataHolder = mock(AnalysisMetadataHolder.class);
+  private final QualityGateService qualityGateService = mock(QualityGateService.class);
 
-  private LoadQualityGateStep underTest = new LoadQualityGateStep(qualityGateService, mutableQualityGateHolder, analysisMetadataHolder);
+  private final LoadQualityGateStep underTest = new LoadQualityGateStep(qualityGateService, mutableQualityGateHolder, analysisMetadataHolder);
 
   @Before
   public void setUp() {
-    when(analysisMetadataHolder.getOrganization()).thenReturn(mock(Organization.class));
   }
 
   @Test
@@ -68,7 +66,7 @@ public class LoadQualityGateStepTest {
 
     when(analysisMetadataHolder.isPullRequest()).thenReturn(true);
     QualityGate defaultGate = new QualityGate("1", "qg", Arrays.asList(variation, condition));
-    when(qualityGateService.findDefaultQualityGate(any(Organization.class))).thenReturn(defaultGate);
+    when(qualityGateService.findDefaultQualityGate()).thenReturn(defaultGate);
 
     underTest.execute(new TestComputationStepContext());
 
@@ -78,7 +76,7 @@ public class LoadQualityGateStepTest {
   @Test
   public void execute_sets_default_QualityGate_when_project_has_no_settings() {
     QualityGate defaultGate = mock(QualityGate.class);
-    when(qualityGateService.findDefaultQualityGate(any(Organization.class))).thenReturn(defaultGate);
+    when(qualityGateService.findDefaultQualityGate()).thenReturn(defaultGate);
 
     underTest.execute(new TestComputationStepContext());
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,18 +19,15 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import Other from '../Other';
+import { OSs } from '../../../types';
+import Other, { OtherProps } from '../Other';
 
 it('renders correctly', () => {
-  expect(
-    shallow(<Other host="host" os="win" projectKey="projectKey" token="token" />)
-  ).toMatchSnapshot();
-
-  expect(
-    shallow(<Other host="host" os="linux" projectKey="projectKey" token="token" />)
-  ).toMatchSnapshot();
-
-  expect(
-    shallow(<Other host="host" os="linux" projectKey="projectKey" token="token" />)
-  ).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot();
 });
+
+function shallowRender(props: Partial<OtherProps> = {}) {
+  return shallow<OtherProps>(
+    <Other host="host" os={OSs.Linux} projectKey="projectKey" token="token" {...props} />
+  );
+}

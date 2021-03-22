@@ -2,6 +2,41 @@
 title: Release Upgrade Notes
 url: /setup/upgrade-notes/
 ---
+## Release 8.7 Upgrade Notes  
+**JavaScript and TypeScript analysis now requires Node.js 10+**  
+In order to analyze JavaScript or TypeScript code, you now need to have Node.js 10+ installed on the machine running the scan.
+
+**Azure DevOps Services and Bitbucket Cloud are now supported**  
+SonarQube now officially supports Azure DevOps Services and Bitbucket Cloud. If you were running analysis using Bitbucket Pipelines previously, when you upgrade, the Main branch name in your SonarQube project needs to match the branch name in your code repository to continue writing history to the branch. You may have to rename it before running analysis again.
+
+[Full release notes](https://jira.sonarsource.com/secure/ReleaseNote.jspa?projectId=10930&version=16540)  
+
+## Release 8.6 Upgrade Notes  
+**Elasticsearch update and change in cluster configuration**  
+For non-DCE editions, the Elasticsearch upgrade doesn't change the configuration. SonarQube automatically binds to the loopback address an additional Elasticsearch port which can be configured optionally.  
+
+When running a cluster with Data Center Edition, the configuration of search nodes has changed. The old search properties will now fail. You need to configure two new sets of properties. See [Configure and Operate a Cluster](/setup/operate-cluster/) for more information.  
+
+We recommend only giving external access to the application nodes and to the main port. ([SONAR-12686](https://jira.sonarsource.com/browse/SONAR-12686)).
+
+**Default Authentication and Administrator credentials**  
+On a fresh install to avoid misconfiguration and related security risks, authentication is now required by default, and you need to change the default password for the administrator account. 
+When upgrading, if you were still using default credentials, you'll be asked to change the password the next time you authenticate with the admin account. ([MMF-1352](https://jira.sonarsource.com/browse/MMF-1352), [MMF-2146](https://jira.sonarsource.com/browse/MMF-2146)).
+
+[Full release notes](https://jira.sonarsource.com/secure/ReleaseNote.jspa?projectId=10930&version=16435)  
+
+## Release 8.5 Upgrade Notes  
+**GitHub Enterprise compatibility**  
+SonarQube 8.5 only supports GitHub Enterprise 2.15+ for pull request decoration (the previous minimum version was 2.14).
+
+**SonarScanner for MSBuild compatibility**  
+Analyzing a C# / VB.NET solution in SonarQube 8.5 requires SonarScanner for MSBuild 4.0+.
+
+**Upgrade simplified: Languages, GIT and SVN support now built-in**  
+Languages provided with your edition and support for GIT and SVN version control are now built-in and don’t require plugins. If you were using these plugins, you need to remove them from SonarQube before upgrading. ([MMF-2042](https://jira.sonarsource.com/browse/MMF-2042)).
+
+[Full release notes](https://jira.sonarsource.com/secure/ReleaseNote.jspa?projectId=10930&version=16342)
+
 ## Release 8.4 Upgrade Notes  
 **Updated system settings recommendations**  
 In previous versions, the recommended limits regarding threads, file descriptors, and vm.max_map_count were taken from Elasticsearch dependencies. This release can reach these limits occasionally, so we recommend increasing the following settings of your OS when upgrading:
@@ -37,7 +72,7 @@ The code coverage for .NET projects now takes into account the branch/condition 
 
 **Analysis summary for GitHub Pull Requests**
 * Pull Request analysis can be shown under the Conversation tab in GitHub. You can enable or disable it at **Project Settings > General Settings > Pull Request Decoration**. 
-* If you already have Pull Request analysis under the GitHub Checks tab, you'll need to update your GitHub App to give Pull Requests read & write access. For more information see [Decorating Pull Requests](/analysis/pr-decoration/). ([MMF-1892](https://jira.sonarsource.com/browse/MMF-1892)).
+* If you already have Pull Request analysis under the GitHub Checks tab, you'll need to update your GitHub App to give Pull Requests read & write access. For more information see [Pull Requests](/analysis/pull-request/). ([MMF-1892](https://jira.sonarsource.com/browse/MMF-1892)).
 
 **Applications on the Projects page**  
 [Applications](/user-guide/applications/) are now found on the Projects page. You can filter, favorite, and tag applications like you can with projects. ([MMF-1382](https://jira.sonarsource.com/browse/MMF-1382)).

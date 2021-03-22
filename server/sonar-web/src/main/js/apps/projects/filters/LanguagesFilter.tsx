@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ interface Props {
   languages: T.Languages;
   maxFacetValue?: number;
   onQueryChange: (change: T.RawQuery) => void;
-  organization?: { key: string };
   property?: string;
   query: T.Dict<any>;
   value?: string[];
@@ -68,7 +67,6 @@ export default class LanguagesFilter extends React.Component<Props> {
           <SearchableFilterFooter
             onQueryChange={this.props.onQueryChange}
             options={this.getSearchOptions()}
-            organization={this.props.organization}
             property={property}
             query={this.props.query}
           />
@@ -77,7 +75,6 @@ export default class LanguagesFilter extends React.Component<Props> {
         maxFacetValue={this.props.maxFacetValue}
         onQueryChange={this.props.onQueryChange}
         options={this.getSortedOptions(this.props.facet)}
-        organization={this.props.organization}
         property={property}
         renderOption={this.renderOption}
         value={this.props.value}

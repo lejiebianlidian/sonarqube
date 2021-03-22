@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +19,14 @@
  */
 import * as React from 'react';
 import ConfirmModal from 'sonar-ui-common/components/controls/ConfirmModal';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { renameQualityGate } from '../../../api/quality-gates';
 
 interface Props {
   onClose: () => void;
   onRename: () => Promise<void>;
-  organization?: string;
   qualityGate: T.QualityGate;
 }
 
@@ -44,16 +45,14 @@ export default class RenameQualityGateForm extends React.PureComponent<Props, St
   };
 
   handleRename = () => {
-    const { qualityGate, organization } = this.props;
+    const { qualityGate } = this.props;
     const { name } = this.state;
 
     if (!name) {
       return undefined;
     }
 
-    return renameQualityGate({ id: qualityGate.id, name, organization }).then(() =>
-      this.props.onRename()
-    );
+    return renameQualityGate({ id: qualityGate.id, name }).then(() => this.props.onRename());
   };
 
   render() {
@@ -69,10 +68,11 @@ export default class RenameQualityGateForm extends React.PureComponent<Props, St
         onClose={this.props.onClose}
         onConfirm={this.handleRename}
         size="small">
+        <MandatoryFieldsExplanation className="modal-field" />
         <div className="modal-field">
           <label htmlFor="quality-gate-form-name">
             {translate('name')}
-            <em className="mandatory">*</em>
+            <MandatoryFieldMarker />
           </label>
           <input
             autoFocus={true}

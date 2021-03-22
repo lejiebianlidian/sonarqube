@@ -11,11 +11,17 @@ With Branch Analysis, you can ensure that you're maintaining consistent code qua
 
 ### Master / Main Branch
 
-This is the default branch and typically corresponds to what's being developed for your next release. This is usually known within a development team as "master" or "head" and is analyzed when no specific branch parameters are provided. It is labeled "Main Branch" and defaults to the name "master" but can be renamed from the project settings at **Administration > Branches and Pull Requests**. When you are using Community Edition, this is the only branch you see.
+This is the default branch and typically corresponds to what's being developed for your next release. This branch is usually known within a development team as "master" or "head" and is analyzed when no specific branch parameters are provided. SonarQube labels this branch as **Main Branch**, and, with Community Edition, this is the only branch you can analyze. 
+
+Adding projects by ALM copies the main branch name in SonarQube from the main branch name in your repository. See **ALM Integrations** in the documentation navigation for more information on adding your project from an ALM.
+
+If you add your project manually, your main branch defaults to the name "master".
+
+Starting in [Developer Edition](https://redirect.sonarsource.com/editions/developer.html), your main branch can be renamed from the project settings at **Project Settings > Branches and Pull Requests**. 
 
 ### Settings and Quality Profiles on Branches
 
-Branch settings and quality profiles are the same as those set for the master branch, and by design, it's not possible to configure other values. The New Code Period is the only exception to this as it can be set on a branch-by-branch basis. 
+Branch settings and Quality Profiles are the same as those set for the master branch, and by design, it's not possible to configure other values. The New Code Period is the only exception to this as it can be set on a branch-by-branch basis. 
 
 ### New Code
 
@@ -78,3 +84,15 @@ For example, adding the pattern `release/.*` would keep any branches named relea
 You can set a branch to **Keep when inactive** at the project level from from the **Branches** tab at **Project Settings > Branches and Pull Requests**. Here, you can also turn off protection for a branch so it will be deleted when it's inactive for the number of days that has been specified in the global settings at **Administration > General Settings > Housekeeping > Number of days before deleting inactive branches**. 
 
 **Note:** The main branch is always protected from automatic deletion, even if it's inactive. This can't be changed.
+
+## Keeping your "master" branch history when upgrading from Community Edition to a commercial edition
+[[info]]
+| If you added a SonarQube project from an ALM instead of manually, the name of the main branch in SonarQube is copied from the name of the main branch in your repository, and you shouldn't have any branch history issues when upgrading to a commercial edition.
+
+In Community Edition, if you create a project manually, your analyzed branch is named "master" by default. 
+
+When upgrading to a current commercial edition version, automatic branch and pull request configuration creates branches based on their names in your code repository. If the name of your Main Branch (master) in SonarQube doesn't match the branch's name in your code repository, the history of your Main Branch won't be taken on by the branch you analyze. 
+
+**Before running analysis**, you can keep your branch history by renaming the Main Branch in SonarQube with the name of the branch in your code repository at **Project Settings > Branches and Pull Requests**. 
+
+For example, if your Main Branch is named "master" in SonarQube but "develop" in your code repository, rename your Main Branch "develop" in SonarQube.

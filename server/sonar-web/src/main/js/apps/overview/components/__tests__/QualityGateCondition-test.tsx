@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ function quickMock(
         type
       }),
       value: '3',
-      ...(addPeriod ? { periods: [{ value: '3', index: 1 }] } : {})
+      ...(addPeriod ? { period: { value: '3', index: 1 } } : {})
     },
     metric,
     ...(addPeriod ? { period: 1 } : {})

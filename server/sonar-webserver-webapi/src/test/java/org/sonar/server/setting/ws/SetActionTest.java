@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,14 +21,20 @@ package org.sonar.server.setting.ws;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
+
 import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.config.PropertyDefinitions;
@@ -43,7 +49,6 @@ import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.property.PropertyDbTester;
 import org.sonar.db.property.PropertyDto;
 import org.sonar.db.property.PropertyQuery;
@@ -55,8 +60,6 @@ import org.sonar.server.exceptions.BadRequestException;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.l18n.I18nRule;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.setting.SettingsChangeNotifier;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ws.TestRequest;
@@ -67,6 +70,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.sonar.db.component.ComponentTesting.newView;
 import static org.sonar.db.metric.MetricTesting.newMetricDto;
@@ -74,6 +78,7 @@ import static org.sonar.db.property.PropertyTesting.newComponentPropertyDto;
 import static org.sonar.db.property.PropertyTesting.newGlobalPropertyDto;
 import static org.sonar.db.user.UserTesting.newUserDto;
 
+@RunWith(DataProviderRunner.class)
 public class SetActionTest {
 
   private static final Gson GSON = GsonHelper.create();
@@ -95,7 +100,6 @@ public class SetActionTest {
   private FakeSettingsNotifier settingsChangeNotifier = new FakeSettingsNotifier(dbClient);
   private SettingsUpdater settingsUpdater = new SettingsUpdater(dbClient, definitions);
   private SettingValidations validations = new SettingValidations(definitions, dbClient, i18n);
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
   private SetAction underTest = new SetAction(definitions, dbClient, componentFinder, userSession, settingsUpdater, settingsChangeNotifier, validations);
 
   private WsActionTester ws = new WsActionTester(underTest);
@@ -104,6 +108,16 @@ public class SetActionTest {
   public void setUp() {
     // by default test doesn't care about permissions
     userSession.logIn().setSystemAdministrator();
+  }
+
+  @DataProvider
+  public static Object[][] securityJsonProperties() {
+    return new Object[][] {
+      {"sonar.security.config.javasecurity"},
+      {"sonar.security.config.phpsecurity"},
+      {"sonar.security.config.pythonsecurity"},
+      {"sonar.security.config.roslyn.sonaranalyzer.security.cs"}
+    };
   }
 
   @Test
@@ -393,6 +407,147 @@ public class SetActionTest {
   }
 
   @Test
+  public void persist_JSON_property() {
+    definitions.addComponent(PropertyDefinition
+      .builder("my.key")
+      .name("foo")
+      .description("desc")
+      .category("cat")
+      .subCategory("subCat")
+      .type(PropertyType.JSON)
+      .build());
+
+    callForGlobalSetting("my.key", "{\"test\":\"value\"}");
+
+    assertGlobalSetting("my.key", "{\"test\":\"value\"}");
+  }
+
+  @Test
+  public void fail_if_JSON_invalid_for_JSON_property() {
+    definitions.addComponent(PropertyDefinition
+      .builder("my.key")
+      .name("foo")
+      .description("desc")
+      .category("cat")
+      .subCategory("subCat")
+      .type(PropertyType.JSON)
+      .build());
+
+    assertThatThrownBy(() -> callForGlobalSetting("my.key", "{\"test\":\"value\""))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Provided JSON is invalid");
+
+    assertThatThrownBy(() -> callForGlobalSetting("my.key", "{\"test\":\"value\",}"))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Provided JSON is invalid");
+
+    assertThatThrownBy(() -> callForGlobalSetting("my.key", "{\"test\":[\"value\",]}"))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Provided JSON is invalid");
+  }
+
+  @Test
+  @UseDataProvider("securityJsonProperties")
+  public void successfully_validate_json_schema(String securityPropertyKey) {
+    String security_custom_config = "{\n" +
+      "  \"S3649\": {\n" +
+      "    \"sources\": [\n" +
+      "      {\n" +
+      "        \"methodId\": \"My\\\\Namespace\\\\ClassName\\\\ServerRequest::getQuery\"\n" +
+      "      }\n" +
+      "    ],\n" +
+      "    \"sanitizers\": [\n" +
+      "      {\n" +
+      "        \"methodId\": \"str_replace\"\n" +
+      "      }\n" +
+      "    ],\n" +
+      "    \"sinks\": [\n" +
+      "      {\n" +
+      "        \"methodId\": \"mysql_query\",\n" +
+      "        \"args\": [1]\n" +
+      "      }\n" +
+      "    ]\n" +
+      "  }\n" +
+      "}";
+    definitions.addComponent(PropertyDefinition
+      .builder(securityPropertyKey)
+      .name("foo")
+      .description("desc")
+      .category("cat")
+      .subCategory("subCat")
+      .type(PropertyType.JSON)
+      .build());
+
+    callForGlobalSetting(securityPropertyKey, security_custom_config);
+
+    assertGlobalSetting(securityPropertyKey, security_custom_config);
+  }
+
+  @Test
+  @UseDataProvider("securityJsonProperties")
+  public void fail_json_schema_validation_when_property_has_incorrect_type(String securityPropertyKey) {
+    String security_custom_config = "{\n" +
+      "  \"S3649\": {\n" +
+      "    \"sources\": [\n" +
+      "      {\n" +
+      "        \"methodId\": \"My\\\\Namespace\\\\ClassName\\\\ServerRequest::getQuery\"\n" +
+      "      }\n" +
+      "    ],\n" +
+      "    \"sinks\": [\n" +
+      "      {\n" +
+      "        \"methodId\": 12345,\n" +
+      "        \"args\": [1]\n" +
+      "      }\n" +
+      "    ]\n" +
+      "  }\n" +
+      "}";
+    definitions.addComponent(PropertyDefinition
+      .builder(securityPropertyKey)
+      .name("foo")
+      .description("desc")
+      .category("cat")
+      .subCategory("subCat")
+      .type(PropertyType.JSON)
+      .build());
+
+    assertThatThrownBy(() -> callForGlobalSetting(securityPropertyKey, security_custom_config))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("S3649/sinks/0/methodId: expected type: String, found: Integer");
+  }
+
+  @Test
+  @UseDataProvider("securityJsonProperties")
+  public void fail_json_schema_validation_when_property_has_unknown_attribute(String securityPropertyKey) {
+    String security_custom_config = "{\n" +
+      "  \"S3649\": {\n" +
+      "    \"sources\": [\n" +
+      "      {\n" +
+      "        \"methodId\": \"My\\\\Namespace\\\\ClassName\\\\ServerRequest::getQuery\"\n" +
+      "      }\n" +
+      "    ],\n" +
+      "    \"unknown\": [\n" +
+      "      {\n" +
+      "        \"methodId\": 12345,\n" +
+      "        \"args\": [1]\n" +
+      "      }\n" +
+      "    ]\n" +
+      "  }\n" +
+      "}";
+    definitions.addComponent(PropertyDefinition
+      .builder(securityPropertyKey)
+      .name("foo")
+      .description("desc")
+      .category("cat")
+      .subCategory("subCat")
+      .type(PropertyType.JSON)
+      .build());
+
+    assertThatThrownBy(() -> callForGlobalSetting(securityPropertyKey, security_custom_config))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("extraneous key [unknown] is not permitted");
+  }
+
+  @Test
   public void persist_global_setting_with_non_ascii_characters() {
     callForGlobalSetting("my.key", "ﬁ±∞…");
 
@@ -558,7 +713,7 @@ public class SetActionTest {
       .defaultValue("default")
       .onQualifiers(Qualifiers.PROJECT)
       .build());
-    ComponentDto view = db.components().insertComponent(newView(db.getDefaultOrganization(), "view-uuid"));
+    ComponentDto view = db.components().insertComponent(newView("view-uuid"));
     i18n.put("qualifier." + Qualifiers.VIEW, "View");
     expectedException.expect(BadRequestException.class);
     expectedException.expectMessage("Setting 'my.key' cannot be set on a View");
@@ -619,20 +774,20 @@ public class SetActionTest {
 
   @Test
   public void succeed_for_property_without_definition_when_set_on_view_component() {
-    ComponentDto view = db.components().insertView();
+    ComponentDto view = db.components().insertPrivatePortfolio();
     succeedForPropertyWithoutDefinitionAndValidComponent(view, view);
   }
 
   @Test
   public void succeed_for_property_without_definition_when_set_on_subview_component() {
-    ComponentDto view = db.components().insertView();
+    ComponentDto view = db.components().insertPrivatePortfolio();
     ComponentDto subview = db.components().insertComponent(ComponentTesting.newSubView(view));
     succeedForPropertyWithoutDefinitionAndValidComponent(view, subview);
   }
 
   @Test
   public void fail_for_property_without_definition_when_set_on_projectCopy_component() {
-    ComponentDto view = db.components().insertView();
+    ComponentDto view = db.components().insertPrivatePortfolio();
     ComponentDto projectCopy = db.components().insertComponent(ComponentTesting.newProjectCopy("a", db.components().insertPrivateProject(), view));
 
     failForPropertyWithoutDefinitionOnUnsupportedComponent(view, projectCopy);
@@ -907,8 +1062,7 @@ public class SetActionTest {
 
   @Test
   public void fail_when_using_branch_db_key() {
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPublicProject(organization);
+    ComponentDto project = db.components().insertPublicProject();
     userSession.logIn().addProjectPermission(UserRole.ADMIN, project);
     ComponentDto branch = db.components().insertProjectBranch(project);
 

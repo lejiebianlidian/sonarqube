@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@ interface Props {
   onFilterChange: (changes: Partial<Query>) => void;
   onPopupToggle: (issue: string, popupName: string, open?: boolean) => void;
   openPopup: string | undefined;
-  organization: { key: string } | undefined;
   previousIssue: T.Issue | undefined;
   selected: boolean;
 }
@@ -96,14 +95,10 @@ export default class ListItem extends React.PureComponent<Props> {
     const displayComponent = !previousIssue || previousIssue.component !== issue.component;
 
     return (
-      <div className="issues-workspace-list-item">
+      <li className="issues-workspace-list-item">
         {displayComponent && (
           <div className="issues-workspace-list-component note">
-            <ComponentBreadcrumbs
-              component={component}
-              issue={this.props.issue}
-              organization={this.props.organization}
-            />
+            <ComponentBreadcrumbs component={component} issue={this.props.issue} />
           </div>
         )}
         <Issue
@@ -118,7 +113,7 @@ export default class ListItem extends React.PureComponent<Props> {
           openPopup={this.props.openPopup}
           selected={this.props.selected}
         />
-      </div>
+      </li>
     );
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@ interface Props {
   onIssueClick: (issueKey: string) => void;
   onPopupToggle: (issue: string, popupName: string, open?: boolean) => void;
   openPopup: { issue: string; name: string } | undefined;
-  organization: { key: string } | undefined;
   selectedIssue: T.Issue | undefined;
 }
 
@@ -71,7 +70,7 @@ export default class IssuesList extends React.PureComponent<Props, State> {
     }
 
     return (
-      <div>
+      <ul>
         {issues.map((issue, index) => (
           <ListItem
             branchLike={branchLike}
@@ -85,12 +84,11 @@ export default class IssuesList extends React.PureComponent<Props, State> {
             onFilterChange={this.props.onFilterChange}
             onPopupToggle={this.props.onPopupToggle}
             openPopup={openPopup && openPopup.issue === issue.key ? openPopup.name : undefined}
-            organization={this.props.organization}
             previousIssue={index > 0 ? issues[index - 1] : undefined}
             selected={selectedIssue != null && selectedIssue.key === issue.key}
           />
         ))}
-      </div>
+      </ul>
     );
   }
 }

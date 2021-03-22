@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ public class UpdateAzureRequest {
   private String key;
   private String newKey;
   private String personalAccessToken;
+  private String url;
 
   public String getKey() {
     return key;
@@ -65,6 +66,18 @@ public class UpdateAzureRequest {
    */
   public UpdateAzureRequest setPersonalAccessToken(String personalAccessToken) {
     this.personalAccessToken = personalAccessToken;
+    return this;
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  /**
+   * This is a mandatory parameter.
+   */
+  public UpdateAzureRequest setUrl(String url) {
+    this.url = url;
     return this;
   }
 

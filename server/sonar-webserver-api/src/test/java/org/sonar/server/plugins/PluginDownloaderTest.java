@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 package org.sonar.server.plugins;
 
-import com.google.common.base.Optional;
 import java.io.File;
 import java.net.URI;
+import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -129,7 +129,7 @@ public class PluginDownloaderTest {
 
   @Test
   public void download_when_update_center_is_unavailable_with_no_exception_thrown() {
-    when(updateCenterMatrixFactory.getUpdateCenter(anyBoolean())).thenReturn(Optional.absent());
+    when(updateCenterMatrixFactory.getUpdateCenter(anyBoolean())).thenReturn(Optional.empty());
 
     Plugin test = Plugin.factory("test");
     Release test10 = new Release(test, "1.0").setDownloadUrl("http://server/test-1.0.jar");
@@ -252,7 +252,7 @@ public class PluginDownloaderTest {
   @Test
   public void getDownloadedPluginFilenames_reads_plugin_info_of_files_in_download_folder() throws Exception {
     pluginDownloader.start();
-    assertThat(pluginDownloader.getDownloadedPlugins()).hasSize(0);
+    assertThat(pluginDownloader.getDownloadedPlugins()).isEmpty();
 
     File file1 = new File(downloadDir, "file1.jar");
     file1.createNewFile();

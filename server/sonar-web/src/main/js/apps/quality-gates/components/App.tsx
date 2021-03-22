@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,17 +38,13 @@ import Details from './Details';
 import List from './List';
 import ListHeader from './ListHeader';
 
-interface Props extends WithRouterProps {
-  organization?: Pick<T.Organization, 'key'>;
-}
-
 interface State {
   canCreate: boolean;
   loading: boolean;
   qualityGates: T.QualityGate[];
 }
 
-class App extends React.PureComponent<Props, State> {
+class App extends React.PureComponent<Pick<WithRouterProps, 'params' | 'router'>, State> {
   mounted = false;
   state: State = { canCreate: false, loading: true, qualityGates: [] };
 
@@ -59,7 +55,7 @@ class App extends React.PureComponent<Props, State> {
     addSideBarClass();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: WithRouterProps) {
     if (prevProps.params.id !== undefined && this.props.params.id === undefined) {
       this.openDefault(this.state.qualityGates);
     }
@@ -72,8 +68,7 @@ class App extends React.PureComponent<Props, State> {
   }
 
   fetchQualityGates = () => {
-    const { organization } = this.props;
-    return fetchQualityGates({ organization: organization && organization.key }).then(
+    return fetchQualityGates().then(
       ({ actions, qualitygates: qualityGates }) => {
         if (this.mounted) {
           this.setState({ canCreate: actions.create, loading: false, qualityGates });
@@ -93,10 +88,7 @@ class App extends React.PureComponent<Props, State> {
 
   openDefault(qualityGates: T.QualityGate[]) {
     const defaultQualityGate = qualityGates.find(gate => Boolean(gate.isDefault))!;
-    const { organization } = this.props;
-    this.props.router.replace(
-      getQualityGateUrl(String(defaultQualityGate.id), organization && organization.key)
-    );
+    this.props.router.replace(getQualityGateUrl(String(defaultQualityGate.id)));
   }
 
   handleSetDefault = (qualityGate: T.QualityGate) => {
@@ -116,7 +108,6 @@ class App extends React.PureComponent<Props, State> {
     const { id } = this.props.params;
     const { canCreate, qualityGates } = this.state;
     const defaultTitle = translate('quality_gates.page');
-    const organization = this.props.organization && this.props.organization.key;
 
     return (
       <>
@@ -131,11 +122,10 @@ class App extends React.PureComponent<Props, State> {
                   <div className="layout-page-filters">
                     <ListHeader
                       canCreate={canCreate}
-                      organization={organization}
                       refreshQualityGates={this.fetchQualityGates}
                     />
                     <DeferredSpinner loading={this.state.loading}>
-                      <List organization={organization} qualityGates={qualityGates} />
+                      <List qualityGates={qualityGates} />
                     </DeferredSpinner>
                   </div>
                 </div>
@@ -147,7 +137,6 @@ class App extends React.PureComponent<Props, State> {
             <Details
               id={id}
               onSetDefault={this.handleSetDefault}
-              organization={organization}
               qualityGates={this.state.qualityGates}
               refreshQualityGates={this.fetchQualityGates}
             />

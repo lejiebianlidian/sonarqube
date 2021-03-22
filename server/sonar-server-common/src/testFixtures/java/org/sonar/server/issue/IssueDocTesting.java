@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.core.util.Uuids;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.server.issue.index.IssueDoc;
+import org.sonar.server.issue.index.IssueScope;
 
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
@@ -47,7 +48,6 @@ public class IssueDocTesting {
       .setModuleUuid(!componentDto.scope().equals(Scopes.PROJECT) ? componentDto.moduleUuid() : componentDto.uuid())
       .setModuleUuidPath(componentDto.moduleUuidPath())
       .setProjectUuid(mainBranchProjectUuid == null ? componentDto.projectUuid() : mainBranchProjectUuid)
-      .setOrganizationUuid(componentDto.getOrganizationUuid())
       // File path make no sens on modules and projects
       .setFilePath(!componentDto.scope().equals(Scopes.PROJECT) ? componentDto.path() : null)
       .setIsMainBranch(mainBranchProjectUuid == null);
@@ -60,6 +60,7 @@ public class IssueDocTesting {
     doc.setType(RuleType.CODE_SMELL);
     doc.setAssigneeUuid("assignee_uuid_" + randomAlphabetic(26));
     doc.setAuthorLogin("author_" + randomAlphabetic(5));
+    doc.setScope(IssueScope.MAIN);
     doc.setLanguage("language_" + randomAlphabetic(5));
     doc.setComponentUuid(Uuids.createFast());
     doc.setFilePath("filePath_" + randomAlphabetic(5));

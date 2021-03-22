@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ import * as React from 'react';
 import Measure from '../Measure';
 
 jest.mock('../../../helpers/measures', () => {
-  const measures = require.requireActual('../../../helpers/measures');
+  const measures = jest.requireActual('../../../helpers/measures');
   measures.getRatingTooltip = jest.fn(() => 'tooltip');
   return measures;
 });

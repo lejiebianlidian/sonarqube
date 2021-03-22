@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,22 +24,17 @@ import Dropdown from 'sonar-ui-common/components/controls/Dropdown';
 import DropdownIcon from 'sonar-ui-common/components/icons/DropdownIcon';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { isMySet } from '../../../../apps/issues/utils';
-import { isSonarCloud } from '../../../../helpers/system';
 import { getQualityGatesUrl } from '../../../../helpers/urls';
-import { isLoggedIn } from '../../../../helpers/users';
+import { ComponentQualifier } from '../../../../types/component';
 
 interface Props {
-  appState: Pick<T.AppState, 'canAdmin' | 'globalPages' | 'organizationsEnabled' | 'qualifiers'>;
+  appState: Pick<T.AppState, 'canAdmin' | 'globalPages' | 'qualifiers'>;
   currentUser: T.CurrentUser;
   location: { pathname: string };
 }
 
 export default class GlobalNavMenu extends React.PureComponent<Props> {
   renderProjects() {
-    if (isSonarCloud() && !isLoggedIn(this.props.currentUser)) {
-      return null;
-    }
-
     const active =
       this.props.location.pathname.startsWith('/projects') &&
       this.props.location.pathname !== '/projects/create';
@@ -47,7 +42,7 @@ export default class GlobalNavMenu extends React.PureComponent<Props> {
     return (
       <li>
         <Link className={classNames({ active })} to="/projects">
-          {isSonarCloud() ? translate('my_projects') : translate('projects.page')}
+          {translate('projects.page')}
         </Link>
       </li>
     );
@@ -64,23 +59,7 @@ export default class GlobalNavMenu extends React.PureComponent<Props> {
   }
 
   renderIssuesLink() {
-    if (isSonarCloud() && !isLoggedIn(this.props.currentUser)) {
-      return null;
-    }
-
     const active = this.props.location.pathname.startsWith('/issues');
-
-    if (isSonarCloud()) {
-      return (
-        <li>
-          <Link
-            className={classNames({ active })}
-            to={{ pathname: '/issues', query: { resolved: 'false' } }}>
-            {translate('my_issues')}
-          </Link>
-        </li>
-      );
-    }
 
     const query =
       this.props.currentUser.isLoggedIn && isMySet()
@@ -160,7 +139,8 @@ export default class GlobalNavMenu extends React.PureComponent<Props> {
         {({ onToggleClick, open }) => (
           <a
             aria-expanded={open}
-            aria-haspopup="true"
+            aria-haspopup="menu"
+            role="button"
             className={classNames('dropdown-toggle', { active: open })}
             href="#"
             id="global-navigation-more"
@@ -174,17 +154,18 @@ export default class GlobalNavMenu extends React.PureComponent<Props> {
   }
 
   render() {
-    const governanceInstalled = this.props.appState.qualifiers.includes('VW');
-    const { organizationsEnabled } = this.props.appState;
+    const governanceInstalled = this.props.appState.qualifiers.includes(
+      ComponentQualifier.Portfolio
+    );
 
     return (
       <ul className="global-navbar-menu">
         {this.renderProjects()}
         {governanceInstalled && this.renderPortfolios()}
         {this.renderIssuesLink()}
-        {!organizationsEnabled && this.renderRulesLink()}
-        {!organizationsEnabled && this.renderProfilesLink()}
-        {!organizationsEnabled && this.renderQualityGatesLink()}
+        {this.renderRulesLink()}
+        {this.renderProfilesLink()}
+        {this.renderQualityGatesLink()}
         {this.renderAdministrationLink()}
         {this.renderMore()}
       </ul>

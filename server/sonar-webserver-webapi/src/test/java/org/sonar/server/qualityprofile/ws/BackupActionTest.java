@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,51 +21,40 @@ package org.sonar.server.qualityprofile.ws;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.sonar.api.resources.Languages;
 import org.sonar.api.server.ws.WebService;
 import org.sonar.api.server.ws.WebService.Param;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.qualityprofile.QProfileDto;
-import org.sonar.db.user.UserDto;
-import org.sonar.server.exceptions.ForbiddenException;
-import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.language.LanguageTesting;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
 import org.sonar.server.qualityprofile.QProfileBackuper;
 import org.sonar.server.qualityprofile.QProfileBackuperImpl;
 import org.sonar.server.qualityprofile.QProfileParser;
 import org.sonar.server.tester.UserSessionRule;
+import org.sonar.server.ws.TestRequest;
 import org.sonar.server.ws.TestResponse;
 import org.sonar.server.ws.WsActionTester;
 
-import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.db.organization.OrganizationDto.Subscription.FREE;
-import static org.sonar.db.organization.OrganizationDto.Subscription.PAID;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BackupActionTest {
 
   private static final String A_LANGUAGE = "xoo";
 
   @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-  @Rule
   public DbTester db = DbTester.create();
   @Rule
   public UserSessionRule userSession = UserSessionRule.standalone();
 
-  private QProfileBackuper backuper = new QProfileBackuperImpl(db.getDbClient(), null, null, null, new QProfileParser());
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(db);
-  private QProfileWsSupport wsSupport = new QProfileWsSupport(db.getDbClient(), userSession, defaultOrganizationProvider);
-  private Languages languages = LanguageTesting.newLanguages(A_LANGUAGE);
-  private WsActionTester tester = new WsActionTester(new BackupAction(db.getDbClient(), backuper, wsSupport, languages));
+  private final QProfileBackuper backuper = new QProfileBackuperImpl(db.getDbClient(), null, null, null, new QProfileParser());
+  private final QProfileWsSupport wsSupport = new QProfileWsSupport(db.getDbClient(), userSession);
+  private final Languages languages = LanguageTesting.newLanguages(A_LANGUAGE);
+  private final WsActionTester tester = new WsActionTester(new BackupAction(db.getDbClient(), backuper, wsSupport, languages));
 
   @Test
   public void returns_backup_of_profile_with_specified_key() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(), qp -> qp.setLanguage("xoo"));
+    QProfileDto profile = db.qualityProfiles().insert(qp -> qp.setLanguage("xoo"));
 
     TestResponse response = tester.newRequest()
       .setParam("language", profile.getLanguage())
@@ -77,109 +66,22 @@ public class BackupActionTest {
   }
 
   @Test
-  public void returns_backup_of_profile_with_specified_name_on_default_organization() {
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(A_LANGUAGE));
+  public void returns_backup_of_profile_with_specified_name() {
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage(A_LANGUAGE));
 
     TestResponse response = tester.newRequest()
       .setParam("language", profile.getLanguage())
       .setParam("qualityProfile", profile.getName())
       .execute();
     assertThat(response.getInput()).isXmlEqualTo(xmlForProfileWithoutRules(profile));
-  }
-
-  @Test
-  public void returns_backup_of_profile_with_specified_name_and_organization() {
-    OrganizationDto org = db.organizations().insert();
-    QProfileDto profile = db.qualityProfiles().insert(org, p -> p.setLanguage(A_LANGUAGE));
-
-    TestResponse response = tester.newRequest()
-      .setParam("organization", org.getKey())
-      .setParam("language", profile.getLanguage())
-      .setParam("qualityProfile", profile.getName())
-      .execute();
-    assertThat(response.getInput()).isXmlEqualTo(xmlForProfileWithoutRules(profile));
-  }
-
-  @Test
-  public void returns_backup_of_profile_on_free_organization() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(FREE));
-    QProfileDto profile = db.qualityProfiles().insert(organization, p -> p.setLanguage(A_LANGUAGE));
-
-    TestResponse response = tester.newRequest()
-      .setParam("organization", organization.getKey())
-      .setParam("language", profile.getLanguage())
-      .setParam("qualityProfile", profile.getName())
-      .execute();
-
-    assertThat(response.getInput()).isXmlEqualTo(xmlForProfileWithoutRules(profile));
-  }
-
-  @Test
-  public void returns_backup_of_profile_on_paid_organization() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(PAID));
-    QProfileDto profile = db.qualityProfiles().insert(organization, p -> p.setLanguage(A_LANGUAGE));
-    UserDto user = db.users().insertUser();
-    userSession.logIn(user).addMembership(organization);
-
-    TestResponse response = tester.newRequest()
-      .setParam("organization", organization.getKey())
-      .setParam("language", profile.getLanguage())
-      .setParam("qualityProfile", profile.getName())
-      .execute();
-
-    assertThat(response.getInput()).isXmlEqualTo(xmlForProfileWithoutRules(profile));
-  }
-
-  @Test
-  public void throws_NotFoundException_if_specified_organization_does_not_exist() {
-    expectedException.expect(NotFoundException.class);
-    expectedException.expectMessage("No organization with key 'the-missing-org'");
-
-    tester.newRequest()
-      .setParam("organization", "the-missing-org")
-      .setParam("language", A_LANGUAGE)
-      .setParam("qualityProfile", "the-name")
-      .execute();
-  }
-
-  @Test
-  public void throws_NotFoundException_if_profile_name_exists_but_in_another_organization() {
-    OrganizationDto org1 = db.organizations().insert();
-    QProfileDto profileInOrg1 = db.qualityProfiles().insert(org1, p -> p.setLanguage(A_LANGUAGE));
-    OrganizationDto org2 = db.organizations().insert();
-    QProfileDto profileInOrg2 = db.qualityProfiles().insert(org2, p -> p.setLanguage(A_LANGUAGE));
-
-    expectedException.expect(NotFoundException.class);
-    expectedException.expectMessage("Quality Profile for language 'xoo' and name '" + profileInOrg1.getName() + "' does not exist in organization '" + org2.getKey() + "'");
-
-    tester.newRequest()
-      .setParam("organization", org2.getKey())
-      .setParam("language", profileInOrg1.getLanguage())
-      .setParam("qualityProfile", profileInOrg1.getName())
-      .execute();
   }
 
   @Test
   public void throws_IAE_if_profile_reference_is_not_set() {
-    expectedException.expect(IllegalArgumentException.class);
+    TestRequest request = tester.newRequest();
 
-    tester.newRequest().execute();
-  }
-
-  @Test
-  public void fail_on_paid_organization_when_not_member() {
-    OrganizationDto organization = db.organizations().insert(o -> o.setSubscription(PAID));
-    QProfileDto profile = db.qualityProfiles().insert(organization, p -> p.setLanguage(A_LANGUAGE));
-    userSession.logIn();
-
-    expectedException.expect(ForbiddenException.class);
-    expectedException.expectMessage(format("You're not member of organization '%s'", organization.getKey()));
-
-    tester.newRequest()
-      .setParam("organization", organization.getKey())
-      .setParam("language", profile.getLanguage())
-      .setParam("qualityProfile", profile.getName())
-      .execute();
+    assertThatThrownBy(request::execute)
+      .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -192,11 +94,9 @@ public class BackupActionTest {
     assertThat(definition.isPost()).isFalse();
 
     // parameters
-    assertThat(definition.params()).extracting(Param::key).containsExactlyInAnyOrder("organization", "qualityProfile", "language");
+    assertThat(definition.params()).extracting(Param::key).containsExactlyInAnyOrder("qualityProfile", "language");
     Param language = definition.param("language");
     assertThat(language.deprecatedSince()).isNullOrEmpty();
-    Param orgParam = definition.param("organization");
-    assertThat(orgParam.since()).isEqualTo("6.4");
   }
 
   private static String xmlForProfileWithoutRules(QProfileDto profile) {

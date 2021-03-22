@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ public class MigrateSlbsAndLlbsToCommonTypeInCeTasksTest {
 
   private void verifyMigrationResult() {
     assertThat(dbTester.countRowsOfTable(TABLE)).isEqualTo(8);
-    assertThat(dbTester.countSql("select count(*) from " + TABLE + " where kee = 'branchType' and text_value in ('LONG', 'SHORT')")).isEqualTo(0);
+    assertThat(dbTester.countSql("select count(*) from " + TABLE + " where kee = 'branchType' and text_value in ('LONG', 'SHORT')")).isZero();
     assertThat(dbTester.select("select uuid from " + TABLE + " where kee = 'branchType' and text_value = 'BRANCH'")
       .stream()
       .map(e -> e.get("UUID"))

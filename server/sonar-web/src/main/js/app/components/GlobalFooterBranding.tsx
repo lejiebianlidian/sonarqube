@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import * as React from 'react';
 import { isOfficial } from '../../helpers/system';
 
@@ -27,7 +26,7 @@ export default function GlobalFooterBranding() {
   return official ? (
     <div>
       SonarQube&trade; technology is powered by{' '}
-      <a href="http://www.sonarsource.com" rel="noopener noreferrer" target="_blank">
+      <a href="https://www.sonarsource.com" rel="noopener noreferrer" target="_blank">
         SonarSource SA
       </a>
     </div>
@@ -35,7 +34,7 @@ export default function GlobalFooterBranding() {
     <div>
       This application is based on{' '}
       <a
-        href="http://www.sonarqube.org/"
+        href="https://www.sonarqube.org/?referrer=sonarqube"
         rel="noopener noreferrer"
         target="_blank"
         title="SonarQube™">
@@ -43,7 +42,7 @@ export default function GlobalFooterBranding() {
       </a>{' '}
       but is <strong>not</strong> an official version provided by{' '}
       <a
-        href="http://www.sonarsource.com"
+        href="https://www.sonarsource.com"
         rel="noopener noreferrer"
         target="_blank"
         title="SonarSource SA">

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ import { Button, ResetButtonLink } from 'sonar-ui-common/components/controls/but
 import { DropdownOverlay } from 'sonar-ui-common/components/controls/Dropdown';
 import { PopupPlacement } from 'sonar-ui-common/components/ui/popups';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import MarkdownTips from '../../common/MarkdownTips';
+import FormattingTips from '../../common/FormattingTips';
 
 interface Props {
   comment?: Pick<T.IssueComment, 'markdown'>;
@@ -98,7 +98,7 @@ export default class CommentPopup extends React.PureComponent<Props, State> {
               </ResetButtonLink>
             </div>
             <div className="issue-comment-form-tips">
-              <MarkdownTips />
+              <FormattingTips />
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -70,7 +70,6 @@ public class ComponentsService extends BaseService {
     return call(
       new GetRequest(path("search"))
         .setParam("language", request.getLanguage())
-        .setParam("organization", request.getOrganization())
         .setParam("p", request.getP())
         .setParam("ps", request.getPs())
         .setParam("q", request.getQ())
@@ -92,7 +91,6 @@ public class ComponentsService extends BaseService {
         .setParam("f", request.getF() == null ? null : request.getF().stream().collect(Collectors.joining(",")))
         .setParam("facets", request.getFacets() == null ? null : request.getFacets().stream().collect(Collectors.joining(",")))
         .setParam("filter", request.getFilter())
-        .setParam("organization", request.getOrganization())
         .setParam("p", request.getP())
         .setParam("ps", request.getPs())
         .setParam("s", request.getS()),

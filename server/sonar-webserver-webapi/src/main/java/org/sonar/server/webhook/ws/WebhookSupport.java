@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,14 +23,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import okhttp3.HttpUrl;
 import org.sonar.api.config.Configuration;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
-import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.user.UserSession;
 
-import static java.lang.String.format;
 import static org.sonar.api.web.UserRole.ADMIN;
-import static org.sonar.db.permission.OrganizationPermission.ADMINISTER;
+import static org.sonar.db.permission.GlobalPermission.ADMINISTER;
 import static org.sonar.process.ProcessProperties.Property.SONAR_VALIDATE_WEBHOOKS;
 
 public class WebhookSupport {
@@ -47,8 +44,8 @@ public class WebhookSupport {
     userSession.checkProjectPermission(ADMIN, projectDto);
   }
 
-  void checkPermission(OrganizationDto organizationDto) {
-    userSession.checkPermission(ADMINISTER, organizationDto);
+  void checkPermission() {
+    userSession.checkPermission(ADMINISTER);
   }
 
   void checkUrlPattern(String url, String message, Object... messageArguments) {
@@ -67,11 +64,4 @@ public class WebhookSupport {
       // this will only happen for public URLs
     }
   }
-
-  void checkThatProjectBelongsToOrganization(ProjectDto projectDto, OrganizationDto organizationDto, String message, Object... messageArguments) {
-    if (!organizationDto.getUuid().equals(projectDto.getOrganizationUuid())) {
-      throw new NotFoundException(format(message, messageArguments));
-    }
-  }
-
 }

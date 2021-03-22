@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ import GraphsLegendCustom, { GraphsLegendCustomProps } from '../GraphsLegendCust
 
 it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot('default');
-  expect(shallowRender({ showLeakLegend: true })).toMatchSnapshot('with leak legend');
 });
 
 function shallowRender(props: Partial<GraphsLegendCustomProps> = {}) {
@@ -51,7 +50,6 @@ function shallowRender(props: Partial<GraphsLegendCustomProps> = {}) {
           type: 'INT'
         }
       ]}
-      showLeakLegend={false}
       {...props}
     />
   );

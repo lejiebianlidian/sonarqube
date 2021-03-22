@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.time.Clock;
+import java.time.DateTimeException;
 import java.time.OffsetDateTime;
 import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +53,6 @@ import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.SnapshotDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.server.issue.SearchRequest;
 import org.sonar.server.issue.index.IssueQuery.PeriodStart;
@@ -66,7 +67,6 @@ import static org.sonar.api.issue.Issue.STATUSES;
 import static org.sonar.api.issue.Issue.STATUS_REVIEWED;
 import static org.sonar.api.issue.Issue.STATUS_TO_REVIEW;
 import static org.sonar.api.utils.DateUtils.longToDate;
-import static org.sonar.api.utils.DateUtils.parseDateOrDateTime;
 import static org.sonar.api.utils.DateUtils.parseEndingDateOrDateTime;
 import static org.sonar.api.utils.DateUtils.parseStartingDateOrDateTime;
 import static org.sonar.core.util.stream.MoreCollectors.toHashSet;
@@ -108,6 +108,7 @@ public class IssueQueryFactory {
 
   public IssueQuery create(SearchRequest request) {
     try (DbSession dbSession = dbClient.openSession(false)) {
+      final ZoneId timeZone = parseTimeZone(request.getTimeZone()).orElse(clock.getZone());
       IssueQuery.Builder builder = IssueQuery.builder()
         .issueKeys(request.getIssues())
         .severities(request.getSeverities())
@@ -117,6 +118,7 @@ public class IssueQueryFactory {
         .rules(ruleKeysToRuleId(dbSession, request.getRules()))
         .assigneeUuids(request.getAssigneeUuids())
         .authors(request.getAuthors())
+        .scopes(request.getScopes())
         .languages(request.getLanguages())
         .tags(request.getTags())
         .types(request.getTypes())
@@ -125,22 +127,33 @@ public class IssueQueryFactory {
         .cwe(request.getCwe())
         .sonarsourceSecurity(request.getSonarsourceSecurity())
         .assigned(request.getAssigned())
-        .createdAt(parseDateOrDateTime(request.getCreatedAt()))
-        .createdBefore(parseEndingDateOrDateTime(request.getCreatedBefore()))
+        .createdAt(parseStartingDateOrDateTime(request.getCreatedAt(), timeZone))
+        .createdBefore(parseEndingDateOrDateTime(request.getCreatedBefore(), timeZone))
         .facetMode(request.getFacetMode())
-        .organizationUuid(convertOrganizationKeyToUuid(dbSession, request.getOrganization()));
+        .timeZone(timeZone);
 
       List<ComponentDto> allComponents = new ArrayList<>();
       boolean effectiveOnComponentOnly = mergeDeprecatedComponentParameters(dbSession, request, allComponents);
       addComponentParameters(builder, dbSession, effectiveOnComponentOnly, allComponents, request);
 
-      setCreatedAfterFromRequest(dbSession, builder, request, allComponents);
+      setCreatedAfterFromRequest(dbSession, builder, request, allComponents, timeZone);
       String sort = request.getSort();
       if (!Strings.isNullOrEmpty(sort)) {
         builder.sort(sort);
         builder.asc(request.getAsc());
       }
       return builder.build();
+    }
+  }
+
+  private static Optional<ZoneId> parseTimeZone(@Nullable String timeZone) {
+    if (timeZone == null) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.of(ZoneId.of(timeZone));
+    } catch (DateTimeException e) {
+      throw new IllegalArgumentException("TimeZone '" + timeZone + "' cannot be parsed as a valid zone ID");
     }
   }
 
@@ -155,17 +168,8 @@ public class IssueQueryFactory {
     builder.createdAfter(actualCreatedAfter, createdAfterInclusive);
   }
 
-  @CheckForNull
-  private String convertOrganizationKeyToUuid(DbSession dbSession, @Nullable String organizationKey) {
-    if (organizationKey == null) {
-      return null;
-    }
-    Optional<OrganizationDto> organization = dbClient.organizationDao().selectByKey(dbSession, organizationKey);
-    return organization.map(OrganizationDto::getUuid).orElse(UNKNOWN);
-  }
-
-  private void setCreatedAfterFromRequest(DbSession dbSession, IssueQuery.Builder builder, SearchRequest request, List<ComponentDto> componentUuids) {
-    Date createdAfter = parseStartingDateOrDateTime(request.getCreatedAfter());
+  private void setCreatedAfterFromRequest(DbSession dbSession, IssueQuery.Builder builder, SearchRequest request, List<ComponentDto> componentUuids, ZoneId timeZone) {
+    Date createdAfter = parseStartingDateOrDateTime(request.getCreatedAfter(), timeZone);
     String createdInLast = request.getCreatedInLast();
 
     if (request.getSinceLeakPeriod() == null || !request.getSinceLeakPeriod()) {
@@ -236,7 +240,7 @@ public class IssueQueryFactory {
     }
     builder.moduleUuids(request.getModuleUuids());
     builder.directories(request.getDirectories());
-    builder.fileUuids(request.getFileUuids());
+    builder.files(request.getFiles());
 
     addComponentsBasedOnQualifier(builder, session, components, request);
   }
@@ -275,7 +279,7 @@ public class IssueQueryFactory {
         break;
       case Qualifiers.FILE:
       case Qualifiers.UNIT_TEST_FILE:
-        builder.fileUuids(components.stream().map(ComponentDto::uuid).collect(toList()));
+        builder.componentUuids(components.stream().map(ComponentDto::uuid).collect(toList()));
         break;
       default:
         throw new IllegalArgumentException("Unable to set search root context for components " + Joiner.on(',').join(components));

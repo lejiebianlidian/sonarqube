@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 package org.sonar.db.component;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,7 @@ import org.sonar.db.Dao;
 import org.sonar.db.DbSession;
 import org.sonar.db.project.ProjectDto;
 
+import static java.util.Collections.emptyList;
 import static org.sonar.db.DatabaseUtils.executeLargeInputs;
 
 public class BranchDao implements Dao {
@@ -41,24 +41,14 @@ public class BranchDao implements Dao {
   }
 
   public void insert(DbSession dbSession, BranchDto dto) {
-    setKeyType(dto);
     mapper(dbSession).insert(dto, system2.now());
   }
 
   public void upsert(DbSession dbSession, BranchDto dto) {
     BranchMapper mapper = mapper(dbSession);
     long now = system2.now();
-    setKeyType(dto);
     if (mapper.update(dto, now) == 0) {
       mapper.insert(dto, now);
-    }
-  }
-
-  private static void setKeyType(BranchDto dto) {
-    if (dto.getBranchType() == BranchType.PULL_REQUEST) {
-      dto.setKeyType(KeyType.PULL_REQUEST);
-    } else {
-      dto.setKeyType(KeyType.BRANCH);
     }
   }
 
@@ -73,22 +63,22 @@ public class BranchDao implements Dao {
   }
 
   public Optional<BranchDto> selectByBranchKey(DbSession dbSession, String projectUuid, String key) {
-    return selectByKey(dbSession, projectUuid, key, KeyType.BRANCH);
+    return selectByKey(dbSession, projectUuid, key, BranchType.BRANCH);
   }
 
   public List<BranchDto> selectByBranchKeys(DbSession dbSession, Map<String, String> branchKeyByProjectUuid) {
     if (branchKeyByProjectUuid.isEmpty()) {
-      return Collections.emptyList();
+      return emptyList();
     }
     return mapper(dbSession).selectByBranchKeys(branchKeyByProjectUuid);
   }
 
   public Optional<BranchDto> selectByPullRequestKey(DbSession dbSession, String projectUuid, String key) {
-    return selectByKey(dbSession, projectUuid, key, KeyType.PULL_REQUEST);
+    return selectByKey(dbSession, projectUuid, key, BranchType.PULL_REQUEST);
   }
 
-  private static Optional<BranchDto> selectByKey(DbSession dbSession, String projectUuid, String key, KeyType keyType) {
-    return Optional.ofNullable(mapper(dbSession).selectByKey(projectUuid, key, keyType));
+  private static Optional<BranchDto> selectByKey(DbSession dbSession, String projectUuid, String key, BranchType branchType) {
+    return Optional.ofNullable(mapper(dbSession).selectByKey(projectUuid, key, branchType));
   }
 
   public Collection<BranchDto> selectByComponent(DbSession dbSession, ComponentDto component) {
@@ -104,6 +94,9 @@ public class BranchDao implements Dao {
   }
 
   public List<BranchDto> selectByUuids(DbSession session, Collection<String> uuids) {
+    if (uuids.isEmpty()) {
+      return emptyList();
+    }
     return executeLargeInputs(uuids, mapper(session)::selectByUuids);
   }
 
@@ -113,7 +106,7 @@ public class BranchDao implements Dao {
 
   public List<String> selectProjectUuidsWithIssuesNeedSync(DbSession session, Collection<String> uuids) {
     if (uuids.isEmpty()) {
-      return Collections.emptyList();
+      return emptyList();
     }
 
     return executeLargeInputs(uuids, mapper(session)::selectProjectUuidsWithIssuesNeedSync);
@@ -154,6 +147,10 @@ public class BranchDao implements Dao {
   public long updateNeedIssueSync(DbSession dbSession, String branchUuid, boolean needIssueSync) {
     long now = system2.now();
     return mapper(dbSession).updateNeedIssueSync(branchUuid, needIssueSync, now);
+  }
+
+  public void deleteBranch(DbSession dbSession, String projectUuid, String branchKey) {
+    mapper(dbSession).deleteBranch(projectUuid, branchKey);
   }
 
   public boolean doAnyOfComponentsNeedIssueSync(DbSession session, List<String> components) {

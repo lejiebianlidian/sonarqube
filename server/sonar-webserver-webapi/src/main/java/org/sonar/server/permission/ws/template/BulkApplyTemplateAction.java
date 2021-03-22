@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,6 @@ import static org.sonar.server.ws.KeyExamples.KEY_PROJECT_EXAMPLE_001;
 import static org.sonar.server.ws.KeyExamples.KEY_PROJECT_EXAMPLE_002;
 import static org.sonar.server.ws.WsParameterBuilder.createRootQualifiersParameter;
 import static org.sonar.server.ws.WsParameterBuilder.QualifierParameterContext.newQualifierParameterContext;
-import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_ORGANIZATION;
 import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_QUALIFIER;
 import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_TEMPLATE_ID;
 import static org.sonarqube.ws.client.permission.PermissionsWsParameters.PARAM_TEMPLATE_NAME;
@@ -104,8 +103,7 @@ public class BulkApplyTemplateAction implements PermissionsWsAction {
       .setExampleValue("apac");
 
     createRootQualifiersParameter(action, newQualifierParameterContext(i18n, resourceTypes))
-      .setDefaultValue(Qualifiers.PROJECT)
-      .setDeprecatedKey(PARAM_QUALIFIER, "6.6");
+      .setDefaultValue(Qualifiers.PROJECT);
 
     WsParameters.createTemplateParameters(action);
 
@@ -120,7 +118,7 @@ public class BulkApplyTemplateAction implements PermissionsWsAction {
 
     action.createParam(PARAM_VISIBILITY)
       .setDescription("Filter the projects that should be visible to everyone (%s), or only specific user/groups (%s).<br/>" +
-        "If no visibility is specified, the default project visibility of the organization will be used.",
+        "If no visibility is specified, the default project visibility will be used.",
         Visibility.PUBLIC.getLabel(), Visibility.PRIVATE.getLabel())
       .setRequired(false)
       .setInternal(true)
@@ -149,11 +147,11 @@ public class BulkApplyTemplateAction implements PermissionsWsAction {
   private void doHandle(BulkApplyTemplateRequest request) {
     try (DbSession dbSession = dbClient.openSession(false)) {
       PermissionTemplateDto template = wsSupport.findTemplate(dbSession, newTemplateRef(
-        request.getTemplateId(), request.getOrganization(), request.getTemplateName()));
-      checkGlobalAdmin(userSession, template.getOrganizationUuid());
+        request.getTemplateId(), request.getTemplateName()));
+      checkGlobalAdmin(userSession);
 
       ComponentQuery componentQuery = buildDbQuery(request);
-      List<ComponentDto> projects = dbClient.componentDao().selectByQuery(dbSession, template.getOrganizationUuid(), componentQuery, 0, Integer.MAX_VALUE);
+      List<ComponentDto> projects = dbClient.componentDao().selectByQuery(dbSession, componentQuery, 0, Integer.MAX_VALUE);
 
       permissionTemplateService.applyAndCommit(dbSession, template, projects);
     }
@@ -161,7 +159,6 @@ public class BulkApplyTemplateAction implements PermissionsWsAction {
 
   private static BulkApplyTemplateRequest toBulkApplyTemplateWsRequest(Request request) {
     return new BulkApplyTemplateRequest()
-      .setOrganization(request.param(PARAM_ORGANIZATION))
       .setTemplateId(request.param(PARAM_TEMPLATE_ID))
       .setTemplateName(request.param(PARAM_TEMPLATE_NAME))
       .setQualifiers(request.mandatoryParamAsStrings(PARAM_QUALIFIERS))
@@ -191,7 +188,6 @@ public class BulkApplyTemplateAction implements PermissionsWsAction {
 
   private static class BulkApplyTemplateRequest {
     private String templateId;
-    private String organization;
     private String templateName;
     private String query;
     private Collection<String> qualifiers = singleton(Qualifiers.PROJECT);
@@ -207,16 +203,6 @@ public class BulkApplyTemplateAction implements PermissionsWsAction {
 
     public BulkApplyTemplateRequest setTemplateId(@Nullable String templateId) {
       this.templateId = templateId;
-      return this;
-    }
-
-    @CheckForNull
-    public String getOrganization() {
-      return organization;
-    }
-
-    public BulkApplyTemplateRequest setOrganization(@Nullable String s) {
-      this.organization = s;
       return this;
     }
 

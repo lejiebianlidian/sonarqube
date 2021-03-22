@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -198,11 +198,11 @@ public class QProfileTreeImplTest {
   }
 
   private QProfileDto createProfile(RuleDefinitionDto rule) {
-    return db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(rule.getLanguage()));
+    return db.qualityProfiles().insert(p -> p.setLanguage(rule.getLanguage()));
   }
 
   private QProfileDto createChildProfile(QProfileDto parent) {
-    return db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p
+    return db.qualityProfiles().insert(p -> p
       .setLanguage(parent.getLanguage())
       .setParentKee(parent.getKee())
       .setName("Child of " + parent.getName()));
@@ -218,8 +218,6 @@ public class QProfileTreeImplTest {
 
     assertThat(activeRule.getSeverityString()).isEqualTo(expectedSeverity);
     assertThat(activeRule.getInheritance()).isEqualTo(expectedInheritance != null ? expectedInheritance.name() : null);
-    assertThat(activeRule.getCreatedAt()).isNotNull();
-    assertThat(activeRule.getUpdatedAt()).isNotNull();
 
     List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid());
     assertThat(params).hasSize(expectedParams.size());
@@ -253,8 +251,6 @@ public class QProfileTreeImplTest {
 
     assertThat(activeRule.getSeverityString()).isEqualTo(expectedSeverity);
     assertThat(activeRule.getInheritance()).isEqualTo(expectedInheritance != null ? expectedInheritance.name() : null);
-    assertThat(activeRule.getCreatedAt()).isNotNull();
-    assertThat(activeRule.getUpdatedAt()).isNotNull();
 
     List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid());
     assertThat(params).hasSize(expectedParams.size());

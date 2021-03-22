@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,40 +20,32 @@
 import * as React from 'react';
 import { Link } from 'react-router';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
+import DateFromNow from 'sonar-ui-common/components/intl/DateFromNow';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import DocTooltip from '../../../components/docs/DocTooltip';
 import { getRulesUrl } from '../../../helpers/urls';
 import BuiltInQualityProfileBadge from '../components/BuiltInQualityProfileBadge';
 import ProfileActions from '../components/ProfileActions';
-import ProfileDate from '../components/ProfileDate';
 import ProfileLink from '../components/ProfileLink';
 import { Profile } from '../types';
 
 export interface ProfilesListRowProps {
-  organization: string | null;
   profile: Profile;
   updateProfiles: () => Promise<void>;
 }
 
 export function ProfilesListRow(props: ProfilesListRowProps) {
-  const { organization, profile } = props;
+  const { profile } = props;
 
   const offset = 25 * (profile.depth - 1);
-  const activeRulesUrl = getRulesUrl(
-    {
-      qprofile: profile.key,
-      activation: 'true'
-    },
-    organization
-  );
-  const deprecatedRulesUrl = getRulesUrl(
-    {
-      qprofile: profile.key,
-      activation: 'true',
-      statuses: 'DEPRECATED'
-    },
-    organization
-  );
+  const activeRulesUrl = getRulesUrl({
+    qprofile: profile.key,
+    activation: 'true'
+  });
+  const deprecatedRulesUrl = getRulesUrl({
+    qprofile: profile.key,
+    activation: 'true',
+    statuses: 'DEPRECATED'
+  });
 
   return (
     <tr
@@ -63,10 +55,7 @@ export function ProfilesListRow(props: ProfilesListRowProps) {
       <td className="quality-profiles-table-name text-middle">
         <div className="display-flex-center" style={{ paddingLeft: offset }}>
           <div>
-            <ProfileLink
-              language={profile.language}
-              name={profile.name}
-              organization={organization}>
+            <ProfileLink language={profile.language} name={profile.name}>
               {profile.name}
             </ProfileLink>
           </div>
@@ -76,12 +65,9 @@ export function ProfilesListRow(props: ProfilesListRowProps) {
 
       <td className="quality-profiles-table-projects thin nowrap text-middle text-right">
         {profile.isDefault ? (
-          <DocTooltip
-            doc={import(
-              /* webpackMode: "eager" */ 'Docs/tooltips/quality-profiles/default-quality-profile.md'
-            )}>
+          <Tooltip overlay={translate('quality_profiles.list.default.help')}>
             <span className="badge">{translate('default')}</span>
-          </DocTooltip>
+          </Tooltip>
         ) : (
           <span>{profile.projectCount}</span>
         )}
@@ -104,20 +90,15 @@ export function ProfilesListRow(props: ProfilesListRowProps) {
       </td>
 
       <td className="quality-profiles-table-date thin nowrap text-middle text-right">
-        <ProfileDate date={profile.rulesUpdatedAt} />
+        <DateFromNow date={profile.rulesUpdatedAt} />
       </td>
 
       <td className="quality-profiles-table-date thin nowrap text-middle text-right">
-        <ProfileDate date={profile.lastUsed} />
+        <DateFromNow date={profile.lastUsed} />
       </td>
 
       <td className="quality-profiles-table-actions thin nowrap text-middle text-right">
-        <ProfileActions
-          fromList={true}
-          organization={organization}
-          profile={profile}
-          updateProfiles={props.updateProfiles}
-        />
+        <ProfileActions fromList={true} profile={profile} updateProfiles={props.updateProfiles} />
       </td>
     </tr>
   );

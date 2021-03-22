@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,9 @@ import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 
 export interface Props {
+  defaultVisibility: T.Visibility;
   onClose: () => void;
   onConfirm: (visiblity: T.Visibility) => void;
-  organization: T.Organization;
 }
 
 interface State {
@@ -37,7 +37,7 @@ interface State {
 export default class ChangeDefaultVisibilityForm extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { visibility: props.organization.projectVisibility as T.Visibility };
+    this.state = { visibility: props.defaultVisibility };
   }
 
   handleConfirmClick = () => {
@@ -50,11 +50,10 @@ export default class ChangeDefaultVisibilityForm extends React.PureComponent<Pro
   };
 
   render() {
-    const { organization } = this.props;
     return (
       <Modal contentLabel="modal form" onRequestClose={this.props.onClose}>
         <header className="modal-head">
-          <h2>{translate('organization.change_visibility_form.header')}</h2>
+          <h2>{translate('settings.projects.change_visibility_form.header')}</h2>
         </header>
 
         <div className="modal-body">
@@ -63,10 +62,7 @@ export default class ChangeDefaultVisibilityForm extends React.PureComponent<Pro
               <Radio
                 value={visibility}
                 checked={this.state.visibility === visibility}
-                onCheck={this.handleVisibilityChange}
-                disabled={
-                  visibility === 'private' && !organization.canUpdateProjectsVisibilityToPrivate
-                }>
+                onCheck={this.handleVisibilityChange}>
                 <div>
                   {translate('visibility', visibility)}
                   <p className="text-muted spacer-top">
@@ -77,16 +73,14 @@ export default class ChangeDefaultVisibilityForm extends React.PureComponent<Pro
             </div>
           ))}
 
-          {organization.canUpdateProjectsVisibilityToPrivate && (
-            <Alert variant="warning">
-              {translate('organization.change_visibility_form.warning')}
-            </Alert>
-          )}
+          <Alert variant="warning">
+            {translate('settings.projects.change_visibility_form.warning')}
+          </Alert>
         </div>
 
         <footer className="modal-foot">
           <Button className="js-confirm" onClick={this.handleConfirmClick}>
-            {translate('organization.change_visibility_form.submit')}
+            {translate('settings.projects.change_visibility_form.submit')}
           </Button>
           <ResetButtonLink className="js-modal-close" onClick={this.props.onClose}>
             {translate('cancel')}

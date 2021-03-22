@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,17 +19,18 @@
  */
 package org.sonar.db.user;
 
+import java.util.Set;
 import org.apache.ibatis.annotations.Param;
 
 public interface UserGroupMapper {
 
   void insert(UserGroupDto dto);
 
+  Set<String> selectUserUuidsInGroup(@Param("groupUuid") String groupUuid);
+
   void delete(@Param("groupUuid") String groupUuid, @Param("userUuid") String userUuid);
 
   void deleteByGroupUuid(@Param("groupUuid") String groupUuid);
-
-  void deleteByOrganizationAndUser(@Param("organizationUuid") String organizationUuid, @Param("userUuid") String userUuid);
 
   void deleteByUserUuid(@Param("userUuid") String userUuid);
 }

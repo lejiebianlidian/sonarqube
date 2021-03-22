@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,11 +18,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { Setting } from '../../../types/settings';
 import Definition from './Definition';
 
 interface Props {
   component?: T.Component;
-  settings: T.Setting[];
+  settings: Setting[];
 }
 
 export default function DefinitionsList({ component, settings }: Props) {

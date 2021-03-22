@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -78,6 +78,8 @@ import org.sonar.scanner.scan.branch.ProjectPullRequests;
 import org.sonarqube.ws.NewCodePeriods;
 import org.sonarqube.ws.Qualityprofiles.SearchWsResponse.QualityProfile;
 import org.sonarqube.ws.Rules.ListResponse.Rule;
+
+import static java.util.Collections.emptySet;
 
 /**
  * Main utility class for writing scanner medium tests.
@@ -209,6 +211,7 @@ public class ScannerMediumTester extends ExternalResource {
     r.setTemplateRuleKey(templateRuleKey);
     r.setLanguage(language);
     r.setSeverity(severity);
+    r.setDeprecatedKeys(emptySet());
 
     activeRules.addActiveRule(r);
     return this;

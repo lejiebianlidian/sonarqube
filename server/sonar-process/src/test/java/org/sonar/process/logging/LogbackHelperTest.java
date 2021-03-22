@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -165,7 +165,7 @@ public class LogbackHelperTest {
     julLogger.severe("Message1");
 
     // JUL bridge has not been initialized, nothing in logs
-    assertThat(memoryAppender.getLogs()).hasSize(0);
+    assertThat(memoryAppender.getLogs()).isEmpty();
 
     // Enabling JUL bridge
     LoggerContextListener propagator = underTest.enableJulChangePropagation(ctx);

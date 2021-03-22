@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,14 +30,12 @@ import javax.annotation.Nullable;
 import org.sonar.api.web.UserRole;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.UnauthorizedException;
 
-import static java.lang.String.format;
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.sonar.server.user.UserSession.IdentityProvider.SONARQUBE;
 
@@ -78,16 +76,17 @@ public abstract class AbstractUserSession implements UserSession {
   }
 
   @Override
-  public final boolean hasPermission(OrganizationPermission permission, OrganizationDto organization) {
-    return hasPermission(permission, organization.getUuid());
+  @CheckForNull
+  public Long getLastSonarlintConnectionDate() {
+    return null;
   }
 
   @Override
-  public final boolean hasPermission(OrganizationPermission permission, String organizationUuid) {
-    return isRoot() || hasPermissionImpl(permission, organizationUuid);
+  public final boolean hasPermission(GlobalPermission permission) {
+    return isRoot() || hasPermissionImpl(permission);
   }
 
-  protected abstract boolean hasPermissionImpl(OrganizationPermission permission, String organizationUuid);
+  protected abstract boolean hasPermissionImpl(GlobalPermission permission);
 
   @Override
   public final boolean hasComponentPermission(String permission, ComponentDto component) {
@@ -120,13 +119,6 @@ public abstract class AbstractUserSession implements UserSession {
   protected abstract Optional<String> componentUuidToProjectUuid(String componentUuid);
 
   protected abstract boolean hasProjectUuidPermission(String permission, String projectUuid);
-
-  @Override
-  public final boolean hasMembership(OrganizationDto organizationDto) {
-    return isRoot() || hasMembershipImpl(organizationDto);
-  }
-
-  protected abstract boolean hasMembershipImpl(OrganizationDto organizationDto);
 
   @Override
   public final List<ComponentDto> keepAuthorizedComponents(String permission, Collection<ComponentDto> components) {
@@ -181,13 +173,8 @@ public abstract class AbstractUserSession implements UserSession {
   }
 
   @Override
-  public final UserSession checkPermission(OrganizationPermission permission, OrganizationDto organization) {
-    return checkPermission(permission, organization.getUuid());
-  }
-
-  @Override
-  public final UserSession checkPermission(OrganizationPermission permission, String organizationUuid) {
-    if (!hasPermission(permission, organizationUuid)) {
+  public final UserSession checkPermission(GlobalPermission permission) {
+    if (!hasPermission(permission)) {
       throw new ForbiddenException(INSUFFICIENT_PRIVILEGES_MESSAGE);
     }
     return this;
@@ -228,13 +215,4 @@ public abstract class AbstractUserSession implements UserSession {
     }
     return this;
   }
-
-  @Override
-  public UserSession checkMembership(OrganizationDto organization) {
-    if (!hasMembership(organization)) {
-      throw new ForbiddenException(format("You're not member of organization '%s'", organization.getKey()));
-    }
-    return this;
-  }
-
 }

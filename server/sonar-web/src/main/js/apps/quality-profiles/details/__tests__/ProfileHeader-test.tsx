@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,11 +28,6 @@ it('should render correctly', () => {
 
 function shallowRender(props: Partial<ProfileHeader['props']> = {}) {
   return shallow(
-    <ProfileHeader
-      organization="foo"
-      profile={mockQualityProfile()}
-      updateProfiles={jest.fn()}
-      {...props}
-    />
+    <ProfileHeader profile={mockQualityProfile()} updateProfiles={jest.fn()} {...props} />
   );
 }

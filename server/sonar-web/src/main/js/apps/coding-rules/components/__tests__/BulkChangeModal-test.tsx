@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -105,7 +105,6 @@ function shallowRender(props: Partial<BulkChangeModal['props']> = {}) {
       action="activate"
       languages={{ js: mockLanguage() }}
       onClose={jest.fn()}
-      organization={undefined}
       profile={mockQualityProfile()}
       query={{ languages: ['js'] } as Query}
       referencedProfiles={{

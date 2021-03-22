@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,14 +22,7 @@ import * as React from 'react';
 import JavaMaven from '../JavaMaven';
 
 it('renders correctly', () => {
-  expect(shallow(<JavaMaven host="host" token="token" />)).toMatchSnapshot();
   expect(
-    shallow(<JavaMaven host="host" organization="organization" token="token" />)
-  ).toMatchSnapshot();
-});
-
-it('renders with projectKey', () => {
-  expect(
-    shallow(<JavaMaven host="host" organization="organization" projectKey="foo" token="token" />)
+    shallow(<JavaMaven host="host" projectKey="projectKey" token="token" />)
   ).toMatchSnapshot();
 });

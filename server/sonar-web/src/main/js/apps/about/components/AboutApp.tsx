@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,6 @@ import AboutStandards from './AboutStandards';
 import EntryIssueTypes from './EntryIssueTypes';
 
 interface Props {
-  appState: Pick<T.AppState, 'defaultOrganization' | 'organizationsEnabled'>;
   currentUser: T.CurrentUser;
   customText?: string;
   fetchAboutPageSettings: () => Promise<void>;
@@ -183,7 +182,7 @@ export class AboutApp extends React.PureComponent<Props, State> {
               <AboutQualityGates />
             </div>
             <div className="flex-column flex-column-half about-page-group-boxes">
-              <AboutStandards appState={this.props.appState} />
+              <AboutStandards />
             </div>
           </div>
 

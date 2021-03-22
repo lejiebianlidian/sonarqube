@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 package org.sonar.server.issue.index;
 
 import java.time.Clock;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,11 +31,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.api.utils.DateUtils;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.SnapshotDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.rule.RuleDbTester;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.user.UserDto;
@@ -50,6 +49,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonar.api.resources.Qualifiers.APP;
 import static org.sonar.api.utils.DateUtils.addDays;
+import static org.sonar.api.utils.DateUtils.parseDateTime;
 import static org.sonar.api.web.UserRole.USER;
 import static org.sonar.db.component.ComponentTesting.newDirectory;
 import static org.sonar.db.component.ComponentTesting.newFileDto;
@@ -67,16 +67,14 @@ public class IssueQueryFactoryTest {
   @Rule
   public DbTester db = DbTester.create();
 
-  private RuleDbTester ruleDbTester = new RuleDbTester(db);
-
-  private Clock clock = mock(Clock.class);
-  private IssueQueryFactory underTest = new IssueQueryFactory(db.getDbClient(), clock, userSession);
+  private final RuleDbTester ruleDbTester = new RuleDbTester(db);
+  private final Clock clock = mock(Clock.class);
+  private final IssueQueryFactory underTest = new IssueQueryFactory(db.getDbClient(), clock, userSession);
 
   @Test
   public void create_from_parameters() {
     UserDto user = db.users().insertUser(u -> u.setLogin("joanna"));
-    OrganizationDto organization = db.organizations().insert();
-    ComponentDto project = db.components().insertPrivateProject(organization);
+    ComponentDto project = db.components().insertPrivateProject();
     ComponentDto module = db.components().insertComponent(newModuleDto(project));
     ComponentDto file = db.components().insertComponent(newFileDto(project));
 
@@ -92,11 +90,11 @@ public class IssueQueryFactoryTest {
       .setProjects(asList(project.getDbKey()))
       .setModuleUuids(asList(module.uuid()))
       .setDirectories(asList("aDirPath"))
-      .setFileUuids(asList(file.uuid()))
+      .setFiles(asList(file.uuid()))
       .setAssigneesUuid(asList(user.getUuid()))
+      .setScopes(asList("MAIN", "TEST"))
       .setLanguages(asList("xoo"))
       .setTags(asList("tag1", "tag2"))
-      .setOrganization(organization.getKey())
       .setAssigned(true)
       .setCreatedAfter("2013-04-16T09:08:24+0200")
       .setCreatedBefore("2013-04-17T09:08:24+0200")
@@ -113,18 +111,18 @@ public class IssueQueryFactoryTest {
     assertThat(query.resolved()).isTrue();
     assertThat(query.projectUuids()).containsOnly(project.uuid());
     assertThat(query.moduleUuids()).containsOnly(module.uuid());
-    assertThat(query.fileUuids()).containsOnly(file.uuid());
+    assertThat(query.files()).containsOnly(file.uuid());
     assertThat(query.assignees()).containsOnly(user.getUuid());
+    assertThat(query.scopes()).containsOnly("TEST", "MAIN");
     assertThat(query.languages()).containsOnly("xoo");
     assertThat(query.tags()).containsOnly("tag1", "tag2");
-    assertThat(query.organizationUuid()).isEqualTo(organization.getUuid());
     assertThat(query.onComponentOnly()).isFalse();
     assertThat(query.assigned()).isTrue();
     assertThat(query.rules()).hasSize(2);
     assertThat(query.directories()).containsOnly("aDirPath");
-    assertThat(query.createdAfter().date()).isEqualTo(DateUtils.parseDateTime("2013-04-16T09:08:24+0200"));
+    assertThat(query.createdAfter().date()).isEqualTo(parseDateTime("2013-04-16T09:08:24+0200"));
     assertThat(query.createdAfter().inclusive()).isTrue();
-    assertThat(query.createdBefore()).isEqualTo(DateUtils.parseDateTime("2013-04-17T09:08:24+0200"));
+    assertThat(query.createdBefore()).isEqualTo(parseDateTime("2013-04-17T09:08:24+0200"));
     assertThat(query.sort()).isEqualTo(IssueQuery.SORT_BY_CREATION_DATE);
     assertThat(query.asc()).isTrue();
   }
@@ -153,25 +151,49 @@ public class IssueQueryFactoryTest {
 
   @Test
   public void dates_are_inclusive() {
+    when(clock.getZone()).thenReturn(ZoneId.of("Europe/Paris"));
     SearchRequest request = new SearchRequest()
       .setCreatedAfter("2013-04-16")
       .setCreatedBefore("2013-04-17");
 
     IssueQuery query = underTest.create(request);
 
-    assertThat(query.createdAfter().date()).isEqualTo(DateUtils.parseDate("2013-04-16"));
+    assertThat(query.createdAfter().date()).isEqualTo(parseDateTime("2013-04-16T00:00:00+0200"));
     assertThat(query.createdAfter().inclusive()).isTrue();
-    assertThat(query.createdBefore()).isEqualTo(DateUtils.parseDate("2013-04-18"));
+    assertThat(query.createdBefore()).isEqualTo(parseDateTime("2013-04-18T00:00:00+0200"));
   }
 
   @Test
   public void creation_date_support_localdate() {
+    when(clock.getZone()).thenReturn(ZoneId.of("Europe/Paris"));
     SearchRequest request = new SearchRequest()
       .setCreatedAt("2013-04-16");
 
     IssueQuery query = underTest.create(request);
 
-    assertThat(query.createdAt()).isEqualTo(DateUtils.parseDate("2013-04-16"));
+    assertThat(query.createdAt()).isEqualTo(parseDateTime("2013-04-16T00:00:00+0200"));
+  }
+
+  @Test
+  public void use_provided_timezone_to_parse_createdAfter() {
+    SearchRequest request = new SearchRequest()
+      .setCreatedAfter("2020-04-16")
+      .setTimeZone("Europe/Volgograd");
+
+    IssueQuery query = underTest.create(request);
+
+    assertThat(query.createdAfter().date()).isEqualTo(parseDateTime("2020-04-16T00:00:00+0400"));
+  }
+
+  @Test
+  public void use_provided_timezone_to_parse_createdBefore() {
+    SearchRequest request = new SearchRequest()
+      .setCreatedBefore("2020-04-16")
+      .setTimeZone("Europe/Moscow");
+
+    IssueQuery query = underTest.create(request);
+
+    assertThat(query.createdBefore()).isEqualTo(parseDateTime("2020-04-17T00:00:00+0300"));
   }
 
   @Test
@@ -181,7 +203,7 @@ public class IssueQueryFactoryTest {
 
     IssueQuery query = underTest.create(request);
 
-    assertThat(query.createdAt()).isEqualTo(DateUtils.parseDateTime("2013-04-16T09:08:24+0200"));
+    assertThat(query.createdAt()).isEqualTo(parseDateTime("2013-04-16T09:08:24+0200"));
   }
 
   @Test
@@ -205,9 +227,8 @@ public class IssueQueryFactoryTest {
     assertThat(query.moduleUuids()).isEmpty();
     assertThat(query.moduleRootUuids()).isEmpty();
     assertThat(query.directories()).isEmpty();
-    assertThat(query.fileUuids()).isEmpty();
+    assertThat(query.files()).isEmpty();
     assertThat(query.viewUuids()).isEmpty();
-    assertThat(query.organizationUuid()).isNull();
     assertThat(query.branchUuid()).isNull();
   }
 
@@ -224,10 +245,21 @@ public class IssueQueryFactoryTest {
   }
 
   @Test
-  public void param_componentUuids_enables_search_in_view_tree_if_user_has_permission_on_view() {
-    ComponentDto view = db.components().insertView();
+  public void fail_if_invalid_timezone() {
     SearchRequest request = new SearchRequest()
-      .setComponentUuids(asList(view.uuid()));
+      .setTimeZone("Poitou-Charentes");
+
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("TimeZone 'Poitou-Charentes' cannot be parsed as a valid zone ID");
+
+    underTest.create(request);
+  }
+
+  @Test
+  public void param_componentUuids_enables_search_in_view_tree_if_user_has_permission_on_view() {
+    ComponentDto view = db.components().insertPublicPortfolio();
+    SearchRequest request = new SearchRequest()
+      .setComponentUuids(singletonList(view.uuid()));
     userSession.registerComponents(view);
 
     IssueQuery query = underTest.create(request);
@@ -240,7 +272,7 @@ public class IssueQueryFactoryTest {
   public void application_search_project_issues() {
     ComponentDto project1 = db.components().insertPublicProject();
     ComponentDto project2 = db.components().insertPublicProject();
-    ComponentDto application = db.components().insertPublicApplication(db.getDefaultOrganization());
+    ComponentDto application = db.components().insertPublicApplication();
     db.components().insertComponents(newProjectCopy("PC1", project1, application));
     db.components().insertComponents(newProjectCopy("PC2", project2, application));
     userSession.registerComponents(application, project1, project2);
@@ -259,7 +291,7 @@ public class IssueQueryFactoryTest {
     ComponentDto project2 = db.components().insertPublicProject();
     db.components().insertSnapshot(project2, s -> s.setPeriodDate(null));
     ComponentDto project3 = db.components().insertPublicProject();
-    ComponentDto application = db.components().insertPublicApplication(db.getDefaultOrganization());
+    ComponentDto application = db.components().insertPublicApplication();
     db.components().insertComponents(newProjectCopy("PC1", project1, application));
     db.components().insertComponents(newProjectCopy("PC2", project2, application));
     db.components().insertComponents(newProjectCopy("PC3", project3, application));
@@ -277,10 +309,10 @@ public class IssueQueryFactoryTest {
 
   @Test
   public void return_empty_results_if_not_allowed_to_search_for_subview() {
-    ComponentDto view = db.components().insertView();
+    ComponentDto view = db.components().insertPrivatePortfolio();
     ComponentDto subView = db.components().insertComponent(newSubView(view));
     SearchRequest request = new SearchRequest()
-      .setComponentUuids(asList(subView.uuid()));
+      .setComponentUuids(singletonList(subView.uuid()));
 
     IssueQuery query = underTest.create(request);
 
@@ -347,7 +379,7 @@ public class IssueQueryFactoryTest {
 
     IssueQuery query = underTest.create(request);
 
-    assertThat(query.fileUuids()).containsExactly(file.uuid());
+    assertThat(query.componentUuids()).containsExactly(file.uuid());
   }
 
   @Test
@@ -359,7 +391,7 @@ public class IssueQueryFactoryTest {
 
     IssueQuery query = underTest.create(request);
 
-    assertThat(query.fileUuids()).containsExactly(file.uuid());
+    assertThat(query.componentUuids()).containsExactly(file.uuid());
   }
 
   @Test
@@ -389,22 +421,22 @@ public class IssueQueryFactoryTest {
     assertThat(underTest.create(new SearchRequest()
       .setComponents(singletonList(file.getKey()))
       .setBranch(branch.getBranch())))
-        .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.fileUuids()), IssueQuery::isMainBranch)
+        .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.componentUuids()), IssueQuery::isMainBranch)
         .containsOnly(branch.uuid(), singletonList(file.uuid()), false);
 
     assertThat(underTest.create(new SearchRequest()
       .setComponents(singletonList(branch.getKey()))
-      .setFileUuids(singletonList(file.uuid()))
+      .setFiles(singletonList(file.path()))
       .setBranch(branch.getBranch())))
-        .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.fileUuids()), IssueQuery::isMainBranch)
-        .containsOnly(branch.uuid(), singletonList(file.uuid()), false);
+        .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.files()), IssueQuery::isMainBranch)
+        .containsOnly(branch.uuid(), singletonList(file.path()), false);
 
     assertThat(underTest.create(new SearchRequest()
       .setProjects(singletonList(branch.getKey()))
-      .setFileUuids(singletonList(file.uuid()))
+      .setFiles(singletonList(file.path()))
       .setBranch(branch.getBranch())))
-        .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.fileUuids()), IssueQuery::isMainBranch)
-        .containsOnly(branch.uuid(), singletonList(file.uuid()), false);
+        .extracting(IssueQuery::branchUuid, query -> new ArrayList<>(query.files()), IssueQuery::isMainBranch)
+        .containsOnly(branch.uuid(), singletonList(file.path()), false);
   }
 
   @Test
@@ -440,7 +472,7 @@ public class IssueQueryFactoryTest {
 
   @Test
   public void search_by_application_key() {
-    ComponentDto application = db.components().insertPrivateApplication(db.getDefaultOrganization());
+    ComponentDto application = db.components().insertPrivateApplication();
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto project2 = db.components().insertPrivateProject();
     db.components().insertComponents(newProjectCopy(project1, application));
@@ -498,12 +530,12 @@ public class IssueQueryFactoryTest {
 
   @Test
   public void set_created_after_from_created_since() {
-    Date now = DateUtils.parseDateTime("2013-07-25T07:35:00+0100");
+    Date now = parseDateTime("2013-07-25T07:35:00+0100");
     when(clock.instant()).thenReturn(now.toInstant());
     when(clock.getZone()).thenReturn(ZoneOffset.UTC);
     SearchRequest request = new SearchRequest()
       .setCreatedInLast("1y2m3w4d");
-    assertThat(underTest.create(request).createdAfter().date()).isEqualTo(DateUtils.parseDateTime("2012-04-30T07:35:00+0100"));
+    assertThat(underTest.create(request).createdAfter().date()).isEqualTo(parseDateTime("2012-04-30T07:35:00+0100"));
     assertThat(underTest.create(request).createdAfter().inclusive()).isTrue();
 
   }
@@ -546,16 +578,6 @@ public class IssueQueryFactoryTest {
 
     underTest.create(new SearchRequest()
       .setCreatedAfter("unknown-date"));
-  }
-
-  @Test
-  public void return_empty_results_if_organization_with_specified_key_does_not_exist() {
-    SearchRequest request = new SearchRequest()
-      .setOrganization("does_not_exist");
-
-    IssueQuery query = underTest.create(request);
-
-    assertThat(query.organizationUuid()).isEqualTo("<UNKNOWN>");
   }
 
 }

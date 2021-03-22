@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -112,6 +112,8 @@ public class PostProjectAnalysisTaskTester {
   private Branch branch;
   private ScannerContext scannerContext;
   private String analysisUuid;
+  @Nullable
+  private String revision;
   @CheckForNull
   private Map<String, Object> stats;
 
@@ -203,6 +205,14 @@ public class PostProjectAnalysisTaskTester {
     return this;
   }
 
+  /**
+   * @since 8.7
+   */
+  public PostProjectAnalysisTaskTester withRevision(@Nullable String revision) {
+    this.revision = revision;
+    return this;
+  }
+
   public PostProjectAnalysisTask.ProjectAnalysis execute() {
     requireNonNull(ceTask, CE_TASK_CAN_NOT_BE_NULL);
     requireNonNull(project, PROJECT_CAN_NOT_BE_NULL);
@@ -213,6 +223,7 @@ public class PostProjectAnalysisTaskTester {
       analysis = new AnalysisBuilder()
         .setDate(date)
         .setAnalysisUuid(analysisUuid)
+        .setRevision(revision)
         .build();
     }
 
@@ -245,6 +256,7 @@ public class PostProjectAnalysisTaskTester {
       public PostProjectAnalysisTask.ProjectAnalysis getProjectAnalysis() {
         return projectAnalysis;
       }
+
       @Override
       public PostProjectAnalysisTask.LogStatistics getLogStatistics() {
         return logStatistics;

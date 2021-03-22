@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,26 +19,30 @@
  */
 import * as React from 'react';
 import { FormattedMessage } from 'react-intl';
-import { Link } from 'react-router';
+import { Link, WithRouterProps } from 'react-router';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import { hasMessage, translate } from 'sonar-ui-common/helpers/l10n';
 import { STATUSES } from '../../../../apps/background-tasks/constants';
+import { withRouter } from '../../../../components/hoc/withRouter';
 import { getComponentBackgroundTaskUrl } from '../../../../helpers/urls';
+import { Task, TaskStatuses } from '../../../../types/tasks';
 import ComponentNavLicenseNotif from './ComponentNavLicenseNotif';
 
-interface Props {
+interface Props extends Pick<WithRouterProps, 'location'> {
   component: T.Component;
-  currentTask?: T.Task;
+  currentTask?: Task;
   currentTaskOnSameBranch?: boolean;
   isInProgress?: boolean;
   isPending?: boolean;
 }
 
-export default class ComponentNavBgTaskNotif extends React.PureComponent<Props> {
+export class ComponentNavBgTaskNotif extends React.PureComponent<Props> {
   renderMessage(messageKey: string, status?: string, branch?: string) {
-    const { component, currentTask } = this.props;
+    const { component, currentTask, location } = this.props;
+    const backgroundTaskUrl = getComponentBackgroundTaskUrl(component.key, status);
     const canSeeBackgroundTasks =
       component.configuration && component.configuration.showBackgroundTasks;
+    const isOnBackgroundTaskPage = location.pathname === backgroundTaskUrl.pathname;
 
     let type;
     if (currentTask && hasMessage('background_task.type', currentTask.type)) {
@@ -47,20 +51,24 @@ export default class ComponentNavBgTaskNotif extends React.PureComponent<Props> 
     }
 
     let url;
+    let stacktrace;
     if (canSeeBackgroundTasks) {
       messageKey += '.admin';
-      url = (
-        <Link to={getComponentBackgroundTaskUrl(component.key, status)}>
-          {translate('background_tasks.page')}
-        </Link>
-      );
+
+      if (isOnBackgroundTaskPage) {
+        messageKey += '.help';
+        stacktrace = translate('background_tasks.show_stacktrace');
+      } else {
+        messageKey += '.link';
+        url = <Link to={backgroundTaskUrl}>{translate('background_tasks.page')}</Link>;
+      }
     }
 
     return (
       <FormattedMessage
         defaultMessage={translate(messageKey)}
         id={messageKey}
-        values={{ branch, url, type }}
+        values={{ branch, url, stacktrace, type }}
       />
     );
   }
@@ -79,7 +87,7 @@ export default class ComponentNavBgTaskNotif extends React.PureComponent<Props> 
           {this.renderMessage('component_navigation.status.pending', STATUSES.ALL)}
         </Alert>
       );
-    } else if (currentTask && currentTask.status === STATUSES.FAILED) {
+    } else if (currentTask && currentTask.status === TaskStatuses.Failed) {
       if (
         currentTask.errorType &&
         hasMessage('license.component_navigation.button', currentTask.errorType)
@@ -111,3 +119,5 @@ export default class ComponentNavBgTaskNotif extends React.PureComponent<Props> 
     return null;
   }
 }
+
+export default withRouter(ComponentNavBgTaskNotif);

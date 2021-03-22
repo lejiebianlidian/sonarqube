@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +19,15 @@
  */
 package org.sonar.server.telemetry;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.sonar.core.platform.EditionProvider;
+import org.sonar.core.platform.EditionProvider.Edition;
 import org.sonar.server.measure.index.ProjectMeasuresStatistics;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 public class TelemetryData {
@@ -38,13 +40,20 @@ public class TelemetryData {
   private final boolean usingBranches;
   private final Database database;
   private final Map<String, Long> projectCountByLanguage;
+  private final Map<String, Long> almIntegrationCountByAlm;
   private final Map<String, Long> nclocByLanguage;
-  @CheckForNull
+  private final List<String> externalAuthenticationProviders;
+  private final Map<String, Long> projectCountByScm;
+  private final Map<String, Long> projectCountByCi;
   private final EditionProvider.Edition edition;
   private final String licenseType;
   private final Long installationDate;
   private final String installationVersion;
   private final boolean inDocker;
+  private final Boolean hasUnanalyzedC;
+  private final Boolean hasUnanalyzedCpp;
+  private final List<String> customSecurityConfigs;
+  private final long sonarlintWeeklyUsers;
 
   private TelemetryData(Builder builder) {
     serverId = builder.serverId;
@@ -55,13 +64,21 @@ public class TelemetryData {
     projectCount = builder.projectMeasuresStatistics.getProjectCount();
     usingBranches = builder.usingBranches;
     database = builder.database;
+    sonarlintWeeklyUsers = builder.sonarlintWeeklyUsers;
     projectCountByLanguage = builder.projectMeasuresStatistics.getProjectCountByLanguage();
+    almIntegrationCountByAlm = builder.almIntegrationCountByAlm;
     nclocByLanguage = builder.projectMeasuresStatistics.getNclocByLanguage();
     edition = builder.edition;
     licenseType = builder.licenseType;
     installationDate = builder.installationDate;
     installationVersion = builder.installationVersion;
     inDocker = builder.inDocker;
+    hasUnanalyzedC = builder.hasUnanalyzedC;
+    hasUnanalyzedCpp = builder.hasUnanalyzedCpp;
+    customSecurityConfigs = builder.customSecurityConfigs == null ? emptyList() : builder.customSecurityConfigs;
+    externalAuthenticationProviders = builder.externalAuthenticationProviders;
+    projectCountByScm = builder.projectCountByScm;
+    projectCountByCi = builder.projectCountByCi;
   }
 
   public String getServerId() {
@@ -78,6 +95,10 @@ public class TelemetryData {
 
   public long getNcloc() {
     return ncloc;
+  }
+
+  public long sonarlintWeeklyUsers() {
+    return sonarlintWeeklyUsers;
   }
 
   public long getUserCount() {
@@ -100,6 +121,10 @@ public class TelemetryData {
     return projectCountByLanguage;
   }
 
+  public Map<String, Long> getAlmIntegrationCountByAlm() {
+    return almIntegrationCountByAlm;
+  }
+
   public Map<String, Long> getNclocByLanguage() {
     return nclocByLanguage;
   }
@@ -112,16 +137,40 @@ public class TelemetryData {
     return Optional.ofNullable(licenseType);
   }
 
-  public Long getInstallationDate(){
+  public Long getInstallationDate() {
     return installationDate;
   }
 
-  public String getInstallationVersion(){
+  public String getInstallationVersion() {
     return installationVersion;
   }
 
   public boolean isInDocker() {
     return inDocker;
+  }
+
+  public Optional<Boolean> hasUnanalyzedC() {
+    return Optional.ofNullable(hasUnanalyzedC);
+  }
+
+  public Optional<Boolean> hasUnanalyzedCpp() {
+    return Optional.ofNullable(hasUnanalyzedCpp);
+  }
+
+  public List<String> getCustomSecurityConfigs() {
+    return customSecurityConfigs;
+  }
+
+  public List<String> getExternalAuthenticationProviders() {
+    return externalAuthenticationProviders;
+  }
+
+  public Map<String, Long> getProjectCountByScm() {
+    return projectCountByScm;
+  }
+
+  public Map<String, Long> getProjectCountByCi() {
+    return projectCountByCi;
   }
 
   static Builder builder() {
@@ -132,19 +181,47 @@ public class TelemetryData {
     private String serverId;
     private String version;
     private long userCount;
+    private long sonarlintWeeklyUsers;
     private Map<String, String> plugins;
     private Database database;
     private ProjectMeasuresStatistics projectMeasuresStatistics;
+    private Map<String, Long> almIntegrationCountByAlm;
     private Long ncloc;
     private Boolean usingBranches;
-    private EditionProvider.Edition edition;
+    private Edition edition;
     private String licenseType;
     private Long installationDate;
     private String installationVersion;
     private boolean inDocker = false;
+    private Boolean hasUnanalyzedC;
+    private Boolean hasUnanalyzedCpp;
+    private List<String> customSecurityConfigs;
+    private List<String> externalAuthenticationProviders;
+    private Map<String, Long> projectCountByScm;
+    private Map<String, Long> projectCountByCi;
 
     private Builder() {
       // enforce static factory method
+    }
+
+    Builder setExternalAuthenticationProviders(List<String> providers) {
+      this.externalAuthenticationProviders = providers;
+      return this;
+    }
+
+    Builder setProjectCountByScm(Map<String, Long> projectCountByScm) {
+      this.projectCountByScm = projectCountByScm;
+      return this;
+    }
+
+    Builder setSonarlintWeeklyUsers(long sonarlintWeeklyUsers) {
+      this.sonarlintWeeklyUsers = sonarlintWeeklyUsers;
+      return this;
+    }
+
+    Builder setProjectCountByCi(Map<String, Long> projectCountByCi) {
+      this.projectCountByCi = projectCountByCi;
+      return this;
     }
 
     Builder setServerId(String serverId) {
@@ -164,6 +241,11 @@ public class TelemetryData {
 
     Builder setPlugins(Map<String, String> plugins) {
       this.plugins = plugins;
+      return this;
+    }
+
+    Builder setAlmIntegrationCountByAlm(Map<String, Long> almIntegrationCountByAlm) {
+      this.almIntegrationCountByAlm = almIntegrationCountByAlm;
       return this;
     }
 
@@ -187,28 +269,43 @@ public class TelemetryData {
       return this;
     }
 
-    public Builder setEdition(@Nullable EditionProvider.Edition edition) {
+    Builder setEdition(@Nullable Edition edition) {
       this.edition = edition;
       return this;
     }
 
-    public Builder setLicenseType(@Nullable String licenseType) {
+    Builder setLicenseType(@Nullable String licenseType) {
       this.licenseType = licenseType;
       return this;
     }
 
-    public Builder setInstallationDate(@Nullable Long installationDate){
+    Builder setInstallationDate(@Nullable Long installationDate) {
       this.installationDate = installationDate;
       return this;
     }
 
-    public Builder setInstallationVersion(@Nullable String installationVersion){
+    Builder setInstallationVersion(@Nullable String installationVersion) {
       this.installationVersion = installationVersion;
       return this;
     }
 
-    public Builder setInDocker(boolean inDocker) {
+    Builder setInDocker(boolean inDocker) {
       this.inDocker = inDocker;
+      return this;
+    }
+
+    Builder setHasUnanalyzedC(@Nullable Boolean hasUnanalyzedC) {
+      this.hasUnanalyzedC = hasUnanalyzedC;
+      return this;
+    }
+
+    Builder setHasUnanalyzedCpp(@Nullable Boolean hasUnanalyzedCpp) {
+      this.hasUnanalyzedCpp = hasUnanalyzedCpp;
+      return this;
+    }
+
+    Builder setCustomSecurityConfigs(List<String> customSecurityConfigs) {
+      this.customSecurityConfigs = customSecurityConfigs;
       return this;
     }
 
@@ -217,9 +314,13 @@ public class TelemetryData {
       requireNonNull(version);
       requireNonNull(plugins);
       requireNonNull(projectMeasuresStatistics);
+      requireNonNull(almIntegrationCountByAlm);
       requireNonNull(ncloc);
       requireNonNull(database);
       requireNonNull(usingBranches);
+      requireNonNull(externalAuthenticationProviders);
+      requireNonNull(projectCountByScm);
+      requireNonNull(projectCountByCi);
 
       return new TelemetryData(this);
     }

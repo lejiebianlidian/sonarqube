@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@ package org.sonar.server.component;
 import com.google.common.collect.ImmutableSet;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -29,7 +30,7 @@ import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.Scopes;
 import org.sonar.api.utils.System2;
 import org.sonar.core.i18n.I18n;
-import org.sonar.core.util.Uuids;
+import org.sonar.core.util.UuidFactory;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.component.BranchDto;
@@ -57,16 +58,18 @@ public class ComponentUpdater {
   private final PermissionTemplateService permissionTemplateService;
   private final FavoriteUpdater favoriteUpdater;
   private final ProjectIndexers projectIndexers;
+  private final UuidFactory uuidFactory;
 
   public ComponentUpdater(DbClient dbClient, I18n i18n, System2 system2,
     PermissionTemplateService permissionTemplateService, FavoriteUpdater favoriteUpdater,
-    ProjectIndexers projectIndexers) {
+    ProjectIndexers projectIndexers, UuidFactory uuidFactory) {
     this.dbClient = dbClient;
     this.i18n = i18n;
     this.system2 = system2;
     this.permissionTemplateService = permissionTemplateService;
     this.favoriteUpdater = favoriteUpdater;
     this.projectIndexers = projectIndexers;
+    this.uuidFactory = uuidFactory;
   }
 
   /**
@@ -86,11 +89,22 @@ public class ComponentUpdater {
    * Create component without committing.
    * Don't forget to call commitAndIndex(...) when ready to commit.
    */
-  public ComponentDto createWithoutCommit(DbSession dbSession, NewComponent newComponent, @Nullable String userUuid, Consumer<ComponentDto> componentModifier) {
+  public ComponentDto createWithoutCommit(DbSession dbSession, NewComponent newComponent,
+    @Nullable String userUuid, Consumer<ComponentDto> componentModifier) {
+    return createWithoutCommit(dbSession, newComponent, userUuid, null, componentModifier);
+  }
+
+  /**
+   * Create component without committing.
+   * Don't forget to call commitAndIndex(...) when ready to commit.
+   */
+  public ComponentDto createWithoutCommit(DbSession dbSession, NewComponent newComponent,
+    @Nullable String userUuid, @Nullable String mainBranchName,
+    Consumer<ComponentDto> componentModifier) {
     checkKeyFormat(newComponent.qualifier(), newComponent.key());
     ComponentDto componentDto = createRootComponent(dbSession, newComponent, componentModifier);
     if (isRootProject(componentDto)) {
-      createMainBranch(dbSession, componentDto.uuid());
+      createMainBranch(dbSession, componentDto.uuid(), mainBranchName);
     }
     handlePermissionTemplate(dbSession, componentDto, userUuid);
     return componentDto;
@@ -105,9 +119,9 @@ public class ComponentUpdater {
       "Could not create %s, key already exists: %s", getQualifierToDisplay(newComponent.qualifier()), newComponent.key());
 
     long now = system2.now();
-    String uuid = Uuids.create();
+    String uuid = uuidFactory.create();
+
     ComponentDto component = new ComponentDto()
-      .setOrganizationUuid(newComponent.getOrganizationUuid())
       .setUuid(uuid)
       .setUuidPath(ComponentDto.UUID_PATH_OF_ROOT)
       .setRootUuid(uuid)
@@ -116,6 +130,7 @@ public class ComponentUpdater {
       .setProjectUuid(uuid)
       .setDbKey(newComponent.key())
       .setName(newComponent.name())
+      .setDescription(newComponent.description())
       .setLongName(newComponent.name())
       .setScope(Scopes.PROJECT)
       .setQualifier(newComponent.qualifier())
@@ -139,7 +154,6 @@ public class ComponentUpdater {
       .setQualifier(component.qualifier())
       .setName(component.name())
       .setPrivate(component.isPrivate())
-      .setOrganizationUuid(component.getOrganizationUuid())
       .setDescription(component.description())
       .setUpdatedAt(now)
       .setCreatedAt(now);
@@ -150,11 +164,11 @@ public class ComponentUpdater {
       && MAIN_BRANCH_QUALIFIERS.contains(componentDto.qualifier());
   }
 
-  private void createMainBranch(DbSession session, String componentUuid) {
+  private void createMainBranch(DbSession session, String componentUuid, @Nullable String mainBranch) {
     BranchDto branch = new BranchDto()
       .setBranchType(BranchType.BRANCH)
       .setUuid(componentUuid)
-      .setKey(BranchDto.DEFAULT_MAIN_BRANCH_NAME)
+      .setKey(Optional.ofNullable(mainBranch).orElse(BranchDto.DEFAULT_MAIN_BRANCH_NAME))
       .setMergeBranchUuid(null)
       .setExcludeFromPurge(true)
       .setProjectUuid(componentUuid);

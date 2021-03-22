@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +17,10 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { uniq } from 'lodash';
 import * as React from 'react';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import { isDefined } from 'sonar-ui-common/helpers/types';
 import { BitbucketProject, BitbucketRepository } from '../../../types/alm-integration';
 import BitbucketProjectAccordion from './BitbucketProjectAccordion';
 
@@ -44,17 +42,34 @@ export default function BitbucketSearchResults(props: BitbucketSearchResultsProp
     selectedRepository
   } = props;
 
-  const filteredProjects = uniq(
-    searchResults.map(r => projects.find(p => p.key === r.projectKey)).filter(isDefined)
+  if (searchResults.length === 0 && !searching) {
+    return (
+      <Alert className="big-spacer-top" variant="warning">
+        {translate('onboarding.create_project.no_bbs_repos.filter')}
+      </Alert>
+    );
+  }
+
+  const filteredProjects = projects.filter(p => searchResults.some(r => r.projectKey === p.key));
+  const filteredProjectKeys = filteredProjects.map(p => p.key);
+  const filteredSearchResults = searchResults.filter(
+    r => !filteredProjectKeys.includes(r.projectKey)
   );
 
-  return filteredProjects.length === 0 && !searching ? (
-    <Alert className="big-spacer-top" variant="warning">
-      {translate('onboarding.create_project.no_bbs_repos.filter')}
-    </Alert>
-  ) : (
+  return (
     <div className="big-spacer-top">
       <DeferredSpinner loading={searching}>
+        {filteredSearchResults.length > 0 && (
+          <BitbucketProjectAccordion
+            disableRepositories={disableRepositories}
+            onSelectRepository={props.onSelectRepository}
+            open={true}
+            repositories={filteredSearchResults}
+            selectedRepository={selectedRepository}
+            showingAllRepositories={true}
+          />
+        )}
+
         {filteredProjects.map(project => {
           const repositories = searchResults.filter(r => r.projectKey === project.key);
 

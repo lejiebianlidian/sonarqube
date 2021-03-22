@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,6 @@ public class DevelopersService extends BaseService {
         .setParam("from", request.getFrom() == null ? null : request.getFrom().stream().collect(Collectors.joining(",")))
         .setParam("projects", request.getProjects() == null ? null : request.getProjects().stream().collect(Collectors.joining(",")))
         .setMediaType(MediaTypes.JSON)
-      ).content();
+    ).content();
   }
 }

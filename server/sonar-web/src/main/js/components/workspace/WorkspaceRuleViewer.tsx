@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -76,11 +76,7 @@ export default class WorkspaceRuleViewer extends React.PureComponent<Props> {
           aria-live="polite"
           className="workspace-viewer-container"
           style={{ height: this.props.height }}>
-          <WorkspaceRuleDetails
-            onLoad={this.handleLoaded}
-            organizationKey={rule.organization}
-            ruleKey={rule.key}
-          />
+          <WorkspaceRuleDetails onLoad={this.handleLoaded} ruleKey={rule.key} />
         </div>
       </div>
     );

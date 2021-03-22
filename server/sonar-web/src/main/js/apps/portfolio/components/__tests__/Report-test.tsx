@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /* eslint-disable import/first */
 jest.mock('../../../../api/report', () => {
-  const report = require.requireActual('../../../../api/report');
+  const report = jest.requireActual('../../../../api/report');
   report.getReportStatus = jest.fn(() => Promise.resolve({}));
   return report;
 });

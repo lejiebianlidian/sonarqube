@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -148,6 +148,21 @@ public class JwtSerializerTest {
       .setIssuedAt(new Date(system2.now()))
       .setExpiration(addMinutes(new Date(), 20))
       .signWith(decodeSecretKey("LyWgHktP0FuHB2K+kMs3KWMCJyFHVZDdDSqpIxAMVaQ="), HS256)
+      .compact();
+
+    assertThat(underTest.decode(token)).isEmpty();
+  }
+
+  @Test
+  public void return_no_token_if_none_algorithm() {
+    setSecretKey(A_SECRET_KEY);
+    underTest.start();
+
+    String token = Jwts.builder()
+      .setId("123")
+      .setSubject(USER_LOGIN)
+      .setIssuedAt(new Date(system2.now()))
+      .setExpiration(addMinutes(new Date(), 20))
       .compact();
 
     assertThat(underTest.decode(token)).isEmpty();

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
-import { mockLocation, mockOrganization } from '../../../../helpers/testMocks';
+import { mockLocation } from '../../../../helpers/testMocks';
 import { App } from '../App';
 
 jest.mock('../../../../api/permissions', () => ({
@@ -29,7 +29,7 @@ jest.mock('../../../../api/permissions', () => ({
       {
         id: '1',
         name: 'Default template',
-        description: 'Default permission template of organization test',
+        description: 'Default permission template',
         createdAt: '2019-02-07T17:23:26+0100',
         updatedAt: '2019-02-07T17:23:26+0100',
         permissions: [
@@ -54,12 +54,5 @@ it('should render correctly', async () => {
 });
 
 function shallowRender(props: Partial<App['props']> = {}) {
-  return shallow(
-    <App
-      location={mockLocation()}
-      organization={mockOrganization()}
-      topQualifiers={['TRK']}
-      {...props}
-    />
-  );
+  return shallow(<App location={mockLocation()} topQualifiers={['TRK']} {...props} />);
 }

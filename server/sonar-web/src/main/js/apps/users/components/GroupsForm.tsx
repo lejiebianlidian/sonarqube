@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,6 @@ export default class GroupsForm extends React.PureComponent<Props, State> {
   fetchUsers = (searchParams: SelectListSearchParams) =>
     getUserGroups({
       login: this.props.user.login,
-      organization: undefined,
       p: searchParams.page,
       ps: searchParams.pageSize,
       q: searchParams.query !== '' ? searchParams.query : undefined,

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,8 @@ public class GitLabSettings {
 
   static final String GITLAB_AUTH_ENABLED = "sonar.auth.gitlab.enabled";
   static final String GITLAB_AUTH_URL = "sonar.auth.gitlab.url";
-  static final String GITLAB_AUTH_APPLICATION_ID = "sonar.auth.gitlab.applicationId";
-  static final String GITLAB_AUTH_SECRET = "sonar.auth.gitlab.secret";
+  static final String GITLAB_AUTH_APPLICATION_ID = "sonar.auth.gitlab.applicationId.secured";
+  static final String GITLAB_AUTH_SECRET = "sonar.auth.gitlab.secret.secured";
   static final String GITLAB_AUTH_ALLOW_USERS_TO_SIGNUP = "sonar.auth.gitlab.allowUsersToSignUp";
   static final String GITLAB_AUTH_SYNC_USER_GROUPS = "sonar.auth.gitlab.groupsSync";
 
@@ -120,7 +120,8 @@ public class GitLabSettings {
       PropertyDefinition.builder(GITLAB_AUTH_SYNC_USER_GROUPS)
         .deprecatedKey("sonar.auth.gitlab.sync_user_groups")
         .name("Synchronize user groups")
-        .description("For each GitLab group he belongs to, the user will be associated to a group with the same name (if it exists) in SonarQube. If enabled, the GitLab Oauth2 application will need to provide the api scope")
+        .description("For each GitLab group he belongs to, the user will be associated to a group with the same name (if it exists) in SonarQube." +
+          " If enabled, the GitLab Oauth2 application will need to provide the api scope")
         .category(CATEGORY)
         .subCategory(SUBCATEGORY)
         .type(PropertyType.BOOLEAN)

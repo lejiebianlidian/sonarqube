@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -61,9 +61,7 @@ export default class PageActions extends React.PureComponent<Props> {
 
         <div className="issues-page-actions">
           <ReloadButton onClick={this.props.onReload} />
-          {paging != null && (
-            <IssuesCounter className="spacer-left" current={selectedIndex} total={paging.total} />
-          )}
+          {paging != null && <IssuesCounter current={selectedIndex} total={paging.total} />}
           {effortTotal !== undefined && <TotalEffort effort={effortTotal} />}
         </div>
 

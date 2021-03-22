@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,25 +33,22 @@ import org.sonar.core.util.stream.MoreCollectors;
 public class TrackerExecution {
 
   private final TrackerBaseInputFactory baseInputFactory;
-  private final TrackerRawInputFactory rawInputFactory;
   private final ClosedIssuesInputFactory closedIssuesInputFactory;
   private final Tracker<DefaultIssue, DefaultIssue> tracker;
   private final ComponentIssuesLoader componentIssuesLoader;
   private final AnalysisMetadataHolder analysisMetadataHolder;
 
-  public TrackerExecution(TrackerBaseInputFactory baseInputFactory, TrackerRawInputFactory rawInputFactory,
+  public TrackerExecution(TrackerBaseInputFactory baseInputFactory,
     ClosedIssuesInputFactory closedIssuesInputFactory, Tracker<DefaultIssue, DefaultIssue> tracker,
     ComponentIssuesLoader componentIssuesLoader, AnalysisMetadataHolder analysisMetadataHolder) {
     this.baseInputFactory = baseInputFactory;
-    this.rawInputFactory = rawInputFactory;
     this.closedIssuesInputFactory = closedIssuesInputFactory;
     this.tracker = tracker;
     this.componentIssuesLoader = componentIssuesLoader;
     this.analysisMetadataHolder = analysisMetadataHolder;
   }
 
-  public Tracking<DefaultIssue, DefaultIssue> track(Component component) {
-    Input<DefaultIssue> rawInput = rawInputFactory.create(component);
+  public Tracking<DefaultIssue, DefaultIssue> track(Component component, Input<DefaultIssue> rawInput) {
     Input<DefaultIssue> openBaseIssuesInput = baseInputFactory.create(component);
     NonClosedTracking<DefaultIssue, DefaultIssue> openIssueTracking = tracker.trackNonClosed(rawInput, openBaseIssuesInput);
     if (openIssueTracking.isComplete() || analysisMetadataHolder.isFirstAnalysis()) {

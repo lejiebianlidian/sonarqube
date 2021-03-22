@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ import org.sonar.api.utils.System2;
 import org.sonar.api.web.UserRole;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.permission.PermissionQuery;
 import org.sonar.db.user.UserDto;
 
@@ -46,17 +45,15 @@ public class UserWithPermissionTemplateDaoTest {
   @Rule
   public DbTester db = DbTester.create(System2.INSTANCE);
 
-  private DbSession dbSession = db.getSession();
+  private final DbSession dbSession = db.getSession();
 
-  private PermissionTemplateDao underTest = db.getDbClient().permissionTemplateDao();
+  private final PermissionTemplateDao underTest = db.getDbClient().permissionTemplateDao();
 
   @Test
   public void select_logins() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user1 = db.users().insertUser();
     UserDto user2 = db.users().insertUser();
     UserDto user3 = db.users().insertUser();
-    db.organizations().addMember(organization, user1, user2, user3);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, ADMIN);
@@ -65,36 +62,31 @@ public class UserWithPermissionTemplateDaoTest {
     PermissionTemplateDto anotherPermissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(anotherPermissionTemplate, user1, USER);
 
-    assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).build(),
+    assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession, builder().build(),
       permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin(), user3.getLogin());
+      .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin(), user3.getLogin());
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).withAtLeastOnePermission().setPermission(USER).build(),
+      builder().withAtLeastOnePermission().setPermission(USER).build(),
       permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
+      .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
   }
 
   @Test
   public void return_no_logins_on_unknown_template_key() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user = db.users().insertUser();
-    db.organizations().addMember(organization, user);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user, USER);
 
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).setPermission(USER).withAtLeastOnePermission().build(), "999"))
-        .isEmpty();
+      builder().setPermission(USER).withAtLeastOnePermission().build(), "999"))
+      .isEmpty();
   }
 
   @Test
   public void select_only_logins_with_permission() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user1 = db.users().insertUser();
     UserDto user2 = db.users().insertUser();
     UserDto user3 = db.users().insertUser();
-    db.organizations().addMember(organization, user1, user2, user3);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, ADMIN);
@@ -104,78 +96,70 @@ public class UserWithPermissionTemplateDaoTest {
     db.permissionTemplates().addUserToTemplate(anotherPermissionTemplate, user1, USER);
 
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).setPermission(USER).withAtLeastOnePermission().build(),
+      builder().setPermission(USER).withAtLeastOnePermission().build(),
       permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
+      .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
   }
 
   @Test
   public void select_only_enable_users() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user = db.users().insertUser();
     UserDto disabledUser = db.users().insertUser(u -> u.setActive(false));
-    db.organizations().addMember(organization, user, disabledUser);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, disabledUser, USER);
 
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).setPermission(USER).build(), permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user.getLogin());
+      builder().setPermission(USER).build(), permissionTemplate.getUuid()))
+      .containsExactlyInAnyOrder(user.getLogin());
   }
 
   @Test
   public void search_by_user_name() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user1 = db.users().insertUser(u -> u.setName("User1"));
     UserDto user2 = db.users().insertUser(u -> u.setName("User2"));
     UserDto user3 = db.users().insertUser(u -> u.setName("User3"));
-    db.organizations().addMember(organization, user1, user2, user3);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user2, USER);
 
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(
-      dbSession, builder().setOrganizationUuid(organization.getUuid()).withAtLeastOnePermission().setPermission(USER).setSearchQuery("SEr1").build(),
+      dbSession, builder().withAtLeastOnePermission().setPermission(USER).setSearchQuery("SEr1").build(),
       permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user1.getLogin());
+      .containsExactlyInAnyOrder(user1.getLogin());
 
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(
-      dbSession, builder().setOrganizationUuid(organization.getUuid()).withAtLeastOnePermission().setPermission(USER).setSearchQuery("user").build(),
+      dbSession, builder().withAtLeastOnePermission().setPermission(USER).setSearchQuery("user").build(),
       permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
+      .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
   }
 
   @Test
   public void selectUserLoginsByQueryAndTemplate_is_ordering_result_by_users_with_permissions_then_by_name() {
-    OrganizationDto organization = db.organizations().insert();
-    PermissionTemplateDto template = db.permissionTemplates().insertTemplate(organization);
+    PermissionTemplateDto template = db.permissionTemplates().insertTemplate();
     UserDto user1 = db.users().insertUser(u -> u.setName("A"));
     UserDto user2 = db.users().insertUser(u -> u.setName("B"));
     UserDto user3 = db.users().insertUser(u -> u.setName("C"));
-    db.organizations().addMember(organization, user1, user2, user3);
     db.permissionTemplates().addUserToTemplate(template.getUuid(), user3.getUuid(), UserRole.USER);
 
-    PermissionQuery query = PermissionQuery.builder().setOrganizationUuid(organization.getUuid()).build();
+    PermissionQuery query = PermissionQuery.builder().build();
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(db.getSession(), query, template.getUuid()))
       .containsExactly(user3.getLogin(), user1.getLogin(), user2.getLogin());
   }
 
   @Test
   public void selectUserLoginsByQueryAndTemplate_is_order_by_groups_with_permission_when_many_users() {
-    OrganizationDto organization = db.organizations().insert();
-    PermissionTemplateDto template = db.permissionTemplates().insertTemplate(organization);
+    PermissionTemplateDto template = db.permissionTemplates().insertTemplate();
     // Add another template having some users with permission to make sure it's correctly ignored
-    PermissionTemplateDto otherTemplate = db.permissionTemplates().insertTemplate(organization);
+    PermissionTemplateDto otherTemplate = db.permissionTemplates().insertTemplate();
     IntStream.rangeClosed(1, DEFAULT_PAGE_SIZE + 1).forEach(i -> {
       UserDto user = db.users().insertUser("User-" + i);
-      db.organizations().addMember(organization, user);
       db.permissionTemplates().addUserToTemplate(otherTemplate, user, UserRole.USER);
     });
     String lastLogin = "User-" + (DEFAULT_PAGE_SIZE + 1);
     db.permissionTemplates().addUserToTemplate(template, db.users().selectUserByLogin(lastLogin).get(), UserRole.USER);
 
-    PermissionQuery query = PermissionQuery.builder().setOrganizationUuid(organization.getUuid()).build();
+    PermissionQuery query = PermissionQuery.builder().build();
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(db.getSession(), query, template.getUuid()))
       .hasSize(DEFAULT_PAGE_SIZE)
       .startsWith(lastLogin);
@@ -183,52 +167,46 @@ public class UserWithPermissionTemplateDaoTest {
 
   @Test
   public void should_be_paginated() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user1 = db.users().insertUser(u -> u.setName("User1"));
     UserDto user2 = db.users().insertUser(u -> u.setName("User2"));
     UserDto user3 = db.users().insertUser(u -> u.setName("User3"));
-    db.organizations().addMember(organization, user1, user2, user3);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user2, USER);
 
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).setPageIndex(1).setPageSize(2).build(), permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
+      builder().setPageIndex(1).setPageSize(2).build(), permissionTemplate.getUuid()))
+      .containsExactlyInAnyOrder(user1.getLogin(), user2.getLogin());
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).setPageIndex(2).setPageSize(2).build(), permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user3.getLogin());
+      builder().setPageIndex(2).setPageSize(2).build(), permissionTemplate.getUuid()))
+      .containsExactlyInAnyOrder(user3.getLogin());
     assertThat(underTest.selectUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).setPageIndex(3).setPageSize(1).build(), permissionTemplate.getUuid()))
-        .containsExactlyInAnyOrder(user3.getLogin());
+      builder().setPageIndex(3).setPageSize(1).build(), permissionTemplate.getUuid()))
+      .containsExactlyInAnyOrder(user3.getLogin());
   }
 
   @Test
   public void count_users() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user1 = db.users().insertUser();
     UserDto user2 = db.users().insertUser();
     UserDto user3 = db.users().insertUser();
-    db.organizations().addMember(organization, user1, user2, user3);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user2, USER);
 
     assertThat(underTest.countUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).build(), permissionTemplate.getUuid()))
-        .isEqualTo(3);
+      builder().build(), permissionTemplate.getUuid()))
+      .isEqualTo(3);
     assertThat(underTest.countUserLoginsByQueryAndTemplate(dbSession,
-      builder().setOrganizationUuid(organization.getUuid()).withAtLeastOnePermission().setPermission("user").build(), permissionTemplate.getUuid()))
-        .isEqualTo(2);
+      builder().withAtLeastOnePermission().setPermission("user").build(), permissionTemplate.getUuid()))
+      .isEqualTo(2);
   }
 
   @Test
   public void select_user_permission_templates_by_template_and_logins() {
-    OrganizationDto organization = db.organizations().insert();
     UserDto user1 = db.users().insertUser();
     UserDto user2 = db.users().insertUser();
     UserDto user3 = db.users().insertUser();
-    db.organizations().addMember(organization, user1, user2, user3);
     PermissionTemplateDto permissionTemplate = db.permissionTemplates().insertTemplate();
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, USER);
     db.permissionTemplates().addUserToTemplate(permissionTemplate, user1, ADMIN);

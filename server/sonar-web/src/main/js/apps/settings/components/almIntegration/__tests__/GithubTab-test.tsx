@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ import GithubTab, { GithubTabProps } from '../GithubTab';
 
 it('should render correctly', () => {
   expect(shallowRender()).toMatchSnapshot('with branch support');
-  expect(shallowRender({ branchesEnabled: false })).toMatchSnapshot('without branch support');
 });
 
 function shallowRender(props: Partial<GithubTabProps> = {}) {
@@ -32,9 +31,11 @@ function shallowRender(props: Partial<GithubTabProps> = {}) {
     <GithubTab
       branchesEnabled={true}
       definitions={[mockGithubBindingDefinition()]}
+      definitionStatus={{}}
       loadingAlmDefinitions={false}
       loadingProjectCount={false}
       multipleAlmEnabled={true}
+      onCheck={jest.fn()}
       onDelete={jest.fn()}
       onUpdateDefinitions={jest.fn()}
       {...props}

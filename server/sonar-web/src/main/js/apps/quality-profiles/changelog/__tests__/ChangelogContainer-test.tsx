@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,9 +27,7 @@ import { ChangelogContainer } from '../ChangelogContainer';
 beforeEach(() => jest.clearAllMocks());
 
 jest.mock('../../../../api/quality-profiles', () => {
-  const { mockQualityProfileChangelogEvent } = require.requireActual(
-    '../../../../helpers/testMocks'
-  );
+  const { mockQualityProfileChangelogEvent } = jest.requireActual('../../../../helpers/testMocks');
   return {
     getProfileChangelog: jest.fn().mockResolvedValue({
       events: [
@@ -71,7 +69,6 @@ function shallowRender() {
   return shallow<ChangelogContainer>(
     <ChangelogContainer
       location={mockLocation()}
-      organization="TEST"
       profile={mockQualityProfile()}
       router={mockRouter()}
     />

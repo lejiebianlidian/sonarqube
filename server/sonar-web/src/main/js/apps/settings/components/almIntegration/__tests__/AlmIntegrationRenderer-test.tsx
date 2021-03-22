@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,8 @@ it('should render correctly', () => {
     'delete modal'
   );
   expect(shallowRender({ currentAlm: AlmKeys.Azure })).toMatchSnapshot('azure');
-  expect(shallowRender({ currentAlm: AlmKeys.Bitbucket })).toMatchSnapshot('bitbucket');
+  expect(shallowRender({ currentAlm: AlmKeys.BitbucketServer })).toMatchSnapshot('bitbucket');
+  expect(shallowRender({ currentAlm: AlmKeys.BitbucketCloud })).toMatchSnapshot('bitbucketcloud');
   expect(shallowRender({ currentAlm: AlmKeys.GitLab })).toMatchSnapshot('gitlab');
 });
 
@@ -40,11 +41,13 @@ function shallowRender(props: Partial<AlmIntegrationRendererProps> = {}) {
     <AlmIntegrationRenderer
       branchesEnabled={true}
       currentAlm={AlmKeys.GitHub}
-      definitions={{ azure: [], bitbucket: [], github: [], gitlab: [] }}
+      definitions={{ azure: [], bitbucket: [], bitbucketcloud: [], github: [], gitlab: [] }}
+      definitionStatus={{}}
       loadingAlmDefinitions={false}
       loadingProjectCount={false}
       multipleAlmEnabled={false}
       onCancel={jest.fn()}
+      onCheck={jest.fn()}
       onConfirmDelete={jest.fn()}
       onDelete={jest.fn()}
       onSelectAlm={jest.fn()}

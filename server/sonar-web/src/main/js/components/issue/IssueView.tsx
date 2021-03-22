@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -77,12 +77,7 @@ export default class IssueView extends React.PureComponent<Props> {
     });
 
     return (
-      <div
-        className={issueClass}
-        data-issue={issue.key}
-        onClick={this.handleClick}
-        role="listitem"
-        tabIndex={0}>
+      <div className={issueClass} data-issue={issue.key} onClick={this.handleClick} role="group">
         <IssueTitleBar
           branchLike={this.props.branchLike}
           currentPopup={this.props.currentPopup}

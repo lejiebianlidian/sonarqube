@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.qualityprofile.QProfileDto;
+import org.sonar.db.qualityprofile.QualityProfileTesting;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleParamDto;
 import org.sonar.db.rule.RuleTesting;
@@ -86,8 +87,8 @@ public class QProfileComparisonTest {
     db.ruleDao().insertRuleParam(dbSession, xooRule1, RuleParamDto.createFor(xooRule1)
       .setName("min").setType(RuleParamType.INTEGER.type()));
 
-    left = QProfileTesting.newXooP1("org-123");
-    right = QProfileTesting.newXooP2("org-123");
+    left = QualityProfileTesting.newQualityProfileDto().setLanguage("xoo");
+    right = QualityProfileTesting.newQualityProfileDto().setLanguage("xoo");
     db.qualityProfileDao().insert(dbSession, left, right);
 
     dbSession.commit();

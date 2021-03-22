@@ -55,8 +55,22 @@ After following these steps, set the Security Hotspot to one of the following:
 
 * **Fixed** – if you have applied a fix to secure the code highlighted by the Hotspot.
 * **Safe** – if the code is already secure and doesn't need to be fixed. (for example, other more relevant protections are already in place).
-* **Needs additional review** – if you need another user's review.
+* **To review** – if you need another user's review.
 
 ### Review History
 
-The **Review history** tab shows the history of the Security Hotspot including the status it's been assigned and any comments the reviewer had regarding the Hotspot.  
+The **Review history** tab shows the history of the Security Hotspot including the status it's been assigned and any comments the reviewer had regarding the Hotspot.
+
+### Reviewing Hotspots in your IDE
+
+Seeing a Security Hotspot directly in the IDE can help you better understand its context and decide whether it is safe or not. This is the purpose of the **Open in IDE** button that you'll see as an authenticated user.
+
+This feature is available to users of:
+* [SonarLint for Visual Studio](https://www.sonarlint.org/visualstudio) 4.29 and above 
+* [SonarLint for IntelliJ](https://www.sonarlint.org/intellij) 4.13 and above
+* [SonarLint for VS Code](https://www.sonarlint.org/vscode) 1.20 and above
+* [SonarLint for Eclipse](https://www.sonarlint.org/eclipse) 5.7 and above
+
+The project needs to be open in the appropriate IDE and bound to the server through SonarLint's connected mode.
+
+Keep in mind that the revision or branch analyzed by SonarQube may not be the same as what you have opened in the IDE. In this case, SonarLint will do its best to locate the Security Hotspot in your local code.

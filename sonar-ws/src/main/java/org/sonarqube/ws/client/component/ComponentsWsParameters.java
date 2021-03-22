@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ public class ComponentsWsParameters {
   public static final String ACTION_SUGGESTIONS = "suggestions";
 
   // parameters
-  public static final String PARAM_ORGANIZATION = "organization";
   public static final String PARAM_QUALIFIERS = "qualifiers";
   public static final String PARAM_STRATEGY = "strategy";
   public static final String PARAM_FILTER = "filter";

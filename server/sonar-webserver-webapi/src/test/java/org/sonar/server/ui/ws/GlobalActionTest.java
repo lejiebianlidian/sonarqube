@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,10 +38,8 @@ import org.sonar.db.DbClient;
 import org.sonar.db.dialect.H2;
 import org.sonar.db.dialect.PostgreSql;
 import org.sonar.server.almsettings.MultipleAlmFeatureProvider;
+import org.sonar.server.authentication.DefaultAdminCredentialsVerifier;
 import org.sonar.server.issue.index.IssueIndexSyncProgressChecker;
-import org.sonar.server.organization.DefaultOrganizationProvider;
-import org.sonar.server.organization.TestDefaultOrganizationProvider;
-import org.sonar.server.organization.TestOrganizationFlags;
 import org.sonar.server.platform.WebServer;
 import org.sonar.server.tester.UserSessionRule;
 import org.sonar.server.ui.PageRepository;
@@ -51,7 +49,6 @@ import org.sonar.updatecenter.common.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,18 +59,17 @@ public class GlobalActionTest {
   @Rule
   public UserSessionRule userSession = UserSessionRule.standalone();
 
-  private MapSettings settings = new MapSettings();
+  private final MapSettings settings = new MapSettings();
 
-  private Server server = mock(Server.class);
-  private WebServer webServer = mock(WebServer.class);
-  private DbClient dbClient = mock(DbClient.class, RETURNS_DEEP_STUBS);
-  private IssueIndexSyncProgressChecker indexSyncProgressChecker = mock(IssueIndexSyncProgressChecker.class);
-  private TestOrganizationFlags organizationFlags = TestOrganizationFlags.standalone();
-  private DefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.fromUuid("foo");
-  private BranchFeatureRule branchFeature = new BranchFeatureRule();
-  private PlatformEditionProvider editionProvider = mock(PlatformEditionProvider.class);
-  private MultipleAlmFeatureProvider multipleAlmFeatureProvider = mock(MultipleAlmFeatureProvider.class);
-  private WebAnalyticsLoader webAnalyticsLoader = mock(WebAnalyticsLoader.class);
+  private final Server server = mock(Server.class);
+  private final WebServer webServer = mock(WebServer.class);
+  private final DbClient dbClient = mock(DbClient.class, RETURNS_DEEP_STUBS);
+  private final IssueIndexSyncProgressChecker indexSyncProgressChecker = mock(IssueIndexSyncProgressChecker.class);
+  private final BranchFeatureRule branchFeature = new BranchFeatureRule();
+  private final PlatformEditionProvider editionProvider = mock(PlatformEditionProvider.class);
+  private final MultipleAlmFeatureProvider multipleAlmFeatureProvider = mock(MultipleAlmFeatureProvider.class);
+  private final WebAnalyticsLoader webAnalyticsLoader = mock(WebAnalyticsLoader.class);
+  private final DefaultAdminCredentialsVerifier defaultAdminCredentialsVerifier = mock(DefaultAdminCredentialsVerifier.class);
 
   private WsActionTester ws;
 
@@ -116,6 +112,7 @@ public class GlobalActionTest {
     settings.setProperty("sonar.lf.enableGravatar", true);
     settings.setProperty("sonar.updatecenter.activate", false);
     settings.setProperty("sonar.technicalDebt.ratingGrid", "0.05,0.1,0.2,0.5");
+    settings.setProperty("sonar.developerAggregatedInfo.disabled", false);
     // This setting should be ignored as it's not needed
     settings.setProperty("sonar.defaultGroup", "sonar-users");
     init();
@@ -128,6 +125,7 @@ public class GlobalActionTest {
       "    \"sonar.lf.enableGravatar\": \"true\"," +
       "    \"sonar.updatecenter.activate\": \"false\"," +
       "    \"sonar.technicalDebt.ratingGrid\": \"0.05,0.1,0.2,0.5\"" +
+      "    \"sonar.developerAggregatedInfo.disabled\": \"false\"" +
       "  }" +
       "}");
   }
@@ -145,6 +143,18 @@ public class GlobalActionTest {
       "    \"sonar.prismic.accessToken\": \"secret\"," +
       "    \"sonar.analytics.gtm.trackingId\": \"gtm_id\"," +
       "    \"sonar.homepage.url\": \"https://s3/homepage.json\"" +
+      "  }" +
+      "}");
+  }
+
+  @Test
+  public void return_developer_info_disabled_setting() {
+    init();
+    settings.setProperty("sonar.developerAggregatedInfo.disabled", true);
+
+    assertJson(call()).isSimilarTo("{" +
+      "  \"settings\": {" +
+      "    \"sonar.developerAggregatedInfo.disabled\": \"true\"" +
       "  }" +
       "}");
   }
@@ -224,17 +234,6 @@ public class GlobalActionTest {
   }
 
   @Test
-  public void organization_support() {
-    init();
-    organizationFlags.setEnabled(true);
-
-    assertJson(call()).isSimilarTo("{" +
-      "  \"organizationsEnabled\": true," +
-      "  \"defaultOrganization\": \"key_foo\"" +
-      "}");
-  }
-
-  @Test
   public void branch_support() {
     init();
     branchFeature.setEnabled(true);
@@ -271,6 +270,22 @@ public class GlobalActionTest {
     userSession.logIn().setRoot();
 
     assertJson(call()).isSimilarTo("{\"canAdmin\":true}");
+  }
+
+  @Test
+  public void instance_uses_default_admin_credentials() {
+    init();
+
+    when(defaultAdminCredentialsVerifier.hasDefaultCredentialUser()).thenReturn(true);
+
+    // Even if the default credentials are used, if the current user it not a system admin, the flag is not returned.
+    assertJson(call()).isNotSimilarTo("{\"instanceUsesDefaultAdminCredentials\":true}");
+
+    userSession.logIn().setSystemAdministrator();
+    assertJson(call()).isSimilarTo("{\"instanceUsesDefaultAdminCredentials\":true}");
+
+    when(defaultAdminCredentialsVerifier.hasDefaultCredentialUser()).thenReturn(false);
+    assertJson(call()).isSimilarTo("{\"instanceUsesDefaultAdminCredentials\":false}");
   }
 
   @Test
@@ -376,8 +391,8 @@ public class GlobalActionTest {
     }});
     pageRepository.start();
     GlobalAction wsAction = new GlobalAction(pageRepository, settings.asConfig(), new ResourceTypes(resourceTypeTrees), server,
-      webServer, dbClient, organizationFlags, defaultOrganizationProvider, branchFeature, userSession, editionProvider, multipleAlmFeatureProvider, webAnalyticsLoader,
-      indexSyncProgressChecker);
+      webServer, dbClient, branchFeature, userSession, editionProvider, multipleAlmFeatureProvider, webAnalyticsLoader,
+      indexSyncProgressChecker, defaultAdminCredentialsVerifier);
     ws = new WsActionTester(wsAction);
     wsAction.start();
   }

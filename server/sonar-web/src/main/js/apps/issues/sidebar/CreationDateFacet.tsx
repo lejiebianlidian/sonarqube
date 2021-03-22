@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@ import { InjectedIntlProps, injectIntl } from 'react-intl';
 import BarChart from 'sonar-ui-common/components/charts/BarChart';
 import { longFormatterOption } from 'sonar-ui-common/components/intl/DateFormatter';
 import DateFromNow from 'sonar-ui-common/components/intl/DateFromNow';
-import DateTimeFormatter from 'sonar-ui-common/components/intl/DateTimeFormatter';
+import DateTimeFormatter, {
+  formatterOption as dateTimeFormatterOption
+} from 'sonar-ui-common/components/intl/DateTimeFormatter';
 import { parseDate } from 'sonar-ui-common/helpers/dates';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { formatMeasure } from 'sonar-ui-common/helpers/measures';
@@ -32,11 +34,13 @@ import DateRangeInput from '../../../components/controls/DateRangeInput';
 import FacetBox from '../../../components/facet/FacetBox';
 import FacetHeader from '../../../components/facet/FacetHeader';
 import FacetItem from '../../../components/facet/FacetItem';
+import { isPortfolioLike } from '../../../types/component';
 import { Query } from '../utils';
 
 interface Props {
   component: T.Component | undefined;
   createdAfter: Date | undefined;
+  createdAfterIncludesTime: boolean;
   createdAt: string;
   createdBefore: Date | undefined;
   createdInLast: string;
@@ -48,7 +52,7 @@ interface Props {
   stats: T.Dict<number> | undefined;
 }
 
-class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
+export class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
   property = 'createdAt';
 
   static defaultProps = {
@@ -100,11 +104,23 @@ class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
   handleLeakPeriodClick = () => this.resetTo({ sinceLeakPeriod: true });
 
   getValues() {
-    const { createdAfter, createdAt, createdBefore, createdInLast, sinceLeakPeriod } = this.props;
+    const {
+      createdAfter,
+      createdAfterIncludesTime,
+      createdAt,
+      createdBefore,
+      createdInLast,
+      sinceLeakPeriod
+    } = this.props;
     const { formatDate } = this.props.intl;
     const values = [];
     if (createdAfter) {
-      values.push(formatDate(createdAfter, longFormatterOption));
+      values.push(
+        formatDate(
+          createdAfter,
+          createdAfterIncludesTime ? dateTimeFormatterOption : longFormatterOption
+        )
+      );
     }
     if (createdAt) {
       values.push(formatDate(createdAt, longFormatterOption));
@@ -191,18 +207,6 @@ class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
     );
   }
 
-  renderExactDate() {
-    return (
-      <div className="search-navigator-facet-container">
-        <DateTimeFormatter date={this.props.createdAt} />
-        <br />
-        <span className="note">
-          <DateFromNow date={this.props.createdAt} />
-        </span>
-      </div>
-    );
-  }
-
   renderPeriodSelectors() {
     const { createdAfter, createdBefore } = this.props;
     return (
@@ -226,7 +230,7 @@ class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
           tooltip={translate('issues.facet.createdAt.all')}
           value=""
         />
-        {component ? (
+        {component && !isPortfolioLike(component.qualifier) ? (
           <FacetItem
             active={sinceLeakPeriod}
             name={translate('issues.new_code')}
@@ -264,10 +268,30 @@ class CreationDateFacet extends React.PureComponent<Props & InjectedIntlProps> {
   }
 
   renderInner() {
-    const { createdAt } = this.props;
-    return createdAt ? (
-      this.renderExactDate()
-    ) : (
+    const { createdAfter, createdAfterIncludesTime, createdAt } = this.props;
+
+    if (createdAt) {
+      return (
+        <div className="search-navigator-facet-container">
+          <DateTimeFormatter date={this.props.createdAt} />
+          <br />
+          <span className="note">
+            <DateFromNow date={this.props.createdAt} />
+          </span>
+        </div>
+      );
+    }
+
+    if (createdAfter && createdAfterIncludesTime) {
+      return (
+        <div className="search-navigator-facet-container">
+          <strong>{translate('after')} </strong>
+          <DateTimeFormatter date={createdAfter} />
+        </div>
+      );
+    }
+
+    return (
       <div>
         {this.renderBarChart()}
         {this.renderPeriodSelectors()}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,15 +22,7 @@ import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getRulesApp } from '../../../../api/rules';
 import ScreenPositionHelper from '../../../../components/common/ScreenPositionHelper';
-import { isSonarCloud } from '../../../../helpers/system';
-import {
-  mockAppState,
-  mockCurrentUser,
-  mockLocation,
-  mockOrganization,
-  mockRouter,
-  mockRule
-} from '../../../../helpers/testMocks';
+import { mockCurrentUser, mockLocation, mockRouter, mockRule } from '../../../../helpers/testMocks';
 import { App } from '../App';
 
 jest.mock('../../../../components/common/ScreenPositionHelper');
@@ -88,15 +80,6 @@ describe('renderBulkButton', () => {
     expect(wrapper.instance().renderBulkButton()).toBeNull();
   });
 
-  it('should be null when on SonarCloud and no organization is given', () => {
-    (isSonarCloud as jest.Mock).mockReturnValue(true);
-
-    const wrapper = shallowRender({
-      organization: undefined
-    });
-    expect(wrapper.instance().renderBulkButton()).toBeNull();
-  });
-
   it('should be null when the user does not have the sufficient permission', () => {
     (getRulesApp as jest.Mock).mockReturnValue({ canWrite: false, repositories: [] });
 
@@ -114,20 +97,16 @@ describe('renderBulkButton', () => {
 });
 
 function shallowRender(props: Partial<App['props']> = {}) {
-  const organization = mockOrganization();
   return shallow<App>(
     <App
-      appState={mockAppState()}
       currentUser={mockCurrentUser({
         isLoggedIn: true
       })}
       languages={{ js: { key: 'js', name: 'JavaScript' } }}
       location={mockLocation()}
-      organization={organization}
       params={{}}
       router={mockRouter()}
       routes={[]}
-      userOrganizations={[organization]}
       {...props}
     />
   );

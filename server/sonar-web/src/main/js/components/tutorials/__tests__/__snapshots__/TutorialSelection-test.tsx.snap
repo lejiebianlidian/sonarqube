@@ -2,12 +2,12 @@
 
 exports[`should render correctly 1`] = `
 <TutorialSelectionRenderer
+  baseUrl="http://host.url"
   component={
     Object {
       "breadcrumbs": Array [],
       "key": "my-project",
       "name": "MyProject",
-      "organization": "foo",
       "qualifier": "TRK",
       "qualityGate": Object {
         "isDefault": true,

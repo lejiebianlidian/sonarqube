@@ -4,7 +4,6 @@
 
     <sql id="projectColumns">
       p.uuid as uuid,
-      p.organization_uuid as organizationUuid,
       p.kee as kee,
       p.qualifier as qualifier,
       p.name as name,
@@ -46,6 +45,18 @@
       </foreach>
   </select>
 
+    <select id="selectApplicationsByKeys" resultType="Project">
+    select
+      <include refid="projectColumns"/>
+    from projects p
+    where
+      p.qualifier='APP' and
+      p.kee in
+      <foreach collection="kees" open="(" close=")" item="k" separator=",">
+        #{k,jdbcType=VARCHAR}
+      </foreach>
+  </select>
+
     <select id="selectProjects" resultType="Project">
     select
       <include refid="projectColumns"/>
@@ -54,21 +65,18 @@
       p.qualifier='TRK'
   </select>
 
-  <select id="selectByOrganizationUuid" parameterType="String" resultType="Project">
+  <select id="selectAll" resultType="Project">
     select
       <include refid="projectColumns"/>
     from projects p
-    where
-      p.organization_uuid=#{organizationUuid,jdbcType=VARCHAR}
   </select>
 
-    <select id="selectProjectsByOrganizationUuid" parameterType="String" resultType="Project">
+  <select id="selectAllApplications" resultType="Project">
     select
       <include refid="projectColumns"/>
     from projects p
     where
-      p.qualifier='TRK' and
-      p.organization_uuid=#{organizationUuid,jdbcType=VARCHAR}
+      p.qualifier='APP'
   </select>
 
   <select id="selectProjectByKey" parameterType="String" resultType="Project">
@@ -99,7 +107,6 @@
 
   <insert id="insert" parameterType="Project">
     INSERT INTO projects (
-      organization_uuid,
       kee,
       qualifier,
       uuid,
@@ -111,7 +118,6 @@
       updated_at
     )
     VALUES (
-    #{organizationUuid,jdbcType=VARCHAR},
     #{kee,jdbcType=VARCHAR},
     #{qualifier,jdbcType=VARCHAR},
     #{uuid,jdbcType=VARCHAR},

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -57,11 +57,11 @@ public class IssueIndexDefinition implements IndexDefinition {
    */
   public static final String FIELD_ISSUE_FUNC_CLOSED_AT = "issueClosedAt";
   public static final String FIELD_ISSUE_KEY = "key";
+  public static final String FIELD_ISSUE_SCOPE = "scope";
   public static final String FIELD_ISSUE_LANGUAGE = "language";
   public static final String FIELD_ISSUE_LINE = "line";
   public static final String FIELD_ISSUE_MODULE_UUID = "module";
   public static final String FIELD_ISSUE_MODULE_PATH = "modulePath";
-  public static final String FIELD_ISSUE_ORGANIZATION_UUID = "organization";
 
   /**
    * The (real) project, equivalent of projects.main_branch_project_uuid | projects.project_uuid, so
@@ -142,11 +142,11 @@ public class IssueIndexDefinition implements IndexDefinition {
     mapping.createDateTimeField(FIELD_ISSUE_FUNC_UPDATED_AT);
     mapping.createDateTimeField(FIELD_ISSUE_FUNC_CLOSED_AT);
     mapping.keywordFieldBuilder(FIELD_ISSUE_KEY).disableNorms().addSubFields(SORTABLE_ANALYZER).build();
+    mapping.keywordFieldBuilder(FIELD_ISSUE_SCOPE).disableNorms().build();
     mapping.keywordFieldBuilder(FIELD_ISSUE_LANGUAGE).disableNorms().build();
     mapping.createIntegerField(FIELD_ISSUE_LINE);
     mapping.keywordFieldBuilder(FIELD_ISSUE_MODULE_UUID).disableNorms().build();
     mapping.createUuidPathField(FIELD_ISSUE_MODULE_PATH);
-    mapping.keywordFieldBuilder(FIELD_ISSUE_ORGANIZATION_UUID).disableNorms().build();
     mapping.keywordFieldBuilder(FIELD_ISSUE_PROJECT_UUID).disableNorms().addSubFields(SORTABLE_ANALYZER).build();
     mapping.keywordFieldBuilder(FIELD_ISSUE_BRANCH_UUID).disableNorms().build();
     mapping.createBooleanField(FIELD_ISSUE_IS_MAIN_BRANCH);

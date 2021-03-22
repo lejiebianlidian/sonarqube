@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -107,5 +107,11 @@ public enum PropertyType {
    * @deprecated since 6.3, this type is useless as Dashboards have been removed
    */
   @Deprecated
-  LONG
+  LONG,
+
+  /**
+   * JSON property type
+   * @since 8.8
+   */
+  JSON
 }

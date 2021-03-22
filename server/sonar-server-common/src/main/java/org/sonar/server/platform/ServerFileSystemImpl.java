@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -79,8 +79,13 @@ public class ServerFileSystemImpl implements ServerFileSystem, org.sonar.api.pla
   }
 
   @Override
-  public File getInstalledPluginsDir() {
+  public File getInstalledExternalPluginsDir() {
     return new File(getHomeDir(), "extensions/plugins");
+  }
+
+  @Override
+  public File getInstalledBundledPluginsDir() {
+    return new File(getHomeDir(), "lib/extensions");
   }
 
   @Override

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition.BuiltInQualityProfile;
@@ -56,7 +57,7 @@ public class BuiltInQualityProfilesDefinitionTest {
   }
 
   @Test
-  public void sanityCheck() {
+  public void sanityEqualCheck() {
     Map<String, Map<String, BuiltInQualityProfile>> profiles = define(c -> {
       NewBuiltInQualityProfile profile1 = c.createBuiltInQualityProfile("Foo1", "xoo");
       NewBuiltInActiveRule rule = profile1.activateRule("repo", "rule");
@@ -65,26 +66,31 @@ public class BuiltInQualityProfilesDefinitionTest {
       profile2.done();
       NewBuiltInQualityProfile profile3 = c.createBuiltInQualityProfile("Foo1", "xoo2");
       profile3.done();
-      assertThat(profile1).isEqualTo(profile1);
-      assertThat(profile1).isNotEqualTo(null);
-      assertThat(profile1).isNotEqualTo("Foo");
+
+      assertThat(profile1).isNotNull();
       assertThat(profile1).isNotEqualTo(profile2);
       assertThat(profile1).isNotEqualTo(profile3);
+
       assertThat(profile1.hashCode()).isNotEqualTo(profile2.hashCode());
-      assertThat(profile1.toString()).isEqualTo("NewBuiltInQualityProfile{name='Foo1', language='xoo', default='false'}");
-      assertThat(rule.toString()).isEqualTo("[repository=repo, key=rule]");
+
+      assertThat(profile1.name()).isNotEqualTo("Foo");
+      assertThat(profile1.toString()).hasToString("NewBuiltInQualityProfile{name='Foo1', language='xoo', default='false'}");
+      assertThat(rule.toString()).hasToString("[repository=repo, key=rule]");
     });
+
     BuiltInQualityProfile profile1 = profiles.get("xoo").get("Foo1");
     BuiltInQualityProfile profile2 = profiles.get("xoo").get("Foo2");
     BuiltInQualityProfile profile3 = profiles.get("xoo2").get("Foo1");
-    assertThat(profile1).isEqualTo(profile1);
-    assertThat(profile1).isNotEqualTo(null);
-    assertThat(profile1).isNotEqualTo("Foo");
-    assertThat(profile1).isNotEqualTo(profile2);
-    assertThat(profile1).isNotEqualTo(profile3);
+
+    assertThat(profile1)
+      .isNotNull()
+      .isNotEqualTo(profile2)
+      .isNotEqualTo(profile3);
     assertThat(profile1.hashCode()).isNotEqualTo(profile2.hashCode());
-    assertThat(profile1.toString()).isEqualTo("BuiltInQualityProfile{name='Foo1', language='xoo', default='false'}");
-    assertThat(profile1.rule(RuleKey.of("repo", "rule")).toString()).isEqualTo("[repository=repo, key=rule]");
+
+    assertThat(profile1.name()).isNotEqualTo("Foo");
+    assertThat(profile1.toString()).hasToString("BuiltInQualityProfile{name='Foo1', language='xoo', default='false'}");
+    assertThat(profile1.rule(RuleKey.of("repo", "rule")).toString()).hasToString("[repository=repo, key=rule]");
   }
 
   @Test

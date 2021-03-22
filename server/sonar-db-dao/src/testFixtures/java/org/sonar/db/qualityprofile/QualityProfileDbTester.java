@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ import org.sonar.core.util.Uuids;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.db.project.ProjectDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.user.GroupDto;
@@ -52,19 +51,19 @@ public class QualityProfileDbTester {
   }
 
   /**
-   * Create a profile with random field values on the specified organization.
+   * Create a profile with random field values.
    */
-  public QProfileDto insert(OrganizationDto organization) {
-    return insert(organization, c -> {
+  public QProfileDto insert() {
+    return insert(c -> {
     });
   }
 
+
   /**
-   * Create a profile with random field values on the specified organization.
+   * Create a profile with random field values
    */
-  public QProfileDto insert(OrganizationDto organization, Consumer<QProfileDto> consumer) {
-    QProfileDto profile = QualityProfileTesting.newQualityProfileDto()
-      .setOrganizationUuid(organization.getUuid());
+  public QProfileDto insert(Consumer<QProfileDto> consumer) {
+    QProfileDto profile = QualityProfileTesting.newQualityProfileDto();
     consumer.accept(profile);
 
     dbClient.qualityProfileDao().insert(dbSession, profile);
@@ -107,7 +106,7 @@ public class QualityProfileDbTester {
   public QualityProfileDbTester setAsDefault(QProfileDto profile, QProfileDto... others) {
     dbClient.defaultQProfileDao().insertOrUpdate(dbSession, DefaultQProfileDto.from(profile));
     for (QProfileDto other : others) {
-      dbClient.defaultQProfileDao().insertOrUpdate(dbSession, DefaultQProfileDto.from(other));
+      dbClient.defaultQProfileDao().insertOrUpdate(dbSession, DefaultQProfileDto.from( other));
     }
     dbSession.commit();
     return this;

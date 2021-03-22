@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ public class SourceSimilarityImplTest {
   public void zero_if_fully_different() {
     List<String> left = asList("a", "b", "c");
     List<String> right = asList("d", "e");
-    assertThat(underTest.score(left, right)).isEqualTo(0);
+    assertThat(underTest.score(left, right)).isZero();
   }
 
   @Test
@@ -127,6 +127,6 @@ public class SourceSimilarityImplTest {
 
   @Test
   public void two_empty_lists_are_not_considered_as_equal() {
-    assertThat(underTest.score(emptyList(), emptyList())).isEqualTo(0);
+    assertThat(underTest.score(emptyList(), emptyList())).isZero();
   }
 }

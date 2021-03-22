@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ import static org.sonar.api.issue.Issue.STATUS_OPEN;
 import static org.sonar.api.issue.Issue.STATUS_TO_REVIEW;
 
 public class TrackerRawInputFactory {
-  private static final long DEFAULT_EXTERNAL_ISSUE_EFFORT = 0l;
+  private static final long DEFAULT_EXTERNAL_ISSUE_EFFORT = 0L;
   private final TreeRootHolder treeRootHolder;
   private final BatchReportReader reportReader;
   private final CommonRuleEngine commonRuleEngine;
@@ -180,7 +180,7 @@ public class TrackerRawInputFactory {
       if (reportIssue.getSeverity() != Severity.UNSET_SEVERITY) {
         issue.setSeverity(reportIssue.getSeverity().name());
       }
-      if (reportIssue.getGap() != 0) {
+      if (Double.compare(reportIssue.getGap(), 0D) != 0) {
         issue.setGap(reportIssue.getGap());
       }
       DbIssues.Locations.Builder dbLocationsBuilder = DbIssues.Locations.newBuilder();

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,9 +21,7 @@ package org.sonar.server.user;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.sonar.db.user.GroupDto;
 import org.sonar.db.user.GroupTesting;
 import org.sonar.server.exceptions.UnauthorizedException;
@@ -31,13 +29,11 @@ import org.sonar.server.tester.AnonymousMockUserSession;
 import org.sonar.server.tester.MockUserSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ThreadLocalUserSessionTest {
 
   private ThreadLocalUserSession threadLocalUserSession = new ThreadLocalUserSession();
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setUp() {
@@ -56,14 +52,18 @@ public class ThreadLocalUserSessionTest {
     GroupDto group = GroupTesting.newGroupDto();
     MockUserSession expected = new MockUserSession("karadoc")
       .setUuid("karadoc-uuid")
+      .setResetPassword(true)
+      .setLastSonarlintConnectionDate(1000L)
       .setGroups(group);
     threadLocalUserSession.set(expected);
 
     UserSession session = threadLocalUserSession.get();
     assertThat(session).isSameAs(expected);
+    assertThat(threadLocalUserSession.getLastSonarlintConnectionDate()).isEqualTo(1000L);
     assertThat(threadLocalUserSession.getLogin()).isEqualTo("karadoc");
     assertThat(threadLocalUserSession.getUuid()).isEqualTo("karadoc-uuid");
     assertThat(threadLocalUserSession.isLoggedIn()).isTrue();
+    assertThat(threadLocalUserSession.shouldResetPassword()).isTrue();
     assertThat(threadLocalUserSession.getGroups()).extracting(GroupDto::getUuid).containsOnly(group.getUuid());
   }
 
@@ -76,13 +76,14 @@ public class ThreadLocalUserSessionTest {
     assertThat(session).isSameAs(expected);
     assertThat(threadLocalUserSession.getLogin()).isNull();
     assertThat(threadLocalUserSession.isLoggedIn()).isFalse();
+    assertThat(threadLocalUserSession.shouldResetPassword()).isFalse();
     assertThat(threadLocalUserSession.getGroups()).isEmpty();
   }
 
   @Test
   public void throw_UnauthorizedException_when_no_session() {
-    thrown.expect(UnauthorizedException.class);
-    threadLocalUserSession.get();
+    assertThatThrownBy(() -> threadLocalUserSession.get())
+      .isInstanceOf(UnauthorizedException.class);
   }
 
 }

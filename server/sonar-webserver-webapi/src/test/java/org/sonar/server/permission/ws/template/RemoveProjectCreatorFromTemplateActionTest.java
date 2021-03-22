@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -63,9 +63,9 @@ public class RemoveProjectCreatorFromTemplateActionTest extends BasePermissionWs
 
   @Before
   public void setUp() {
-    loginAsAdmin(db.getDefaultOrganization());
+    loginAsAdmin();
     when(system.now()).thenReturn(2_000_000_000L);
-    template = db.permissionTemplates().insertTemplate(db.getDefaultOrganization());
+    template = db.permissionTemplates().insertTemplate();
   }
 
   @Test

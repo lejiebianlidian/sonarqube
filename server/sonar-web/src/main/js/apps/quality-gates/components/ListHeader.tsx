@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,27 +21,22 @@ import * as React from 'react';
 import { Button } from 'sonar-ui-common/components/controls/buttons';
 import ModalButton from 'sonar-ui-common/components/controls/ModalButton';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import DocTooltip from '../../../components/docs/DocTooltip';
+import DocumentationTooltip from '../../../components/common/DocumentationTooltip';
 import CreateQualityGateForm from './CreateQualityGateForm';
 
 interface Props {
   canCreate: boolean;
   refreshQualityGates: () => Promise<void>;
-  organization?: string;
 }
 
-export default function ListHeader({ canCreate, refreshQualityGates, organization }: Props) {
+export default function ListHeader({ canCreate, refreshQualityGates }: Props) {
   return (
     <header className="page-header">
       {canCreate && (
         <div className="page-actions">
           <ModalButton
             modal={({ onClose }) => (
-              <CreateQualityGateForm
-                onClose={onClose}
-                onCreate={refreshQualityGates}
-                organization={organization}
-              />
+              <CreateQualityGateForm onClose={onClose} onCreate={refreshQualityGates} />
             )}>
             {({ onClick }) => (
               <Button data-test="quality-gates__add" onClick={onClick}>
@@ -54,9 +49,15 @@ export default function ListHeader({ canCreate, refreshQualityGates, organizatio
 
       <div className="display-flex-center">
         <h1 className="page-title">{translate('quality_gates.page')}</h1>
-        <DocTooltip
+        <DocumentationTooltip
           className="spacer-left"
-          doc={import(/* webpackMode: "eager" */ 'Docs/tooltips/quality-gates/quality-gate.md')}
+          content={translate('quality_gates.help')}
+          links={[
+            {
+              href: '/documentation/user-guide/quality-gates/',
+              label: translate('learn_more')
+            }
+          ]}
         />
       </div>
     </header>

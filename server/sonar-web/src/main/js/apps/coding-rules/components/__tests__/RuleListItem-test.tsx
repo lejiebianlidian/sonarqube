@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -71,18 +71,6 @@ it('handle deactivation', async () => {
   expect(onDeactivate).toBeCalledWith(profile.key, rule.key);
 });
 
-describe('#renderDeactivateButton', () => {
-  it('should render correctly', () => {
-    const wrapper = shallowRender();
-    const instance = wrapper.instance();
-
-    expect(instance.renderDeactivateButton('NONE')).toMatchSnapshot();
-    expect(
-      instance.renderDeactivateButton('', 'coding_rules.need_extend_or_copy')
-    ).toMatchSnapshot();
-  });
-});
-
 describe('renderActions', () => {
   it('should be null when there is no selected profile', () => {
     const wrapper = shallowRender({
@@ -120,7 +108,9 @@ describe('renderActions', () => {
       })
     });
 
-    expect(wrapper.instance().renderActions()).toMatchSnapshot();
+    expect(wrapper.instance().renderActions()).toMatchSnapshot('activate');
+    wrapper.setProps({ activation: { inherit: 'INHERITED', severity: 'CRITICAL' } });
+    expect(wrapper.instance().renderActions()).toMatchSnapshot('deactivate');
   });
 
   it('should render the deactivate button', () => {
@@ -165,7 +155,6 @@ function shallowRender(props?: Partial<RuleListItem['props']>) {
       onDeactivate={jest.fn()}
       onFilterChange={jest.fn()}
       onOpen={jest.fn()}
-      organization={undefined}
       rule={mockRule({ key: 'javascript:S1067' })}
       selected={false}
       {...props}

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,29 +19,25 @@
  */
 import { shallow } from 'enzyme';
 import * as React from 'react';
+import { mockIssue } from '../../../../helpers/testMocks';
+import { ComponentQualifier } from '../../../../types/component';
 import ComponentBreadcrumbs from '../ComponentBreadcrumbs';
 
-const baseIssue = {
+const baseIssue = mockIssue(false, {
   component: 'comp',
   componentLongName: 'comp-name',
-  flows: [],
-  organization: 'org',
+  componentQualifier: ComponentQualifier.File,
   project: 'proj',
-  projectName: 'proj-name',
-  secondaryLocations: []
-};
+  projectName: 'proj-name'
+});
 
 it('renders', () => {
   expect(
-    shallow(
-      <ComponentBreadcrumbs component={undefined} issue={baseIssue} organization={undefined} />
-    )
+    shallow(<ComponentBreadcrumbs component={undefined} issue={baseIssue} />)
   ).toMatchSnapshot();
 });
 
 it('renders with sub-project', () => {
   const issue = { ...baseIssue, subProject: 'sub-proj', subProjectName: 'sub-proj-name' };
-  expect(
-    shallow(<ComponentBreadcrumbs component={undefined} issue={issue} organization={undefined} />)
-  ).toMatchSnapshot();
+  expect(shallow(<ComponentBreadcrumbs component={undefined} issue={issue} />)).toMatchSnapshot();
 });

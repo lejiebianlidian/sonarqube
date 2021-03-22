@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,17 +23,17 @@ import { Link } from 'react-router';
 import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/controls/buttons';
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { createProject } from '../../api/components';
 import VisibilitySelector from '../../components/common/VisibilitySelector';
 import { getProjectUrl } from '../../helpers/urls';
-import UpgradeOrganizationBox from '../create/components/UpgradeOrganizationBox';
 
 interface Props {
+  defaultProjectVisibility?: T.Visibility;
   onClose: () => void;
   onProjectCreated: () => void;
-  onOrganizationUpgrade: () => void;
-  organization: T.Organization;
 }
 
 interface State {
@@ -56,7 +56,7 @@ export default class CreateProjectForm extends React.PureComponent<Props, State>
       key: '',
       loading: false,
       name: '',
-      visibility: props.organization.projectVisibility
+      visibility: props.defaultProjectVisibility
     };
   }
 
@@ -91,7 +91,6 @@ export default class CreateProjectForm extends React.PureComponent<Props, State>
 
     const data = {
       name: this.state.name,
-      organization: this.props.organization && this.props.organization.key,
       project: this.state.key,
       visibility: this.state.visibility
     };
@@ -113,7 +112,7 @@ export default class CreateProjectForm extends React.PureComponent<Props, State>
   };
 
   render() {
-    const { organization } = this.props;
+    const { defaultProjectVisibility } = this.props;
     const { createdProject } = this.state;
 
     return (
@@ -156,10 +155,11 @@ export default class CreateProjectForm extends React.PureComponent<Props, State>
             </header>
 
             <div className="modal-body">
+              <MandatoryFieldsExplanation className="modal-field" />
               <div className="modal-field">
                 <label htmlFor="create-project-name">
                   {translate('name')}
-                  <em className="mandatory">*</em>
+                  <MandatoryFieldMarker />
                 </label>
                 <input
                   autoFocus={true}
@@ -175,7 +175,7 @@ export default class CreateProjectForm extends React.PureComponent<Props, State>
               <div className="modal-field">
                 <label htmlFor="create-project-key">
                   {translate('key')}
-                  <em className="mandatory">*</em>
+                  <MandatoryFieldMarker />
                 </label>
                 <input
                   id="create-project-key"
@@ -190,24 +190,12 @@ export default class CreateProjectForm extends React.PureComponent<Props, State>
               <div className="modal-field">
                 <label>{translate('visibility')}</label>
                 <VisibilitySelector
-                  canTurnToPrivate={organization.canUpdateProjectsVisibilityToPrivate}
+                  canTurnToPrivate={defaultProjectVisibility !== undefined}
                   className="little-spacer-top"
                   onChange={this.handleVisibilityChange}
                   visibility={this.state.visibility}
                 />
               </div>
-              {organization.actions &&
-                organization.actions.admin &&
-                !organization.canUpdateProjectsVisibilityToPrivate && (
-                  <div className="spacer-top">
-                    <UpgradeOrganizationBox
-                      className="width-100"
-                      insideModal={true}
-                      onOrganizationUpgrade={this.props.onOrganizationUpgrade}
-                      organization={organization}
-                    />
-                  </div>
-                )}
             </div>
 
             <footer className="modal-foot">

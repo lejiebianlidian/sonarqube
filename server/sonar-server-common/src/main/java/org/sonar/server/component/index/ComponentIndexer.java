@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
@@ -70,6 +71,10 @@ public class ComponentIndexer implements ProjectIndexer, NeedAuthorizationIndexe
   @Override
   public void indexOnStartup(Set<IndexType> uninitializedIndexTypes) {
     doIndexByProjectUuid(null, Size.LARGE);
+  }
+
+  public void indexAll() {
+    doIndexByProjectUuid(null, Size.REGULAR);
   }
 
   @Override
@@ -151,10 +156,10 @@ public class ComponentIndexer implements ProjectIndexer, NeedAuthorizationIndexe
     bulk.stop();
   }
 
-  private void addProjectDeletionToBulkIndexer(BulkIndexer bulkIndexer, String projectUuid) {
-    SearchRequestBuilder searchRequest = esClient.prepareSearch(TYPE_COMPONENT.getMainType())
-      .setQuery(QueryBuilders.termQuery(ComponentIndexDefinition.FIELD_PROJECT_UUID, projectUuid))
-      .setRouting(AuthorizationDoc.idOf(projectUuid));
+  private static void addProjectDeletionToBulkIndexer(BulkIndexer bulkIndexer, String projectUuid) {
+    SearchRequest searchRequest = EsClient.prepareSearch(TYPE_COMPONENT.getMainType())
+      .source(new SearchSourceBuilder().query(QueryBuilders.termQuery(ComponentIndexDefinition.FIELD_PROJECT_UUID, projectUuid)))
+      .routing(AuthorizationDoc.idOf(projectUuid));
     bulkIndexer.addDeletion(searchRequest);
   }
 
@@ -182,7 +187,6 @@ public class ComponentIndexer implements ProjectIndexer, NeedAuthorizationIndexe
       .setName(component.name())
       .setKey(component.getDbKey())
       .setProjectUuid(component.projectUuid())
-      .setOrganization(component.getOrganizationUuid())
       .setQualifier(component.qualifier());
   }
 }

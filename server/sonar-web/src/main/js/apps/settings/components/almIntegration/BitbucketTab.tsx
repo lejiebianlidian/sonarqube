@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,99 +18,169 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
-import { FormattedMessage } from 'react-intl';
-import { Link } from 'react-router';
-import { Alert } from 'sonar-ui-common/components/ui/Alert';
-import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import {
+  createBitbucketCloudConfiguration,
   createBitbucketConfiguration,
+  updateBitbucketCloudConfiguration,
   updateBitbucketConfiguration
 } from '../../../../api/alm-settings';
-import { AlmKeys, BitbucketBindingDefinition } from '../../../../types/alm-settings';
-import AlmTab from './AlmTab';
-import BitbucketForm from './BitbucketForm';
+import {
+  AlmKeys,
+  AlmSettingsBindingStatus,
+  BitbucketBindingDefinition,
+  BitbucketCloudBindingDefinition,
+  isBitbucketBindingDefinition
+} from '../../../../types/alm-settings';
+import BitbucketTabRenderer from './BitbucketTabRenderer';
 
-export interface BitbucketTabProps {
-  definitions: BitbucketBindingDefinition[];
+interface Props {
+  branchesEnabled: boolean;
+  definitions: Array<BitbucketBindingDefinition | BitbucketCloudBindingDefinition>;
+  definitionStatus: T.Dict<AlmSettingsBindingStatus>;
   loadingAlmDefinitions: boolean;
   loadingProjectCount: boolean;
   multipleAlmEnabled: boolean;
+  onCheck: (definitionKey: string) => void;
   onDelete: (definitionKey: string) => void;
   onUpdateDefinitions: () => void;
 }
 
-export default function BitbucketTab(props: BitbucketTabProps) {
-  const { multipleAlmEnabled, definitions, loadingAlmDefinitions, loadingProjectCount } = props;
+interface State {
+  editedDefinition?: BitbucketBindingDefinition | BitbucketCloudBindingDefinition;
+  isCreating: boolean;
+  submitting: boolean;
+  success: boolean;
+  variant?: AlmKeys.BitbucketServer | AlmKeys.BitbucketCloud;
+}
 
-  return (
-    <div className="bordered">
-      <AlmTab
-        additionalColumnsHeaders={[translate('settings.almintegration.table.column.bitbucket.url')]}
-        additionalColumnsKeys={['url']}
-        additionalTableInfo={
-          <Alert className="big-spacer-bottom width-50" variant="info">
-            <FormattedMessage
-              defaultMessage={translate(
-                'settings.almintegration.feature.alm_repo_import.disabled_if_multiple_bbs_instances'
-              )}
-              id="settings.almintegration.feature.alm_repo_import.disabled_if_multiple_bbs_instances"
-              values={{
-                feature: (
-                  <em>{translate('settings.almintegration.feature.alm_repo_import.title')}</em>
-                )
-              }}
-            />
-          </Alert>
+export const DEFAULT_SERVER_BINDING = { key: '', url: '', personalAccessToken: '' };
+export const DEFAULT_CLOUD_BINDING = { key: '', clientId: '', clientSecret: '', workspace: '' };
+
+export default class BitbucketTab extends React.PureComponent<Props, State> {
+  mounted = false;
+  state: State = { isCreating: false, submitting: false, success: false };
+
+  componentDidMount() {
+    this.mounted = true;
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
+  }
+
+  handleCancel = () => {
+    this.setState({
+      editedDefinition: undefined,
+      isCreating: false,
+      success: false,
+      variant: undefined
+    });
+  };
+
+  handleCreate = () => {
+    this.setState({
+      editedDefinition: DEFAULT_SERVER_BINDING, // Default to Bitbucket Server.
+      isCreating: true,
+      success: false,
+      variant: undefined
+    });
+  };
+
+  handleSelectVariant = (variant: AlmKeys.BitbucketServer | AlmKeys.BitbucketCloud) => {
+    this.setState({
+      variant,
+      editedDefinition:
+        variant === AlmKeys.BitbucketServer ? DEFAULT_SERVER_BINDING : DEFAULT_CLOUD_BINDING
+    });
+  };
+
+  handleEdit = (definitionKey: string) => {
+    const editedDefinition = this.props.definitions.find(d => d.key === definitionKey);
+    const variant = isBitbucketBindingDefinition(editedDefinition)
+      ? AlmKeys.BitbucketServer
+      : AlmKeys.BitbucketCloud;
+    this.setState({ editedDefinition, variant, success: false });
+  };
+
+  handleSubmit = (
+    config: BitbucketBindingDefinition | BitbucketCloudBindingDefinition,
+    originalKey: string
+  ) => {
+    const call = originalKey
+      ? this.updateConfiguration({ newKey: config.key, ...config, key: originalKey })
+      : this.createConfiguration({ ...config });
+
+    this.setState({ submitting: true });
+    return call
+      .then(() => {
+        if (this.mounted) {
+          this.setState({
+            editedDefinition: undefined,
+            isCreating: false,
+            submitting: false,
+            success: true
+          });
         }
-        alm={AlmKeys.Bitbucket}
-        createConfiguration={createBitbucketConfiguration}
-        defaultBinding={{ key: '', url: '', personalAccessToken: '' }}
+      })
+      .then(this.props.onUpdateDefinitions)
+      .then(() => {
+        this.props.onCheck(config.key);
+      })
+      .catch(() => {
+        if (this.mounted) {
+          this.setState({ submitting: false, success: false });
+        }
+      });
+  };
+
+  updateConfiguration = (
+    config: (BitbucketBindingDefinition | BitbucketCloudBindingDefinition) & { newKey: string }
+  ) => {
+    if (isBitbucketBindingDefinition(config)) {
+      return updateBitbucketConfiguration(config);
+    }
+    return updateBitbucketCloudConfiguration(config);
+  };
+
+  createConfiguration = (config: BitbucketBindingDefinition | BitbucketCloudBindingDefinition) => {
+    if (isBitbucketBindingDefinition(config)) {
+      return createBitbucketConfiguration(config);
+    }
+    return createBitbucketCloudConfiguration(config);
+  };
+
+  render() {
+    const {
+      branchesEnabled,
+      definitions,
+      definitionStatus,
+      loadingAlmDefinitions,
+      loadingProjectCount,
+      multipleAlmEnabled
+    } = this.props;
+    const { editedDefinition, isCreating, submitting, success, variant } = this.state;
+
+    return (
+      <BitbucketTabRenderer
+        branchesEnabled={branchesEnabled}
         definitions={definitions}
-        features={[
-          {
-            name: translate('settings.almintegration.feature.pr_decoration.title'),
-            active: definitions.length > 0,
-            description: translate('settings.almintegration.feature.pr_decoration.description'),
-            inactiveReason: translate('settings.almintegration.feature.need_at_least_1_binding')
-          },
-          {
-            name: translate('settings.almintegration.feature.alm_repo_import.title'),
-            active: definitions.length === 1,
-            description: translate('settings.almintegration.feature.alm_repo_import.description'),
-            inactiveReason: translateWithParameters(
-              'onboarding.create_project.too_many_bbs_instances_X',
-              definitions.length
-            )
-          }
-        ]}
-        form={childProps => <BitbucketForm {...childProps} />}
-        help={
-          <>
-            <h3>{translate('onboarding.create_project.pat_help.title')}</h3>
-
-            <p className="big-spacer-top">
-              {translate('settings.almintegration.bitbucket.help_1')}
-            </p>
-
-            <ul className="big-spacer-top list-styled">
-              <li>{translate('settings.almintegration.bitbucket.help_2')}</li>
-              <li>{translate('settings.almintegration.bitbucket.help_3')}</li>
-            </ul>
-
-            <p className="big-spacer-top big-spacer-bottom">
-              <Link target="_blank" to="/documentation/analysis/pr-decoration/">
-                {translate('learn_more')}
-              </Link>
-            </p>
-          </>
-        }
+        definitionStatus={definitionStatus}
+        editedDefinition={editedDefinition}
+        isCreating={isCreating}
         loadingAlmDefinitions={loadingAlmDefinitions}
         loadingProjectCount={loadingProjectCount}
         multipleAlmEnabled={multipleAlmEnabled}
-        onDelete={props.onDelete}
-        onUpdateDefinitions={props.onUpdateDefinitions}
-        updateConfiguration={updateBitbucketConfiguration}
+        onCancel={this.handleCancel}
+        onCheck={this.props.onCheck}
+        onCreate={this.handleCreate}
+        onDelete={this.props.onDelete}
+        onEdit={this.handleEdit}
+        onSelectVariant={this.handleSelectVariant}
+        onSubmit={this.handleSubmit}
+        submitting={submitting}
+        success={success}
+        variant={variant}
       />
-    </div>
-  );
+    );
+  }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ interface Props {
 export default function FilterHeader(props: Props) {
   return (
     <div className="search-navigator-facet-header projects-facet-header">
-      {props.name}
+      <h3 className="h4">{props.name}</h3>
       {props.children}
     </div>
   );

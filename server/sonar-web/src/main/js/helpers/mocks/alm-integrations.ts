@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +18,29 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import {
+  AzureProject,
+  AzureRepository,
   BitbucketProject,
   BitbucketRepository,
-  GithubRepository
+  GithubRepository,
+  GitlabProject
 } from '../../types/alm-integration';
+
+export function mockAzureProject(overrides: Partial<AzureProject> = {}): AzureProject {
+  return {
+    name: 'azure-project-1',
+    description: 'Azure Project',
+    ...overrides
+  };
+}
+
+export function mockAzureRepository(overrides: Partial<AzureRepository> = {}): AzureRepository {
+  return {
+    name: 'Azure repo 1',
+    projectName: 'Azure Project',
+    ...overrides
+  };
+}
 
 export function mockBitbucketProject(overrides: Partial<BitbucketProject> = {}): BitbucketProject {
   return {
@@ -51,6 +70,19 @@ export function mockGitHubRepository(overrides: Partial<GithubRepository> = {}):
     name: 'repository 1',
     sqProjectKey: '',
     url: 'owner/repo1',
+    ...overrides
+  };
+}
+
+export function mockGitlabProject(overrides: Partial<GitlabProject> = {}): GitlabProject {
+  return {
+    id: 'id1234',
+    name: 'Awesome Project !',
+    slug: 'awesome-project-exclamation',
+    pathName: 'Company / Best Projects',
+    pathSlug: 'company/best-projects',
+    sqProjectKey: '',
+    url: 'https://gitlab.company.com/best-projects/awesome-project-exclamation',
     ...overrides
   };
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ public class ClobColumnDefTest {
 
   @Test
   public void generate_sql_type_on_h2() {
-    assertThat(underTest.generateSqlType(new H2())).isEqualTo("CLOB(2147483647)");
+    assertThat(underTest.generateSqlType(new H2())).isEqualTo("CLOB");
   }
 
   @Test

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,18 +18,19 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import { ComponentQualifier } from '../../types/component';
+import { IssueType } from '../../types/issues';
 import {
   getComponentDrilldownUrl,
   getComponentIssuesUrl,
   getComponentOverviewUrl,
   getComponentSecurityHotspotsUrl,
+  getIssuesUrl,
   getQualityGatesUrl,
   getQualityGateUrl
 } from '../urls';
 
 const SIMPLE_COMPONENT_KEY = 'sonarqube';
 const COMPLEX_COMPONENT_KEY = 'org.sonarsource.sonarqube:sonarqube';
-const COMPLEX_COMPONENT_KEY_ENCODED = encodeURIComponent(COMPLEX_COMPONENT_KEY);
 const METRIC = 'coverage';
 
 describe('#getComponentIssuesUrl', () => {
@@ -117,21 +118,18 @@ describe('#getComponentDrilldownUrl', () => {
 });
 
 describe('#getQualityGate(s)Url', () => {
-  it('should take organization key into account', () => {
+  it('should work as expected', () => {
     expect(getQualityGatesUrl()).toEqual({ pathname: '/quality_gates' });
-    expect(getQualityGatesUrl('foo')).toEqual({ pathname: '/organizations/foo/quality_gates' });
     expect(getQualityGateUrl('bar')).toEqual({ pathname: '/quality_gates/show/bar' });
-    expect(getQualityGateUrl('bar', 'foo')).toEqual({
-      pathname: '/organizations/foo/quality_gates/show/bar'
-    });
   });
+});
 
-  it('should encode keys', () => {
-    expect(getQualityGatesUrl(COMPLEX_COMPONENT_KEY)).toEqual({
-      pathname: '/organizations/' + COMPLEX_COMPONENT_KEY_ENCODED + '/quality_gates'
-    });
-    expect(getQualityGateUrl(COMPLEX_COMPONENT_KEY)).toEqual({
-      pathname: '/quality_gates/show/' + COMPLEX_COMPONENT_KEY_ENCODED
+describe('getIssuesUrl', () => {
+  it('should work as expected', () => {
+    const type = IssueType.Bug;
+    expect(getIssuesUrl({ type })).toEqual({
+      pathname: '/issues',
+      query: { type }
     });
   });
 });

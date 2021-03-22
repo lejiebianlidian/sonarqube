@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ import { Button } from 'sonar-ui-common/components/controls/buttons';
 import ConfirmButton from 'sonar-ui-common/components/controls/ConfirmButton';
 import Tooltip from 'sonar-ui-common/components/controls/Tooltip';
 import DateFormatter from 'sonar-ui-common/components/intl/DateFormatter';
-import DateFromNowHourPrecision from 'sonar-ui-common/components/intl/DateFromNowHourPrecision';
+import DateFromNow from 'sonar-ui-common/components/intl/DateFromNow';
 import DeferredSpinner from 'sonar-ui-common/components/ui/DeferredSpinner';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { limitComponentName } from 'sonar-ui-common/helpers/path';
@@ -42,6 +42,8 @@ interface State {
   loading: boolean;
   showConfirmation: boolean;
 }
+
+const MAX_TOKEN_NAME_FIELD = 20;
 
 export default class TokensFormItem extends React.PureComponent<Props, State> {
   mounted = false;
@@ -86,11 +88,11 @@ export default class TokensFormItem extends React.PureComponent<Props, State> {
       <tr>
         <td>
           <Tooltip overlay={token.name}>
-            <span>{limitComponentName(token.name)}</span>
+            <span>{limitComponentName(token.name, MAX_TOKEN_NAME_FIELD)}</span>
           </Tooltip>
         </td>
         <td className="nowrap">
-          <DateFromNowHourPrecision date={token.lastConnectionDate} />
+          <DateFromNow date={token.lastConnectionDate} hourPrecision={true} />
         </td>
         <td className="thin nowrap text-right">
           <DateFormatter date={token.createdAt} long={true} />

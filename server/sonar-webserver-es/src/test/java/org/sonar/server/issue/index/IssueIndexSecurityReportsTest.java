@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -33,7 +34,6 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.System2;
 import org.sonar.db.DbTester;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
 import org.sonar.server.es.EsTester;
 import org.sonar.server.permission.index.IndexPermissions;
 import org.sonar.server.permission.index.PermissionIndexerTester;
@@ -52,7 +52,6 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.rules.ExpectedException.none;
 import static org.sonar.api.resources.Qualifiers.PROJECT;
 import static org.sonar.db.component.ComponentTesting.newPrivateProjectDto;
-import static org.sonar.db.organization.OrganizationTesting.newOrganizationDto;
 import static org.sonar.server.issue.IssueDocTesting.newDoc;
 import static org.sonar.server.security.SecurityStandards.SANS_TOP_25_INSECURE_INTERACTION;
 import static org.sonar.server.security.SecurityStandards.SANS_TOP_25_POROUS_DEFENSES;
@@ -79,9 +78,8 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getOwaspTop10Report_dont_count_vulnerabilities_from_other_projects() {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
-    ComponentDto another = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
+    ComponentDto another = newPrivateProjectDto();
     indexIssues(
       newDoc("anotherProject", another).setOwaspTop10(singletonList("a1")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN).setSeverity(Severity.CRITICAL),
       newDoc("openvul1", project).setOwaspTop10(singletonList("a1")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN).setSeverity(Severity.MAJOR));
@@ -97,8 +95,7 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getOwaspTop10Report_dont_count_closed_vulnerabilities() {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
     indexIssues(
       newDoc("openvul1", project).setOwaspTop10(asList("a1")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN).setSeverity(Severity.MAJOR),
       newDoc("notopenvul", project).setOwaspTop10(asList("a1")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_CLOSED).setResolution(Issue.RESOLUTION_FIXED)
@@ -114,8 +111,7 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getOwaspTop10Report_dont_count_old_vulnerabilities() {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
     indexIssues(
       // Previous vulnerabilities in projects that are not reanalyzed will have no owasp nor cwe attributes (not even 'unknown')
       newDoc("openvulNotReindexed", project).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN).setSeverity(Severity.MAJOR));
@@ -130,9 +126,8 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getOwaspTop10Report_dont_count_hotspots_from_other_projects() {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
-    ComponentDto another = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
+    ComponentDto another = newPrivateProjectDto();
     indexIssues(
       newDoc("openhotspot1", project).setOwaspTop10(asList("a1")).setType(RuleType.SECURITY_HOTSPOT).setStatus(Issue.STATUS_TO_REVIEW),
       newDoc("anotherProject", another).setOwaspTop10(asList("a1")).setType(RuleType.SECURITY_HOTSPOT).setStatus(Issue.STATUS_TO_REVIEW));
@@ -146,8 +141,7 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getOwaspTop10Report_dont_count_closed_hotspots() {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
     indexIssues(
       newDoc("openhotspot1", project).setOwaspTop10(asList("a1")).setType(RuleType.SECURITY_HOTSPOT).setStatus(Issue.STATUS_TO_REVIEW),
       newDoc("closedHotspot", project).setOwaspTop10(asList("a1")).setType(RuleType.SECURITY_HOTSPOT).setStatus(Issue.STATUS_CLOSED)
@@ -164,7 +158,9 @@ public class IssueIndexSecurityReportsTest {
   public void getOwaspTop10Report_aggregation_no_cwe() {
     List<SecurityStandardCategoryStatistics> owaspTop10Report = indexIssuesAndAssertOwaspReport(false);
 
-    assertThat(owaspTop10Report).allMatch(category -> category.getChildren().isEmpty());
+    assertThat(owaspTop10Report)
+      .isNotEmpty()
+      .allMatch(category -> category.getChildren().isEmpty());
   }
 
   @Test
@@ -191,8 +187,7 @@ public class IssueIndexSecurityReportsTest {
   }
 
   private List<SecurityStandardCategoryStatistics> indexIssuesAndAssertOwaspReport(boolean includeCwe) {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
     indexIssues(
       newDoc("openvul1", project).setOwaspTop10(asList("a1", "a3")).setCwe(asList("123", "456")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN)
         .setSeverity(Severity.MAJOR),
@@ -227,8 +222,7 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getSansTop25Report_aggregation() {
-    OrganizationDto org = newOrganizationDto();
-    ComponentDto project = newPrivateProjectDto(org);
+    ComponentDto project = newPrivateProjectDto();
     indexIssues(
       newDoc("openvul1", project).setSansTop25(asList(SANS_TOP_25_INSECURE_INTERACTION, SANS_TOP_25_RISKY_RESOURCE)).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN)
         .setSeverity(Severity.MAJOR),
@@ -263,8 +257,8 @@ public class IssueIndexSecurityReportsTest {
 
   @Test
   public void getSansTop25Report_aggregation_on_portfolio() {
-    ComponentDto portfolio1 = db.components().insertPrivateApplication(db.getDefaultOrganization());
-    ComponentDto portfolio2 = db.components().insertPrivateApplication(db.getDefaultOrganization());
+    ComponentDto portfolio1 = db.components().insertPrivateApplication();
+    ComponentDto portfolio2 = db.components().insertPrivateApplication();
     ComponentDto project1 = db.components().insertPrivateProject();
     ComponentDto project2 = db.components().insertPrivateProject();
 
@@ -299,6 +293,120 @@ public class IssueIndexSecurityReportsTest {
         tuple(SANS_TOP_25_POROUS_DEFENSES, 0L, OptionalInt.empty(), 0L, 0L, 1));
 
     assertThat(sansTop25Report).allMatch(category -> category.getChildren().isEmpty());
+  }
+
+  @Test
+  public void getCWETop25Report_aggregation() {
+    ComponentDto project = newPrivateProjectDto();
+    indexIssues(
+      newDoc("openvul", project).setCwe(asList("119")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN)
+        .setSeverity(Severity.MAJOR),
+      newDoc("notopenvul", project).setCwe(asList("119")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_CLOSED)
+        .setResolution(Issue.RESOLUTION_FIXED)
+        .setSeverity(Severity.BLOCKER),
+      newDoc("toreviewhotspot", project).setCwe(asList("89")).setType(RuleType.SECURITY_HOTSPOT)
+        .setStatus(Issue.STATUS_TO_REVIEW),
+      newDoc("only2020", project).setCwe(asList("862")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_REOPENED)
+        .setSeverity(Severity.MINOR),
+      newDoc("unknown", project).setCwe(asList("999")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_REOPENED)
+        .setSeverity(Severity.MINOR));
+
+    List<SecurityStandardCategoryStatistics> cweTop25Reports = underTest.getCweTop25Reports(project.uuid(), false);
+
+    SecurityStandardCategoryStatistics cwe2019 = cweTop25Reports.get(0);
+    assertThat(cwe2019.getChildren()).hasSize(25);
+    assertThat(findRuleInCweByYear(cwe2019, "119")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(1L, 0L, 0L);
+    assertThat(findRuleInCweByYear(cwe2019, "89")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(0L, 1L, 0L);
+    assertThat(findRuleInCweByYear(cwe2019, "862")).isNull();
+    assertThat(findRuleInCweByYear(cwe2019, "999")).isNull();
+
+    SecurityStandardCategoryStatistics cwe2020 = cweTop25Reports.get(1);
+    assertThat(cwe2020.getChildren()).hasSize(25);
+    assertThat(findRuleInCweByYear(cwe2020, "119")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(1L, 0L, 0L);
+    assertThat(findRuleInCweByYear(cwe2020, "89")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(0L, 1L, 0L);
+    assertThat(findRuleInCweByYear(cwe2020, "862")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(1L, 0L, 0L);
+    assertThat(findRuleInCweByYear(cwe2020, "999")).isNull();
+  }
+
+  @Test
+  public void getCWETop25Report_aggregation_on_portfolio() {
+    ComponentDto application = db.components().insertPrivateApplication();
+    ComponentDto project1 = db.components().insertPrivateProject();
+    ComponentDto project2 = db.components().insertPrivateProject();
+
+    indexIssues(
+      newDoc("openvul1", project1).setCwe(asList("119")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_OPEN)
+        .setSeverity(Severity.MAJOR),
+      newDoc("openvul2", project2).setCwe(asList("119")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_REOPENED)
+        .setSeverity(Severity.MINOR),
+      newDoc("toreviewhotspot", project1).setCwe(asList("89")).setType(RuleType.SECURITY_HOTSPOT)
+        .setStatus(Issue.STATUS_TO_REVIEW),
+      newDoc("only2020", project2).setCwe(asList("862")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_REOPENED)
+        .setSeverity(Severity.MINOR),
+      newDoc("unknown", project2).setCwe(asList("999")).setType(RuleType.VULNERABILITY).setStatus(Issue.STATUS_REOPENED)
+        .setSeverity(Severity.MINOR));
+
+    indexView(application.uuid(), asList(project1.uuid(), project2.uuid()));
+
+    List<SecurityStandardCategoryStatistics> cweTop25Reports = underTest.getCweTop25Reports(application.uuid(), true);
+
+    SecurityStandardCategoryStatistics cwe2019 = cweTop25Reports.get(0);
+    assertThat(cwe2019.getChildren()).hasSize(25);
+    assertThat(findRuleInCweByYear(cwe2019, "119")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(2L, 0L, 0L);
+    assertThat(findRuleInCweByYear(cwe2019, "89")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(0L, 1L, 0L);
+    assertThat(findRuleInCweByYear(cwe2019, "862")).isNull();
+    assertThat(findRuleInCweByYear(cwe2019, "999")).isNull();
+
+    SecurityStandardCategoryStatistics cwe2020 = cweTop25Reports.get(1);
+    assertThat(cwe2020.getChildren()).hasSize(25);
+    assertThat(findRuleInCweByYear(cwe2020, "119")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(2L, 0L, 0L);
+    assertThat(findRuleInCweByYear(cwe2020, "89")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(0L, 1L, 0L);
+    assertThat(findRuleInCweByYear(cwe2020, "862")).isNotNull()
+      .extracting(SecurityStandardCategoryStatistics::getVulnerabilities,
+        SecurityStandardCategoryStatistics::getToReviewSecurityHotspots,
+        SecurityStandardCategoryStatistics::getReviewedSecurityHotspots)
+      .containsExactlyInAnyOrder(1L, 0L, 0L);
+    assertThat(findRuleInCweByYear(cwe2020, "999")).isNull();
+  }
+
+  private SecurityStandardCategoryStatistics findRuleInCweByYear(SecurityStandardCategoryStatistics statistics, String cweId) {
+    return statistics.getChildren().stream().filter(stat -> stat.getCategory().equals(cweId)).findAny().orElse(null);
   }
 
   private void indexIssues(IssueDoc... issues) {

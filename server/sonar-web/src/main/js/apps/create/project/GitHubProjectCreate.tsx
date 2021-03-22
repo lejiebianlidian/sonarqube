@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -176,8 +176,8 @@ export default class GitHubProjectCreate extends React.Component<Props, State> {
       const data = await getGithubRepositories({
         almSetting: settings.key,
         organization: organizationKey,
-        ps: REPOSITORY_PAGE_SIZE,
-        p: page,
+        pageSize: REPOSITORY_PAGE_SIZE,
+        page,
         query
       });
 

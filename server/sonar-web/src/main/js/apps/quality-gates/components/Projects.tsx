@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ import {
 
 interface Props {
   canEdit?: boolean;
-  organization?: string;
   qualityGate: T.QualityGate;
 }
 
@@ -67,8 +66,7 @@ export default class Projects extends React.PureComponent<Props, State> {
 
   fetchProjects = (searchParams: SelectListSearchParams) =>
     searchProjects({
-      gateId: this.props.qualityGate.id,
-      organization: this.props.organization,
+      gateName: this.props.qualityGate.name,
       page: searchParams.page,
       pageSize: searchParams.pageSize,
       query: searchParams.query !== '' ? searchParams.query : undefined,
@@ -100,7 +98,6 @@ export default class Projects extends React.PureComponent<Props, State> {
   handleSelect = (key: string) =>
     associateGateWithProject({
       gateId: this.props.qualityGate.id,
-      organization: this.props.organization,
       projectKey: key
     }).then(() => {
       if (this.mounted) {
@@ -114,7 +111,6 @@ export default class Projects extends React.PureComponent<Props, State> {
   handleUnselect = (key: string) =>
     dissociateGateWithProject({
       gateId: this.props.qualityGate.id,
-      organization: this.props.organization,
       projectKey: key
     }).then(() => {
       if (this.mounted) {

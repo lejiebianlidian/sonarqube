@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ public interface ProjectMapper {
 
   List<ProjectDto> selectByUuids(@Param("uuids") Collection<String> uuids);
 
-  List<ProjectDto> selectByOrganizationUuid(@Param("organizationUuid") String organizationUuid);
+  List<ProjectDto> selectAll();
 
   void updateKey(@Param("uuid") String uuid, @Param("newKey") String newKey, @Param("updatedAt") long updatedAt);
 
@@ -54,7 +54,9 @@ public interface ProjectMapper {
 
   List<ProjectDto> selectProjects();
 
-  List<ProjectDto> selectProjectsByOrganizationUuid(String organizationUuid);
-
   void updateVisibility(@Param("uuid") String uuid, @Param("isPrivate") boolean isPrivate, @Param("updatedAt") long updatedAt);
+
+  List<ProjectDto> selectAllApplications();
+
+  List<ProjectDto> selectApplicationsByKeys(@Param("kees") Collection<String> kees);
 }

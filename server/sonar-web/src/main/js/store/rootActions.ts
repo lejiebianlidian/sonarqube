@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ import { Dispatch } from 'redux';
 import * as auth from '../api/auth';
 import { getLanguages } from '../api/languages';
 import { getAllMetrics } from '../api/metrics';
-import { getOrganization, getOrganizationNavigation, getOrganizations } from '../api/organizations';
 import { getQualityGateProjectStatus } from '../api/quality-gates';
 import { getBranchLikeQuery } from '../helpers/branch-like';
 import { extractStatusConditionsFromProjectStatus } from '../helpers/qualityGates';
@@ -32,13 +31,14 @@ import { registerBranchStatusAction } from './branches';
 import { addGlobalErrorMessage } from './globalMessages';
 import { receiveLanguages } from './languages';
 import { receiveMetrics } from './metrics';
-import { receiveOrganizations } from './organizations';
 
 export function fetchLanguages() {
   return (dispatch: Dispatch) => {
     getLanguages().then(
       languages => dispatch(receiveLanguages(languages)),
-      () => {}
+      () => {
+        /* do nothing */
+      }
     );
   };
 }
@@ -47,30 +47,12 @@ export function fetchMetrics() {
   return (dispatch: Dispatch) => {
     getAllMetrics().then(
       metrics => dispatch(receiveMetrics(metrics)),
-      () => {}
-    );
-  };
-}
-
-export function fetchOrganizations(organizations: string[]) {
-  return (dispatch: Dispatch) => {
-    getOrganizations({ organizations: organizations && organizations.join() }).then(
-      r => dispatch(receiveOrganizations(r.organizations)),
-      () => {}
-    );
-  };
-}
-
-export const fetchOrganization = (key: string) => (dispatch: Dispatch) => {
-  return Promise.all([getOrganization(key), getOrganizationNavigation(key)]).then(
-    ([organization, navigation]) => {
-      if (organization) {
-        const organizationWithPermissions = { ...organization, ...navigation };
-        dispatch(receiveOrganizations([organizationWithPermissions]));
+      () => {
+        /* do nothing */
       }
-    }
-  );
-};
+    );
+  };
+}
 
 export function fetchBranchStatus(branchLike: BranchLike, projectKey: string) {
   return (dispatch: Dispatch<any>) => {

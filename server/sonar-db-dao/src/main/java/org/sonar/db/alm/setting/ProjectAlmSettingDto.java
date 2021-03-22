@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -62,6 +62,12 @@ public class ProjectAlmSettingDto {
    */
   private Boolean summaryCommentEnabled;
 
+  /**
+   * Boolean to know if this SonarQube project is part of a monorepo
+   * default value is false
+   */
+  private Boolean monorepo;
+
   private long updatedAt;
   private long createdAt;
 
@@ -117,6 +123,15 @@ public class ProjectAlmSettingDto {
 
   public ProjectAlmSettingDto setSummaryCommentEnabled(@Nullable Boolean summaryCommentEnabled) {
     this.summaryCommentEnabled = summaryCommentEnabled;
+    return this;
+  }
+
+  public Boolean getMonorepo() {
+    return monorepo;
+  }
+
+  public ProjectAlmSettingDto setMonorepo(Boolean monorepo) {
+    this.monorepo = monorepo;
     return this;
   }
 

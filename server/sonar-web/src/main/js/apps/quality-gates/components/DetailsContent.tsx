@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,15 +18,14 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import HelpTooltip from 'sonar-ui-common/components/controls/HelpTooltip';
 import { translate } from 'sonar-ui-common/helpers/l10n';
-import DocTooltip from '../../../components/docs/DocTooltip';
 import Conditions from './Conditions';
 import Projects from './Projects';
 
 export interface DetailsContentProps {
   isDefault?: boolean;
   metrics: T.Dict<T.Metric>;
-  organization?: string;
   onAddCondition: (condition: T.Condition) => void;
   onRemoveCondition: (Condition: T.Condition) => void;
   onSaveCondition: (newCondition: T.Condition, oldCondition: T.Condition) => void;
@@ -35,7 +34,7 @@ export interface DetailsContentProps {
 }
 
 export function DetailsContent(props: DetailsContentProps) {
-  const { isDefault, metrics, organization, qualityGate, updatedConditionId } = props;
+  const { isDefault, metrics, qualityGate, updatedConditionId } = props;
   const conditions = qualityGate.conditions || [];
   const actions = qualityGate.actions || ({} as any);
 
@@ -48,7 +47,6 @@ export function DetailsContent(props: DetailsContentProps) {
         onAddCondition={props.onAddCondition}
         onRemoveCondition={props.onRemoveCondition}
         onSaveCondition={props.onSaveCondition}
-        organization={organization}
         qualityGate={qualityGate}
         updatedConditionId={updatedConditionId}
       />
@@ -56,11 +54,13 @@ export function DetailsContent(props: DetailsContentProps) {
       <div className="quality-gate-section" id="quality-gate-projects">
         <header className="display-flex-center spacer-bottom">
           <h3>{translate('quality_gates.projects')}</h3>
-          <DocTooltip
+          <HelpTooltip
             className="spacer-left"
-            doc={import(
-              /* webpackMode: "eager" */ 'Docs/tooltips/quality-gates/quality-gate-projects.md'
-            )}
+            overlay={
+              <div className="big-padded-top big-padded-bottom">
+                {translate('quality_gates.projects.help')}
+              </div>
+            }
           />
         </header>
         {isDefault ? (
@@ -70,7 +70,6 @@ export function DetailsContent(props: DetailsContentProps) {
             canEdit={actions.associateProjects}
             // pass unique key to re-mount the component when the quality gate changes
             key={qualityGate.id}
-            organization={organization}
             qualityGate={qualityGate}
           />
         )}

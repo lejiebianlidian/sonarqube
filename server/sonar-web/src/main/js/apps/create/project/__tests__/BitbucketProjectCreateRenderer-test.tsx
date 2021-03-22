@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 import { shallow } from 'enzyme';
 import * as React from 'react';
 import {
@@ -49,7 +48,7 @@ it('should render correctly', () => {
 function shallowRender(props: Partial<BitbucketProjectCreateRendererProps> = {}) {
   return shallow<BitbucketProjectCreateRendererProps>(
     <BitbucketProjectCreateRenderer
-      bitbucketSetting={mockAlmSettingsInstance({ alm: AlmKeys.Bitbucket })}
+      bitbucketSetting={mockAlmSettingsInstance({ alm: AlmKeys.BitbucketServer })}
       importing={false}
       loading={false}
       onImportRepository={jest.fn()}

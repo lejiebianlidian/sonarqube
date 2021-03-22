@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,8 @@ public class DropIssueChangesTable extends DdlChange {
     super(db);
   }
 
-  @Override public void execute(Context context) throws SQLException {
+  @Override
+  public void execute(Context context) throws SQLException {
     context.execute(new DropTableBuilder(getDialect(), "issue_changes").build());
   }
 }

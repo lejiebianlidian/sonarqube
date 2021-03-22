@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,6 @@ public class MeasuresWsParameters {
   public static final String ACTION_SEARCH_HISTORY = "search_history";
 
   // parameters
-  public static final String DEPRECATED_PARAM_BASE_COMPONENT_ID = "baseComponentId";
-  public static final String DEPRECATED_PARAM_BASE_COMPONENT_KEY = "baseComponentKey";
   public static final String PARAM_COMPONENT = "component";
   public static final String PARAM_BRANCH = "branch";
   public static final String PARAM_PULL_REQUEST = "pullRequest";

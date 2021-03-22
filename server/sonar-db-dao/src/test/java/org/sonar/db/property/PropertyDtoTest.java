@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,15 +20,12 @@
 package org.sonar.db.property;
 
 import com.google.common.base.Strings;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class PropertyDtoTest {
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   PropertyDto underTest = new PropertyDto();
 
@@ -42,23 +39,22 @@ public class PropertyDtoTest {
 
   @Test
   public void testHashCode() {
-    assertThat(new PropertyDto().setKey("123").setComponentUuid("uuid123").hashCode()).isNotNull();
-    assertThat(new PropertyDto().setKey("123").setComponentUuid("uuid123").hashCode())
-      .isEqualTo(new PropertyDto().setKey("123").setComponentUuid("uuid123").hashCode());
+    assertThat(new PropertyDto().setKey("123").setComponentUuid("uuid123"))
+      .hasSameHashCodeAs(new PropertyDto().setKey("123").setComponentUuid("uuid123"));
   }
 
   @Test
   public void testToString() {
-    assertThat(new PropertyDto().setKey("foo:bar").setValue("value").setComponentUuid("uuid123").setUserUuid("456").toString())
-      .isEqualTo("PropertyDto{foo:bar, value, uuid123, 456}");
+    assertThat(new PropertyDto().setKey("foo:bar").setValue("value").setComponentUuid("uuid123").setUserUuid("456"))
+      .hasToString("PropertyDto{foo:bar, value, uuid123, 456}");
   }
 
   @Test
   public void fail_if_key_longer_than_512_characters() {
     String veryLongKey = Strings.repeat("a", 513);
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Setting key length (513) is longer than the maximum authorized (512). '" + veryLongKey + "' was provided");
 
-    underTest.setKey(veryLongKey);
+    assertThatThrownBy(() -> underTest.setKey(veryLongKey))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Setting key length (513) is longer than the maximum authorized (512). '" + veryLongKey + "' was provided");
   }
 }

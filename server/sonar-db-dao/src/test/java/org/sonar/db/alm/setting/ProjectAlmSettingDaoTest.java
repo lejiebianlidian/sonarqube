@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -63,10 +63,10 @@ public class ProjectAlmSettingDaoTest {
       .extracting(ProjectAlmSettingDto::getUuid, ProjectAlmSettingDto::getAlmSettingUuid, ProjectAlmSettingDto::getProjectUuid,
         ProjectAlmSettingDto::getAlmRepo, ProjectAlmSettingDto::getAlmSlug,
         ProjectAlmSettingDto::getCreatedAt, ProjectAlmSettingDto::getUpdatedAt,
-        ProjectAlmSettingDto::getSummaryCommentEnabled)
+        ProjectAlmSettingDto::getSummaryCommentEnabled, ProjectAlmSettingDto::getMonorepo)
       .containsExactly(A_UUID, githubAlmSettingDto.getUuid(), project.getUuid(),
         githubProjectAlmSettingDto.getAlmRepo(), githubProjectAlmSettingDto.getAlmSlug(),
-        A_DATE, A_DATE, githubProjectAlmSettingDto.getSummaryCommentEnabled());
+        A_DATE, A_DATE, githubProjectAlmSettingDto.getSummaryCommentEnabled(), false);
 
     assertThat(underTest.selectByProject(dbSession, anotherProject)).isNotPresent();
   }

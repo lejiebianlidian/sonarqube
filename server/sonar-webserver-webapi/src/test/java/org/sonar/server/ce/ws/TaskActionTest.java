@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.sonar.api.utils.System2;
 import org.sonar.api.web.UserRole;
 import org.sonar.core.permission.GlobalPermissions;
@@ -38,51 +37,49 @@ import org.sonar.db.ce.CeActivityDto;
 import org.sonar.db.ce.CeQueueDto;
 import org.sonar.db.ce.CeTaskCharacteristicDto;
 import org.sonar.db.ce.CeTaskMessageDto;
+import org.sonar.db.ce.CeTaskMessageType;
 import org.sonar.db.ce.CeTaskTypes;
 import org.sonar.db.component.ComponentDto;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.user.UserDto;
 import org.sonar.server.exceptions.ForbiddenException;
 import org.sonar.server.exceptions.NotFoundException;
 import org.sonar.server.tester.UserSessionRule;
+import org.sonar.server.ws.TestRequest;
 import org.sonar.server.ws.WsActionTester;
 import org.sonarqube.ws.Ce;
 import org.sonarqube.ws.Common;
 
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.sonar.core.permission.GlobalPermissions.SCAN_EXECUTION;
 import static org.sonar.db.ce.CeTaskCharacteristicDto.BRANCH_KEY;
 import static org.sonar.db.ce.CeTaskCharacteristicDto.BRANCH_TYPE_KEY;
 import static org.sonar.db.component.BranchType.BRANCH;
-import static org.sonar.db.permission.OrganizationPermission.SCAN;
+import static org.sonar.db.permission.GlobalPermission.SCAN;
 
 public class TaskActionTest {
 
   private static final String SOME_TASK_UUID = "TASK_1";
 
   @Rule
-  public UserSessionRule userSession = UserSessionRule.standalone();
+  public final UserSessionRule userSession = UserSessionRule.standalone();
 
   @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  public final DbTester db = DbTester.create(System2.INSTANCE);
 
-  @Rule
-  public DbTester db = DbTester.create(System2.INSTANCE);
+  private final TaskFormatter formatter = new TaskFormatter(db.getDbClient(), System2.INSTANCE);
+  private final TaskAction underTest = new TaskAction(db.getDbClient(), formatter, userSession);
+  private final WsActionTester ws = new WsActionTester(underTest);
 
-  private OrganizationDto organization;
   private ComponentDto privateProject;
   private ComponentDto publicProject;
-  private TaskFormatter formatter = new TaskFormatter(db.getDbClient(), System2.INSTANCE);
-  private TaskAction underTest = new TaskAction(db.getDbClient(), formatter, userSession);
-  private WsActionTester ws = new WsActionTester(underTest);
 
   @Before
   public void setUp() {
-    organization = db.organizations().insert();
-    privateProject = db.components().insertPrivateProject(organization);
-    publicProject = db.components().insertPublicProject(organization);
+    privateProject = db.components().insertPrivateProject();
+    publicProject = db.components().insertPublicProject();
   }
 
   @Test
@@ -101,7 +98,6 @@ public class TaskActionTest {
     Ce.TaskResponse taskResponse = ws.newRequest()
       .setParam("id", SOME_TASK_UUID)
       .executeProtobuf(Ce.TaskResponse.class);
-    assertThat(taskResponse.getTask().getOrganization()).isEqualTo(organization.getKey());
     assertThat(taskResponse.getTask().getId()).isEqualTo(SOME_TASK_UUID);
     assertThat(taskResponse.getTask().getStatus()).isEqualTo(Ce.TaskStatus.PENDING);
     assertThat(taskResponse.getTask().getSubmitterLogin()).isEqualTo(user.getLogin());
@@ -109,7 +105,6 @@ public class TaskActionTest {
     assertThat(taskResponse.getTask().getComponentKey()).isEqualTo(privateProject.getDbKey());
     assertThat(taskResponse.getTask().getComponentName()).isEqualTo(privateProject.name());
     assertThat(taskResponse.getTask().hasExecutionTimeMs()).isFalse();
-    assertThat(taskResponse.getTask().getLogs()).isFalse();
     assertThat(taskResponse.getTask().getWarningCount()).isZero();
     assertThat(taskResponse.getTask().getWarningsList()).isEmpty();
   }
@@ -125,6 +120,7 @@ public class TaskActionTest {
           .setUuid("u_" + i)
           .setTaskUuid(queueDto.getUuid())
           .setMessage("m_" + i)
+          .setType(CeTaskMessageType.GENERIC)
           .setCreatedAt(queueDto.getUuid().hashCode() + i)));
     db.commit();
 
@@ -148,7 +144,6 @@ public class TaskActionTest {
       .setParam("id", SOME_TASK_UUID)
       .executeProtobuf(Ce.TaskResponse.class);
     Ce.Task task = taskResponse.getTask();
-    assertThat(task.getOrganization()).isEqualTo(organization.getKey());
     assertThat(task.getId()).isEqualTo(SOME_TASK_UUID);
     assertThat(task.getStatus()).isEqualTo(Ce.TaskStatus.FAILED);
     assertThat(task.getComponentId()).isEqualTo(privateProject.uuid());
@@ -156,7 +151,6 @@ public class TaskActionTest {
     assertThat(task.getComponentName()).isEqualTo(privateProject.name());
     assertThat(task.getAnalysisId()).isEqualTo(activityDto.getAnalysisUuid());
     assertThat(task.getExecutionTimeMs()).isEqualTo(500L);
-    assertThat(task.getLogs()).isFalse();
     assertThat(task.getWarningCount()).isZero();
     assertThat(task.getWarningsList()).isEmpty();
   }
@@ -292,11 +286,10 @@ public class TaskActionTest {
   public void throw_NotFoundException_if_id_does_not_exist() {
     logInAsRoot();
 
-    expectedException.expect(NotFoundException.class);
-
-    ws.newRequest()
-      .setParam("id", "DOES_NOT_EXIST")
-      .execute();
+    TestRequest request = ws.newRequest()
+      .setParam("id", "DOES_NOT_EXIST");
+    assertThatThrownBy(request::execute)
+      .isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -314,9 +307,9 @@ public class TaskActionTest {
     userSession.logIn().registerComponents(publicProject);
     CeQueueDto task = createAndPersistQueueTask(publicProject, user);
 
-    expectedException.expect(ForbiddenException.class);
-
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -325,9 +318,9 @@ public class TaskActionTest {
     userSession.logIn().addProjectPermission(UserRole.USER, privateProject);
     CeQueueDto task = createAndPersistQueueTask(privateProject, user);
 
-    expectedException.expect(ForbiddenException.class);
-
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -340,9 +333,9 @@ public class TaskActionTest {
   }
 
   @Test
-  public void get_project_queue_task_with_scan_permission_on_organization_but_not_on_project() {
+  public void get_project_queue_task_with_scan_permission_but_not_on_project() {
     UserDto user = db.users().insertUser();
-    userSession.logIn(user).addPermission(SCAN, privateProject.getOrganizationUuid());
+    userSession.logIn(user).addPermission(SCAN);
     CeQueueDto task = createAndPersistQueueTask(privateProject, user);
 
     call(task.getUuid());
@@ -354,9 +347,9 @@ public class TaskActionTest {
     userSession.logIn(user);
     CeQueueDto task = createAndPersistQueueTask(privateProject, user);
 
-    expectedException.expect(ForbiddenException.class);
-
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -374,9 +367,9 @@ public class TaskActionTest {
     userSession.logIn(user).setNonSystemAdministrator();
     CeQueueDto task = createAndPersistQueueTask(null, user);
 
-    expectedException.expect(ForbiddenException.class);
-
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -392,14 +385,14 @@ public class TaskActionTest {
     userSession.logIn().registerComponents(publicProject);
     CeActivityDto task = createAndPersistArchivedTask(publicProject);
 
-    expectedException.expect(ForbiddenException.class);
-    
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
-  public void get_project_archived_task_with_scan_permission_on_organization_but_not_on_project() {
-    userSession.logIn().addPermission(SCAN, privateProject.getOrganizationUuid());
+  public void get_project_archived_task_with_scan_permission_but_not_on_project() {
+    userSession.logIn().addPermission(SCAN);
     CeActivityDto task = createAndPersistArchivedTask(privateProject);
 
     call(task.getUuid());
@@ -410,9 +403,9 @@ public class TaskActionTest {
     userSession.logIn();
     CeActivityDto task = createAndPersistArchivedTask(privateProject);
 
-    expectedException.expect(ForbiddenException.class);
-
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -428,9 +421,9 @@ public class TaskActionTest {
     userSession.logIn().setNonSystemAdministrator();
     CeActivityDto task = createAndPersistArchivedTask(null);
 
-    expectedException.expect(ForbiddenException.class);
-
-    call(task.getUuid());
+    String uuid = task.getUuid();
+    assertThatThrownBy(() -> call(uuid))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -444,18 +437,18 @@ public class TaskActionTest {
   public void get_warnings_on_public_project_archived_task_if_not_admin_fails_with_ForbiddenException() {
     userSession.logIn().registerComponents(publicProject);
 
-    expectedException.expect(ForbiddenException.class);
-
-    getWarningsImpl(createAndPersistArchivedTask(publicProject));
+    CeActivityDto persistArchivedTask = createAndPersistArchivedTask(publicProject);
+    assertThatThrownBy(() -> getWarningsImpl(persistArchivedTask))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
   public void get_warnings_on_private_project_archived_task_if_user_fails_with_ForbiddenException() {
     userSession.logIn().addProjectPermission(UserRole.USER, privateProject);
 
-    expectedException.expect(ForbiddenException.class);
-
-    getWarningsImpl(createAndPersistArchivedTask(privateProject));
+    CeActivityDto persistArchivedTask = createAndPersistArchivedTask(privateProject);
+    assertThatThrownBy(() -> getWarningsImpl(persistArchivedTask))
+      .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -466,8 +459,8 @@ public class TaskActionTest {
   }
 
   @Test
-  public void get_warnings_on_private_project_archived_task_if_scan_on_organization() {
-    userSession.logIn().addPermission(OrganizationPermission.SCAN, organization);
+  public void get_warnings_on_private_project_archived_task_if_global_scan_permission() {
+    userSession.logIn().addPermission(GlobalPermission.SCAN);
 
     getWarningsImpl(createAndPersistArchivedTask(privateProject));
   }
@@ -488,6 +481,7 @@ public class TaskActionTest {
       .setUuid(UuidFactoryFast.getInstance().create())
       .setTaskUuid(task.getUuid())
       .setMessage("msg_" + task.getUuid() + "_" + i)
+      .setType(CeTaskMessageType.GENERIC)
       .setCreatedAt(task.getUuid().hashCode() + i);
     db.getDbClient().ceTaskMessageDao().insert(db.getSession(), res);
     db.getSession().commit();

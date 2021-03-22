@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,13 +42,6 @@ it('should render correctly', () => {
   expect(getWrapper()).toMatchSnapshot();
 });
 
-it('should show a group column', () => {
-  const wrapper = getWrapper({ organizationsEnabled: false });
-  expect(wrapper.find('th').filterWhere(elem => elem.text() === 'my_profile.groups')).toHaveLength(
-    1
-  );
-});
-
 function getWrapper(props = {}) {
   return shallow(
     <UsersList
@@ -62,7 +55,6 @@ function getWrapper(props = {}) {
         }
       ]}
       onUpdateUsers={jest.fn()}
-      organizationsEnabled={true}
       updateTokensCount={jest.fn()}
       users={users}
       {...props}

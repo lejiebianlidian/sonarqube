@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ import org.sonar.core.extension.CoreExtensionsLoader;
 import org.sonar.core.platform.ComponentContainer;
 import org.sonar.core.platform.PluginClassloaderFactory;
 import org.sonar.core.platform.PluginInfo;
-import org.sonar.core.platform.PluginLoader;
+import org.sonar.core.platform.PluginClassLoader;
 import org.sonar.core.platform.PluginRepository;
 import org.sonar.core.util.DefaultHttpDownloader;
 import org.sonar.core.util.UuidFactoryImpl;
@@ -74,7 +74,7 @@ public class GlobalContainer extends ComponentContainer {
 
   @Override
   protected void doBeforeStart() {
-    RawScannerProperties rawScannerProperties = new RawScannerProperties(scannerProperties);
+    ScannerProperties rawScannerProperties = new ScannerProperties(scannerProperties);
     GlobalAnalysisMode globalMode = new GlobalAnalysisMode(rawScannerProperties);
     add(rawScannerProperties);
     add(globalMode);
@@ -85,7 +85,7 @@ public class GlobalContainer extends ComponentContainer {
     try {
       String.class.getMethod("isBlank");
     } catch (NoSuchMethodException e) {
-      LOG.warn("SonarScanner will require Java 11 to run starting in SonarQube 8.x");
+      LOG.warn("SonarScanner will require Java 11 to run starting in SonarQube 9.x");
     }
   }
 
@@ -99,7 +99,7 @@ public class GlobalContainer extends ComponentContainer {
     add(
       // plugins
       ScannerPluginRepository.class,
-      PluginLoader.class,
+      PluginClassLoader.class,
       PluginClassloaderFactory.class,
       ScannerPluginJarExploder.class,
       ExtensionInstaller.class,

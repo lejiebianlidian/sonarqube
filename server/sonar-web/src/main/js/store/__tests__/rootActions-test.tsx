@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,14 +23,12 @@ import { registerBranchStatusAction } from '../branches';
 import { fetchBranchStatus, registerBranchStatus } from '../rootActions';
 
 jest.mock('../branches', () => ({
-  ...require.requireActual('../branches'),
+  ...jest.requireActual('../branches'),
   registerBranchStatusAction: jest.fn()
 }));
 
 jest.mock('../../api/quality-gates', () => {
-  const { mockQualityGateProjectStatus } = require.requireActual(
-    '../../helpers/mocks/quality-gates'
-  );
+  const { mockQualityGateProjectStatus } = jest.requireActual('../../helpers/mocks/quality-gates');
   return {
     getQualityGateProjectStatus: jest.fn().mockResolvedValue(
       mockQualityGateProjectStatus({

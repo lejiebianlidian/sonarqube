@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,35 +17,35 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 import { shallow } from 'enzyme';
 import * as React from 'react';
-import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
-import { deleteProfile } from '../../../../api/quality-profiles';
 import { mockEvent, mockQualityProfile } from '../../../../helpers/testMocks';
-import DeleteProfileForm from '../DeleteProfileForm';
-
-beforeEach(() => jest.clearAllMocks());
-
-jest.mock('../../../../api/quality-profiles', () => ({
-  deleteProfile: jest.fn().mockResolvedValue({})
-}));
+import DeleteProfileForm, { DeleteProfileFormProps } from '../DeleteProfileForm';
 
 it('should render correctly', () => {
-  const wrapper = shallowRender();
-  expect(wrapper).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot('default');
+  expect(shallowRender({ loading: true })).toMatchSnapshot('loading');
+  expect(shallowRender({ profile: mockQualityProfile({ childrenCount: 2 }) })).toMatchSnapshot(
+    'profile has children'
+  );
 });
 
-it('should handle form submit correctly', async () => {
-  const wrapper = shallowRender();
-  wrapper.instance().handleFormSubmit(mockEvent());
-  await waitAndUpdate(wrapper);
+it('should correctly submit the form', () => {
+  const onDelete = jest.fn();
+  const wrapper = shallowRender({ onDelete });
 
-  expect(deleteProfile).toHaveBeenCalled();
+  const formOnSubmit = wrapper.find('form').props().onSubmit;
+  if (formOnSubmit) {
+    formOnSubmit(mockEvent());
+  }
+  expect(onDelete).toBeCalled();
 });
 
-function shallowRender(props: Partial<DeleteProfileForm['props']> = {}) {
-  return shallow<DeleteProfileForm>(
+function shallowRender(props: Partial<DeleteProfileFormProps> = {}) {
+  return shallow<DeleteProfileFormProps>(
     <DeleteProfileForm
+      loading={false}
       onClose={jest.fn()}
       onDelete={jest.fn()}
       profile={mockQualityProfile()}

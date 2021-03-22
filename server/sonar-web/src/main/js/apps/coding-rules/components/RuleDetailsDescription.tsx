@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,13 +22,12 @@ import * as React from 'react';
 import { Button, ResetButtonLink } from 'sonar-ui-common/components/controls/buttons';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { updateRule } from '../../../api/rules';
-import MarkdownTips from '../../../components/common/MarkdownTips';
+import FormattingTips from '../../../components/common/FormattingTips';
 import RemoveExtendedDescriptionModal from './RemoveExtendedDescriptionModal';
 
 interface Props {
   canWrite: boolean | undefined;
   onChange: (newRuleDetails: T.RuleDetails) => void;
-  organization: string | undefined;
   ruleDetails: T.RuleDetails;
 }
 
@@ -83,8 +82,7 @@ export default class RuleDetailsDescription extends React.PureComponent<Props, S
 
     updateRule({
       key: this.props.ruleDetails.key,
-      markdown_note: text,
-      organization: this.props.organization
+      markdown_note: text
     }).then(
       ruleDetails => {
         this.props.onChange(ruleDetails);
@@ -178,7 +176,7 @@ export default class RuleDetailsDescription extends React.PureComponent<Props, S
               {this.state.submitting && <i className="spinner spacer-left" />}
             </td>
             <td className="text-right">
-              <MarkdownTips />
+              <FormattingTips />
             </td>
           </tr>
         </tbody>

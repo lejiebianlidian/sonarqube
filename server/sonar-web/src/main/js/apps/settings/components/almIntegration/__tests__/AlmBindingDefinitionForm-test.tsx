@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,11 @@ import { GithubBindingDefinition } from '../../../../../types/alm-settings';
 import AlmBindingDefinitionForm from '../AlmBindingDefinitionForm';
 
 it('should render correctly', () => {
-  expect(shallowRender()).toMatchSnapshot();
+  expect(shallowRender()).toMatchSnapshot('create');
+
+  expect(shallowRender({ bindingDefinition: mockGithubBindingDefinition() })).toMatchSnapshot(
+    'edit'
+  );
 });
 
 it('should reset if the props change', () => {
@@ -129,10 +133,6 @@ it('should (dis)allow submit by validating its state', () => {
   expect(wrapper.instance().canSubmit()).toBe(false);
 
   wrapper.setState({ formData: mockGithubBindingDefinition(), touched: true });
-  expect(wrapper.instance().canSubmit()).toBe(true);
-
-  wrapper.setState({ formData: mockGithubBindingDefinition({ key: '' }), touched: true });
-  wrapper.setProps({ hideKeyField: true });
   expect(wrapper.instance().canSubmit()).toBe(true);
 
   wrapper.setState({ formData: mockGithubBindingDefinition({ url: '' }), touched: true });

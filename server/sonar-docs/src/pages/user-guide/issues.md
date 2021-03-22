@@ -3,7 +3,7 @@ title: Issues
 url: /user-guide/issues/
 ---
 
-While running an analysis, {instance} raises an issue every time a piece of code breaks a coding rule. The set of coding rules is defined through the associated [quality profile](/instance-administration/quality-profiles/) for each language in the project. 
+While running an analysis, {instance} raises an issue every time a piece of code breaks a coding rule. The set of coding rules is defined through the associated [Quality Profile](/instance-administration/quality-profiles/) for each language in the project. 
 
 ### Issue Types
 
@@ -36,6 +36,8 @@ So new issues get introduced.
 Sometimes, issues are self-evident once they're pointed out. For instance, if your team has agreed to a init-lower, camelCase variable naming convention, and an issue is raised on `My_variable`, you don't need a lot of context to understand the problem. But in other situations context may be essential to understanding why an issue was raised. That's why {instance} supports not just the primary issue location, where the issue message is shown, but also secondary issue locations. For instance, secondary issues locations are used to mark the pieces of code in a method which add Cognitive Complexity to a method. 
 
 But there are times when a simple laundry list of contributing locations isn't enough to understand an issue. For instance, when a null pointer can be dereferenced on some paths through the code, what you really need are issue flows. Each flow is a _set_ of secondary locations ordered to show the exact path through the code on which a problem can happen. And because there can be multiple paths through the code on which, for instance a resource is not released, {instance} supports multiple flows.
+
+Check out this [![YouTube link](/images/youtube.png) video](https://youtu.be/17G-aZcuMKw) for more on issues with multiple locations.
 
 ## Issues lifecycle
 ### Statuses
@@ -84,7 +86,7 @@ Once an issue has been determied to be "new", as described above, the next quest
 
 * On first analysis of a project or branch
 * When the rule is new in the profile (a brand new rule activated or a rule that was deactivated and is now activated)
-* When the analyzer has just been upgraded (because rule implementations could be smarter now)
+* When SonarQube has just been upgraded (because rule implementations could be smarter now)
 * When the rule is external
 
 As a consequence, it is possible that backdating will keep newly raised issues out of New Code.
@@ -116,7 +118,7 @@ The Confirm, False Positive, Won't Fix, Severity change, and Resolve actions all
 * **Severity change** - This is the middle ground between the first two options. Yes, it's a problem, but it's not as bad a problem as the rule's default severity makes it out to be. Or perhaps it's actually far worse. Either way, you adjust the severity of the issue to bring it in line with what you feel it deserves.  Requires Administer Issues permission on the project.
 * **Resolve** - If you think you've fixed an open issue, you can Resolve it. If you're right, the next analysis will move it to closed status. If you're wrong, its status will go to re-opened.
 
-If you tend to mark a lot of issues False Positive or Won't Fix, it means that some coding rules are not appropriate for your context. So, you can either completely deactivate them in the quality profile or use issue exclusions to narrow the focus of the rules so they are not used on specific parts (or types of object) of your application. Similarly, making a lot of severity changes should prompt you to consider updating the rule severities in your profiles.
+If you tend to mark a lot of issues False Positive or Won't Fix, it means that some coding rules are not appropriate for your context. So, you can either completely deactivate them in the Quality Profile or use issue exclusions to narrow the focus of the rules so they are not used on specific parts (or types of object) of your application. Similarly, making a lot of severity changes should prompt you to consider updating the rule severities in your profiles.
 
 As you edit issues, the related metrics (e.g. New Bugs), will update automatically, as will the Quality Gate status if it's relevant.
 

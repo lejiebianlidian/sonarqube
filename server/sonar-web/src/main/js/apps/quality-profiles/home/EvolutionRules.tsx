@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,10 +35,6 @@ function parseRules(rules: T.Rule[], actives?: T.Dict<T.RuleActivation[]>): Exte
   });
 }
 
-interface Props {
-  organization: string | null;
-}
-
 interface ExtendedRule extends T.Rule {
   activations: number;
 }
@@ -48,11 +44,11 @@ interface State {
   latestRulesTotal?: number;
 }
 
-export default class EvolutionRules extends React.PureComponent<Props, State> {
+export default class EvolutionRules extends React.PureComponent<{}, State> {
   periodStartDate: string;
   mounted = false;
 
-  constructor(props: Props) {
+  constructor(props: {}) {
     super(props);
     this.state = {};
     const startDate = new Date();
@@ -74,7 +70,6 @@ export default class EvolutionRules extends React.PureComponent<Props, State> {
       asc: false,
       available_since: this.periodStartDate,
       f: 'name,langName,actives',
-      organization: this.props.organization || undefined,
       ps: RULES_LIMIT,
       s: 'createdAt'
     };
@@ -88,7 +83,9 @@ export default class EvolutionRules extends React.PureComponent<Props, State> {
           });
         }
       },
-      () => {}
+      () => {
+        /*noop*/
+      }
     );
   }
 
@@ -97,10 +94,7 @@ export default class EvolutionRules extends React.PureComponent<Props, State> {
       return null;
     }
 
-    const newRulesUrl = getRulesUrl(
-      { available_since: this.periodStartDate },
-      this.props.organization
-    );
+    const newRulesUrl = getRulesUrl({ available_since: this.periodStartDate });
 
     return (
       <div className="boxed-group boxed-group-inner quality-profiles-evolution-rules">
@@ -111,9 +105,7 @@ export default class EvolutionRules extends React.PureComponent<Props, State> {
           {this.state.latestRules.map(rule => (
             <li className="spacer-top" key={rule.key}>
               <div className="text-ellipsis">
-                <Link
-                  className="link-no-underline"
-                  to={getRulesUrl({ rule_key: rule.key }, this.props.organization)}>
+                <Link className="link-no-underline" to={getRulesUrl({ rule_key: rule.key })}>
                   {' '}
                   {rule.name}
                 </Link>

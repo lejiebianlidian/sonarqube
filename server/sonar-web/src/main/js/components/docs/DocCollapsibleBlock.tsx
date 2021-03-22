@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@ export default class DocCollapsibleBlock extends React.PureComponent<{}, State> 
       <a
         aria-expanded={this.state.open}
         aria-haspopup={true}
+        role="button"
         className="link-no-underline"
         href="#"
         onClick={this.handleClick}>

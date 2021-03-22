@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,19 +28,20 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.sonar.api.batch.rule.LoadedActiveRule;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
-import org.sonar.scanner.mediumtest.ScannerMediumTester;
 import org.sonar.scanner.mediumtest.AnalysisResult;
+import org.sonar.scanner.mediumtest.ScannerMediumTester;
 import org.sonar.scanner.protocol.output.ScannerReport.ExternalIssue;
 import org.sonar.scanner.protocol.output.ScannerReport.Issue;
-import org.sonar.api.batch.rule.LoadedActiveRule;
 import org.sonar.xoo.XooPlugin;
 import org.sonar.xoo.rule.HasTagSensor;
 import org.sonar.xoo.rule.OneExternalIssuePerLineSensor;
 import org.sonar.xoo.rule.XooRulesDefinition;
 
+import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -229,7 +230,7 @@ public class IssuesMediumTest {
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("Specifying module-relative paths at project level in property 'sonar.issue.ignore.multicriteria' is deprecated. To continue matching files like 'moduleA/src/sampleA.xoo', update this property so that patterns refer to project-relative paths.");
 
     List<Issue> issues = result.issuesFor(result.inputFile("moduleA/src/sampleA.xoo"));
-    assertThat(issues).hasSize(0);
+    assertThat(issues).isEmpty();
 
     issues = result.issuesFor(result.inputFile("moduleB/src/sampleB.xoo"));
     assertThat(issues).hasSize(10);
@@ -376,7 +377,7 @@ public class IssuesMediumTest {
     assertThat(issues).hasSize(10);
 
     issues = result.issuesFor(result.inputFile("moduleB/src/sampleB.xoo"));
-    assertThat(issues).hasSize(0);
+    assertThat(issues).isEmpty();
   }
 
   private void activateTODORule() {
@@ -385,6 +386,8 @@ public class IssuesMediumTest {
     r.setName("TODO");
     r.setLanguage("xoo");
     r.setSeverity("MAJOR");
+    r.setDeprecatedKeys(emptySet()
+    );
     r.setParams(ImmutableMap.of("tag", "TODO"));
     tester.activateRule(r);
   }

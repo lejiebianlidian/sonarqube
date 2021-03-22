@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ public class WebhookDeliveryStorageTest {
   private final System2 system = mock(System2.class);
 
   @Rule
-  public final DbTester dbTester = DbTester.create(system).setDisableDefaultOrganization(true);
+  public final DbTester dbTester = DbTester.create(system);
 
   private DbClient dbClient = dbTester.getDbClient();
   private DbSession dbSession = dbTester.getSession();

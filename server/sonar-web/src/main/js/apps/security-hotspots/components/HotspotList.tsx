@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ import * as React from 'react';
 import ListFooter from 'sonar-ui-common/components/controls/ListFooter';
 import SecurityHotspotIcon from 'sonar-ui-common/components/icons/SecurityHotspotIcon';
 import { translate, translateWithParameters } from 'sonar-ui-common/helpers/l10n';
+import { addSideBarClass, removeSideBarClass } from 'sonar-ui-common/helpers/pages';
 import { HotspotStatusFilter, RawHotspot, RiskExposure } from '../../../types/security-hotspots';
 import { groupByCategory, RISK_EXPOSURE_LEVELS } from '../utils';
 import HotspotCategory from './HotspotCategory';
@@ -58,6 +59,10 @@ export default class HotspotList extends React.Component<Props, State> {
     };
   }
 
+  componentDidMount() {
+    addSideBarClass();
+  }
+
   componentDidUpdate(prevProps: Props) {
     // Force open the category of selected hotspot
     if (
@@ -77,6 +82,10 @@ export default class HotspotList extends React.Component<Props, State> {
       );
       this.setState({ groupedHotspots });
     }
+  }
+
+  componentWillUnmount() {
+    removeSideBarClass();
   }
 
   groupHotspots = (hotspots: RawHotspot[], securityCategories: T.StandardSecurityCategories) => {
@@ -116,31 +125,42 @@ export default class HotspotList extends React.Component<Props, State> {
           )}
         </h1>
         <ul className="big-spacer-bottom">
-          {groupedHotspots.map(riskGroup => (
-            <li className="big-spacer-bottom" key={riskGroup.risk}>
-              <div className="hotspot-risk-header little-spacer-left">
-                <span>{translate('hotspots.risk_exposure')}:</span>
-                <div className={classNames('hotspot-risk-badge', 'spacer-left', riskGroup.risk)}>
-                  {translate('risk_exposure', riskGroup.risk)}
+          {groupedHotspots.map((riskGroup, riskGroupIndex) => {
+            const isLastRiskGroup = riskGroupIndex === groupedHotspots.length - 1;
+
+            return (
+              <li className="big-spacer-bottom" key={riskGroup.risk}>
+                <div className="hotspot-risk-header little-spacer-left">
+                  <span>{translate('hotspots.risk_exposure')}:</span>
+                  <div className={classNames('hotspot-risk-badge', 'spacer-left', riskGroup.risk)}>
+                    {translate('risk_exposure', riskGroup.risk)}
+                  </div>
                 </div>
-              </div>
-              <ul>
-                {riskGroup.categories.map(cat => (
-                  <li className="spacer-bottom" key={cat.key}>
-                    <HotspotCategory
-                      categoryKey={cat.key}
-                      expanded={expandedCategories[cat.key]}
-                      hotspots={cat.hotspots}
-                      onHotspotClick={this.props.onHotspotClick}
-                      onToggleExpand={this.handleToggleCategory}
-                      selectedHotspot={selectedHotspot}
-                      title={cat.title}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
+                <ul>
+                  {riskGroup.categories.map((cat, categoryIndex) => {
+                    const isLastCategory = categoryIndex === riskGroup.categories.length - 1;
+
+                    return (
+                      <li className="spacer-bottom" key={cat.key}>
+                        <HotspotCategory
+                          categoryKey={cat.key}
+                          expanded={expandedCategories[cat.key]}
+                          hotspots={cat.hotspots}
+                          onHotspotClick={this.props.onHotspotClick}
+                          onToggleExpand={this.handleToggleCategory}
+                          selectedHotspot={selectedHotspot}
+                          title={cat.title}
+                          isLastAndIncomplete={
+                            isLastRiskGroup && isLastCategory && hotspots.length < hotspotsTotal
+                          }
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            );
+          })}
         </ul>
         <ListFooter
           count={hotspots.length}

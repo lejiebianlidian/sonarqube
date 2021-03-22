@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -33,10 +33,10 @@ import org.sonar.process.ProcessId;
 import org.sonar.process.Props;
 import org.sonar.process.cluster.hz.HazelcastMember;
 import org.sonar.process.cluster.hz.HazelcastMemberBuilder;
+import org.sonar.process.cluster.hz.InetAdressResolver;
 
 import static java.util.Arrays.asList;
 import static org.sonar.process.ProcessProperties.Property.CLUSTER_HZ_HOSTS;
-import static org.sonar.process.ProcessProperties.Property.CLUSTER_NAME;
 import static org.sonar.process.ProcessProperties.Property.CLUSTER_NODE_HOST;
 import static org.sonar.process.ProcessProperties.Property.CLUSTER_NODE_HZ_PORT;
 import static org.sonar.process.ProcessProperties.Property.CLUSTER_NODE_NAME;
@@ -60,7 +60,7 @@ public class AppStateFactory {
   }
 
   private static HazelcastMember createHzMember(Props props) {
-    HazelcastMemberBuilder builder = new HazelcastMemberBuilder()
+    HazelcastMemberBuilder builder = new HazelcastMemberBuilder(new InetAdressResolver())
       .setNetworkInterface(props.nonNullValue(CLUSTER_NODE_HOST.getKey()))
       .setMembers(asList(props.nonNullValue(CLUSTER_HZ_HOSTS.getKey()).split(",")))
       .setNodeName(props.nonNullValue(CLUSTER_NODE_NAME.getKey()))
@@ -74,6 +74,6 @@ public class AppStateFactory {
     Set<HostAndPort> hostAndPorts = Arrays.stream(searchHosts.split(","))
       .map(HostAndPort::fromString)
       .collect(Collectors.toSet());
-    return new EsConnectorImpl(props.nonNullValue(CLUSTER_NAME.getKey()), hostAndPorts);
+    return new EsConnectorImpl(hostAndPorts);
   }
 }

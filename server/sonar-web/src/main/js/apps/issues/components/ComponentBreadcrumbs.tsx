@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,26 +18,14 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
+import { translateWithParameters } from 'sonar-ui-common/helpers/l10n';
 import { collapsePath, limitComponentName } from 'sonar-ui-common/helpers/path';
-import Organization from '../../../components/shared/Organization';
 import { getSelectedLocation } from '../utils';
 
 interface Props {
   component?: T.Component;
-  issue: Pick<
-    T.Issue,
-    | 'component'
-    | 'componentLongName'
-    | 'flows'
-    | 'organization'
-    | 'project'
-    | 'projectName'
-    | 'secondaryLocations'
-    | 'subProject'
-    | 'subProjectName'
-  >;
-  link?: boolean;
-  organization: { key: string } | undefined;
+  issue: T.Issue;
   selectedFlowIndex?: number;
   selectedLocationIndex?: number;
 }
@@ -45,12 +33,9 @@ interface Props {
 export default function ComponentBreadcrumbs({
   component,
   issue,
-  organization,
   selectedFlowIndex,
   selectedLocationIndex
 }: Props) {
-  const displayOrganization =
-    !organization && (!component || ['VW', 'SVW'].includes(component.qualifier));
   const displayProject = !component || !['TRK', 'BRC', 'DIR'].includes(component.qualifier);
   const displaySubProject = !component || !['BRC', 'DIR'].includes(component.qualifier);
 
@@ -58,8 +43,13 @@ export default function ComponentBreadcrumbs({
   const componentName = selectedLocation ? selectedLocation.componentName : issue.componentLongName;
 
   return (
-    <div className="component-name text-ellipsis">
-      {displayOrganization && <Organization link={false} organizationKey={issue.organization} />}
+    <div
+      aria-label={translateWithParameters(
+        'issues.on_file_x',
+        `${displayProject ? issue.projectName + ', ' : ''}${componentName}`
+      )}
+      className="component-name text-ellipsis">
+      <QualifierIcon className="spacer-right" qualifier={issue.componentQualifier} />
 
       {displayProject && (
         <span title={issue.projectName}>

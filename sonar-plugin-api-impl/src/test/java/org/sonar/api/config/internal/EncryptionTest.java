@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package org.sonar.api.config.internal;
+
+import java.io.File;
+import java.net.URL;
 
 import org.junit.Test;
 
@@ -50,6 +53,33 @@ public class EncryptionTest {
   }
 
   @Test
+  public void loadSecretKey() throws Exception {
+    Encryption encryption = new Encryption(null);
+    encryption.setPathToSecretKey(pathToSecretKey());
+    assertThat(encryption.hasSecretKey()).isTrue();
+  }
+
+  @Test
+  public void generate_secret_key() {
+    Encryption encryption = new Encryption(null);
+    String key1 = encryption.generateRandomSecretKey();
+    String key2 = encryption.generateRandomSecretKey();
+    assertThat(key1).isNotEqualTo(key2);
+  }
+
+  @Test
+  public void gcm_encryption() throws Exception {
+    Encryption encryption = new Encryption(pathToSecretKey());
+    String clearText = "this is a secrit";
+    String cipherText = encryption.encrypt(clearText);
+    String decryptedText = encryption.decrypt(cipherText);
+    assertThat(cipherText)
+      .startsWith("{aes-gcm}")
+      .isNotEqualTo(clearText);
+    assertThat(decryptedText).isEqualTo(clearText);
+  }
+
+  @Test
   public void decrypt_unknown_algorithm() {
     Encryption encryption = new Encryption(null);
     assertThat(encryption.decrypt("{xxx}Zm9v")).isEqualTo("{xxx}Zm9v");
@@ -59,5 +89,10 @@ public class EncryptionTest {
   public void decrypt_uncrypted_text() {
     Encryption encryption = new Encryption(null);
     assertThat(encryption.decrypt("foo")).isEqualTo("foo");
+  }
+
+  private String pathToSecretKey() throws Exception {
+    URL resource = getClass().getResource("/org/sonar/api/config/internal/AesCipherTest/aes_secret_key.txt");
+    return new File(resource.toURI()).getCanonicalPath();
   }
 }

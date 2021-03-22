@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@ import { range, times } from 'lodash';
 import * as React from 'react';
 import { waitAndUpdate } from 'sonar-ui-common/helpers/testUtils';
 import { getSources } from '../../../../api/components';
+import Issue from '../../../../components/issue/Issue';
 import { mockBranch, mockMainBranch } from '../../../../helpers/mocks/branch-like';
 import {
   mockFlowLocation,
@@ -31,6 +32,7 @@ import {
   mockSourceViewerFile
 } from '../../../../helpers/testMocks';
 import ComponentSourceSnippetGroupViewer from '../ComponentSourceSnippetGroupViewer';
+import SnippetViewer from '../SnippetViewer';
 
 jest.mock('../../../../api/components', () => ({
   getSources: jest.fn().mockResolvedValue([])
@@ -103,6 +105,47 @@ it('should render correctly with flows', () => {
   expect(wrapper.state('snippets')).toHaveLength(2);
   expect(wrapper.state('snippets')[0]).toEqual({ index: 0, start: 29, end: 39 });
   expect(wrapper.state('snippets')[1]).toEqual({ index: 1, start: 69, end: 79 });
+
+  // Check that locationsByLine is defined when isLastOccurenceOfPrimaryComponent
+  expect(
+    wrapper
+      .find(SnippetViewer)
+      .at(0)
+      .props().locationsByLine
+  ).not.toEqual({});
+
+  // If not, it should be an empty object:
+  const snippets = shallowRender({
+    isLastOccurenceOfPrimaryComponent: false,
+    issue,
+    snippetGroup
+  }).find(SnippetViewer);
+
+  expect(snippets.at(0).props().locationsByLine).toEqual({});
+  expect(snippets.at(1).props().locationsByLine).toEqual({});
+});
+
+it('should render file-level issue correctly', () => {
+  // issue with secondary locations and no primary location
+  const issue = mockIssue(true, {
+    flows: [],
+    textRange: undefined
+  });
+
+  const wrapper = shallowRender({
+    issue,
+    snippetGroup: {
+      locations: [
+        mockFlowLocation({
+          component: issue.component,
+          textRange: { startLine: 34, endLine: 34, startOffset: 0, endOffset: 0 }
+        })
+      ],
+      ...mockSnippetsByComponent(issue.component, range(29, 39))
+    }
+  });
+
+  expect(wrapper.find(Issue).exists()).toBe(true);
 });
 
 it('should expand block', async () => {
@@ -257,6 +300,7 @@ describe('getNodes', () => {
     <ComponentSourceSnippetGroupViewer
       branchLike={mockMainBranch()}
       highlightedLocationMessage={{ index: 0, text: '' }}
+      isLastOccurenceOfPrimaryComponent={true}
       issue={mockIssue()}
       issuesByLine={{}}
       lastSnippetGroup={false}
@@ -311,6 +355,7 @@ describe('getHeight', () => {
     <ComponentSourceSnippetGroupViewer
       branchLike={mockMainBranch()}
       highlightedLocationMessage={{ index: 0, text: '' }}
+      isLastOccurenceOfPrimaryComponent={true}
       issue={mockIssue()}
       issuesByLine={{}}
       lastSnippetGroup={false}
@@ -361,6 +406,7 @@ function shallowRender(props: Partial<ComponentSourceSnippetGroupViewer['props']
     <ComponentSourceSnippetGroupViewer
       branchLike={mockMainBranch()}
       highlightedLocationMessage={{ index: 0, text: '' }}
+      isLastOccurenceOfPrimaryComponent={true}
       issue={mockIssue()}
       issuesByLine={{}}
       lastSnippetGroup={false}

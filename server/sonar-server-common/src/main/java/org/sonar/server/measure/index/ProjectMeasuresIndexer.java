@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -71,6 +71,10 @@ public class ProjectMeasuresIndexer implements ProjectIndexer, NeedAuthorization
   @Override
   public void indexOnStartup(Set<IndexType> uninitializedIndexTypes) {
     doIndex(Size.LARGE, null);
+  }
+
+  public void indexAll() {
+    doIndex(Size.REGULAR, null);
   }
 
   @Override
@@ -168,7 +172,6 @@ public class ProjectMeasuresIndexer implements ProjectIndexer, NeedAuthorization
     Long analysisDate = project.getAnalysisDate();
     return new ProjectMeasuresDoc()
       .setId(project.getUuid())
-      .setOrganizationUuid(project.getOrganizationUuid())
       .setKey(project.getKey())
       .setName(project.getName())
       .setQualifier(project.getQualifier())

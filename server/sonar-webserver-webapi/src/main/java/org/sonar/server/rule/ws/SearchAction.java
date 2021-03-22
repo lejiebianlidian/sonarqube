@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,9 +23,11 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,6 +47,7 @@ import org.sonar.api.server.ws.WebService;
 import org.sonar.core.util.stream.MoreCollectors;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
+import org.sonar.db.rule.DeprecatedRuleKeyDto;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleDto;
 import org.sonar.db.rule.RuleParamDto;
@@ -63,7 +66,7 @@ import static org.sonar.api.server.ws.WebService.Param.FACETS;
 import static org.sonar.api.server.ws.WebService.Param.FIELDS;
 import static org.sonar.api.server.ws.WebService.Param.PAGE;
 import static org.sonar.api.server.ws.WebService.Param.PAGE_SIZE;
-import static org.sonar.server.es.SearchOptions.MAX_LIMIT;
+import static org.sonar.server.es.SearchOptions.MAX_PAGE_SIZE;
 import static org.sonar.server.rule.index.RuleIndex.ALL_STATUSES_EXCEPT_REMOVED;
 import static org.sonar.server.rule.index.RuleIndex.FACET_ACTIVE_SEVERITIES;
 import static org.sonar.server.rule.index.RuleIndex.FACET_CWE;
@@ -77,6 +80,7 @@ import static org.sonar.server.rule.index.RuleIndex.FACET_SONARSOURCE_SECURITY;
 import static org.sonar.server.rule.index.RuleIndex.FACET_STATUSES;
 import static org.sonar.server.rule.index.RuleIndex.FACET_TAGS;
 import static org.sonar.server.rule.index.RuleIndex.FACET_TYPES;
+import static org.sonar.server.rule.ws.RulesWsParameters.FIELD_DEPRECATED_KEYS;
 import static org.sonar.server.rule.ws.RulesWsParameters.OPTIONAL_FIELDS;
 import static org.sonar.server.rule.ws.RulesWsParameters.PARAM_ACTIVE_SEVERITIES;
 import static org.sonar.server.rule.ws.RulesWsParameters.PARAM_CWE;
@@ -129,7 +133,7 @@ public class SearchAction implements RulesWsAction {
   @Override
   public void define(WebService.NewController controller) {
     WebService.NewAction action = controller.createAction(ACTION)
-      .addPagingParams(100, MAX_LIMIT)
+      .addPagingParams(100, MAX_PAGE_SIZE)
       .setHandler(this)
       .setChangelog(new Change("7.1", "The field 'scope' has been added to the response"))
       .setChangelog(new Change("7.1", "The field 'scope' has been added to the 'f' parameter"))
@@ -204,7 +208,25 @@ public class SearchAction implements RulesWsAction {
 
   private void writeRules(DbSession dbSession, SearchResponse.Builder response, SearchResult result, SearchOptions context) {
     Map<String, UserDto> usersByUuid = ruleWsSupport.getUsersByUuid(dbSession, result.rules);
-    result.rules.forEach(rule -> response.addRules(mapper.toWsRule(rule.getDefinition(), result, context.getFields(), rule.getMetadata(), usersByUuid)));
+    Map<String, List<DeprecatedRuleKeyDto>> deprecatedRuleKeysByRuleUuid = getDeprecatedRuleKeysByRuleUuid(dbSession, result.rules, context);
+    result.rules.forEach(rule -> response.addRules(mapper.toWsRule(rule.getDefinition(), result, context.getFields(), rule.getMetadata(), usersByUuid,
+      deprecatedRuleKeysByRuleUuid)));
+  }
+
+  private Map<String, List<DeprecatedRuleKeyDto>> getDeprecatedRuleKeysByRuleUuid(DbSession dbSession, List<RuleDto> rules, SearchOptions context) {
+    if (!RuleMapper.shouldReturnField(context.getFields(), FIELD_DEPRECATED_KEYS)) {
+      return Collections.emptyMap();
+    }
+
+    Set<String> ruleUuidsSet = rules.stream()
+      .map(RuleDto::getUuid)
+      .collect(Collectors.toSet());
+    if (ruleUuidsSet.isEmpty()) {
+      return Collections.emptyMap();
+    } else {
+      return dbClient.ruleDao().selectDeprecatedRuleKeysByRuleUuids(dbSession, ruleUuidsSet).stream()
+        .collect(Collectors.groupingBy(DeprecatedRuleKeyDto::getRuleUuid));
+    }
   }
 
   private static SearchOptions buildSearchOptions(SearchRequest request) {
@@ -227,7 +249,7 @@ public class SearchAction implements RulesWsAction {
       context.addFacets(request.getFacets());
     }
     if (pageSize < 1) {
-      context.setPage(Integer.parseInt(request.getP()), 0).setLimit(MAX_LIMIT);
+      context.setPage(Integer.parseInt(request.getP()), 0).setLimit(MAX_PAGE_SIZE);
     } else {
       context.setPage(Integer.parseInt(request.getP()), pageSize);
     }
@@ -236,8 +258,17 @@ public class SearchAction implements RulesWsAction {
 
   private SearchResult doSearch(DbSession dbSession, RuleQuery query, SearchOptions context) {
     SearchIdResult<String> result = ruleIndex.search(query, context);
-    List<RuleDto> rules = dbClient.ruleDao().selectByUuids(dbSession, query.getOrganization().getUuid(), result.getUuids());
-    List<String> ruleUuids = rules.stream().map(RuleDto::getUuid).collect(Collectors.toList());
+    List<String> ruleUuids = result.getUuids();
+    // rule order is managed by ES, this order by must be kept when fetching rule details
+    Map<String, RuleDto> rulesByRuleKey = Maps.uniqueIndex(dbClient.ruleDao().selectByUuids(dbSession, ruleUuids), RuleDto::getUuid);
+    List<RuleDto> rules = new ArrayList<>();
+    for (String ruleUuid : ruleUuids) {
+      RuleDto rule = rulesByRuleKey.get(ruleUuid);
+      if (rule != null) {
+        rules.add(rule);
+      }
+    }
+
     List<String> templateRuleUuids = rules.stream()
       .map(RuleDto::getTemplateUuid)
       .filter(Objects::nonNull)
@@ -255,7 +286,7 @@ public class SearchAction implements RulesWsAction {
   private void doContextResponse(DbSession dbSession, SearchRequest request, SearchResult result, SearchResponse.Builder response, RuleQuery query) {
     SearchOptions contextForResponse = loadCommonContext(request);
     writeRules(dbSession, response, result, contextForResponse);
-    if (contextForResponse.getFields().contains("actives") && ruleWsSupport.areActiveRulesVisible(query.getOrganization())) {
+    if (contextForResponse.getFields().contains("actives")) {
       activeRuleCompleter.completeSearch(dbSession, query, result.rules, response);
     }
   }

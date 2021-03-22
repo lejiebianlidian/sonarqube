@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,10 +20,6 @@
 import { getJSON } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
 import { BranchParameters } from '../types/branch-like';
-
-export function getGlobalNavigation(): Promise<T.AppState> {
-  return getJSON('/api/navigation/global');
-}
 
 type NavComponent = T.Omit<T.Component, 'alm' | 'qualifier' | 'leakPeriodDate' | 'path' | 'tags'>;
 

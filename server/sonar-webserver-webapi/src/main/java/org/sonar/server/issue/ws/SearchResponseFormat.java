@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import org.sonar.api.resources.Language;
 import org.sonar.api.resources.Languages;
+import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.DateUtils;
@@ -43,6 +44,7 @@ import org.sonar.db.user.UserDto;
 import org.sonar.markdown.Markdown;
 import org.sonar.server.es.Facets;
 import org.sonar.server.issue.TextRangeResponseFormatter;
+import org.sonar.server.issue.index.IssueScope;
 import org.sonar.server.issue.workflow.Transition;
 import org.sonarqube.ws.Common;
 import org.sonarqube.ws.Common.Comment;
@@ -90,7 +92,7 @@ public class SearchResponseFormat {
     SearchWsResponse.Builder response = SearchWsResponse.newBuilder();
 
     formatPaging(paging, response);
-    formatEffortTotal(data, response);
+    ofNullable(data.getEffortTotal()).ifPresent(response::setEffortTotal);
     response.addAllIssues(formatIssues(fields, data));
     response.addAllComponents(formatComponents(data));
     formatFacets(data, facets, response);
@@ -122,14 +124,6 @@ public class SearchResponseFormat {
     response.addAllRules(formatRules(data).getRulesList());
     response.addAllUsers(formatUsers(data).getUsersList());
     return response.build();
-  }
-
-  private static void formatEffortTotal(SearchResponseData data, SearchWsResponse.Builder response) {
-    Long effort = data.getEffortTotal();
-    if (effort != null) {
-      response.setDebtTotal(effort);
-      response.setEffortTotal(effort);
-    }
   }
 
   private static void formatPaging(Paging paging, SearchWsResponse.Builder response) {
@@ -171,7 +165,6 @@ public class SearchResponseFormat {
     issueBuilder.setType(Common.RuleType.forNumber(dto.getType()));
 
     ComponentDto component = data.getComponentByUuid(dto.getComponentUuid());
-    issueBuilder.setOrganization(data.getOrganizationKey(component.getOrganizationUuid()));
     issueBuilder.setComponent(component.getKey());
     ofNullable(component.getBranch()).ifPresent(issueBuilder::setBranch);
     ofNullable(component.getPullRequest()).ifPresent(issueBuilder::setPullRequest);
@@ -205,13 +198,11 @@ public class SearchResponseFormat {
     ofNullable(emptyToNull(dto.getChecksum())).ifPresent(issueBuilder::setHash);
     completeIssueLocations(dto, issueBuilder, data);
 
-    // Filter author only if user is member of the organization
-    if (data.getUserOrganizationUuids().contains(component.getOrganizationUuid())) {
-      issueBuilder.setAuthor(nullToEmpty(dto.getAuthorLogin()));
-    }
+    issueBuilder.setAuthor(nullToEmpty(dto.getAuthorLogin()));
     ofNullable(dto.getIssueCreationDate()).map(DateUtils::formatDateTime).ifPresent(issueBuilder::setCreationDate);
     ofNullable(dto.getIssueUpdateDate()).map(DateUtils::formatDateTime).ifPresent(issueBuilder::setUpdateDate);
     ofNullable(dto.getIssueCloseDate()).map(DateUtils::formatDateTime).ifPresent(issueBuilder::setCloseDate);
+    issueBuilder.setScope(Qualifiers.UNIT_TEST_FILE.equals(component.qualifier()) ? IssueScope.TEST.name() : IssueScope.MAIN.name());
   }
 
   private static String engineNameFrom(RuleKey ruleKey) {
@@ -305,11 +296,8 @@ public class SearchResponseFormat {
     Collection<ComponentDto> components = data.getComponents();
     List<Issues.Component> result = new ArrayList<>();
     for (ComponentDto dto : components) {
-      String uuid = dto.uuid();
       Component.Builder builder = Component.newBuilder()
-        .setOrganization(data.getOrganizationKey(dto.getOrganizationUuid()))
         .setKey(dto.getKey())
-        .setUuid(uuid)
         .setQualifier(dto.qualifier())
         .setName(nullToEmpty(dto.name()))
         .setLongName(nullToEmpty(dto.longName()))

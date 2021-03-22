@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -18,16 +18,26 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 import * as React from 'react';
+import { WithRouterProps } from 'react-router';
 import {
   countBindedProjects,
   deleteConfiguration,
-  getAlmDefinitions
+  getAlmDefinitions,
+  validateAlmSettings
 } from '../../../../api/alm-settings';
 import { withAppState } from '../../../../components/hoc/withAppState';
-import { AlmKeys, AlmSettingsBindingDefinitions } from '../../../../types/alm-settings';
+import { withRouter } from '../../../../components/hoc/withRouter';
+import {
+  AlmBindingDefinition,
+  AlmKeys,
+  AlmSettingsBindingDefinitions,
+  AlmSettingsBindingStatus,
+  AlmSettingsBindingStatusType
+} from '../../../../types/alm-settings';
 import AlmIntegrationRenderer from './AlmIntegrationRenderer';
+import { ALM_KEY_LIST } from './utils';
 
-interface Props {
+interface Props extends Pick<WithRouterProps, 'location'> {
   appState: Pick<T.AppState, 'branchesEnabled' | 'multipleAlmEnabled'>;
   component?: T.Component;
 }
@@ -36,6 +46,7 @@ interface State {
   currentAlm: AlmKeys;
   definitionKeyForDeletion?: string;
   definitions: AlmSettingsBindingDefinitions;
+  definitionStatus: T.Dict<AlmSettingsBindingStatus>;
   loadingAlmDefinitions: boolean;
   loadingProjectCount: boolean;
   projectCount?: number;
@@ -43,21 +54,37 @@ interface State {
 
 export class AlmIntegration extends React.PureComponent<Props, State> {
   mounted = false;
-  state: State = {
-    currentAlm: AlmKeys.GitHub,
-    definitions: {
-      [AlmKeys.Azure]: [],
-      [AlmKeys.Bitbucket]: [],
-      [AlmKeys.GitHub]: [],
-      [AlmKeys.GitLab]: []
-    },
-    loadingAlmDefinitions: true,
-    loadingProjectCount: false
-  };
+  state: State;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      currentAlm: props.location.query.alm || AlmKeys.GitHub,
+      definitions: {
+        [AlmKeys.Azure]: [],
+        [AlmKeys.BitbucketServer]: [],
+        [AlmKeys.BitbucketCloud]: [],
+        [AlmKeys.GitHub]: [],
+        [AlmKeys.GitLab]: []
+      },
+      definitionStatus: {},
+      loadingAlmDefinitions: true,
+      loadingProjectCount: false
+    };
+  }
 
   componentDidMount() {
     this.mounted = true;
-    this.fetchPullRequestDecorationSetting();
+    return this.fetchPullRequestDecorationSetting().then(definitions => {
+      if (definitions) {
+        // Validate all alms on load:
+        ALM_KEY_LIST.forEach(alm => {
+          this.state.definitions[alm].forEach((def: AlmBindingDefinition) =>
+            this.handleCheck(def.key, false)
+          );
+        });
+      }
+    });
   }
 
   componentWillUnmount() {
@@ -75,14 +102,6 @@ export class AlmIntegration extends React.PureComponent<Props, State> {
   };
 
   fetchPullRequestDecorationSetting = () => {
-    const {
-      appState: { branchesEnabled }
-    } = this.props;
-
-    if (!branchesEnabled) {
-      return Promise.resolve();
-    }
-
     this.setState({ loadingAlmDefinitions: true });
     return getAlmDefinitions()
       .then(definitions => {
@@ -91,7 +110,9 @@ export class AlmIntegration extends React.PureComponent<Props, State> {
             definitions,
             loadingAlmDefinitions: false
           });
+          return definitions;
         }
+        return undefined;
       })
       .catch(() => {
         if (this.mounted) {
@@ -127,6 +148,41 @@ export class AlmIntegration extends React.PureComponent<Props, State> {
       });
   };
 
+  handleCheck = async (definitionKey: string, alertSuccess = true) => {
+    this.setState(({ definitionStatus }) => {
+      definitionStatus[definitionKey] = {
+        ...definitionStatus[definitionKey],
+        type: AlmSettingsBindingStatusType.Validating
+      };
+
+      return { definitionStatus: { ...definitionStatus } };
+    });
+
+    let type: AlmSettingsBindingStatusType;
+    let failureMessage = '';
+
+    try {
+      failureMessage = await validateAlmSettings(definitionKey);
+      type = failureMessage
+        ? AlmSettingsBindingStatusType.Failure
+        : AlmSettingsBindingStatusType.Success;
+    } catch (_) {
+      type = AlmSettingsBindingStatusType.Warning;
+    }
+
+    if (this.mounted) {
+      this.setState(({ definitionStatus }) => {
+        definitionStatus[definitionKey] = {
+          alertSuccess,
+          failureMessage,
+          type
+        };
+
+        return { definitionStatus: { ...definitionStatus } };
+      });
+    }
+  };
+
   render() {
     const {
       appState: { branchesEnabled, multipleAlmEnabled },
@@ -139,6 +195,7 @@ export class AlmIntegration extends React.PureComponent<Props, State> {
         multipleAlmEnabled={Boolean(multipleAlmEnabled)}
         onCancel={this.handleCancel}
         onConfirmDelete={this.deleteConfiguration}
+        onCheck={this.handleCheck}
         onDelete={this.handleDelete}
         onSelectAlm={this.handleSelectAlm}
         onUpdateDefinitions={this.fetchPullRequestDecorationSetting}
@@ -148,4 +205,4 @@ export class AlmIntegration extends React.PureComponent<Props, State> {
   }
 }
 
-export default withAppState(AlmIntegration);
+export default withRouter(withAppState(AlmIntegration));

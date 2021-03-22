@@ -30,7 +30,7 @@ option optimize_for = SPEED;
 
 message Metadata {
   int64 analysis_date = 1;
-  string organization_key = 2;
+  reserved 2; // organization drop
   // TODO should we keep this project_key here or not ? Because it's a duplication of Component.key
   string project_key = 3;
 
@@ -57,6 +57,8 @@ message Metadata {
   string target_branch_name = 18;
 
   int64 forkDate = 19;
+
+  map<string, int32> not_analyzed_files_by_language = 20;
 
   message QProfile {
     string key = 1;

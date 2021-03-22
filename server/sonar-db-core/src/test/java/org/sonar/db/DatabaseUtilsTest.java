@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -82,6 +82,46 @@ public class DatabaseUtilsTest {
       assertThat(DatabaseUtils.findExistingIndex(connection, tableName, indexName)).contains(indexName);
       assertThat(DatabaseUtils.findExistingIndex(connection, tableName, indexName.toLowerCase(Locale.US))).contains(indexName);
       assertThat(DatabaseUtils.findExistingIndex(connection, tableName.toLowerCase(Locale.US), indexName.toLowerCase(Locale.US))).contains(indexName);
+    }
+  }
+
+  @Test
+  public void find_column_with_lower_case_table_name_and_upper_case_column_name() throws SQLException {
+    String tableName = "tablea";
+    String columnName = "COLUMNA";
+    try (Connection connection = dbTester.openConnection()) {
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName, columnName)).isTrue();
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName.toLowerCase(Locale.US), columnName)).isTrue();
+    }
+  }
+  @Test
+  public void find_column_with_upper_case_table_name_and_upper_case_column_name() throws SQLException {
+    String tableName = "TABLEA";
+    String columnName = "COLUMNA";
+    try (Connection connection = dbTester.openConnection()) {
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName, columnName)).isTrue();
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName.toLowerCase(Locale.US), columnName)).isTrue();
+    }
+  }
+
+  @Test
+  public void find_column_with_lower_case_table_name_and_lower_case_column_name() throws SQLException {
+    String tableName = "tablea";
+    String columnName = "columna";
+    try (Connection connection = dbTester.openConnection()) {
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName, columnName)).isTrue();
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName.toLowerCase(Locale.US), columnName)).isTrue();
+    }
+  }
+
+  @Test
+  public void find_column_with_upper_case_table_name_and_lower_case_column_name() throws SQLException {
+    String tableName = "TABLEA";
+    String columnName = "columna";
+    try (Connection connection = dbTester.openConnection()) {
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName, columnName)).isTrue();
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName, columnName.toLowerCase(Locale.US))).isTrue();
+      assertThat(DatabaseUtils.tableColumnExists(connection, tableName.toLowerCase(Locale.US), columnName.toLowerCase(Locale.US))).isTrue();
     }
   }
 

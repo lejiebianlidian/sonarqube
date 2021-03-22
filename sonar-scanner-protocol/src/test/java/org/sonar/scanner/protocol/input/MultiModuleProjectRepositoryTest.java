@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ public class MultiModuleProjectRepositoryTest {
 
     repository.addFileDataToModule("module1", null, fileData);
 
-    assertThat(repository.repositoriesByModule()).hasSize(0);
+    assertThat(repository.repositoriesByModule()).isEmpty();
   }
 
   @Test
@@ -63,6 +63,6 @@ public class MultiModuleProjectRepositoryTest {
 
     repository.addFileDataToModule("module2", "/Abc.java", fileData);
 
-    assertThat(repository.repositoriesByModule()).hasSize(0);
+    assertThat(repository.repositoriesByModule()).isEmpty();
   }
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ public class EsLoggingTest {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private EsLogging underTest = new EsLogging();
+  private final EsLogging underTest = new EsLogging();
 
   @Test
   public void createProperties_with_empty_props() throws IOException {
@@ -64,7 +64,16 @@ public class EsLoggingTest {
       "appender.file_es.strategy.action.condition.nested_condition.type", "IfAccumulatedFileCount",
       "appender.file_es.strategy.action.condition.nested_condition.exceeds", "7",
       "rootLogger.level", "INFO",
-      "rootLogger.appenderRef.file_es.ref", "file_es");
+      "rootLogger.appenderRef.file_es.ref", "file_es",
+      "loggers", "DEPRECATION,org.elasticsearch.client.RestClient,org.elasticsearch.deprecation",
+      "logger.org.elasticsearch.client.RestClient.name", "org.elasticsearch.client.RestClient",
+      "logger.org.elasticsearch.deprecation.level", "ERROR",
+      "logger.org.elasticsearch.deprecation.name", "org.elasticsearch.deprecation",
+      "logger.DEPRECATION.level", "ERROR",
+      "logger.DEPRECATION.name", "DEPRECATION",
+      "logger.org.elasticsearch.client.RestClient.level", "ERROR"
+
+    );
   }
 
   @Test
@@ -104,7 +113,7 @@ public class EsLoggingTest {
   }
 
   private static Props newProps(String... propertyKeysAndValues) {
-    assertThat(propertyKeysAndValues.length % 2).describedAs("Number of parameters must be even").isEqualTo(0);
+    assertThat(propertyKeysAndValues.length % 2).describedAs("Number of parameters must be even").isZero();
     Properties properties = new Properties();
     for (int i = 0; i < propertyKeysAndValues.length; i++) {
       properties.put(propertyKeysAndValues[i++], propertyKeysAndValues[i]);
@@ -114,9 +123,9 @@ public class EsLoggingTest {
 
   private void verifyProperties(Properties properties, String... expectedPropertyKeysAndValuesOrdered) {
     if (expectedPropertyKeysAndValuesOrdered.length == 0) {
-      assertThat(properties.size()).isEqualTo(0);
+      assertThat(properties.size()).isZero();
     } else {
-      assertThat(expectedPropertyKeysAndValuesOrdered.length % 2).describedAs("Number of parameters must be even").isEqualTo(0);
+      assertThat(expectedPropertyKeysAndValuesOrdered.length % 2).describedAs("Number of parameters must be even").isZero();
       Set<String> keys = new HashSet<>(expectedPropertyKeysAndValuesOrdered.length / 2 + 1);
       keys.add("status");
       for (int i = 0; i < expectedPropertyKeysAndValuesOrdered.length; i++) {

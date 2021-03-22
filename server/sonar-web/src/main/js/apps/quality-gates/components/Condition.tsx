@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@ interface Props {
   condition: T.Condition;
   canEdit: boolean;
   metric: T.Metric;
-  organization?: string;
   onRemoveCondition: (Condition: T.Condition) => void;
   onSaveCondition: (newCondition: T.Condition, oldCondition: T.Condition) => void;
   qualityGate: T.QualityGate;
@@ -77,7 +76,7 @@ export default class Condition extends React.PureComponent<Props, State> {
   };
 
   removeCondition = (condition: T.Condition) => {
-    deleteCondition({ id: condition.id, organization: this.props.organization }).then(
+    deleteCondition({ id: condition.id }).then(
       () => this.props.onRemoveCondition(condition),
       () => {}
     );
@@ -92,7 +91,7 @@ export default class Condition extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { condition, canEdit, metric, organization, qualityGate, updated } = this.props;
+    const { condition, canEdit, metric, qualityGate, updated } = this.props;
     return (
       <tr className={classNames({ highlighted: updated })}>
         <td className="text-middle">
@@ -127,7 +126,6 @@ export default class Condition extends React.PureComponent<Props, State> {
                 metric={metric}
                 onAddCondition={this.handleUpdateCondition}
                 onClose={this.handleUpdateClose}
-                organization={organization}
                 qualityGate={qualityGate}
               />
             )}

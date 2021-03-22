@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ export default function FiltersHeader({ displayReset, onReset }: Props) {
         </div>
       )}
 
-      <h3>{translate('filters')}</h3>
+      <h2 className="h3">{translate('filters')}</h2>
     </div>
   );
 }

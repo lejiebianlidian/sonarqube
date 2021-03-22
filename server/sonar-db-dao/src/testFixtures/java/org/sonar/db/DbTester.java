@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,12 +28,10 @@ import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.apache.commons.lang.StringUtils;
 import org.picocontainer.containers.TransientPicoContainer;
 import org.sonar.api.utils.System2;
 import org.sonar.core.util.SequenceUuidFactory;
 import org.sonar.core.util.UuidFactory;
-import org.sonar.db.alm.AlmDbTester;
 import org.sonar.db.alm.integration.pat.AlmPatsDbTester;
 import org.sonar.db.almsettings.AlmSettingsDbTester;
 import org.sonar.db.component.ComponentDbTester;
@@ -44,9 +42,6 @@ import org.sonar.db.issue.IssueDbTester;
 import org.sonar.db.measure.MeasureDbTester;
 import org.sonar.db.newcodeperiod.NewCodePeriodDbTester;
 import org.sonar.db.notification.NotificationDbTester;
-import org.sonar.db.organization.OrganizationDbTester;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.organization.OrganizationTesting;
 import org.sonar.db.permission.template.PermissionTemplateDbTester;
 import org.sonar.db.plugin.PluginDbTester;
 import org.sonar.db.property.InternalComponentPropertyDbTester;
@@ -60,9 +55,6 @@ import org.sonar.db.user.UserDbTester;
 import org.sonar.db.webhook.WebhookDbTester;
 import org.sonar.db.webhook.WebhookDeliveryDbTester;
 
-import static com.google.common.base.Preconditions.checkState;
-import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
-
 /**
  * This class should be called using @Rule.
  * Data is truncated between each tests. The schema is created between each test.
@@ -73,17 +65,11 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
   private final System2 system2;
   private DbClient client;
   private DbSession session = null;
-  private boolean disableDefaultOrganization = false;
-  private boolean started = false;
-  private String defaultOrganizationUuid = randomAlphanumeric(40);
-  private OrganizationDto defaultOrganization;
-
   private final UserDbTester userTester;
   private final ComponentDbTester componentTester;
   private final ProjectLinkDbTester componentLinkTester;
   private final FavoriteDbTester favoriteTester;
   private final EventDbTester eventTester;
-  private final OrganizationDbTester organizationTester;
   private final PermissionTemplateDbTester permissionTemplateTester;
   private final PropertyDbTester propertyTester;
   private final QualityGateDbTester qualityGateDbTester;
@@ -98,7 +84,6 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
   private final PluginDbTester pluginDbTester;
   private final WebhookDbTester webhookDbTester;
   private final WebhookDeliveryDbTester webhookDeliveryDbTester;
-  private final AlmDbTester almDbTester;
   private final InternalComponentPropertyDbTester internalComponentPropertyTester;
   private final AlmSettingsDbTester almSettingsDbTester;
   private final AlmPatsDbTester almPatsDbtester;
@@ -113,7 +98,6 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
     this.componentLinkTester = new ProjectLinkDbTester(this);
     this.favoriteTester = new FavoriteDbTester(this);
     this.eventTester = new EventDbTester(this);
-    this.organizationTester = new OrganizationDbTester(this);
     this.permissionTemplateTester = new PermissionTemplateDbTester(this);
     this.propertyTester = new PropertyDbTester(this);
     this.qualityGateDbTester = new QualityGateDbTester(this);
@@ -127,7 +111,6 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
     this.pluginDbTester = new PluginDbTester(this);
     this.webhookDbTester = new WebhookDbTester(this);
     this.webhookDeliveryDbTester = new WebhookDeliveryDbTester(this);
-    this.almDbTester = new AlmDbTester(this);
     this.internalComponentPropertyTester = new InternalComponentPropertyDbTester(this);
     this.newCodePeriodTester = new NewCodePeriodDbTester(this);
     this.almSettingsDbTester = new AlmSettingsDbTester(this);
@@ -142,18 +125,8 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
     return new DbTester(system2, null);
   }
 
-  public static DbTester createWithExtensionMappers(Class<?> firstMapperClass, Class<?>... otherMapperClasses) {
-    return new DbTester(System2.INSTANCE, null, new DbTesterMyBatisConfExtension(firstMapperClass, otherMapperClasses));
-  }
-
   public static DbTester createWithExtensionMappers(System2 system2, Class<?> firstMapperClass, Class<?>... otherMapperClasses) {
     return new DbTester(system2, null, new DbTesterMyBatisConfExtension(firstMapperClass, otherMapperClasses));
-  }
-
-  public static DbTester createForSchema(System2 system2, Class testClass, String filename) {
-    String path = StringUtils.replaceChars(testClass.getCanonicalName(), '.', '/');
-    String schemaPath = path + "/" + filename;
-    return new DbTester(system2, schemaPath).setDisableDefaultOrganization(true);
   }
 
   private void initDbClient() {
@@ -168,50 +141,11 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
     client = new DbClient(db.getDatabase(), db.getMyBatis(), new TestDBSessions(db.getMyBatis()), daos.toArray(new Dao[daos.size()]));
   }
 
-  public DbTester setDisableDefaultOrganization(boolean b) {
-    checkState(!started, "DbTester is already started");
-    this.disableDefaultOrganization = b;
-    return this;
-  }
-
-  public DbTester setDefaultOrganizationUuid(String uuid) {
-    checkState(!started, "DbTester is already started");
-    this.defaultOrganizationUuid = uuid;
-    return this;
-  }
-
-  public DbTester enableOrganizations() {
-    properties().insertInternal("organization.enabled", "true");
-    return this;
-  }
-
   @Override
   protected void before() {
     db.start();
     db.truncateTables();
     initDbClient();
-    if (!disableDefaultOrganization) {
-      insertDefaultOrganization();
-    }
-    started = true;
-  }
-
-  private void insertDefaultOrganization() {
-    defaultOrganization = OrganizationTesting.newOrganizationDto().setUuid(defaultOrganizationUuid);
-    try (DbSession dbSession = db.getMyBatis().openSession(false)) {
-      client.organizationDao().insert(dbSession, defaultOrganization, false);
-      client.internalPropertiesDao().save(dbSession, "organization.default", defaultOrganization.getUuid());
-      dbSession.commit();
-    }
-  }
-
-  public boolean hasDefaultOrganization() {
-    return defaultOrganization != null;
-  }
-
-  public OrganizationDto getDefaultOrganization() {
-    checkState(defaultOrganization != null, "Default organization has not been created");
-    return defaultOrganization;
   }
 
   public UserDbTester users() {
@@ -232,10 +166,6 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
 
   public EventDbTester events() {
     return eventTester;
-  }
-
-  public OrganizationDbTester organizations() {
-    return organizationTester;
   }
 
   public PermissionTemplateDbTester permissionTemplates() {
@@ -294,10 +224,6 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
     return webhookDeliveryDbTester;
   }
 
-  public AlmDbTester alm() {
-    return almDbTester;
-  }
-
   public InternalComponentPropertyDbTester internalComponentProperties() {
     return internalComponentPropertyTester;
   }
@@ -306,7 +232,7 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
     return almSettingsDbTester;
   }
 
-  public AlmPatsDbTester almPats(){
+  public AlmPatsDbTester almPats() {
     return almPatsDbtester;
   }
 
@@ -317,7 +243,6 @@ public class DbTester extends AbstractDbTester<TestDbImpl> {
       session.close();
     }
     db.stop();
-    started = false;
   }
 
   public DbSession getSession() {

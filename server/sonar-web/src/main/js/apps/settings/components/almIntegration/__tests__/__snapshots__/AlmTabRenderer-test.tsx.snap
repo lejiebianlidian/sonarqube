@@ -6,29 +6,439 @@ exports[`should render correctly for multi-ALM binding: editing a definition 1`]
 >
   <DeferredSpinner
     loading={false}
-    timeout={100}
   >
-    <AlmBindingDefinitionsTable
-      additionalColumnsHeaders={
-        Array [
-          "url",
-          "app_id",
-        ]
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
       }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+    <AlmBindingDefinitionForm
+      bindingDefinition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      help={<div />}
+      isSecondInstance={true}
+      onCancel={[MockFunction]}
+      onSubmit={[MockFunction]}
+    >
+      <Component />
+    </AlmBindingDefinitionForm>
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for multi-ALM binding: loaded 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for multi-ALM binding: loading ALM definitions 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={true}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for multi-ALM binding: loading project count 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={true}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={true}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for multi-ALM binding: submitting 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for single-ALM binding 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={true}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={true}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={true}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for single-ALM binding 2`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={true}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={true}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly for single-ALM binding 3`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="azure"
+        preventCreation={true}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={true}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="azure"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "key": "key",
+          "personalAccessToken": "asdf1234",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly with validation: create a first 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <p
+      className="spacer-top"
+    >
+      settings.almintegration.empty.github
+    </p>
+    <div
+      className="big-spacer-top"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="github"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionForm
+      bindingDefinition={
+        Object {
+          "appId": "123456",
+          "clientId": "client1",
+          "clientSecret": "**clientsecret**",
+          "key": "key",
+          "privateKey": "asdf1234",
+          "url": "http://github.enterprise.com",
+        }
+      }
+      help={<div />}
+      isSecondInstance={false}
+      onCancel={[MockFunction]}
+      onSubmit={[MockFunction]}
+    >
+      <Component />
+    </AlmBindingDefinitionForm>
+  </DeferredSpinner>
+</div>
+`;
+
+exports[`should render correctly with validation: create a second 1`] = `
+<div
+  className="big-padded"
+>
+  <DeferredSpinner
+    loading={false}
+  >
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="github"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
       alm="github"
-      definitions={
-        Array [
-          Object {
-            "additionalColumns": Array [
-              "http://github.enterprise.com",
-              "123456",
-            ],
-            "key": "key",
-          },
-        ]
+      branchesEnabled={true}
+      definition={
+        Object {
+          "appId": "123456",
+          "clientId": "client1",
+          "clientSecret": "**clientsecret**",
+          "key": "key",
+          "privateKey": "asdf1234",
+          "url": "http://github.enterprise.com",
+        }
       }
-      loading={false}
-      onCreate={[MockFunction]}
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
       onDelete={[MockFunction]}
       onEdit={[MockFunction]}
     />
@@ -43,27 +453,10 @@ exports[`should render correctly for multi-ALM binding: editing a definition 1`]
           "url": "http://github.enterprise.com",
         }
       }
-      help={
-        <FormattedMessage
-          defaultMessage="settings.almintegration.github.info"
-          id="settings.almintegration.github.info"
-          values={
-            Object {
-              "link": <Link
-                onlyActiveOnIndex={false}
-                style={Object {}}
-                target="_blank"
-                to="/documentation/analysis/pr-decoration/"
-              >
-                learn_more
-              </Link>,
-            }
-          }
-        />
-      }
+      help={<div />}
+      isSecondInstance={true}
       onCancel={[MockFunction]}
       onSubmit={[MockFunction]}
-      showInModal={true}
     >
       <Component />
     </AlmBindingDefinitionForm>
@@ -71,348 +464,124 @@ exports[`should render correctly for multi-ALM binding: editing a definition 1`]
 </div>
 `;
 
-exports[`should render correctly for multi-ALM binding: loaded 1`] = `
+exports[`should render correctly with validation: default 1`] = `
 <div
   className="big-padded"
 >
   <DeferredSpinner
     loading={false}
-    timeout={100}
   >
-    <AlmBindingDefinitionsTable
-      additionalColumnsHeaders={
-        Array [
-          "url",
-          "app_id",
-        ]
-      }
-      alm="github"
-      definitions={
-        Array [
-          Object {
-            "additionalColumns": Array [
-              "http://github.enterprise.com",
-              "123456",
-            ],
-            "key": "key",
-          },
-        ]
-      }
-      loading={false}
-      onCreate={[MockFunction]}
-      onDelete={[MockFunction]}
-      onEdit={[MockFunction]}
-    />
-  </DeferredSpinner>
-</div>
-`;
-
-exports[`should render correctly for multi-ALM binding: loading ALM definitions 1`] = `
-<div
-  className="big-padded"
->
-  <DeferredSpinner
-    loading={true}
-    timeout={100}
-  >
-    <AlmBindingDefinitionsTable
-      additionalColumnsHeaders={
-        Array [
-          "url",
-          "app_id",
-        ]
-      }
-      alm="github"
-      definitions={
-        Array [
-          Object {
-            "additionalColumns": Array [
-              "http://github.enterprise.com",
-              "123456",
-            ],
-            "key": "key",
-          },
-        ]
-      }
-      loading={false}
-      onCreate={[MockFunction]}
-      onDelete={[MockFunction]}
-      onEdit={[MockFunction]}
-    />
-  </DeferredSpinner>
-</div>
-`;
-
-exports[`should render correctly for multi-ALM binding: loading project count 1`] = `
-<div
-  className="big-padded"
->
-  <DeferredSpinner
-    loading={false}
-    timeout={100}
-  >
-    <AlmBindingDefinitionsTable
-      additionalColumnsHeaders={
-        Array [
-          "url",
-          "app_id",
-        ]
-      }
-      alm="github"
-      definitions={
-        Array [
-          Object {
-            "additionalColumns": Array [
-              "http://github.enterprise.com",
-              "123456",
-            ],
-            "key": "key",
-          },
-        ]
-      }
-      loading={true}
-      onCreate={[MockFunction]}
-      onDelete={[MockFunction]}
-      onEdit={[MockFunction]}
-    />
-  </DeferredSpinner>
-</div>
-`;
-
-exports[`should render correctly for multi-ALM binding: submitting 1`] = `
-<div
-  className="big-padded"
->
-  <DeferredSpinner
-    loading={false}
-    timeout={100}
-  >
-    <AlmBindingDefinitionsTable
-      additionalColumnsHeaders={
-        Array [
-          "url",
-          "app_id",
-        ]
-      }
-      alm="github"
-      definitions={
-        Array [
-          Object {
-            "additionalColumns": Array [
-              "http://github.enterprise.com",
-              "123456",
-            ],
-            "key": "key",
-          },
-        ]
-      }
-      loading={false}
-      onCreate={[MockFunction]}
-      onDelete={[MockFunction]}
-      onEdit={[MockFunction]}
-    />
-  </DeferredSpinner>
-</div>
-`;
-
-exports[`should render correctly for multi-ALM binding: with features 1`] = `
-<div
-  className="big-padded"
->
-  <DeferredSpinner
-    loading={false}
-    timeout={100}
-  >
-    <AlmBindingDefinitionsTable
-      additionalColumnsHeaders={
-        Array [
-          "url",
-          "app_id",
-        ]
-      }
-      alm="github"
-      definitions={
-        Array [
-          Object {
-            "additionalColumns": Array [
-              "http://github.enterprise.com",
-              "123456",
-            ],
-            "key": "key",
-          },
-        ]
-      }
-      loading={false}
-      onCreate={[MockFunction]}
-      onDelete={[MockFunction]}
-      onEdit={[MockFunction]}
-    />
-  </DeferredSpinner>
-  <div
-    className="big-spacer-top big-padded-top bordered-top"
-  >
-    <h3
-      className="big-spacer-bottom"
-    >
-      settings.almintegration.features
-    </h3>
     <div
-      className="display-flex-wrap"
+      className="spacer-bottom text-right"
     >
-      <AlmIntegrationFeatureBox
-        active={true}
-        description="Bar"
-        key="0"
-        name="Foo"
-      />
-      <AlmIntegrationFeatureBox
-        active={false}
-        description="Bim"
-        key="1"
-        name="Baz"
-      />
+      <Connect(withAppState(CreationTooltip))
+        alm="github"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
     </div>
-  </div>
+    <AlmBindingDefinitionBox
+      alm="github"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "appId": "123456",
+          "clientId": "client1",
+          "clientSecret": "**clientsecret**",
+          "key": "key",
+          "privateKey": "asdf1234",
+          "url": "http://github.enterprise.com",
+        }
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
 </div>
 `;
 
-exports[`should render correctly for single-ALM binding 1`] = `
+exports[`should render correctly with validation: empty 1`] = `
 <div
   className="big-padded"
 >
-  <AlmBindingDefinitionForm
-    bindingDefinition={
-      Object {
-        "appId": "123456",
-        "clientId": "client1",
-        "clientSecret": "**clientsecret**",
-        "key": "key",
-        "privateKey": "asdf1234",
-        "url": "http://github.enterprise.com",
-      }
-    }
-    help={
-      <FormattedMessage
-        defaultMessage="settings.almintegration.github.info"
-        id="settings.almintegration.github.info"
-        values={
-          Object {
-            "link": <Link
-              onlyActiveOnIndex={false}
-              style={Object {}}
-              target="_blank"
-              to="/documentation/analysis/pr-decoration/"
-            >
-              learn_more
-            </Link>,
-          }
-        }
-      />
-    }
-    hideKeyField={true}
-    loading={true}
-    onCancel={[MockFunction]}
-    onDelete={[MockFunction]}
-    onEdit={[MockFunction]}
-    onSubmit={[MockFunction]}
-    readOnly={true}
-    success={false}
+  <DeferredSpinner
+    loading={false}
   >
-    <Component />
-  </AlmBindingDefinitionForm>
+    <p
+      className="spacer-top"
+    >
+      settings.almintegration.empty.github
+    </p>
+    <div
+      className="big-spacer-top"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="github"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+  </DeferredSpinner>
 </div>
 `;
 
-exports[`should render correctly for single-ALM binding 2`] = `
+exports[`should render correctly with validation: pass the correct key for bitbucket cloud 1`] = `
 <div
   className="big-padded"
 >
-  <AlmBindingDefinitionForm
-    bindingDefinition={
-      Object {
-        "appId": "123456",
-        "clientId": "client1",
-        "clientSecret": "**clientsecret**",
-        "key": "key",
-        "privateKey": "asdf1234",
-        "url": "http://github.enterprise.com",
-      }
-    }
-    help={
-      <FormattedMessage
-        defaultMessage="settings.almintegration.github.info"
-        id="settings.almintegration.github.info"
-        values={
-          Object {
-            "link": <Link
-              onlyActiveOnIndex={false}
-              style={Object {}}
-              target="_blank"
-              to="/documentation/analysis/pr-decoration/"
-            >
-              learn_more
-            </Link>,
-          }
-        }
-      />
-    }
-    hideKeyField={true}
-    loading={true}
-    onCancel={[MockFunction]}
-    onDelete={[MockFunction]}
-    onEdit={[MockFunction]}
-    onSubmit={[MockFunction]}
-    readOnly={true}
-    success={false}
+  <DeferredSpinner
+    loading={false}
   >
-    <Component />
-  </AlmBindingDefinitionForm>
-</div>
-`;
-
-exports[`should render correctly for single-ALM binding 3`] = `
-<div
-  className="big-padded"
->
-  <AlmBindingDefinitionForm
-    bindingDefinition={
-      Object {
-        "appId": "123456",
-        "clientId": "client1",
-        "clientSecret": "**clientsecret**",
-        "key": "key",
-        "privateKey": "asdf1234",
-        "url": "http://github.enterprise.com",
-      }
-    }
-    help={
-      <FormattedMessage
-        defaultMessage="settings.almintegration.github.info"
-        id="settings.almintegration.github.info"
-        values={
-          Object {
-            "link": <Link
-              onlyActiveOnIndex={false}
-              style={Object {}}
-              target="_blank"
-              to="/documentation/analysis/pr-decoration/"
-            >
-              learn_more
-            </Link>,
-          }
+    <div
+      className="spacer-bottom text-right"
+    >
+      <Connect(withAppState(CreationTooltip))
+        alm="bitbucket"
+        preventCreation={false}
+      >
+        <Button
+          data-test="settings__alm-create"
+          disabled={false}
+          onClick={[MockFunction]}
+        >
+          settings.almintegration.create
+        </Button>
+      </Connect(withAppState(CreationTooltip))>
+    </div>
+    <AlmBindingDefinitionBox
+      alm="bitbucketcloud"
+      branchesEnabled={true}
+      definition={
+        Object {
+          "clientId": "client1",
+          "clientSecret": "**clientsecret**",
+          "key": "key",
+          "workspace": "workspace",
         }
-      />
-    }
-    hideKeyField={true}
-    loading={true}
-    onCancel={[MockFunction]}
-    onDelete={[MockFunction]}
-    onEdit={[MockFunction]}
-    onSubmit={[MockFunction]}
-    readOnly={true}
-    success={false}
-  >
-    <Component />
-  </AlmBindingDefinitionForm>
+      }
+      key="key"
+      multipleDefinitions={false}
+      onCheck={[MockFunction]}
+      onDelete={[MockFunction]}
+      onEdit={[MockFunction]}
+    />
+  </DeferredSpinner>
 </div>
 `;

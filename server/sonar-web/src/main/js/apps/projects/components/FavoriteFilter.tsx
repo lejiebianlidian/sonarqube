@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,21 +26,16 @@ import { PROJECTS_ALL, PROJECTS_DEFAULT_FILTER, PROJECTS_FAVORITE } from '../uti
 
 interface Props {
   currentUser: T.CurrentUser;
-  organization?: { key: string };
   query?: T.RawQuery;
 }
 
 export default class FavoriteFilter extends React.PureComponent<Props> {
   handleSaveFavorite = () => {
-    if (!this.props.organization) {
-      save(PROJECTS_DEFAULT_FILTER, PROJECTS_FAVORITE);
-    }
+    save(PROJECTS_DEFAULT_FILTER, PROJECTS_FAVORITE);
   };
 
   handleSaveAll = () => {
-    if (!this.props.organization) {
-      save(PROJECTS_DEFAULT_FILTER, PROJECTS_ALL);
-    }
+    save(PROJECTS_DEFAULT_FILTER, PROJECTS_ALL);
   };
 
   render() {
@@ -48,17 +43,12 @@ export default class FavoriteFilter extends React.PureComponent<Props> {
       return null;
     }
 
-    const pathnameForFavorite = this.props.organization
-      ? `/organizations/${this.props.organization.key}/projects/favorite`
-      : '/projects/favorite';
-
-    const pathnameForAll = this.props.organization
-      ? `/organizations/${this.props.organization.key}/projects`
-      : '/projects';
+    const pathnameForFavorite = '/projects/favorite';
+    const pathnameForAll = '/projects';
 
     return (
-      <header className="page-header text-center">
-        <div className="button-group">
+      <div className="page-header text-center">
+        <div className="button-group little-spacer-top">
           <Link
             activeClassName="button-active"
             className="button"
@@ -76,7 +66,7 @@ export default class FavoriteFilter extends React.PureComponent<Props> {
             {translate('all')}
           </IndexLink>
         </div>
-      </header>
+      </div>
     );
   }
 }

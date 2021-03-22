@@ -8,7 +8,6 @@
     "total": 1
   },
   "effortTotal": 10,
-  "debtTotal": 10,
   "issues": [
     {
       "key": "7b112bd4-b650-4037-80bc-82fd47d4eac2",
@@ -31,7 +30,6 @@
   "components": [
     {
       "key": "FILE_KEY",
-      "uuid": "FILE_ID",
       "enabled": true,
       "qualifier": "FIL",
       "name": "NAME_FILE_ID",
@@ -40,7 +38,6 @@
     },
     {
       "key": "PROJECT_KEY",
-      "uuid": "PROJECT_ID",
       "enabled": true,
       "qualifier": "TRK",
       "name": "NAME_PROJECT_ID",

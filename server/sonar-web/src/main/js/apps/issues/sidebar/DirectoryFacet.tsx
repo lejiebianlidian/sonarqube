@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,16 @@ import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { collapsePath } from 'sonar-ui-common/helpers/path';
 import { highlightTerm } from 'sonar-ui-common/helpers/search';
-import { getDirectories, TreeComponentWithPath } from '../../../api/components';
+import { getDirectories } from '../../../api/components';
 import ListStyleFacet from '../../../components/facet/ListStyleFacet';
-import { Facet, Query } from '../utils';
+import { getBranchLikeQuery } from '../../../helpers/branch-like';
+import { BranchLike } from '../../../types/branch-like';
+import { TreeComponentWithPath } from '../../../types/component';
+import { Facet } from '../../../types/issues';
+import { Query } from '../utils';
 
 interface Props {
+  branchLike?: BranchLike;
   componentKey: string;
   directories: string[];
   fetching: boolean;
@@ -49,12 +54,15 @@ export default class DirectoryFacet extends React.PureComponent<Props> {
   };
 
   getSearchResultText = (directory: TreeComponentWithPath) => {
-    return directory.name;
+    return directory.path;
   };
 
   handleSearch = (query: string, page: number) => {
+    const { branchLike } = this.props;
+
     return getDirectories({
       component: this.props.componentKey,
+      ...getBranchLikeQuery(branchLike),
       q: query,
       p: page,
       ps: 30

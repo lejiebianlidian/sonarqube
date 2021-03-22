@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,13 @@ import { ResetButtonLink, SubmitButton } from 'sonar-ui-common/components/contro
 import Modal from 'sonar-ui-common/components/controls/Modal';
 import Select from 'sonar-ui-common/components/controls/Select';
 import { Alert } from 'sonar-ui-common/components/ui/Alert';
+import MandatoryFieldMarker from 'sonar-ui-common/components/ui/MandatoryFieldMarker';
+import MandatoryFieldsExplanation from 'sonar-ui-common/components/ui/MandatoryFieldsExplanation';
 import { csvEscape } from 'sonar-ui-common/helpers/csv';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { latinize } from 'sonar-ui-common/helpers/strings';
 import { createRule, updateRule } from '../../../api/rules';
-import MarkdownTips from '../../../components/common/MarkdownTips';
+import FormattingTips from '../../../components/common/FormattingTips';
 import SeverityHelper from '../../../components/shared/SeverityHelper';
 import TypeHelper from '../../../components/shared/TypeHelper';
 import { RULE_STATUSES, RULE_TYPES, SEVERITIES } from '../../../helpers/constants';
@@ -36,7 +38,6 @@ interface Props {
   customRule?: T.RuleDetails;
   onClose: () => void;
   onDone: (newRuleDetails: T.RuleDetails) => void;
-  organization: string | undefined;
   templateRule: T.RuleDetails;
 }
 
@@ -87,14 +88,13 @@ export default class CustomRuleFormModal extends React.PureComponent<Props, Stat
   }
 
   prepareRequest = () => {
-    const { customRule, organization, templateRule } = this.props;
+    const { customRule, templateRule } = this.props;
     const params = Object.keys(this.state.params)
       .map(key => `${key}=${csvEscape(this.state.params[key])}`)
       .join(';');
     const ruleData = {
       markdown_description: this.state.description,
       name: this.state.name,
-      organization,
       params,
       severity: this.state.severity,
       status: this.state.status
@@ -156,7 +156,7 @@ export default class CustomRuleFormModal extends React.PureComponent<Props, Stat
   renderNameField = () => (
     <div className="modal-field">
       <label htmlFor="coding-rules-custom-rule-creation-name">
-        {translate('name')} <em className="mandatory">*</em>
+        {translate('name')} <MandatoryFieldMarker />
       </label>
       <input
         autoFocus={true}
@@ -173,7 +173,7 @@ export default class CustomRuleFormModal extends React.PureComponent<Props, Stat
   renderKeyField = () => (
     <div className="modal-field">
       <label htmlFor="coding-rules-custom-rule-creation-key">
-        {translate('key')} {!this.props.customRule && <em className="mandatory">*</em>}
+        {translate('key')} {!this.props.customRule && <MandatoryFieldMarker />}
       </label>
 
       {this.props.customRule ? (
@@ -196,7 +196,8 @@ export default class CustomRuleFormModal extends React.PureComponent<Props, Stat
   renderDescriptionField = () => (
     <div className="modal-field">
       <label htmlFor="coding-rules-custom-rule-creation-html-description">
-        {translate('description')} <em className="mandatory">*</em>
+        {translate('description')}
+        <MandatoryFieldMarker />
       </label>
       <textarea
         disabled={this.state.submitting}
@@ -206,7 +207,7 @@ export default class CustomRuleFormModal extends React.PureComponent<Props, Stat
         rows={5}
         value={this.state.description}
       />
-      <MarkdownTips className="modal-field-descriptor text-right" />
+      <FormattingTips className="modal-field-descriptor text-right" />
     </div>
   );
 
@@ -333,6 +334,8 @@ export default class CustomRuleFormModal extends React.PureComponent<Props, Stat
             {reactivating && (
               <Alert variant="warning">{translate('coding_rules.reactivate.help')}</Alert>
             )}
+
+            <MandatoryFieldsExplanation className="spacer-bottom" />
 
             {this.renderNameField()}
             {this.renderKeyField()}

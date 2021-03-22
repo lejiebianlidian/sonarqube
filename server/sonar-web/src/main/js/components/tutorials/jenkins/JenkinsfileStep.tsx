@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,38 +20,41 @@
 import * as React from 'react';
 import { translate } from 'sonar-ui-common/helpers/l10n';
 import { getBaseUrl } from 'sonar-ui-common/helpers/urls';
+import { withAppState } from '../../hoc/withAppState';
 import RenderOptions from '../components/RenderOptions';
 import SentenceWithHighlights from '../components/SentenceWithHighlights';
 import Step from '../components/Step';
+import { BuildTools } from '../types';
+import DotNet from './buildtool-steps/DotNet';
 import Gradle from './buildtool-steps/Gradle';
 import Maven from './buildtool-steps/Maven';
-import MSBuild from './buildtool-steps/MSBuild';
 import Other from './buildtool-steps/Other';
 
 export interface JenkinsfileStepProps {
+  appState: T.AppState;
   component: T.Component;
   open: boolean;
 }
 
-export enum BuildTools {
-  Maven = 'maven',
-  Gradle = 'gradle',
-  MSBuild = 'msbuild',
-  Other = 'other'
-}
+// To remove when CFamily is includ in this tutorial
+type BuildToolsWithoutCFamily = Exclude<BuildTools, BuildTools.CFamily>;
 
 const BUILDTOOL_COMPONENT_MAP: {
-  [x in BuildTools]: React.ComponentType<{ component: T.Component }>;
+  [x in BuildToolsWithoutCFamily]: React.ComponentType<{ component: T.Component }>;
 } = {
   [BuildTools.Maven]: Maven,
   [BuildTools.Gradle]: Gradle,
-  [BuildTools.MSBuild]: MSBuild,
+  [BuildTools.DotNet]: DotNet,
   [BuildTools.Other]: Other
 };
 
-export default function JenkinsfileStep(props: JenkinsfileStepProps) {
-  const { component, open } = props;
-  const [buildTool, setBuildTool] = React.useState<BuildTools | undefined>(undefined);
+export function JenkinsfileStep(props: JenkinsfileStepProps) {
+  const {
+    appState: { branchesEnabled },
+    component,
+    open
+  } = props;
+  const [buildTool, setBuildTool] = React.useState<BuildToolsWithoutCFamily | undefined>(undefined);
   return (
     <Step
       finished={false}
@@ -64,9 +67,9 @@ export default function JenkinsfileStep(props: JenkinsfileStepProps) {
               <RenderOptions
                 checked={buildTool}
                 name="buildtool"
-                onCheck={value => setBuildTool(value as BuildTools)}
+                onCheck={value => setBuildTool(value as BuildToolsWithoutCFamily)}
                 optionLabelKey="onboarding.build"
-                options={Object.values(BuildTools)}
+                options={Object.keys(BUILDTOOL_COMPONENT_MAP)}
               />
             </li>
             {buildTool !== undefined &&
@@ -95,7 +98,11 @@ export default function JenkinsfileStep(props: JenkinsfileStepProps) {
                     <p className="little-spacer-bottom">
                       <strong>{translate('onboarding.tutorial.with.jenkins.commit')}</strong>
                     </p>
-                    <p>{translate('onboarding.tutorial.with.jenkins.commit.why')}</p>
+                    <p>
+                      {branchesEnabled
+                        ? translate('onboarding.tutorial.with.jenkins.commit.why')
+                        : translate('onboarding.tutorial.with.jenkins.commit.why.no_branches')}
+                    </p>
                   </div>
                 </div>
                 <div className="display-flex-row huge-spacer-bottom">
@@ -124,3 +131,5 @@ export default function JenkinsfileStep(props: JenkinsfileStepProps) {
     />
   );
 }
+
+export default withAppState(JenkinsfileStep);

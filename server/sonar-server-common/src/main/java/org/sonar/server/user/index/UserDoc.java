@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.sonar.server.es.BaseDoc;
 
-import static org.sonar.server.user.index.UserIndexDefinition.FIELD_ORGANIZATION_UUIDS;
 import static org.sonar.server.user.index.UserIndexDefinition.TYPE_USER;
 
 public class UserDoc extends BaseDoc {
@@ -68,10 +67,6 @@ public class UserDoc extends BaseDoc {
     return getField(UserIndexDefinition.FIELD_SCM_ACCOUNTS);
   }
 
-  public List<String> organizationUuids() {
-    return getField(FIELD_ORGANIZATION_UUIDS);
-  }
-
   public UserDoc setUuid(@Nullable String s) {
     setField(UserIndexDefinition.FIELD_UUID, s);
     return this;
@@ -99,11 +94,6 @@ public class UserDoc extends BaseDoc {
 
   public UserDoc setScmAccounts(@Nullable List<String> s) {
     setField(UserIndexDefinition.FIELD_SCM_ACCOUNTS, s);
-    return this;
-  }
-
-  public UserDoc setOrganizationUuids(@Nullable List<String> organizationUuids) {
-    setField(FIELD_ORGANIZATION_UUIDS, organizationUuids);
     return this;
   }
 }

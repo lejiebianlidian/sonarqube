@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,10 @@ package org.sonar.server.security;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
+
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,10 +61,31 @@ public final class SecurityStandards {
   private static final Set<String> INSECURE_CWE = new HashSet<>(asList("89", "78", "79", "434", "352", "601"));
   private static final Set<String> RISKY_CWE = new HashSet<>(asList("120", "22", "494", "829", "676", "131", "134", "190"));
   private static final Set<String> POROUS_CWE = new HashSet<>(asList("306", "862", "798", "311", "807", "250", "863", "732", "327", "307", "759"));
+
+  /**
+   * @deprecated SansTop25 report is outdated and will be removed in future versions
+   */
+  @Deprecated
   public static final Map<String, Set<String>> CWES_BY_SANS_TOP_25 = ImmutableMap.of(
     SANS_TOP_25_INSECURE_INTERACTION, INSECURE_CWE,
     SANS_TOP_25_RISKY_RESOURCE, RISKY_CWE,
     SANS_TOP_25_POROUS_DEFENSES, POROUS_CWE);
+
+  // https://cwe.mitre.org/top25/archive/2019/2019_cwe_top25.html
+  public static final List<String> CWE_TOP25_2019 =
+    Collections.unmodifiableList(asList("119", "79", "20", "200", "125", "89", "416", "190", "352",
+      "22", "78", "787", "287", "476", "732", "434", "611", "94",
+      "798", "400", "772", "426", "502", "269", "295"));
+
+  // https://cwe.mitre.org/top25/archive/2020/2020_cwe_top25.html
+  public static final List<String> CWE_TOP25_2020 =
+    Collections.unmodifiableList(asList("79", "787", "20", "125", "119", "89", "200", "416", "352",
+      "78", "190", "22", "476", "287", "434", "732", "94", "522",
+      "611", "798", "502", "269", "400", "306", "862"));
+
+  public static final Map<String, List<String>> CWES_BY_CWE_TOP_25 = ImmutableMap.of(
+    "2019", CWE_TOP25_2019,
+    "2020", CWE_TOP25_2020);
 
   public enum VulnerabilityProbability {
     HIGH(3),
@@ -90,21 +113,22 @@ public final class SecurityStandards {
   }
 
   public enum SQCategory {
+    BUFFER_OVERFLOW("buffer-overflow", HIGH),
     SQL_INJECTION("sql-injection", HIGH),
+    RCE("rce", MEDIUM),
+    OBJECT_INJECTION("object-injection", LOW),
     COMMAND_INJECTION("command-injection", HIGH),
     PATH_TRAVERSAL_INJECTION("path-traversal-injection", HIGH),
     LDAP_INJECTION("ldap-injection", LOW),
     XPATH_INJECTION("xpath-injection", LOW),
-    RCE("rce", MEDIUM),
+    LOG_INJECTION("log-injection", LOW),
+    XXE("xxe", MEDIUM),
+    XSS("xss", HIGH),
     DOS("dos", MEDIUM),
     SSRF("ssrf", MEDIUM),
     CSRF("csrf", HIGH),
-    XSS("xss", HIGH),
-    LOG_INJECTION("log-injection", LOW),
     HTTP_RESPONSE_SPLITTING("http-response-splitting", LOW),
     OPEN_REDIRECT("open-redirect", MEDIUM),
-    XXE("xxe", MEDIUM),
-    OBJECT_INJECTION("object-injection", LOW),
     WEAK_CRYPTOGRAPHY("weak-cryptography", MEDIUM),
     AUTH("auth", HIGH),
     INSECURE_CONF("insecure-conf", LOW),
@@ -134,6 +158,7 @@ public final class SecurityStandards {
   }
 
   public static final Map<SQCategory, Set<String>> CWES_BY_SQ_CATEGORY = ImmutableMap.<SQCategory, Set<String>>builder()
+    .put(SQCategory.BUFFER_OVERFLOW, ImmutableSet.of("119", "120", "131", "676", "788"))
     .put(SQCategory.SQL_INJECTION, ImmutableSet.of("89", "564"))
     .put(SQCategory.COMMAND_INJECTION, ImmutableSet.of("77", "78", "88", "214"))
     .put(SQCategory.PATH_TRAVERSAL_INJECTION, ImmutableSet.of("22"))
@@ -181,8 +206,16 @@ public final class SecurityStandards {
     return toOwaspTop10(standards);
   }
 
+  /**
+   * @deprecated SansTop25 report is outdated and will be removed in future versions
+   */
+  @Deprecated
   public Set<String> getSansTop25() {
     return toSansTop25(cwe);
+  }
+
+  public Set<String> getCweTop25() {
+    return toCweTop25(cwe);
   }
 
   public SQCategory getSqCategory() {
@@ -221,6 +254,14 @@ public final class SecurityStandards {
       .map(s -> s.substring(CWE_PREFIX.length()))
       .collect(toSet());
     return result.isEmpty() ? singleton(UNKNOWN_STANDARD) : result;
+  }
+
+  private static Set<String> toCweTop25(Set<String> cwe) {
+    return CWES_BY_CWE_TOP_25
+      .keySet()
+      .stream()
+      .filter(k -> cwe.stream().anyMatch(CWES_BY_CWE_TOP_25.get(k)::contains))
+      .collect(toSet());
   }
 
   private static Set<String> toSansTop25(Collection<String> cwe) {

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ import { Link } from 'react-router';
 import BranchIcon from 'sonar-ui-common/components/icons/BranchIcon';
 import PullRequestIcon from 'sonar-ui-common/components/icons/PullRequestIcon';
 import QualifierIcon from 'sonar-ui-common/components/icons/QualifierIcon';
-import Organization from '../../../components/shared/Organization';
 import {
   getBranchUrl,
   getPortfolioUrl,
@@ -30,10 +29,11 @@ import {
   getPullRequestUrl
 } from '../../../helpers/urls';
 import { isPortfolioLike } from '../../../types/component';
+import { Task } from '../../../types/tasks';
 import TaskType from './TaskType';
 
 interface Props {
-  task: T.Task;
+  task: Task;
 }
 
 export default function TaskComponent({ task }: Props) {
@@ -56,8 +56,6 @@ export default function TaskComponent({ task }: Props) {
           <QualifierIcon qualifier={task.componentQualifier} />
         </span>
       )}
-
-      {task.organization && <Organization organizationKey={task.organization} />}
 
       {task.componentName && (
         <Link className="spacer-right" to={getTaskComponentUrl(task.componentKey, task)}>
@@ -84,7 +82,7 @@ export default function TaskComponent({ task }: Props) {
   );
 }
 
-function getTaskComponentUrl(componentKey: string, task: T.Task) {
+function getTaskComponentUrl(componentKey: string, task: Task) {
   if (isPortfolioLike(task.componentQualifier)) {
     return getPortfolioUrl(componentKey);
   } else if (task.branch) {

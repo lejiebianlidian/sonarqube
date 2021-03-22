@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -45,8 +45,6 @@ import org.sonar.db.ce.CeQueueDto;
 import org.sonar.db.ce.CeTaskTypes;
 import org.sonar.db.component.ComponentDto;
 import org.sonar.db.component.ComponentTesting;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.organization.OrganizationTesting;
 import org.sonar.server.notification.NotificationService;
 
 import static java.util.Collections.singleton;
@@ -69,17 +67,17 @@ public class ReportAnalysisFailureNotificationExecutionListenerTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private final Random random = new Random();
-  private DbClient dbClient = dbTester.getDbClient();
-  private NotificationService notificationService = mock(NotificationService.class);
-  private ReportAnalysisFailureNotificationSerializer serializer = mock(ReportAnalysisFailureNotificationSerializer.class);
-  private System2 system2 = mock(System2.class);
-  private DbClient dbClientMock = mock(DbClient.class);
-  private CeTask ceTaskMock = mock(CeTask.class);
-  private Throwable throwableMock = mock(Throwable.class);
-  private CeTaskResult ceTaskResultMock = mock(CeTaskResult.class);
-  private ReportAnalysisFailureNotificationExecutionListener fullMockedUnderTest = new ReportAnalysisFailureNotificationExecutionListener(
+  private final DbClient dbClient = dbTester.getDbClient();
+  private final NotificationService notificationService = mock(NotificationService.class);
+  private final ReportAnalysisFailureNotificationSerializer serializer = mock(ReportAnalysisFailureNotificationSerializer.class);
+  private final System2 system2 = mock(System2.class);
+  private final DbClient dbClientMock = mock(DbClient.class);
+  private final CeTask ceTaskMock = mock(CeTask.class);
+  private final Throwable throwableMock = mock(Throwable.class);
+  private final CeTaskResult ceTaskResultMock = mock(CeTaskResult.class);
+  private final ReportAnalysisFailureNotificationExecutionListener fullMockedUnderTest = new ReportAnalysisFailureNotificationExecutionListener(
     notificationService, dbClientMock, serializer, system2);
-  private ReportAnalysisFailureNotificationExecutionListener underTest = new ReportAnalysisFailureNotificationExecutionListener(
+  private final ReportAnalysisFailureNotificationExecutionListener underTest = new ReportAnalysisFailureNotificationExecutionListener(
     notificationService, dbClient, serializer, system2);
 
   @Before
@@ -151,15 +149,14 @@ public class ReportAnalysisFailureNotificationExecutionListenerTest {
   @Test
   public void onEnd_fails_with_IAE_if_component_is_not_a_project() {
     when(ceTaskMock.getType()).thenReturn(CeTaskTypes.REPORT);
-    OrganizationDto organization = OrganizationTesting.newOrganizationDto();
     ComponentDto project = dbTester.components().insertPrivateProject();
     ComponentDto module = dbTester.components().insertComponent(newModuleDto(project));
     ComponentDto directory = dbTester.components().insertComponent(newDirectory(module, randomAlphanumeric(12)));
     ComponentDto file = dbTester.components().insertComponent(ComponentTesting.newFileDto(project));
-    ComponentDto view = dbTester.components().insertComponent(ComponentTesting.newView(organization));
+    ComponentDto view = dbTester.components().insertComponent(ComponentTesting.newView());
     ComponentDto subView = dbTester.components().insertComponent(ComponentTesting.newSubView(view));
     ComponentDto projectCopy = dbTester.components().insertComponent(ComponentTesting.newProjectCopy(project, subView));
-    ComponentDto application = dbTester.components().insertComponent(ComponentTesting.newApplication(organization));
+    ComponentDto application = dbTester.components().insertComponent(ComponentTesting.newApplication());
 
     Arrays.asList(module, directory, file, view, subView, projectCopy, application)
       .forEach(component -> {
@@ -311,8 +308,8 @@ public class ReportAnalysisFailureNotificationExecutionListenerTest {
       .setTaskType(CeTaskTypes.REPORT)
       .setComponentUuid(project.uuid())
       .setCreatedAt(createdAt))
-      .setExecutedAt(executedAt)
-      .setStatus(CeActivityDto.Status.FAILED));
+        .setExecutedAt(executedAt)
+        .setStatus(CeActivityDto.Status.FAILED));
     dbTester.getSession().commit();
   }
 

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -57,10 +57,15 @@ public class CiConfigurationProvider extends ProviderAdapter {
     return new EmptyCiConfiguration();
   }
 
-  private static class EmptyCiConfiguration implements CiConfiguration {
+  static class EmptyCiConfiguration implements CiConfiguration {
     @Override
     public Optional<String> getScmRevision() {
       return Optional.empty();
+    }
+
+    @Override
+    public String getCiName() {
+      return "undetected";
     }
   }
 }

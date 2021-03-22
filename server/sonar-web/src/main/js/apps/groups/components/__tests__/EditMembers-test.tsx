@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ it('should edit members', () => {
   const group = { id: 3, name: 'Foo', membersCount: 5 };
   const onEdit = jest.fn();
 
-  const wrapper = shallow(<EditMembers group={group} onEdit={onEdit} organization="org" />);
+  const wrapper = shallow(<EditMembers group={group} onEdit={onEdit} />);
   expect(wrapper).toMatchSnapshot();
 
   click(wrapper.find('ButtonIcon'));

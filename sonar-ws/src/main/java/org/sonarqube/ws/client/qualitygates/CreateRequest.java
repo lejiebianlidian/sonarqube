@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import javax.annotation.Generated;
 public class CreateRequest {
 
   private String name;
-  private String organization;
 
   /**
    * This is a mandatory parameter.
@@ -46,15 +45,4 @@ public class CreateRequest {
     return name;
   }
 
-  /**
-   * Example value: "my-org"
-   */
-  public CreateRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
-  }
 }

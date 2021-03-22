@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { getJSON, post } from 'sonar-ui-common/helpers/request';
+import { get, getJSON, HttpStatus, parseError, post } from 'sonar-ui-common/helpers/request';
 import throwGlobalError from '../app/utils/throwGlobalError';
 import {
   AlmSettingsBindingDefinitions,
@@ -25,6 +25,8 @@ import {
   AzureBindingDefinition,
   AzureProjectAlmBindingParams,
   BitbucketBindingDefinition,
+  BitbucketCloudBindingDefinition,
+  BitbucketCloudProjectAlmBindingParams,
   BitbucketProjectAlmBindingParams,
   GithubBindingDefinition,
   GithubProjectAlmBindingParams,
@@ -45,6 +47,20 @@ export function getAlmSettings(project?: string): Promise<AlmSettingsInstance[]>
   return getJSON('/api/alm_settings/list', { project })
     .then(({ almSettings }) => almSettings)
     .catch(throwGlobalError);
+}
+
+export function validateAlmSettings(key: string): Promise<string> {
+  return get('/api/alm_settings/validate', { key })
+    .then(() => {
+      return '';
+    })
+    .catch((response: Response) => {
+      if (response.status === HttpStatus.BadRequest) {
+        return parseError(response);
+      } else {
+        return throwGlobalError(response);
+      }
+    });
 }
 
 export function createGithubConfiguration(data: GithubBindingDefinition) {
@@ -71,6 +87,16 @@ export function updateBitbucketConfiguration(
   data: BitbucketBindingDefinition & { newKey: string }
 ) {
   return post('/api/alm_settings/update_bitbucket', data).catch(throwGlobalError);
+}
+
+export function createBitbucketCloudConfiguration(data: BitbucketCloudBindingDefinition) {
+  return post('/api/alm_settings/create_bitbucketcloud', data).catch(throwGlobalError);
+}
+
+export function updateBitbucketCloudConfiguration(
+  data: BitbucketCloudBindingDefinition & { newKey: string }
+) {
+  return post('/api/alm_settings/update_bitbucketcloud', data).catch(throwGlobalError);
 }
 
 export function createGitlabConfiguration(data: GitlabBindingDefinition) {
@@ -105,6 +131,10 @@ export function setProjectAzureBinding(data: AzureProjectAlmBindingParams) {
 
 export function setProjectBitbucketBinding(data: BitbucketProjectAlmBindingParams) {
   return post('/api/alm_settings/set_bitbucket_binding', data).catch(throwGlobalError);
+}
+
+export function setProjectBitbucketCloudBinding(data: BitbucketCloudProjectAlmBindingParams) {
+  return post('/api/alm_settings/set_bitbucketcloud_binding', data).catch(throwGlobalError);
 }
 
 export function setProjectGithubBinding(data: GithubProjectAlmBindingParams) {

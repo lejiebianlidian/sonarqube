@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,18 +20,7 @@
 package org.sonar.db.qualityprofile;
 
 public class OrgActiveRuleDto extends ActiveRuleDto {
-
-  private String organizationUuid;
   private String orgProfileUuid;
-
-  public String getOrganizationUuid() {
-    return organizationUuid;
-  }
-
-  public OrgActiveRuleDto setOrganizationUuid(String s) {
-    this.organizationUuid = s;
-    return this;
-  }
 
   public String getOrgProfileUuid() {
     return orgProfileUuid;

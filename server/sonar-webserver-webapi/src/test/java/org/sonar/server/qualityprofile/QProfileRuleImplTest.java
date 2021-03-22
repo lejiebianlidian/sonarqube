@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -327,7 +327,7 @@ public class QProfileRuleImplTest {
   @Test
   public void fail_to_activate_rule_if_profile_is_on_different_languages() {
     RuleDefinitionDto rule = createJavaRule();
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage("js"));
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage("js"));
     RuleActivation activation = RuleActivation.create(rule.getUuid());
 
     expectFailure("java rule " + rule.getKey() + " cannot be activated on js profile " + profile.getKee(), () -> activate(profile, activation));
@@ -422,7 +422,7 @@ public class QProfileRuleImplTest {
 
     List<ActiveRuleChange> changes = deactivate(profile, rule);
     verifyNoActiveRules();
-    assertThat(changes).hasSize(0);
+    assertThat(changes).isEmpty();
   }
 
   @Test
@@ -576,7 +576,7 @@ public class QProfileRuleImplTest {
     List<ActiveRuleChange> changes = activate(childProfile, overrideActivation);
 
     assertThatRuleIsUpdated(childProfile, rule, MAJOR, INHERITED, of(param.getName(), "foo"));
-    assertThat(changes).hasSize(0);
+    assertThat(changes).isEmpty();
   }
 
   @Test
@@ -702,29 +702,29 @@ public class QProfileRuleImplTest {
     RuleActivation resetActivation = RuleActivation.createReset(rule.getUuid());
     List<ActiveRuleChange> changes = activate(parentProfile, resetActivation);
     verifyNoActiveRules();
-    assertThat(changes).hasSize(0);
+    assertThat(changes).isEmpty();
   }
 
   @Test
   public void bulk_activation() {
-    int bulkSize = SearchOptions.MAX_LIMIT + 10 + new Random().nextInt(100);
+    int bulkSize = SearchOptions.MAX_PAGE_SIZE + 10 + new Random().nextInt(100);
     String language = randomAlphanumeric(10);
     String repositoryKey = randomAlphanumeric(10);
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(language));
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage(language));
 
     List<RuleDto> rules = new ArrayList<>();
     IntStream.rangeClosed(1, bulkSize).forEach(
       i -> rules.add(db.rules().insertRule(r -> r.setLanguage(language).setRepositoryKey(repositoryKey))));
 
     verifyNoActiveRules();
-    ruleIndexer.indexOnStartup(ruleIndexer.getIndexTypes());
+    ruleIndexer.indexAll();
 
     RuleQuery ruleQuery = new RuleQuery()
       .setRepositories(singletonList(repositoryKey));
 
     BulkChangeResult bulkChangeResult = underTest.bulkActivateAndCommit(db.getSession(), profile, ruleQuery, MINOR);
 
-    assertThat(bulkChangeResult.countFailed()).isEqualTo(0);
+    assertThat(bulkChangeResult.countFailed()).isZero();
     assertThat(bulkChangeResult.countSucceeded()).isEqualTo(bulkSize);
     assertThat(bulkChangeResult.getChanges()).hasSize(bulkSize);
     assertThat(db.getDbClient().activeRuleDao().selectByProfile(db.getSession(), profile)).hasSize(bulkSize);
@@ -734,24 +734,24 @@ public class QProfileRuleImplTest {
 
   @Test
   public void bulk_deactivation() {
-    int bulkSize = SearchOptions.MAX_LIMIT + 10 + new Random().nextInt(100);
+    int bulkSize = SearchOptions.MAX_PAGE_SIZE + 10 + new Random().nextInt(100);
     String language = randomAlphanumeric(10);
     String repositoryKey = randomAlphanumeric(10);
-    QProfileDto profile = db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(language));
+    QProfileDto profile = db.qualityProfiles().insert(p -> p.setLanguage(language));
 
     List<RuleDto> rules = new ArrayList<>();
     IntStream.rangeClosed(1, bulkSize).forEach(
       i -> rules.add(db.rules().insertRule(r -> r.setLanguage(language).setRepositoryKey(repositoryKey))));
 
     verifyNoActiveRules();
-    ruleIndexer.indexOnStartup(ruleIndexer.getIndexTypes());
+    ruleIndexer.indexAll();
 
     RuleQuery ruleQuery = new RuleQuery()
       .setRepositories(singletonList(repositoryKey));
 
     BulkChangeResult bulkChangeResult = underTest.bulkActivateAndCommit(db.getSession(), profile, ruleQuery, MINOR);
 
-    assertThat(bulkChangeResult.countFailed()).isEqualTo(0);
+    assertThat(bulkChangeResult.countFailed()).isZero();
     assertThat(bulkChangeResult.countSucceeded()).isEqualTo(bulkSize);
     assertThat(bulkChangeResult.getChanges()).hasSize(bulkSize);
     assertThat(db.getDbClient().activeRuleDao().selectByProfile(db.getSession(), profile)).hasSize(bulkSize);
@@ -759,10 +759,10 @@ public class QProfileRuleImplTest {
     // Now deactivate all rules
     bulkChangeResult = underTest.bulkDeactivateAndCommit(db.getSession(), profile, ruleQuery);
 
-    assertThat(bulkChangeResult.countFailed()).isEqualTo(0);
+    assertThat(bulkChangeResult.countFailed()).isZero();
     assertThat(bulkChangeResult.countSucceeded()).isEqualTo(bulkSize);
     assertThat(bulkChangeResult.getChanges()).hasSize(bulkSize);
-    assertThat(db.getDbClient().activeRuleDao().selectByProfile(db.getSession(), profile)).hasSize(0);
+    assertThat(db.getDbClient().activeRuleDao().selectByProfile(db.getSession(), profile)).isEmpty();
     rules.stream().forEach(
       r -> assertThatRuleIsNotPresent(profile, r.getDefinition()));
   }
@@ -777,15 +777,15 @@ public class QProfileRuleImplTest {
     assertThatRuleIsActivated(parentProfile, rule, null, rule.getSeverityString(), null, emptyMap());
     assertThatRuleIsActivated(childProfile, rule, null, rule.getSeverityString(), INHERITED, emptyMap());
 
-    ruleIndexer.indexOnStartup(ruleIndexer.getIndexTypes());
+    ruleIndexer.indexAll();
 
     RuleQuery ruleQuery = new RuleQuery()
       .setQProfile(childProfile);
     BulkChangeResult bulkChangeResult = underTest.bulkDeactivateAndCommit(db.getSession(), childProfile, ruleQuery);
 
     assertThat(bulkChangeResult.countFailed()).isEqualTo(1);
-    assertThat(bulkChangeResult.countSucceeded()).isEqualTo(0);
-    assertThat(bulkChangeResult.getChanges()).hasSize(0);
+    assertThat(bulkChangeResult.countSucceeded()).isZero();
+    assertThat(bulkChangeResult.getChanges()).isEmpty();
     assertThatRuleIsActivated(parentProfile, rule, null, rule.getSeverityString(), null, emptyMap());
     assertThatRuleIsActivated(childProfile, rule, null, rule.getSeverityString(), INHERITED, emptyMap());
   }
@@ -801,7 +801,7 @@ public class QProfileRuleImplTest {
     activate(parentProfile, RuleActivation.create(rule1.getUuid()));
     activate(parentProfile, RuleActivation.create(rule2.getUuid()));
 
-    ruleIndexer.indexOnStartup(ruleIndexer.getIndexTypes());
+    ruleIndexer.indexAll();
 
     RuleQuery query = new RuleQuery()
       .setRuleKey(rule1.getRuleKey())
@@ -810,7 +810,7 @@ public class QProfileRuleImplTest {
 
     assertThat(result.getChanges()).hasSize(3);
     assertThat(result.countSucceeded()).isEqualTo(1);
-    assertThat(result.countFailed()).isEqualTo(0);
+    assertThat(result.countFailed()).isZero();
 
     // Rule1 must be activated with BLOCKER on all profiles
     assertThatRuleIsActivated(parentProfile, rule1, null, BLOCKER, null, emptyMap());
@@ -851,7 +851,7 @@ public class QProfileRuleImplTest {
   @Test
   public void activation_fails_when_profile_is_built_in() {
     RuleDefinitionDto rule = createRule();
-    QProfileDto builtInProfile = db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
+    QProfileDto builtInProfile = db.qualityProfiles().insert(p -> p.setLanguage(rule.getLanguage()).setIsBuiltIn(true));
 
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("The built-in profile " + builtInProfile.getName() + " is read-only and can't be updated");
@@ -873,11 +873,11 @@ public class QProfileRuleImplTest {
   }
 
   private QProfileDto createProfile(RuleDefinitionDto rule) {
-    return db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p.setLanguage(rule.getLanguage()));
+    return db.qualityProfiles().insert(p -> p.setLanguage(rule.getLanguage()));
   }
 
   private QProfileDto createChildProfile(QProfileDto parent) {
-    return db.qualityProfiles().insert(db.getDefaultOrganization(), p -> p
+    return db.qualityProfiles().insert(p -> p
       .setLanguage(parent.getLanguage())
       .setParentKee(parent.getKee())
       .setName("Child of " + parent.getName()));
@@ -905,8 +905,6 @@ public class QProfileRuleImplTest {
 
     assertThat(activeRule.getSeverityString()).isEqualTo(expectedSeverity);
     assertThat(activeRule.getInheritance()).isEqualTo(expectedInheritance != null ? expectedInheritance.name() : null);
-    assertThat(activeRule.getCreatedAt()).isNotNull();
-    assertThat(activeRule.getUpdatedAt()).isNotNull();
 
     List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid());
     assertThat(params).hasSize(expectedParams.size());
@@ -940,8 +938,6 @@ public class QProfileRuleImplTest {
 
     assertThat(activeRule.getSeverityString()).isEqualTo(expectedSeverity);
     assertThat(activeRule.getInheritance()).isEqualTo(expectedInheritance != null ? expectedInheritance.name() : null);
-    assertThat(activeRule.getCreatedAt()).isNotNull();
-    assertThat(activeRule.getUpdatedAt()).isNotNull();
 
     List<ActiveRuleParamDto> params = db.getDbClient().activeRuleDao().selectParamsByActiveRuleUuid(db.getSession(), activeRule.getUuid());
     assertThat(params).hasSize(expectedParams.size());
@@ -958,7 +954,7 @@ public class QProfileRuleImplTest {
   }
 
   private void verifyNoActiveRules() {
-    assertThat(db.countRowsOfTable(db.getSession(), "active_rules")).isEqualTo(0);
+    assertThat(db.countRowsOfTable(db.getSession(), "active_rules")).isZero();
   }
 
   private RuleDefinitionDto createRule() {

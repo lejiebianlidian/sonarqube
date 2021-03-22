@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -24,16 +24,15 @@ import java.util.Collections;
 import java.util.Optional;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.Immutable;
-import org.sonar.db.organization.OrganizationDto;
-import org.sonar.db.permission.OrganizationPermission;
+import org.sonar.db.permission.GlobalPermission;
 import org.sonar.db.user.GroupDto;
 import org.sonar.server.user.AbstractUserSession;
 
 @Immutable
 public class SafeModeUserSession extends AbstractUserSession {
-  
+
   @Override
-  protected boolean hasPermissionImpl(OrganizationPermission permission, String organizationUuid) {
+  protected boolean hasPermissionImpl(GlobalPermission permission) {
     return false;
   }
 
@@ -44,11 +43,6 @@ public class SafeModeUserSession extends AbstractUserSession {
 
   @Override
   protected boolean hasProjectUuidPermission(String permission, String projectUuid) {
-    return false;
-  }
-
-  @Override
-  protected boolean hasMembershipImpl(OrganizationDto organizationDto) {
     return false;
   }
 
@@ -73,6 +67,11 @@ public class SafeModeUserSession extends AbstractUserSession {
   @Override
   public Collection<GroupDto> getGroups() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public boolean shouldResetPassword() {
+    return false;
   }
 
   @Override

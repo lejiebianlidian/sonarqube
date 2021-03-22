@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -42,14 +42,14 @@ public class SearchRequest {
   private List<String> directories;
   private String facetMode;
   private List<String> facets;
-  private List<String> fileUuids;
+  private List<String> files;
   private List<String> issues;
+  private Set<String> scopes;
   private List<String> languages;
   private List<String> moduleUuids;
   private Boolean onComponentOnly;
   private String branch;
   private String pullRequest;
-  private String organization;
   private int page;
   private int pageSize;
   private List<String> projects;
@@ -66,6 +66,11 @@ public class SearchRequest {
   private List<String> sansTop25;
   private List<String> sonarsourceSecurity;
   private List<String> cwe;
+  private String timeZone;
+
+  public SearchRequest() {
+    // nothing to do here
+  }
 
   @CheckForNull
   public List<String> getActionPlans() {
@@ -208,12 +213,12 @@ public class SearchRequest {
   }
 
   @CheckForNull
-  public List<String> getFileUuids() {
-    return fileUuids;
+  public List<String> getFiles() {
+    return files;
   }
 
-  public SearchRequest setFileUuids(@Nullable List<String> fileUuids) {
-    this.fileUuids = fileUuids;
+  public SearchRequest setFiles(@Nullable List<String> files) {
+    this.files = files;
     return this;
   }
 
@@ -224,6 +229,16 @@ public class SearchRequest {
 
   public SearchRequest setIssues(@Nullable List<String> issues) {
     this.issues = issues;
+    return this;
+  }
+
+  @CheckForNull
+  public Set<String> getScopes() {
+    return scopes;
+  }
+
+  public SearchRequest setScopes(@Nullable Collection<String> scopes) {
+    this.scopes = scopes == null ? null : ImmutableSet.copyOf(scopes);
     return this;
   }
 
@@ -254,16 +269,6 @@ public class SearchRequest {
 
   public SearchRequest setOnComponentOnly(@Nullable Boolean onComponentOnly) {
     this.onComponentOnly = onComponentOnly;
-    return this;
-  }
-
-  @CheckForNull
-  public String getOrganization() {
-    return organization;
-  }
-
-  public SearchRequest setOrganization(@Nullable String s) {
-    this.organization = s;
     return this;
   }
 
@@ -452,6 +457,16 @@ public class SearchRequest {
 
   public SearchRequest setPullRequest(@Nullable String pullRequest) {
     this.pullRequest = pullRequest;
+    return this;
+  }
+
+  @CheckForNull
+  public String getTimeZone() {
+    return timeZone;
+  }
+
+  public SearchRequest setTimeZone(@Nullable String timeZone) {
+    this.timeZone = timeZone;
     return this;
   }
 }

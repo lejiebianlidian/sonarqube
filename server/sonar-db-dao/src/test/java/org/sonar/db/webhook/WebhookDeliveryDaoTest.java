@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ public class WebhookDeliveryDaoTest {
   private static final long BEFORE = NOW - 1_000L;
 
   @Rule
-  public final DbTester dbTester = DbTester.create(System2.INSTANCE).setDisableDefaultOrganization(true);
+  public final DbTester dbTester = DbTester.create(System2.INSTANCE);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -225,7 +225,7 @@ public class WebhookDeliveryDaoTest {
   public void deleteComponentBeforeDate_does_nothing_on_empty_table() {
     underTest.deleteComponentBeforeDate(dbSession, "COMPONENT_1", 1_500_000L);
 
-    assertThat(dbTester.countRowsOfTable(dbSession, "webhook_deliveries")).isEqualTo(0);
+    assertThat(dbTester.countRowsOfTable(dbSession, "webhook_deliveries")).isZero();
   }
 
   @Test

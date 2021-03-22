@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import SetIssueTagsPopup from '../popups/SetIssueTagsPopup';
 interface Props {
   canSetTags: boolean;
   isOpen: boolean;
-  issue: Pick<T.Issue, 'key' | 'projectOrganization' | 'tags'>;
+  issue: Pick<T.Issue, 'key' | 'tags'>;
   onChange: (issue: T.Issue) => void;
   togglePopup: (popup: string, show?: boolean) => void;
 }
@@ -64,14 +64,9 @@ export default class IssueTags extends React.PureComponent<Props> {
           <Toggler
             onRequestClose={this.handleClose}
             open={this.props.isOpen}
-            overlay={
-              <SetIssueTagsPopup
-                organization={issue.projectOrganization}
-                selectedTags={tags}
-                setTags={this.setTags}
-              />
-            }>
+            overlay={<SetIssueTagsPopup selectedTags={tags} setTags={this.setTags} />}>
             <ButtonLink
+              aria-expanded={this.props.isOpen}
               className="issue-action issue-action-with-options js-issue-edit-tags"
               onClick={this.toggleSetTags}>
               <TagsList
@@ -84,14 +79,14 @@ export default class IssueTags extends React.PureComponent<Props> {
           </Toggler>
         </div>
       );
-    } else {
-      return (
-        <TagsList
-          allowUpdate={this.props.canSetTags}
-          className="note"
-          tags={issue.tags && issue.tags.length > 0 ? issue.tags : [translate('issue.no_tag')]}
-        />
-      );
     }
+
+    return (
+      <TagsList
+        allowUpdate={this.props.canSetTags}
+        className="note"
+        tags={issue.tags && issue.tags.length > 0 ? issue.tags : [translate('issue.no_tag')]}
+      />
+    );
   }
 }

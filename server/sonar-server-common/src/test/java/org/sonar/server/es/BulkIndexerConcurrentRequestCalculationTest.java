@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,13 +31,13 @@ public class BulkIndexerConcurrentRequestCalculationTest {
   @Test
   public void should_not_parallelize_if_regular_size() {
     assertConcurrentRequests(BulkIndexer.Size.REGULAR, cores(4))
-      .isEqualTo(0);
+      .isZero();
   }
 
   @Test
   public void should_not_parallelize_if_large_indexing_but_few_cores() {
     assertConcurrentRequests(BulkIndexer.Size.LARGE, cores(4))
-      .isEqualTo(0);
+      .isZero();
   }
 
   /**

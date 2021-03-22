@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -73,6 +73,15 @@ export function checkValue(key: string) {
         dispatch(failValidation(key, translate('settings.state.value_cant_be_empty')));
       }
       return false;
+    }
+
+    if (definition.type === 'JSON') {
+      try {
+        JSON.parse(value);
+      } catch (e) {
+        dispatch(failValidation(key, e.message));
+        return false;
+      }
     }
 
     dispatch(passValidation(key));

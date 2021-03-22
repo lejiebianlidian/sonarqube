@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 package org.sonar.scanner.issue.ignore.pattern;
 
+import com.google.common.base.MoreObjects;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import org.sonar.api.rule.RuleKey;
@@ -45,6 +46,14 @@ public class IssuePattern {
 
   public boolean matchFile(@Nullable String filePath) {
     return filePath != null && filePattern.match(filePath);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+      .add("filePattern", filePattern)
+      .add("rulePattern", rulePattern)
+      .toString();
   }
 
 }

@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,26 +30,12 @@ import javax.annotation.Generated;
 @Generated("sonar-ws-generator")
 public class UsersRequest {
 
-  private String organization;
   private String p;
   private String permission;
   private String projectId;
   private String projectKey;
   private String ps;
   private String q;
-
-  /**
-   * This is part of the internal API.
-   * Example value: "my-org"
-   */
-  public UsersRequest setOrganization(String organization) {
-    this.organization = organization;
-    return this;
-  }
-
-  public String getOrganization() {
-    return organization;
-  }
 
   /**
    * Example value: "42"

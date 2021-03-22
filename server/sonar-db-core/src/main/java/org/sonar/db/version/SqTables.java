@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -26,23 +26,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableSet;
 
 public final class SqTables {
-  /**
-   * These tables are still involved in DB migrations, so potentially
-   * incorrect collation must be fixed so that joins with other
-   * tables are possible.
-   */
-  public static final Set<String> OLD_DROPPED_TABLES = unmodifiableSet(new HashSet<>(asList(
-    "active_dashboards",
-    "activities",
-    "dashboards",
-    "issue_filters",
-    "issue_filter_favourites",
-    "loaded_templates",
-    "measure_filters",
-    "measure_filter_favourites",
-    "resource_index",
-    "widgets",
-    "widget_properties")));
 
   /**
    * List of all the tables.
@@ -52,10 +35,11 @@ public final class SqTables {
   public static final Set<String> TABLES = unmodifiableSet(new HashSet<>(asList(
     "active_rules",
     "active_rule_parameters",
-    "alm_app_installs",
     "alm_settings",
     "alm_pats",
     "analysis_properties",
+    "app_branch_project_branch",
+    "app_projects",
     "ce_activity",
     "ce_queue",
     "ce_task_characteristics",
@@ -82,18 +66,13 @@ public final class SqTables {
     "metrics",
     "new_code_periods",
     "notifications",
-    "organizations",
-    "organization_alm_bindings",
-    "organization_members",
     "org_qprofiles",
-    "org_quality_gates",
     "permission_templates",
     "perm_templates_users",
     "perm_templates_groups",
     "perm_tpl_characteristics",
     "plugins",
     "projects",
-    "project_alm_bindings",
     "project_alm_settings",
     "project_branches",
     "project_links",
@@ -116,6 +95,7 @@ public final class SqTables {
     "session_tokens",
     "snapshots",
     "users",
+    "user_dismissed_messages",
     "user_properties",
     "user_roles",
     "user_tokens",

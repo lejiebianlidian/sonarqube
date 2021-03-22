@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,16 +25,6 @@ import org.sonar.server.project.Project;
 import org.sonar.server.qualityprofile.QualityProfile;
 
 public interface MutableAnalysisMetadataHolder extends AnalysisMetadataHolder {
-
-  /**
-   * @throws IllegalStateException if organizations enabled flag has already been set
-   */
-  MutableAnalysisMetadataHolder setOrganizationsEnabled(boolean isOrganizationsEnabled);
-
-  /**
-   * @throws IllegalStateException if the organization uuid has already been set
-   */
-  MutableAnalysisMetadataHolder setOrganization(Organization organization);
 
   /**
    * @throws IllegalStateException if the analysis uuid has already been set

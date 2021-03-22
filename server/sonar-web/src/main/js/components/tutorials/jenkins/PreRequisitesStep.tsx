@@ -1,6 +1,6 @@
 /*
  * SonarQube
- * Copyright (C) 2009-2020 SonarSource SA
+ * Copyright (C) 2009-2021 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,10 +23,13 @@ import { Link } from 'react-router';
 import { Button } from 'sonar-ui-common/components/controls/buttons';
 import Checkbox from 'sonar-ui-common/components/controls/Checkbox';
 import { translate } from 'sonar-ui-common/helpers/l10n';
+import { AlmKeys } from '../../../types/alm-settings';
 import SentenceWithHighlights from '../components/SentenceWithHighlights';
 import Step from '../components/Step';
 
 export interface PreRequisitesStepProps {
+  alm: AlmKeys;
+  branchesEnabled: boolean;
   onChangeSkipNextTime: (skip: boolean) => void;
   onDone: () => void;
   onOpen: () => void;
@@ -35,7 +38,7 @@ export interface PreRequisitesStepProps {
 }
 
 export default function PreRequisitesStep(props: PreRequisitesStepProps) {
-  const { open, skipNextTime } = props;
+  const { alm, branchesEnabled, open, skipNextTime } = props;
   return (
     <Step
       finished={!open}
@@ -50,7 +53,14 @@ export default function PreRequisitesStep(props: PreRequisitesStepProps) {
             />
           </p>
           <ul className="list-styled big-spacer-bottom">
-            <li>{translate('onboarding.tutorial.with.jenkins.prereqs.plugins.branch_source')}</li>
+            {branchesEnabled && (
+              <li>
+                {translate('onboarding.tutorial.with.jenkins.prereqs.plugins.branch_source', alm)}
+              </li>
+            )}
+            {!branchesEnabled && alm === AlmKeys.GitLab && (
+              <li>{translate('onboarding.tutorial.with.jenkins.prereqs.plugins.gitlab_plugin')}</li>
+            )}
             <li>{translate('onboarding.tutorial.with.jenkins.prereqs.plugins.sonar_scanner')}</li>
           </ul>
           <p className="big-spacer-bottom">
